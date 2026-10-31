@@ -560,47 +560,42 @@
     <div id="humanVerifyModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-[#181a20] rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-700/80 relative text-slate-100 animate-in fade-in zoom-in-95 duration-150 select-none">
             
-            <!-- Modal Header -->
-            <div class="flex items-start justify-between mb-4">
-                <div>
-                    <h3 class="font-extrabold text-white text-lg tracking-tight">Verify to proceed</h3>
-                    <p class="text-xs text-slate-400 mt-0.5 font-medium">A quick check that you're human.</p>
-                </div>
-                <button type="button" id="closeVerifyModal" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
+            <!-- Modal Header (Centered) -->
+            <div class="relative text-center mb-6 pt-1">
+                <button type="button" id="closeVerifyModal" class="absolute -top-1.5 right-0 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
-            </div>
-
-            <!-- Target Resource Pill -->
-            <div class="bg-slate-900/90 border border-slate-800 rounded-xl px-3.5 py-2 font-mono text-xs text-slate-300 truncate mb-5 font-semibold flex items-center space-x-2">
-                <i data-lucide="shield" class="w-3.5 h-3.5 text-blue-400 flex-shrink-0"></i>
-                <span id="verifyTargetName" class="truncate">Almond-AI_Direct_ATS_Index.apks</span>
+                <h3 class="font-extrabold text-white text-xl tracking-tight">Verify to proceed</h3>
+                <p class="text-xs text-slate-400 mt-1 font-medium">A quick check that you're human.</p>
             </div>
 
             <!-- Central Hold to Verify Button -->
-            <div class="relative">
-                <button type="button" id="holdVerifyBtn" class="w-full py-4 px-6 bg-[#1e222d] hover:bg-[#252a37] active:bg-[#1a1e29] border-2 border-blue-500/80 rounded-2xl flex items-center justify-center space-x-3 transition-all relative overflow-hidden group shadow-lg shadow-blue-500/10 cursor-pointer outline-none focus:ring-2 focus:ring-blue-400">
+            <div class="relative mb-2">
+                <button type="button" id="holdVerifyBtn" class="w-full py-4 px-6 bg-[#1e222d] hover:bg-[#252a37] active:bg-[#1a1e29] border-2 border-blue-500/80 rounded-2xl flex items-center justify-center space-x-3 transition-all relative overflow-hidden group shadow-lg shadow-blue-500/10 cursor-pointer outline-none focus:ring-2 focus:ring-blue-400 select-none">
                     
-                    <!-- SVG Circular Progress Ring -->
-                    <div class="relative w-6 h-6 flex-shrink-0 flex items-center justify-center">
-                        <svg class="w-6 h-6 transform -rotate-90" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" class="text-slate-700 fill-none" />
-                            <circle id="holdRingCircle" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" stroke-dasharray="56.548" stroke-dashoffset="56.548" stroke-linecap="round" class="text-blue-400 fill-none transition-none" />
-                        </svg>
-                        <i id="holdVerifySuccessIcon" data-lucide="check" class="hidden w-4 h-4 text-emerald-400 absolute"></i>
+                    <!-- Full-Box Background Fill (Expands left to right, then reverses right to left) -->
+                    <div id="holdBgFill" class="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-700 via-indigo-600 to-cyan-500 w-0 transition-none z-0 opacity-80 pointer-events-none"></div>
+
+                    <!-- Content Overlay (z-10) -->
+                    <div class="relative z-10 flex items-center justify-center space-x-3 pointer-events-none">
+                        <!-- Circular Indicator -->
+                        <div class="relative w-6 h-6 flex-shrink-0 flex items-center justify-center">
+                            <svg class="w-6 h-6 transform -rotate-90" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" class="text-slate-700 fill-none" />
+                                <circle id="holdRingCircle" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" stroke-dasharray="56.548" stroke-dashoffset="56.548" stroke-linecap="round" class="text-cyan-300 fill-none transition-none" />
+                            </svg>
+                            <i id="holdVerifySuccessIcon" data-lucide="check" class="hidden w-4 h-4 text-emerald-300 absolute"></i>
+                        </div>
+
+                        <!-- Button Label -->
+                        <span id="holdVerifyBtnText" class="text-sm font-black text-white tracking-wide transition-colors">Hold to verify</span>
                     </div>
-
-                    <!-- Button Label -->
-                    <span id="holdVerifyBtnText" class="text-sm font-bold text-blue-400 tracking-wide transition-colors">Hold to verify</span>
-
-                    <!-- Bottom Smooth Loading Bar -->
-                    <div id="holdProgressBar" class="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400 w-0 transition-none"></div>
                 </button>
             </div>
 
             <!-- Helper Instructions / Caption -->
-            <p id="holdVerifyHint" class="text-xs text-slate-400 text-center mt-3.5 font-medium leading-relaxed transition-colors">
-                Press and hold until the ring fills, then let go. The Space bar works too.
+            <p id="holdVerifyHint" class="text-xs text-slate-400 text-center mt-3 font-medium leading-relaxed transition-colors">
+                Press and hold until full, then release as the bar reverses. The Space bar works too.
             </p>
 
             <!-- Anti-Bot Signature Status -->

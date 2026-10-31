@@ -914,19 +914,63 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
                </div>`
             : '';
 
-        const applyBtnHtml = isLinkedin
-            ? `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="px-5 py-2.5 bg-[#0A66C2] hover:bg-[#004182] text-white text-xs sm:text-sm font-black rounded-xl flex items-center justify-center space-x-2 shadow-md transition transform active:scale-98">
-                <span>Apply on LinkedIn</span>
-                <i data-lucide="external-link" class="w-4 h-4"></i>
-               </a>`
-            : `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="px-5 py-2.5 bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 hover:from-blue-800 hover:to-violet-800 text-white text-xs sm:text-sm font-black rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-indigo-500/25 transition transform active:scale-98">
-                <span>Direct Apply to ATS</span>
-                <i data-lucide="external-link" class="w-4 h-4"></i>
-               </a>`;
+        const isLocked = Boolean(job.is_locked);
+
+        // Action Buttons: If locked, show unblurred job card with locked CTA buttons and blurred direct link
+        let applyBtnHtml = '';
+        let pitchBtnHtml = '';
+
+        if (isLocked) {
+            pitchBtnHtml = `
+                <button type="button" onclick="triggerRazorpayCheckout()" class="px-4 py-2.5 rounded-xl border-2 border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-black flex items-center space-x-2 transition shadow-sm">
+                    <i data-lucide="lock" class="w-4 h-4 text-slate-500"></i>
+                    <span>Generate AI STAR Pitch (Pro)</span>
+                </button>
+            `;
+
+            applyBtnHtml = `
+                <button type="button" onclick="triggerRazorpayCheckout()" class="px-5 py-2.5 bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 hover:from-blue-800 hover:to-violet-800 text-white text-xs sm:text-sm font-black rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-indigo-500/25 transition transform active:scale-95">
+                    <i data-lucide="lock" class="w-4 h-4 text-violet-200"></i>
+                    <span>Unlock Direct ATS Link (₹699 / $19)</span>
+                </button>
+            `;
+        } else {
+            pitchBtnHtml = `
+                <button type="button" class="generate-pitch-btn px-4 py-2.5 rounded-xl border-2 border-violet-300 bg-violet-50 hover:bg-violet-100 text-violet-900 text-xs sm:text-sm font-black flex items-center space-x-2 transition shadow-sm" data-container="${containerId}" data-idx="${idx}">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-violet-700"></i>
+                    <span>Generate AI STAR Pitch</span>
+                </button>
+            `;
+
+            applyBtnHtml = isLinkedin
+                ? `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="px-5 py-2.5 bg-[#0A66C2] hover:bg-[#004182] text-white text-xs sm:text-sm font-black rounded-xl flex items-center justify-center space-x-2 shadow-md transition transform active:scale-98">
+                    <span>Apply on LinkedIn</span>
+                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                   </a>`
+                : `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="px-5 py-2.5 bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 hover:from-blue-800 hover:to-violet-800 text-white text-xs sm:text-sm font-black rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-indigo-500/25 transition transform active:scale-98">
+                    <span>Direct Apply to ATS</span>
+                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                   </a>`;
+        }
 
         const matchedSkillsHtml = (job.matched_skills || []).slice(0, 8).map(s => 
             `<span class="px-3 py-1 bg-white text-slate-900 text-xs font-black rounded-lg border border-slate-300 shadow-sm hover:border-violet-400 hover:text-violet-800 transition">${s}</span>`
         ).join("");
+
+        const lockedEndpointBar = isLocked ? `
+            <div class="mt-4 pt-3 border-t border-dashed border-violet-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-violet-50/80 p-3 rounded-2xl border border-violet-200">
+                <div class="flex items-center space-x-2 text-xs font-bold text-violet-950">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-violet-700 flex-shrink-0"></i>
+                    <span>Direct Verified Application Link:</span>
+                </div>
+                <div class="flex items-center space-x-2 overflow-hidden">
+                    <span class="font-mono text-xs text-slate-500 select-none bg-white px-3 py-1 rounded-lg border border-violet-200 filter blur-[4px] truncate max-w-[280px]">
+                        https://jobs.${(job.source || 'lever').toLowerCase()}.co/${(job.company || 'hiring').toLowerCase().replace(/[^a-z0-9]/g, '')}/apply
+                    </span>
+                    <span class="text-[10px] font-black uppercase tracking-wider text-violet-800 bg-violet-200/90 px-2 py-0.5 rounded-md flex-shrink-0">Pro Locked</span>
+                </div>
+            </div>
+        ` : '';
 
         card.innerHTML = `
             <!-- Top Ambient Glow Edge -->
@@ -983,36 +1027,15 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
                 </div>
             ` : ''}
 
+            <!-- Locked Direct Link Preview Bar -->
+            ${lockedEndpointBar}
+
             <!-- Action Buttons Row -->
             <div class="mt-5 pt-4 border-t border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <button type="button" class="generate-pitch-btn px-4 py-2.5 rounded-xl border-2 border-violet-300 bg-violet-50 hover:bg-violet-100 text-violet-900 text-xs sm:text-sm font-black flex items-center space-x-2 transition shadow-sm" data-container="${containerId}" data-idx="${idx}">
-                    <i data-lucide="sparkles" class="w-4 h-4 text-violet-700"></i>
-                    <span>Generate AI STAR Pitch</span>
-                </button>
-
+                ${pitchBtnHtml}
                 ${applyBtnHtml}
             </div>
         `;
-
-        // Render Paywall Lock Overlay for free users past index 3
-        if (job.is_locked) {
-            const overlay = document.createElement("div");
-            overlay.className = "absolute inset-0 backdrop-blur-md bg-white/80 flex flex-col items-center justify-center p-6 text-center z-20 border-2 border-dashed border-violet-400 rounded-3xl";
-            overlay.innerHTML = `
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-violet-600 text-white flex items-center justify-center mb-3 shadow-lg shadow-indigo-500/30">
-                    <i data-lucide="lock" class="w-6 h-6"></i>
-                </div>
-                <h4 class="font-black text-slate-950 text-lg">Direct ATS Application Locked</h4>
-                <p class="text-xs font-semibold text-slate-600 max-w-sm mt-1 mb-4">
-                    Unlock all verified direct ATS links, exact recruiter-free endpoints, and custom STAR pitches for this opportunity.
-                </p>
-                <button onclick="triggerRazorpayCheckout()" class="px-6 py-2.5 bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 hover:from-blue-800 hover:to-violet-800 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-xl shadow-indigo-500/25 flex items-center space-x-2 transition transform active:scale-95">
-                    <i data-lucide="sparkles" class="w-4 h-4"></i>
-                    <span>Unlock Almond Pro (₹699 / $19)</span>
-                </button>
-            `;
-            card.appendChild(overlay);
-        }
 
         container.appendChild(card);
     });
@@ -1363,7 +1386,7 @@ function openHumanVerification(targetResourceName, onSuccessCallback) {
 
 function resetVerifierUI() {
     const ringCircle = document.getElementById("holdRingCircle");
-    const progressBar = document.getElementById("holdProgressBar");
+    const bgFill = document.getElementById("holdBgFill");
     const btnText = document.getElementById("holdVerifyBtnText");
     const hintText = document.getElementById("holdVerifyHint");
     const successIcon = document.getElementById("holdVerifySuccessIcon");
@@ -1371,23 +1394,24 @@ function resetVerifierUI() {
 
     if (ringCircle) {
         ringCircle.style.strokeDashoffset = "56.548";
-        ringCircle.className = "text-blue-400 fill-none transition-none";
+        ringCircle.className = "text-cyan-300 fill-none transition-none";
+        ringCircle.parentElement?.classList.remove("hidden");
     }
-    if (progressBar) {
-        progressBar.style.width = "0%";
-        progressBar.className = "absolute bottom-0 left-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400 w-0 transition-none";
+    if (bgFill) {
+        bgFill.style.width = "0%";
+        bgFill.className = "absolute inset-y-0 left-0 bg-gradient-to-r from-blue-700 via-indigo-600 to-cyan-500 w-0 transition-none z-0 opacity-80 pointer-events-none";
     }
     if (btnText) {
         btnText.textContent = "Hold to verify";
-        btnText.className = "text-sm font-bold text-blue-400 tracking-wide transition-colors";
+        btnText.className = "text-sm font-black text-white tracking-wide transition-colors";
     }
     if (hintText) {
-        hintText.textContent = "Press and hold until the ring fills, then let go. The Space bar works too.";
-        hintText.className = "text-xs text-slate-400 text-center mt-3.5 font-medium leading-relaxed transition-colors";
+        hintText.textContent = "Press and hold until full, then release as the bar reverses. Space works too.";
+        hintText.className = "text-xs text-slate-400 text-center mt-3 font-medium leading-relaxed transition-colors";
     }
     if (successIcon) successIcon.classList.add("hidden");
     if (holdBtn) {
-        holdBtn.className = "w-full py-4 px-6 bg-[#1e222d] hover:bg-[#252a37] active:bg-[#1a1e29] border-2 border-blue-500/80 rounded-2xl flex items-center justify-center space-x-3 transition-all relative overflow-hidden group shadow-lg shadow-blue-500/10 cursor-pointer outline-none focus:ring-2 focus:ring-blue-400";
+        holdBtn.className = "w-full py-4 px-6 bg-[#1e222d] hover:bg-[#252a37] active:bg-[#1a1e29] border-2 border-blue-500/80 rounded-2xl flex items-center justify-center space-x-3 transition-all relative overflow-hidden group shadow-lg shadow-blue-500/10 cursor-pointer outline-none focus:ring-2 focus:ring-blue-400 select-none";
     }
 }
 
@@ -1396,7 +1420,7 @@ function initHumanVerifier() {
     const closeBtn = document.getElementById("closeVerifyModal");
     const holdBtn = document.getElementById("holdVerifyBtn");
     const ringCircle = document.getElementById("holdRingCircle");
-    const progressBar = document.getElementById("holdProgressBar");
+    const bgFill = document.getElementById("holdBgFill");
     const btnText = document.getElementById("holdVerifyBtnText");
     const hintText = document.getElementById("holdVerifyHint");
     const successIcon = document.getElementById("holdVerifySuccessIcon");
@@ -1415,49 +1439,86 @@ function initHumanVerifier() {
         }
     });
 
-    const HOLD_DURATION = 1600; // 1.6 seconds
+    const FORWARD_TIME = 1500; // 1.5 seconds to fill left-to-right
+    const REVERSE_TIME = 1500; // 1.5 seconds release window as bar reverses
     const CIRCUMFERENCE = 56.548; // 2 * PI * 9
-    let isHolding = false;
+
+    let verifierState = "IDLE"; // IDLE | FORWARD | REVERSING | SUCCESS | FAILED
     let holdStartTime = 0;
+    let reverseStartTime = 0;
     let animFrameId = null;
-    let isFullyLoaded = false;
 
     function startHold(e) {
         if (e.type === "keydown" && e.code !== "Space") return;
         if (e.type === "keydown") e.preventDefault();
-        if (isHolding || isFullyLoaded) return;
+        if (verifierState === "SUCCESS" || verifierState === "FORWARD" || verifierState === "REVERSING") return;
 
-        isHolding = true;
-        isFullyLoaded = false;
+        verifierState = "FORWARD";
         holdStartTime = performance.now();
 
-        if (hintText) hintText.textContent = "Keep holding until the ring completes...";
+        if (hintText) {
+            hintText.textContent = "Keep holding until the bar reaches the right side...";
+            hintText.className = "text-xs text-blue-300 font-bold text-center mt-3 transition-colors";
+        }
+        if (btnText) btnText.textContent = "Holding...";
 
         function tick(now) {
-            if (!isHolding) return;
-            const elapsed = now - holdStartTime;
-            const progress = Math.min(elapsed / HOLD_DURATION, 1.0);
+            if (verifierState === "FORWARD") {
+                const elapsed = now - holdStartTime;
+                const progress = Math.min(elapsed / FORWARD_TIME, 1.0);
 
-            // Animate SVG circular ring & bottom progress bar
-            if (ringCircle) {
-                const offset = CIRCUMFERENCE * (1 - progress);
-                ringCircle.style.strokeDashoffset = `${offset}`;
-            }
-            if (progressBar) {
-                progressBar.style.width = `${progress * 100}%`;
-            }
+                if (bgFill) bgFill.style.width = `${progress * 100}%`;
+                if (ringCircle) ringCircle.style.strokeDashoffset = `${CIRCUMFERENCE * (1 - progress)}`;
 
-            if (progress >= 1.0) {
-                isFullyLoaded = true;
-                if (btnText) btnText.textContent = "Let go now";
-                if (hintText) hintText.textContent = "Let go now";
-                if (holdBtn) {
-                    holdBtn.classList.add("border-cyan-400", "shadow-cyan-500/30");
+                if (progress >= 1.0) {
+                    // Reached right edge! Trigger REVERSE release window
+                    verifierState = "REVERSING";
+                    reverseStartTime = performance.now();
+
+                    if (btnText) {
+                        btnText.textContent = "RELEASE NOW!";
+                        btnText.className = "text-sm font-black text-white tracking-widest animate-pulse";
+                    }
+                    if (hintText) {
+                        hintText.textContent = "⚡ Release now before the bar empties back to the left!";
+                        hintText.className = "text-xs text-cyan-300 font-black text-center mt-3 animate-pulse";
+                    }
+                    if (holdBtn) {
+                        holdBtn.classList.add("border-cyan-400", "shadow-cyan-400/50");
+                    }
+                    if (bgFill) {
+                        bgFill.className = "absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-400 via-indigo-500 to-blue-600 w-full transition-none z-0 opacity-90 pointer-events-none";
+                    }
                 }
-                return;
+            } else if (verifierState === "REVERSING") {
+                const revElapsed = now - reverseStartTime;
+                const revProgress = Math.max(1.0 - (revElapsed / REVERSE_TIME), 0.0);
+
+                if (bgFill) bgFill.style.width = `${revProgress * 100}%`;
+                if (ringCircle) ringCircle.style.strokeDashoffset = `${CIRCUMFERENCE * (1 - revProgress)}`;
+
+                if (revProgress <= 0.0) {
+                    // User held too long without releasing!
+                    verifierState = "FAILED";
+                    if (animFrameId) cancelAnimationFrame(animFrameId);
+
+                    if (btnText) btnText.textContent = "Held too long!";
+                    if (hintText) {
+                        hintText.textContent = "You must release while the bar is reversing. Try again.";
+                        hintText.className = "text-xs text-amber-400 font-bold text-center mt-3";
+                    }
+                    if (holdBtn) holdBtn.classList.add("border-amber-400");
+                    setTimeout(() => {
+                        resetVerifierUI();
+                        verifierState = "IDLE";
+                    }, 1600);
+                    return;
+                }
             }
 
-            animFrameId = requestAnimationFrame(tick);
+            if (verifierState === "FORWARD" || verifierState === "REVERSING") {
+                animFrameId = requestAnimationFrame(tick);
+            }
         }
 
         animFrameId = requestAnimationFrame(tick);
@@ -1465,31 +1526,34 @@ function initHumanVerifier() {
 
     function releaseHold(e) {
         if (e.type === "keyup" && e.code !== "Space") return;
-        if (!isHolding) return;
-        isHolding = false;
-        if (animFrameId) cancelAnimationFrame(animFrameId);
+        if (verifierState !== "FORWARD" && verifierState !== "REVERSING") return;
 
-        if (isFullyLoaded) {
-            // Human verified!
+        if (verifierState === "REVERSING") {
+            // SUCCESS! User released during the reverse window
+            verifierState = "SUCCESS";
+            if (animFrameId) cancelAnimationFrame(animFrameId);
             sessionStorage.setItem("almond_human_verified", "true");
+
+            if (bgFill) {
+                bgFill.className = "absolute inset-y-0 left-0 bg-emerald-600 w-full transition-all duration-200 z-0 opacity-95";
+            }
             if (btnText) {
                 btnText.textContent = "Human Verified!";
-                btnText.className = "text-sm font-black text-emerald-400 tracking-wide";
+                btnText.className = "text-sm font-black text-white tracking-wide";
             }
             if (hintText) {
-                hintText.textContent = "Verification complete! Launching...";
-                hintText.className = "text-xs text-emerald-400 font-bold text-center mt-3.5";
+                hintText.textContent = "Verification confirmed! Launching...";
+                hintText.className = "text-xs text-emerald-400 font-bold text-center mt-3";
             }
             if (successIcon) successIcon.classList.remove("hidden");
+            if (ringCircle && ringCircle.parentElement) ringCircle.parentElement.classList.add("hidden");
             if (holdBtn) {
-                holdBtn.className = "w-full py-4 px-6 bg-emerald-950/80 border-2 border-emerald-400 rounded-2xl flex items-center justify-center space-x-3 transition-all relative overflow-hidden group shadow-lg shadow-emerald-500/20";
-            }
-            if (progressBar) {
-                progressBar.className = "absolute bottom-0 left-0 h-1 bg-emerald-400 w-full";
+                holdBtn.className = "w-full py-4 px-6 bg-emerald-950/80 border-2 border-emerald-400 rounded-2xl flex items-center justify-center space-x-3 transition-all relative overflow-hidden group shadow-lg shadow-emerald-500/25";
             }
 
             setTimeout(() => {
                 modal.classList.add("hidden");
+                verifierState = "IDLE";
                 if (pendingHumanAction) {
                     const cb = pendingHumanAction;
                     pendingHumanAction = null;
@@ -1497,23 +1561,22 @@ function initHumanVerifier() {
                 }
             }, 450);
 
-        } else {
+        } else if (verifierState === "FORWARD") {
             // Released too early
+            verifierState = "FAILED";
+            if (animFrameId) cancelAnimationFrame(animFrameId);
+
             resetVerifierUI();
-            if (btnText) btnText.textContent = "Hold longer";
+            if (btnText) btnText.textContent = "Hold longer!";
             if (hintText) {
-                hintText.textContent = "Released too early! Please press and hold until the ring fills.";
-                hintText.className = "text-xs text-amber-400 font-bold text-center mt-3.5";
+                hintText.textContent = "Released too early! Hold until full, then release as the bar reverses.";
+                hintText.className = "text-xs text-amber-400 font-bold text-center mt-3";
             }
             if (holdBtn) {
                 holdBtn.classList.add("border-amber-400");
                 setTimeout(() => {
-                    holdBtn.classList.remove("border-amber-400");
-                    if (hintText) {
-                        hintText.textContent = "Press and hold until the ring fills, then let go. The Space bar works too.";
-                        hintText.className = "text-xs text-slate-400 text-center mt-3.5 font-medium leading-relaxed";
-                    }
-                    if (btnText) btnText.textContent = "Hold to verify";
+                    resetVerifierUI();
+                    verifierState = "IDLE";
                 }, 1600);
             }
         }
