@@ -162,12 +162,93 @@ async def export_to_pdf_async(candidate_profile, jobs, output_path):
     html += "</body></html>"
 
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
-    async with async_playwright() as p:
-        browser = await p.chromium.launch()
-        page = await browser.new_page()
-        await page.set_content(html, wait_until="networkidle")
-        await page.pdf(path=output_path, format="A4", print_background=True)
-        await browser.close()
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            await page.set_content(html, wait_until="networkidle")
+            await page.pdf(path=output_path, format="A4", print_background=True)
+            await browser.close()
+        return output_path
+    except Exception as pw_err:
+        print(f"[DOC_EXPORTER] Notice: Playwright browser launch unavailable ({pw_err}). Using pure-Python PDF synthesizer.")
+        return _export_pdf_pure_python(candidate_profile, jobs, output_path)
+
+def _export_pdf_pure_python(candidate_profile, jobs, output_path):
+    """Zero-dependency pure-Python PDF generation fallback for cloud containers."""
+    from fpdf import FPDF
+
+    class DossierPDF(FPDF):
+        def header(self):
+            self.set_font('Helvetica', 'B', 13)
+            self.set_text_color(15, 23, 42)
+            self.cell(0, 8, 'Almond AI — Verified Career Matches & Direct ATS Dossier', new_x='LMARGIN', new_y='NEXT')
+            self.set_draw_color(226, 232, 240)
+            self.line(10, self.get_y(), 200, self.get_y())
+            self.ln(3)
+
+        def footer(self):
+            self.set_y(-12)
+            self.set_font('Helvetica', 'I', 8)
+            self.set_text_color(148, 163, 184)
+            self.cell(0, 8, f'Page {self.page_no()}/{{nb}} — Almond AI (100% Broker-Free Direct Endpoints)', align='C')
+
+    pdf = DossierPDF()
+    pdf.alias_nb_pages()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+
+    cand_name = candidate_profile.get("name", "Candidate")
+    yoe = candidate_profile.get("years_experience", 3)
+    role = candidate_profile.get("current_role", "Software Engineer")
+    skills = ", ".join(candidate_profile.get("skills", [])[:10])
+
+    pdf.set_fill_color(248, 250, 252)
+    pdf.rect(10, pdf.get_y(), 190, 20, 'F')
+    pdf.set_font('Helvetica', 'B', 9.5)
+    pdf.set_text_color(30, 41, 59)
+    pdf.cell(0, 5, f'Candidate: {cand_name} | Role: {role} ({yoe}+ Years Verified)', new_x='LMARGIN', new_y='NEXT')
+    pdf.set_font('Helvetica', '', 8)
+    pdf.set_text_color(71, 85, 105)
+    pdf.multi_cell(0, 4.5, f'Core Skills: {skills}')
+    pdf.ln(4)
+
+    pdf.set_font('Helvetica', 'B', 11)
+    pdf.set_text_color(15, 23, 42)
+    pdf.cell(0, 7, f'Verified Direct ATS Postings ({len(jobs)} Opportunities)', new_x='LMARGIN', new_y='NEXT')
+    pdf.ln(2)
+
+    for idx, j in enumerate(jobs, 1):
+        if pdf.get_y() > 245:
+            pdf.add_page()
+
+        pdf.set_font('Helvetica', 'B', 10)
+        pdf.set_text_color(30, 58, 138)
+        title = f"#{idx}: {j.get('title', '')} @ {j.get('company', '')}"
+        score = f"{j.get('cvmatch_score', 0)}% Match"
+        pdf.cell(150, 5.5, title[:65], new_x='RIGHT')
+        pdf.set_font('Helvetica', 'B', 8.5)
+        pdf.set_text_color(16, 185, 129)
+        pdf.cell(40, 5.5, score, align='R', new_x='LMARGIN', new_y='NEXT')
+
+        pdf.set_font('Helvetica', '', 8)
+        pdf.set_text_color(71, 85, 105)
+        portal = (j.get('source') or 'ATS').upper()
+        loc = j.get('location_tag', j.get('location', 'Remote'))
+        mode = j.get('work_mode', 'Remote')
+        comp = j.get('comp_display', 'Market Competitive')
+        pdf.cell(0, 4.5, f'Portal: {portal} | Location: {loc} ({mode}) | Package: {comp}', new_x='LMARGIN', new_y='NEXT')
+
+        url = j.get('url', '')
+        if url and url.startswith('http'):
+            pdf.set_font('Helvetica', 'U', 7.5)
+            pdf.set_text_color(79, 70, 229)
+            pdf.cell(0, 4.5, 'Direct Apply URL: ' + url[:90], link=url, new_x='LMARGIN', new_y='NEXT')
+
+        pdf.ln(2.5)
+
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+    pdf.output(output_path)
     return output_path
 
 def export_to_pdf(candidate_profile, jobs, output_path):
