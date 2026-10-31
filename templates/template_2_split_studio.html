@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template 2 — Global Split-Pane Studio | Almond AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fbfbfe; color: #0f172a; }
+        .feed-pane { height: calc(100vh - 145px); overflow-y: auto; scrollbar-width: thin; }
+        .detail-pane { height: calc(100vh - 145px); overflow-y: auto; scrollbar-width: thin; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#fbfbfe]">
+
+    <!-- Top Template Switcher Navigation Bar -->
+    <div class="bg-slate-900 text-white px-4 py-2.5 border-b border-slate-800 text-xs font-bold flex flex-wrap items-center justify-between gap-3 sticky top-0 z-50">
+        <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full bg-indigo-500 animate-pulse"></span>
+            <span class="text-white font-extrabold text-sm tracking-tight">ALMOND AI DESIGN LAB</span>
+            <span class="text-slate-400">|</span>
+            <span class="text-indigo-300 font-extrabold uppercase tracking-wider">Template 2 of 5: Global Split-Pane Studio</span>
+        </div>
+        <div class="flex items-center space-x-2">
+            <a href="/template/1" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-bold">1. Executive Terminal</a>
+            <a href="/template/2" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-black shadow-sm">2. Split-Pane Studio</a>
+            <a href="/template/3" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-bold">3. Bento Grid</a>
+            <a href="/template/4" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-bold">4. Stepper Funnel</a>
+            <a href="/template/5" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-bold">5. Obsidian Matrix</a>
+            <a href="/" class="ml-2 px-3 py-1 rounded-lg bg-violet-600 hover:bg-violet-500 text-white font-black">Main App</a>
+        </div>
+    </div>
+
+    <!-- Top Unified Horizontal Filter Strip (AngelList / Indeed Prime Style) -->
+    <div class="bg-white border-b-2 border-slate-200 px-6 py-3 sticky top-[45px] z-40 shadow-sm">
+        <div class="max-w-[1700px] mx-auto flex flex-wrap items-center justify-between gap-4">
+            
+            <div class="flex items-center space-x-3 flex-1 min-w-[320px]">
+                <div class="relative flex-1">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-3"></i>
+                    <input type="text" value="AI Engineer, Full Stack, Remote" class="w-full pl-10 pr-3 py-2 border-2 border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-indigo-600">
+                </div>
+                <div class="flex items-center space-x-1.5 px-3 py-2 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold">
+                    <span>📍</span>
+                    <span>Worldwide Remote</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3 flex-wrap">
+                <div class="flex items-center space-x-2 bg-emerald-50 border-2 border-emerald-300 px-3 py-1.5 rounded-xl">
+                    <span class="text-xs font-black text-emerald-800">Min: ₹15 LPA / $50k</span>
+                </div>
+                <div class="flex items-center space-x-1 bg-slate-100 p-1 rounded-xl text-xs font-extrabold">
+                    <span class="px-2.5 py-1 bg-white text-indigo-700 rounded-lg shadow-sm">All Modes</span>
+                    <span class="px-2.5 py-1 text-slate-600">Remote Only</span>
+                    <span class="px-2.5 py-1 text-slate-600">Freelance</span>
+                </div>
+                <button class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-xl shadow-md flex items-center space-x-1.5">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    <span>Apply Filters</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 2-Pane Studio Body -->
+    <div class="flex-1 max-w-[1700px] w-full mx-auto px-4 sm:px-6 py-5">
+        <div class="grid grid-cols-12 gap-6 items-start">
+            
+            <!-- Left Opportunity Feed Pane (5 cols on md, 4.5 cols on lg) -->
+            <div class="col-span-12 md:col-span-5 lg:col-span-5 space-y-3 feed-pane pr-2">
+                
+                <div class="flex items-center justify-between pb-2">
+                    <span class="text-xs font-black text-slate-900 uppercase tracking-wider">18 Direct ATS Postings</span>
+                    <span class="text-xs font-bold text-indigo-600">Sort: Highest Match</span>
+                </div>
+
+                <!-- Feed Card 1 (Active / Selected) -->
+                <div class="p-4 rounded-2xl bg-white border-2 border-indigo-600 shadow-md cursor-pointer relative transition hover:shadow-lg">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <span class="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-900 text-xs font-black">98% Match</span>
+                            <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white text-xs font-black uppercase ml-1">ASHBY</span>
+                        </div>
+                        <span class="text-xs font-black text-emerald-700">$140k - $175k</span>
+                    </div>
+                    <h3 class="text-base font-black text-slate-950 mt-2">Senior AI Engineer & Agent Systems</h3>
+                    <p class="text-xs font-bold text-slate-600 mt-1">Synthesia AI • Worldwide Remote (US Overlap)</p>
+                    <div class="mt-3 flex flex-wrap gap-1">
+                        <span class="px-2 py-0.5 bg-slate-100 text-slate-800 text-[11px] font-bold rounded">Python</span>
+                        <span class="px-2 py-0.5 bg-slate-100 text-slate-800 text-[11px] font-bold rounded">LLM Agents</span>
+                        <span class="px-2 py-0.5 bg-slate-100 text-slate-800 text-[11px] font-bold rounded">FastAPI</span>
+                    </div>
+                </div>
+
+                <!-- Feed Card 2 -->
+                <div class="p-4 rounded-2xl bg-white border-2 border-slate-200 shadow-sm cursor-pointer hover:border-slate-400 transition hover:shadow-md">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <span class="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-900 text-xs font-black">94% Match</span>
+                            <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white text-xs font-black uppercase ml-1">WORKDAY</span>
+                        </div>
+                        <span class="text-xs font-black text-emerald-700">$100 - $140 / Hr</span>
+                    </div>
+                    <h3 class="text-base font-black text-slate-950 mt-2">Staff Mobile Application Architect</h3>
+                    <p class="text-xs font-bold text-slate-600 mt-1">Braintrust Frontier Labs • Remote</p>
+                    <div class="mt-3 flex flex-wrap gap-1">
+                        <span class="px-2 py-0.5 bg-slate-100 text-slate-800 text-[11px] font-bold rounded">Kotlin</span>
+                        <span class="px-2 py-0.5 bg-slate-100 text-slate-800 text-[11px] font-bold rounded">Play Store Deployment</span>
+                        <span class="px-2 py-0.5 bg-slate-100 text-slate-800 text-[11px] font-bold rounded">CI/CD</span>
+                    </div>
+                </div>
+
+                <!-- Feed Card 3 -->
+                <div class="p-4 rounded-2xl bg-white border-2 border-slate-200 shadow-sm cursor-pointer hover:border-slate-400 transition hover:shadow-md">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <span class="px-2.5 py-0.5 rounded-md bg-violet-100 text-violet-900 text-xs font-black">89% Match</span>
+                            <span class="px-2 py-0.5 rounded-md bg-slate-900 text-white text-xs font-black uppercase ml-1">LEVER</span>
+                        </div>
+                        <span class="text-xs font-black text-emerald-700">₹45 - ₹65 LPA</span>
+                    </div>
+                    <h3 class="text-base font-black text-slate-950 mt-2">Principal Systems Engineer (IDE & Eclipse)</h3>
+                    <p class="text-xs font-bold text-slate-600 mt-1">Bosch Global Software Technologies • Bengaluru / Remote</p>
+                    <div class="mt-3 flex flex-wrap gap-1">
+                        <span class="px-2 py-0.5 bg-slate-100 text-slate-800 text-[11px] font-bold rounded">Enterprise IDE</span>
+                        <span class="px-2 py-0.5 bg-slate-100 text-slate-800 text-[11px] font-bold rounded">Jenkins Pipeline</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Detail Inspection Pane (7 cols on md, 7.5 cols on lg) -->
+            <div class="col-span-12 md:col-span-7 lg:col-span-7 detail-pane bg-white rounded-3xl border-2 border-slate-200 p-7 shadow-lg space-y-6">
+                
+                <!-- Detail Header -->
+                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 border-b-2 border-slate-100">
+                    <div class="space-y-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="px-3 py-1 rounded-xl bg-emerald-100 text-emerald-900 text-xs font-black">● 98% Candidate Match</span>
+                            <span class="px-3 py-1 rounded-xl bg-slate-900 text-white text-xs font-black">ASHBY DIRECT ATS</span>
+                            <span class="px-3 py-1 rounded-xl bg-violet-100 text-violet-900 text-xs font-black">Full-Time Remote</span>
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
+                            Senior AI Engineer & Agent Systems
+                        </h2>
+                        <div class="flex items-center space-x-3 text-sm font-bold text-slate-700">
+                            <span class="font-extrabold text-slate-950">Synthesia AI</span>
+                            <span>•</span>
+                            <span>Worldwide Remote</span>
+                            <span>•</span>
+                            <span class="text-emerald-700 font-black">$140,000 - $175,000 / Year</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-2 flex-shrink-0">
+                        <a href="#" class="px-5 py-3 bg-gradient-to-r from-blue-700 to-indigo-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg flex items-center space-x-2">
+                            <span>Direct Apply</span>
+                            <i data-lucide="external-link" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Overlap & Alignment Matrix -->
+                <div class="bg-indigo-50/60 rounded-2xl p-5 border-2 border-indigo-200 space-y-3">
+                    <h4 class="text-xs font-black text-indigo-950 uppercase tracking-wider">Verified Candidate Alignment (Sridhar S)</h4>
+                    <p class="text-xs font-bold text-indigo-900 leading-relaxed">
+                        Strong alignment with your 8 Play Store production apps, Nestor Technology Solutions infrastructure, and Bosch enterprise CI/CD deployment background.
+                    </p>
+                    <div class="flex flex-wrap gap-2 pt-1">
+                        <span class="px-3 py-1 bg-white text-indigo-950 text-xs font-extrabold rounded-lg border border-indigo-300 shadow-sm">✓ Python / FastAPI Architecture</span>
+                        <span class="px-3 py-1 bg-white text-indigo-950 text-xs font-extrabold rounded-lg border border-indigo-300 shadow-sm">✓ LLM Coding Agents & Rubrics</span>
+                        <span class="px-3 py-1 bg-white text-indigo-950 text-xs font-extrabold rounded-lg border border-indigo-300 shadow-sm">✓ Production Deployment Pipelines</span>
+                    </div>
+                </div>
+
+                <!-- Job Description Overview -->
+                <div class="space-y-3 text-sm text-slate-800 leading-relaxed">
+                    <h4 class="text-sm font-black text-slate-950 uppercase tracking-wider">Role Overview</h4>
+                    <p class="font-medium">
+                        You will design and build autonomous agent pipelines, evaluate generative AI code quality, and develop deterministic evaluation rubrics. You will work directly with distributed engineering teams across North America and global remote hubs.
+                    </p>
+                </div>
+
+                <!-- Integrated STAR Pitch Synthesizer -->
+                <div class="bg-slate-50 rounded-2xl p-5 border-2 border-slate-200 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-violet-600"></i>
+                            <h4 class="text-xs font-black text-slate-950 uppercase tracking-wider">Deterministic STAR Pitch Synthesizer</h4>
+                        </div>
+                        <button class="text-xs font-bold text-violet-700 bg-violet-100 px-2.5 py-1 rounded-lg hover:bg-violet-200">Copy Pitch</button>
+                    </div>
+                    <textarea readonly rows="6" class="w-full text-xs font-mono bg-white border border-slate-200 rounded-xl p-3 text-slate-800 leading-relaxed font-semibold">Dear Synthesia AI Hiring Team,
+
+I am writing to express my strong interest in the Senior AI Engineer role. As Founder of Nestor Technology Solutions (NTS) with 4+ years of software architecture and 8 published Google Play Store applications (including financial analytics, workout tracking, and POS ecosystems), I specialize in building deterministic, high-throughput agent workflows.
+
+At Bosch Global Software Technologies, I architected automated Eclipse/IDE pipelines and Jenkins test automation suites that eliminated manual evaluation friction. I bring deep hands-on expertise in Python, FastAPI, and LLM evaluation criteria. I look forward to contributing immediately to your engineering goals.</textarea>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>

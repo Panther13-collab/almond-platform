@@ -1,0 +1,25 @@
+# Environment and secrets (CRITICAL: Never commit .env)
+.env
+.env.local
+.env.*.local
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Uploads and temporary exports
+uploads/*
+!uploads/.gitkeep
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Virtual environments
+venv/
+.venv/
+env/

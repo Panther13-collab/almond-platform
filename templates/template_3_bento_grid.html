@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template 3 — Centered Hero & Bento Grid | Almond AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f8fafc; 
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.09) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(59, 130, 246, 0.07) 0px, transparent 50%);
+            color: #0f172a; 
+        }
+        .bento-card {
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(16px);
+            border: 2px solid rgba(226, 232, 240, 0.9);
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 1);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .bento-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(139, 92, 246, 0.7);
+            box-shadow: 0 12px 30px -4px rgba(79, 70, 229, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative selection:bg-violet-200">
+
+    <!-- Top Template Switcher Navigation Bar -->
+    <div class="bg-slate-900 text-white px-4 py-2.5 border-b border-slate-800 text-xs font-bold flex flex-wrap items-center justify-between gap-3 sticky top-0 z-50">
+        <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full bg-violet-500 animate-pulse"></span>
+            <span class="text-white font-extrabold text-sm tracking-tight">ALMOND AI DESIGN LAB</span>
+            <span class="text-slate-400">|</span>
+            <span class="text-violet-300 font-extrabold uppercase tracking-wider">Template 3 of 5: Centered Hero & Bento Grid</span>
+        </div>
+        <div class="flex items-center space-x-2">
+            <a href="/template/1" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-bold">1. Executive Terminal</a>
+            <a href="/template/2" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-bold">2. Split-Pane Studio</a>
+            <a href="/template/3" class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-black shadow-sm">3. Bento Grid</a>
+            <a href="/template/4" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-bold">4. Stepper Funnel</a>
+            <a href="/template/5" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-bold">5. Obsidian Matrix</a>
+            <a href="/" class="ml-2 px-3 py-1 rounded-lg bg-violet-600 hover:bg-violet-500 text-white font-black">Main App</a>
+        </div>
+    </div>
+
+    <!-- Centered Hero Section (Raycast & Supabase Style) -->
+    <section class="max-w-5xl mx-auto px-4 pt-12 pb-8 text-center space-y-4">
+        <div class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-violet-100 text-violet-900 border border-violet-300 text-xs font-black uppercase tracking-wider shadow-sm">
+            <span>✨ Almond AI 2.0</span>
+            <span>•</span>
+            <span>Unrestricted Direct ATS Discovery</span>
+        </div>
+        <h1 class="text-3xl sm:text-5xl font-black text-slate-950 tracking-tight leading-tight">
+            Apply Direct to ATS. <br class="hidden sm:inline">
+            <span class="bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 bg-clip-text text-transparent">No Recruiter Spread. Uncapped Pay.</span>
+        </h1>
+        <p class="text-base font-semibold text-slate-600 max-w-2xl mx-auto">
+            Directly crawl 124 enterprise ATS engines (Ashby, Workday, Lever, Greenhouse). Zero broker markup, verified salaries, and deterministic STAR pitches.
+        </p>
+    </section>
+
+    <!-- Bento Grid Container -->
+    <main class="max-w-[1550px] w-full mx-auto px-4 sm:px-6 lg:px-8 pb-14 space-y-8 flex-1">
+        
+        <!-- Bento 4-Box Grid -->
+        <div class="grid grid-cols-12 gap-6">
+            
+            <!-- Box 1: Candidate Profile Snapshot (7 cols) -->
+            <div class="col-span-12 lg:col-span-7 bento-card rounded-3xl p-6 flex flex-col justify-between space-y-4">
+                <div>
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black shadow-md">S</div>
+                            <div>
+                                <h3 class="text-base font-black text-slate-950">Sridhar S</h3>
+                                <p class="text-xs font-bold text-slate-600">Founder, Nestor Technology Solutions (NTS) • 4+ YOE</p>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 rounded-xl bg-emerald-100 text-emerald-900 text-xs font-black">Verified Candidate</span>
+                    </div>
+
+                    <div class="mt-4 space-y-2">
+                        <span class="text-xs font-black uppercase text-slate-700 block">Portfolio Apps & Architecture:</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            <span class="px-3 py-1 bg-violet-50 text-violet-900 text-xs font-bold rounded-lg border border-violet-200">8 Play Store Apps</span>
+                            <span class="px-3 py-1 bg-blue-50 text-blue-900 text-xs font-bold rounded-lg border border-blue-200">Bosch IDE Products</span>
+                            <span class="px-3 py-1 bg-slate-100 text-slate-800 text-xs font-bold rounded-lg border">Python / FastAPI</span>
+                            <span class="px-3 py-1 bg-slate-100 text-slate-800 text-xs font-bold rounded-lg border">Kotlin / Android</span>
+                            <span class="px-3 py-1 bg-slate-100 text-slate-800 text-xs font-bold rounded-lg border">DevOps / CI-CD</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-500">
+                    <span>Source: Sridhar_S_Resume.pdf</span>
+                    <button class="text-blue-600 font-extrabold hover:underline">Re-upload Resume</button>
+                </div>
+            </div>
+
+            <!-- Box 2: Target Criteria HUD (5 cols) -->
+            <div class="col-span-12 lg:col-span-5 bento-card rounded-3xl p-6 flex flex-col justify-between space-y-4">
+                <div>
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <h3 class="text-base font-black text-slate-950">Compensation & Locations</h3>
+                        <span class="px-2.5 py-0.5 rounded-lg bg-violet-100 text-violet-900 text-xs font-bold">Uncapped</span>
+                    </div>
+
+                    <div class="mt-4 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-black uppercase text-slate-700">Minimum Expected:</span>
+                            <span class="text-sm font-black text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-300">₹15 LPA / $50k+</span>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-violet-100 text-violet-900 border border-violet-300">🌐 Worldwide Remote</span>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border">🇮🇳 All India</span>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border">Chennai</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="w-full py-3 bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md">
+                    Execute Match Pipeline
+                </button>
+            </div>
+
+            <!-- Box 3: Top Yield Opportunity Radar (6 cols) -->
+            <div class="col-span-12 md:col-span-6 bento-card rounded-3xl p-6 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-black text-violet-800 uppercase tracking-wider">Top Featured Opportunity</span>
+                    <span class="px-2.5 py-0.5 rounded-lg bg-emerald-100 text-emerald-900 text-xs font-black">98% Match</span>
+                </div>
+                <h4 class="text-xl font-black text-slate-950">Senior AI Engineer & Coding Agent Evaluator</h4>
+                <p class="text-xs font-bold text-slate-600">Turing Labs • North America / Worldwide Remote</p>
+                <div class="flex items-center justify-between pt-2">
+                    <span class="text-sm font-black text-emerald-700">$100 - $150 / Hr ($14k/Mo)</span>
+                    <a href="#" class="px-4 py-2 bg-slate-950 text-white text-xs font-black rounded-xl">Inspect ATS</a>
+                </div>
+            </div>
+
+            <!-- Box 4: Direct ATS Engine Gateway (6 cols) -->
+            <div class="col-span-12 md:col-span-6 bento-card rounded-3xl p-6 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-black text-blue-800 uppercase tracking-wider">Direct ATS Verification Status</span>
+                    <span class="px-2.5 py-0.5 rounded-lg bg-blue-100 text-blue-900 text-xs font-black">124 Endpoints Active</span>
+                </div>
+                <div class="grid grid-cols-4 gap-2 pt-1 text-center">
+                    <div class="p-2 bg-slate-50 border rounded-xl">
+                        <span class="block text-xs font-black text-slate-900">ASHBY</span>
+                        <span class="block text-[10px] text-emerald-700 font-bold">100% Direct</span>
+                    </div>
+                    <div class="p-2 bg-slate-50 border rounded-xl">
+                        <span class="block text-xs font-black text-slate-900">WORKDAY</span>
+                        <span class="block text-[10px] text-emerald-700 font-bold">100% Direct</span>
+                    </div>
+                    <div class="p-2 bg-slate-50 border rounded-xl">
+                        <span class="block text-xs font-black text-slate-900">LEVER</span>
+                        <span class="block text-[10px] text-emerald-700 font-bold">100% Direct</span>
+                    </div>
+                    <div class="p-2 bg-slate-50 border rounded-xl">
+                        <span class="block text-xs font-black text-slate-900">GREENHOUSE</span>
+                        <span class="block text-[10px] text-emerald-700 font-bold">100% Direct</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Job Cards Grid (2 Columns) -->
+        <div class="space-y-4 pt-4">
+            <h3 class="text-xl font-black text-slate-950">Live Direct ATS Opportunity Stream</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Card 1 -->
+                <div class="bento-card rounded-3xl p-6 space-y-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <span class="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-900 text-xs font-black">96% CV Match</span>
+                            <span class="px-2.5 py-0.5 rounded-md bg-slate-950 text-white text-xs font-black ml-1">ASHBY</span>
+                        </div>
+                        <span class="text-sm font-black text-emerald-700">$140k - $175k</span>
+                    </div>
+                    <h4 class="text-lg font-black text-slate-950">Senior AI Systems Architect</h4>
+                    <p class="text-xs font-bold text-slate-600">Synthesia AI • Worldwide Remote</p>
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                        <button class="text-xs font-black text-violet-700 hover:underline">Generate STAR Pitch</button>
+                        <a href="#" class="px-4 py-2 bg-indigo-600 text-white text-xs font-black rounded-xl">Direct Apply</a>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bento-card rounded-3xl p-6 space-y-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <span class="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-900 text-xs font-black">94% CV Match</span>
+                            <span class="px-2.5 py-0.5 rounded-md bg-slate-950 text-white text-xs font-black ml-1">WORKDAY</span>
+                        </div>
+                        <span class="text-sm font-black text-emerald-700">₹45 - ₹65 LPA</span>
+                    </div>
+                    <h4 class="text-lg font-black text-slate-950">Staff Mobile Solutions Architect</h4>
+                    <p class="text-xs font-bold text-slate-600">Braintrust Labs • Remote (India / US)</p>
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                        <button class="text-xs font-black text-violet-700 hover:underline">Generate STAR Pitch</button>
+                        <a href="#" class="px-4 py-2 bg-indigo-600 text-white text-xs font-black rounded-xl">Direct Apply</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>
