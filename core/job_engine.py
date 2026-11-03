@@ -3,7 +3,30 @@ import urllib.parse
 import json
 import time
 import re
+import copy
+import threading
+from typing import Dict, Any, List, Optional
 from bs4 import BeautifulSoup
+
+# Fast In-Memory Cache for Candidates with Similar Skills / Roles
+_RESUME_SEARCH_CACHE: Dict[str, Dict[str, Any]] = {}
+_SEARCH_CACHE_LOCK = threading.Lock()
+_SEARCH_CACHE_TTL = 7200  # 2 Hours
+
+def _get_skills_fingerprint(candidate_profile: Dict[str, Any], preferences: Dict[str, Any]) -> str:
+    """Generates a normalized fingerprint for matching candidates with similar skills and search criteria."""
+    raw_skills = candidate_profile.get("skills") or []
+    norm_skills = sorted(list(set(re.sub(r'[^a-z0-9]', '', s.lower()) for s in raw_skills if s)))
+    top_skills_str = ",".join(norm_skills[:10])
+    target_role = re.sub(r'[^a-z0-9]', '', (candidate_profile.get("target_role") or "").lower())
+    locations = sorted(list(set(re.sub(r'[^a-z0-9]', '', l.lower()) for l in (preferences.get("locations") or []))))
+    locations_str = ",".join(locations)
+    work_mode = preferences.get("work_mode", "all")
+    emp_type = preferences.get("employment_type", "all")
+    currency = preferences.get("currency", "INR")
+    min_pkg = str(preferences.get("min_package", 15.0))
+    incl_li = str(preferences.get("include_linkedin", False))
+    return f"{target_role}|{top_skills_str}|{locations_str}|{work_mode}|{emp_type}|{currency}|{min_pkg}|{incl_li}"
 
 DIRECT_ATS_DOMAINS = [
     "greenhouse.io", "lever.co", "myworkdayjobs.com", "bamboohr.com", 
@@ -627,6 +650,16 @@ def fetch_linkedin_postings(candidate_profile, preferences, limit=10, offset=0):
     return sliced, has_more, len(linkedin_results)
 
 def search_matching_jobs(candidate_profile, preferences):
+    fingerprint = _get_skills_fingerprint(candidate_profile, preferences)
+    now = time.time()
+
+    # Instant return if similar skills / role was already queried recently
+    with _SEARCH_CACHE_LOCK:
+        cached = _RESUME_SEARCH_CACHE.get(fingerprint)
+        if cached and (now - cached.get("timestamp", 0) < _SEARCH_CACHE_TTL):
+            print(f"[SEARCH CACHE] Instant cache hit for candidate skills fingerprint: {fingerprint[:40]}...")
+            return copy.deepcopy(cached["result"])
+
     currency = preferences.get("currency", "INR")
     min_val = float(preferences.get("min_package", 15.0))
     pref_locations = preferences.get("locations", ["Worldwide Remote"])
@@ -695,7 +728,16 @@ def search_matching_jobs(candidate_profile, preferences):
         li_res, _, _ = fetch_linkedin_postings(candidate_profile, preferences, limit=10, offset=0)
         linkedin_results = li_res
 
-    return {
+    final_result = {
         "ats_jobs": verified_results,
         "linkedin_jobs": linkedin_results
     }
+
+    # Store in fast cache for similar skills lookups
+    with _SEARCH_CACHE_LOCK:
+        _RESUME_SEARCH_CACHE[fingerprint] = {
+            "result": copy.deepcopy(final_result),
+            "timestamp": time.time()
+        }
+
+    return final_result

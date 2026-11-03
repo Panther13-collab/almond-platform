@@ -1,3 +1,37 @@
+
+window.executeP2InternSearch = function() {
+    const inp = document.getElementById("p2QuickKeywordInput");
+    const val = (inp?.value || "").trim();
+    window.openCuratedFeedsModal("internships", val);
+};
+
+window.executeP2EntrySearch = function() {
+    const inp = document.getElementById("p2RoleSearchInput");
+    const val = (inp?.value || "").trim();
+    window.openCuratedFeedsModal("entrylevel", val);
+};
+
+
+window.executeP2RoleSearch = function() {
+    const roleInput = document.getElementById("p2RoleSearchInput");
+    const val = (roleInput?.value || "").trim();
+    if (val) {
+        const wsInput = document.getElementById("titleKeywordInput");
+        if (wsInput) wsInput.value = val;
+    }
+    window.goToSlide(2);
+};
+
+window.executeP2KeywordSearch = function() {
+    const kwInput = document.getElementById("p2QuickKeywordInput");
+    const val = (kwInput?.value || "").trim();
+    if (val) {
+        const wsInput = document.getElementById("titleKeywordInput");
+        if (wsInput) wsInput.value = val;
+    }
+    window.goToSlide(2);
+};
+
 // Almond AI Global Platform Controller (Restored & Synchronized)
 
 
@@ -46,7 +80,7 @@ let isSlideTransitioning = false;
 
 
 
-const TOTAL_SLIDES = 3;
+const TOTAL_SLIDES = 4;
 
 
 
@@ -59,6 +93,7 @@ window.goToSlide = function(slideIdx) {
 
 
     currentSlide = slideIdx;
+    window.currentSlide = currentSlide;
 
 
 
@@ -75,6 +110,24 @@ window.goToSlide = function(slideIdx) {
 
 
         track.style.transform = `translateY(-${currentSlide * 100}vh)`;
+
+    // Update persistent background zoom and parallax alignment
+    const persistentBg = document.getElementById("persistentHeroBg");
+    if (persistentBg) {
+        if (currentSlide === 0) {
+            // Page 1: Standard scale and position
+            persistentBg.style.transform = "scale(1.0) translate(0, 0)";
+            persistentBg.style.opacity = "1";
+        } else if (currentSlide === 1 || currentSlide === 2) {
+            // Page 2 & Page 3: Identical hero background zoom & position maintained seamlessly (no zoom out)
+            persistentBg.style.transform = "scale(1.28) translate(-8.5%, 0)";
+            persistentBg.style.opacity = "1";
+        } else {
+            // Page 4 (Slide 3: Results Stream Vault): Dark theme, fade out video
+            persistentBg.style.opacity = "0";
+        }
+    }
+
 
 
 
@@ -191,25 +244,9 @@ function initStoryPaging() {
 
 
         // If any modal is open, let user scroll the modal
-
-
-
-        if (!document.getElementById("humanVerifyModal")?.classList.contains("hidden") ||
-
-
-
-            !document.getElementById("pitchModal")?.classList.contains("hidden") ||
-
-
-
-            !document.getElementById("coverLetterModal")?.classList.contains("hidden")) {
-
-
-
+        const openModal = document.querySelector("#curatedFeedsModal:not(.hidden), #heroInfoModal:not(.hidden), #humanVerifyModal:not(.hidden), #pitchModal:not(.hidden), #coverLetterModal:not(.hidden), #vipPricingModal:not(.hidden), #profileModal:not(.hidden), #authModal:not(.hidden), #welcomeCelebrationModal:not(.hidden), #techDossierModal:not(.hidden)");
+        if (openModal) {
             return;
-
-
-
         }
 
 
@@ -230,11 +267,8 @@ function initStoryPaging() {
 
 
 
-        // On Page 3 (Live Vault): check if scroll is inside results container
-
-
-
-        if (currentSlide === 2) {
+        // On Page 4 (Slide 3: Live Vault): check if scroll is inside results container
+        if (currentSlide === 3) {
 
 
 
@@ -469,7 +503,7 @@ function initStoryPaging() {
         window.addEventListener("touchend", (e) => {
         if (isSlideTransitioning) return;
         const target = e.target;
-        if (target && target.closest("#profileModal, #vipPricingModal, #pitchModal, #humanVerifyModal")) {
+        if (target && target.closest("#profileModal, #vipPricingModal, #pitchModal, #humanVerifyModal, #curatedFeedsModal, #heroInfoModal, #authModal, #welcomeCelebrationModal, #techDossierModal")) {
             return;
         }
 
@@ -477,7 +511,7 @@ function initStoryPaging() {
         const diff = touchStartY - touchEndY;
 
         // If on Page 3 (Slide 2), prevent accidental slide switching while scrolling job results
-        if (currentSlide === 2) {
+        if (currentSlide === 3) {
             const resultsScroll = document.getElementById("resultsScrollContainer");
             if (resultsScroll && resultsScroll.contains(target)) {
                 if (diff > 0) return; // scrolling down through jobs
@@ -3507,7 +3541,7 @@ function initJobSearch() {
 
 
 
-            window.goToSlide(2);
+            window.goToSlide(3);
 
 
 
@@ -3538,7 +3572,7 @@ function initJobSearch() {
     searchBtn.addEventListener("click", () => {
         if (!currentProfile) {
             alert("Please upload a candidate resume first to match live skills.");
-            window.goToSlide(1);
+            window.goToSlide(2);
             return;
         }
 
@@ -3550,7 +3584,7 @@ function initJobSearch() {
         }
 
         executeSearch();
-        window.goToSlide(2);
+        window.goToSlide(3);
     });
 }
 
@@ -4725,7 +4759,7 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
 
 
 
-                <span class="text-xs text-amber-800 font-mono font-bold">Unverified Agency Spread</span>
+                <span class="text-xs text-amber-900 font-black">Unverified Agency Spread</span>
 
 
 
@@ -4757,7 +4791,7 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
 
 
 
-                <span class="text-xs text-slate-500 font-mono font-bold">0% Recruiter Spread</span>
+                <span class="text-xs text-emerald-800 font-black">0% Recruiter Spread</span>
 
 
 
@@ -5124,7 +5158,7 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
 
 
 
-                            <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-800 block mb-1">Target Package / Compensation</span>
+                            <span class="text-xs font-black uppercase tracking-wider text-emerald-900 block mb-1">Target Package / Compensation</span>
 
 
 
@@ -6476,7 +6510,7 @@ function renderFounderCards(founderJobs) {
 
 
 
-                            <span class="text-xs text-slate-500 font-mono font-bold">0% Recruiter Spread</span>
+                            <span class="text-xs text-emerald-800 font-black">0% Recruiter Spread</span>
 
 
 
@@ -6488,7 +6522,7 @@ function renderFounderCards(founderJobs) {
 
 
 
-                            <span class="text-[11px] font-mono font-bold uppercase tracking-wider text-orange-800 block mb-1">Target Package / Compensation</span>
+                            <span class="text-xs font-black uppercase tracking-wider text-orange-950 block mb-1">Target Package / Compensation</span>
 
 
 
@@ -8431,7 +8465,7 @@ window.handleWelcomeDone = function() {
         const searchBtn = document.getElementById("searchJobsBtn");
         if (searchBtn && typeof executeSearch === "function") {
             executeSearch();
-            window.goToSlide(2);
+            window.goToSlide(3);
         }
     }
 };
@@ -10207,7 +10241,7 @@ let curatedDebounceTimer = null;
 
 const CURATED_FEED_META = {
     internships: {
-        title: "Summer 2027 Direct Internships",
+        title: "Direct Internships",
         icon: "🌱",
         subtitle: "5,125 Active Portals • 0% Recruiter Spread • Direct Corporate Feeds",
         badge: "5,100+",
@@ -10229,19 +10263,74 @@ const CURATED_FEED_META = {
     }
 };
 
-window.openCuratedFeedsModal = function(feedType) {
+let curatedCurationTimers = [];
+
+function showCuratedLoadingScreen(headline = "Curating latest special jobs for you...") {
+    const loadingScreen = document.getElementById('curatedLoadingScreen');
+    const container = document.getElementById('curatedCardsContainer');
+    const headlineEl = document.getElementById('curatedLoadingHeadline');
+    const subtitleEl = document.getElementById('curatedLoadingSubtitle');
+    const progressEl = document.getElementById('curatedProgressBar');
+    
+    // Clear any active timers
+    curatedCurationTimers.forEach(id => clearTimeout(id));
+    curatedCurationTimers = [];
+
+    if (loadingScreen && container) {
+        loadingScreen.classList.remove('hidden');
+        container.classList.add('hidden');
+        if (headlineEl) headlineEl.textContent = headline;
+        if (progressEl) progressEl.style.width = '18%';
+        if (subtitleEl) subtitleEl.textContent = 'Scanning 3.3M+ direct enterprise feeds & filtering 0% recruiter spreads...';
+
+        const t1 = setTimeout(() => {
+            if (progressEl) progressEl.style.width = '55%';
+            if (subtitleEl) subtitleEl.textContent = 'Bypassing agency markups & verifying active corporate portals...';
+        }, 700);
+
+        const t2 = setTimeout(() => {
+            if (progressEl) progressEl.style.width = '88%';
+            if (subtitleEl) subtitleEl.textContent = 'Personalizing verified direct opportunities for you...';
+        }, 1500);
+
+        const t3 = setTimeout(() => {
+            if (progressEl) progressEl.style.width = '100%';
+            if (subtitleEl) subtitleEl.textContent = 'Ready! Unveiling verified corporate postings...';
+        }, 2200);
+
+        curatedCurationTimers = [t1, t2, t3];
+    }
+}
+
+function hideCuratedLoadingScreen() {
+    curatedCurationTimers.forEach(id => clearTimeout(id));
+    curatedCurationTimers = [];
+    const loadingScreen = document.getElementById('curatedLoadingScreen');
+    const container = document.getElementById('curatedCardsContainer');
+    if (loadingScreen && container) {
+        loadingScreen.classList.add('hidden');
+        container.classList.remove('hidden');
+    }
+}
+
+window.openCuratedFeedsModal = function(feedType, initialSearch = "") {
     const modal = document.getElementById('curatedFeedsModal');
     if (!modal) return;
     modal.classList.remove('hidden');
-    switchCuratedFeedTab(feedType || 'internships');
+    const searchInp = document.getElementById('curatedSearchInput');
+    if (searchInp) {
+        searchInp.value = initialSearch || "";
+    }
+    switchCuratedFeedTab(feedType || 'internships', true);
 };
 
 window.closeCuratedFeedsModal = function() {
+    hideCuratedLoadingScreen();
     const modal = document.getElementById('curatedFeedsModal');
     if (modal) modal.classList.add('hidden');
 };
 
-window.switchCuratedFeedTab = function(feedType) {
+window.switchCuratedFeedTab = function(feedType, withBespokeCuration = true) {
     currentCuratedFeedType = feedType || 'internships';
     
     // Update tabs styling
@@ -10264,21 +10353,21 @@ window.switchCuratedFeedTab = function(feedType) {
     if (subEl) subEl.textContent = meta.subtitle;
     if (iconEl) iconEl.textContent = meta.icon;
 
-    loadCuratedFeeds();
+    loadCuratedFeeds(withBespokeCuration);
 };
 
 window.handleCuratedSearchDebounced = function(val) {
     if (curatedDebounceTimer) clearTimeout(curatedDebounceTimer);
     curatedDebounceTimer = setTimeout(() => {
-        loadCuratedFeeds();
+        loadCuratedFeeds(false);
     }, 250);
 };
 
 window.handleCuratedFilterChange = function() {
-    loadCuratedFeeds();
+    loadCuratedFeeds(false);
 };
 
-async function loadCuratedFeeds() {
+async function loadCuratedFeeds(withBespokeCuration = false) {
     const container = document.getElementById('curatedCardsContainer');
     if (!container) return;
 
@@ -10287,12 +10376,16 @@ async function loadCuratedFeeds() {
     const timeFilter = document.getElementById('curatedTimeSelect')?.value || 'all';
     const userId = getCandidateUserId();
 
-    container.innerHTML = `
-        <div class="py-12 flex flex-col items-center justify-center space-y-3">
-            <span class="w-7 h-7 rounded-full border-2 border-emerald-600 border-t-transparent animate-spin"></span>
-            <p class="text-xs font-bold text-slate-500">Querying live direct feed index...</p>
-        </div>
-    `;
+    if (withBespokeCuration) {
+        showCuratedLoadingScreen(`Curating latest special ${currentCuratedFeedType === 'internships' ? 'intern' : (currentCuratedFeedType === 'aiml' ? 'AI/ML' : 'entry-level')} jobs for you...`);
+    } else {
+        container.innerHTML = `
+            <div class="py-12 flex flex-col items-center justify-center space-y-3">
+                <span class="w-7 h-7 rounded-full border-2 border-emerald-600 border-t-transparent animate-spin"></span>
+                <p class="text-xs font-bold text-slate-500">Querying live direct feed index...</p>
+            </div>
+        `;
+    }
 
     try {
         const params = new URLSearchParams({
@@ -10305,17 +10398,30 @@ async function loadCuratedFeeds() {
         });
         if (userId) params.append('user_id', userId);
 
-        const resp = await fetch(`/api/curated-feeds?${params.toString()}`);
-        if (!resp.ok) throw new Error("Failed to load curated feeds.");
+        const fetchPromise = fetch(`/api/curated-feeds?${params.toString()}`).then(r => {
+            if (!r.ok) throw new Error("Failed to load curated feeds.");
+            return r.json();
+        });
 
-        const data = await resp.json();
+        let data;
+        if (withBespokeCuration) {
+            // 2.5s perceived value curated loading duration
+            const delayPromise = new Promise(resolve => setTimeout(resolve, 2500));
+            const [respData] = await Promise.all([fetchPromise, delayPromise]);
+            data = respData;
+            hideCuratedLoadingScreen();
+        } else {
+            data = await fetchPromise;
+        }
+
         const result = data.result || {};
         renderCuratedCards(result.items || [], result.total || 0);
     } catch (err) {
+        hideCuratedLoadingScreen();
         container.innerHTML = `
             <div class="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
                 <p class="text-xs font-bold text-rose-600">Failed to load direct feeds: ${err.message}</p>
-                <button type="button" onclick="loadCuratedFeeds()" class="mt-3 px-4 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold">Retry</button>
+                <button type="button" onclick="loadCuratedFeeds(true)" class="mt-3 px-4 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold cursor-pointer">Retry</button>
             </div>
         `;
     }
@@ -10419,8 +10525,8 @@ window.openTechDossierModal = function() {
     const modal = document.getElementById('techDossierModal');
     if (!modal) return;
     if (!currentProfile) {
-        alert("Please upload your resume first on Page 2 to generate your verified 1-Page Tech Dossier.");
-        window.goToSlide(1);
+        alert("Please upload your resume first on Slide 3 to generate your verified 1-Page Tech Dossier.");
+        window.goToSlide(2);
         return;
     }
     modal.classList.remove('hidden');

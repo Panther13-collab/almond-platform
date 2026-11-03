@@ -63,8 +63,16 @@
             padding: 0;
         }
 
+        *, *::before, *::after {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
         body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
             background-color: #070b14;
             color: #0f172a;
         }
@@ -200,7 +208,7 @@
             <div class="flex items-center gap-2 sm:gap-2.5">
                 <button type="button" onclick="openHeroInfoModal('ats')" class="px-3 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-bold text-slate-800 hover:text-emerald-900 bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5" title="Learn more about Almond Jobs & our mission">
                     <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
-                    <span>Who We Are</span>
+                    <span>Who We Are?</span>
                 </button>
                 <button type="button" onclick="openVipPricingModal()" class="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs px-3.5 sm:px-5 py-2 rounded-full shadow-md shadow-violet-500/25 hover:scale-105 active:scale-95 transition-all cursor-pointer">
                     VIP Access
@@ -216,154 +224,266 @@
 
     <!-- KINETIC REEL / STORY PRESENTATION VIEWPORT -->
     <div id="story-viewport" class="relative w-full h-screen overflow-hidden">
-        <div id="story-track" class="w-full h-full">
+
+        <!-- PERSISTENT HERO & DISCOVERY CINEMATIC BACKGROUND (Stationary behind Page 1 & 2 with Parallax Zoom) -->
+        <div id="persistentHeroBg" class="absolute inset-0 pointer-events-none z-0 overflow-hidden bg-[#fafaf9] transition-all duration-700 ease-out origin-center">
+            <video autoplay loop muted playsinline preload="auto" poster="/static/warrior_clean.png?v=20261103_700" class="w-full h-full object-cover object-center opacity-30 transition-opacity duration-300">
+                <source src="/static/kage_clean.webm?v=20261103_700" type="video/webm">
+                <source src="/static/kage_clean.mp4?v=20261103_700" type="video/mp4">
+            </video>
+            <!-- Pure white atmospheric washes providing crisp background and clear silhouette visibility -->
+            <div class="absolute inset-0 bg-white/45"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-white via-transparent to-white/70"></div>
+        </div>
+
+        <div id="story-track" class="w-full h-full relative z-10">
 
             <!-- 3. PAGE 1: HERO (STANDARD PROFESSIONAL SAAS HERO - TRUE VERTICAL & HORIZONTAL CENTER) -->
-            <section id="hero" class="story-page w-full h-full relative overflow-hidden bg-white">
+            <section id="hero" class="story-page w-full h-full relative overflow-hidden bg-transparent">
                 
                 <!-- Clean white canvas with warrior silhouette and subtle natural color (Page 1 only) -->
-                <div class="absolute inset-0 pointer-events-none z-0 overflow-hidden bg-[#fafaf9]">
-                    <video autoplay loop muted playsinline preload="auto" poster="/static/warrior_clean.png?v=20261103_700" class="w-full h-full object-cover object-center opacity-30 transition-opacity duration-300">
-                        <source src="/static/kage_clean.webm?v=20261103_700" type="video/webm">
-                        <source src="/static/kage_clean.mp4?v=20261103_700" type="video/mp4">
-                    </video>
-                    <!-- Pure white atmospheric washes providing crisp background and clear silhouette visibility -->
-                    <div class="absolute inset-0 bg-white/45"></div>
-                    <div class="absolute inset-0 bg-gradient-to-t from-white via-transparent to-white/70"></div>
-                </div>
+                
 
                 <!-- Centered Hero Content -->
-                <div class="max-w-5xl mx-auto w-full relative z-10 flex flex-col justify-center items-center text-center h-full px-6 lg:px-8 pt-28 sm:pt-32 pb-6">
-                    
-                    <!-- Value Proposition Interactive Pills (Centrally Aligned) -->
+                <div class="max-w-5xl mx-auto w-full relative z-10 flex flex-col justify-center items-center text-center h-full px-6 lg:px-8 pt-16 sm:pt-20 pb-8">
+
+                    <!-- Value Proposition Interactive Pills (Moved higher up with tighter spacing) -->
                     <div class="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 mb-5 mx-auto w-full text-center">
-                        <button type="button" onclick="openHeroInfoModal('brokers')" class="px-3.5 py-1.5 rounded-full text-[11px] font-extrabold tracking-wider uppercase bg-red-100/90 hover:bg-red-200 text-red-800 border border-red-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Click to view broker breakdown">
-                            <span>✕ NO BROKERS</span>
-                            <span class="text-[9px] bg-red-200 text-red-950 px-1.5 py-0.5 rounded-full font-black">WHAT'S THIS? ℹ</span>
+                        <button type="button" onclick="openHeroInfoModal('brokers')" class="px-3.5 py-1.5 rounded-full text-[11px] font-extrabold tracking-wider uppercase bg-red-50/90 hover:bg-red-100 text-red-600 border border-red-200/90 shadow-2xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Click to view broker breakdown">
+                            <i data-lucide="x" class="w-3.5 h-3.5 text-red-500 stroke-[3]"></i>
+                            <span>NO BROKERS</span>
                         </button>
-                        <button type="button" onclick="openHeroInfoModal('middlemen')" class="px-3.5 py-1.5 rounded-full text-[11px] font-extrabold tracking-wider uppercase bg-red-100/90 hover:bg-red-200 text-red-800 border border-red-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Click to view middlemen breakdown">
-                            <span>✕ NO MIDDLEMEN</span>
-                            <span class="text-[9px] bg-red-200 text-red-950 px-1.5 py-0.5 rounded-full font-black">WHAT'S THIS? ℹ</span>
+                        <button type="button" onclick="openHeroInfoModal('middlemen')" class="px-3.5 py-1.5 rounded-full text-[11px] font-extrabold tracking-wider uppercase bg-red-50/90 hover:bg-red-100 text-red-600 border border-red-200/90 shadow-2xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Click to view middlemen breakdown">
+                            <i data-lucide="x" class="w-3.5 h-3.5 text-red-500 stroke-[3]"></i>
+                            <span>NO MIDDLEMEN</span>
                         </button>
-                        <button type="button" onclick="openHeroInfoModal('deadposts')" class="px-3.5 py-1.5 rounded-full text-[11px] font-extrabold tracking-wider uppercase bg-red-100/90 hover:bg-red-200 text-red-800 border border-red-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Click to view ghost jobs breakdown">
-                            <span>✕ NO DEAD POSTS</span>
-                            <span class="text-[9px] bg-red-200 text-red-950 px-1.5 py-0.5 rounded-full font-black">WHAT'S THIS? ℹ</span>
+                        <button type="button" onclick="openHeroInfoModal('deadposts')" class="px-3.5 py-1.5 rounded-full text-[11px] font-extrabold tracking-wider uppercase bg-red-50/90 hover:bg-red-100 text-red-600 border border-red-200/90 shadow-2xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Click to view ghost jobs breakdown">
+                            <i data-lucide="x" class="w-3.5 h-3.5 text-red-500 stroke-[3]"></i>
+                            <span>NO DEAD POSTS</span>
                         </button>
                     </div>
 
-                    <!-- Expansive Headline: Very Large "Move First" Statement -->
-                    <h1 class="tracking-tight text-slate-950 max-w-4xl mx-auto mb-5 text-center">
-                        <span class="block text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black text-slate-950 tracking-tight leading-[1.06] pb-1">Move first.</span>
-                        <span class="inline-block text-3xl sm:text-4xl md:text-5xl font-black bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent tracking-tight leading-normal pt-1 pb-3 px-2" style="-webkit-box-decoration-break: clone; box-decoration-break: clone;">Apply unseen.</span>
+                    <!-- Perfectly Centered Horizontal Dual Headline (Balanced Scale) -->
+                    <h1 class="tracking-tight max-w-4xl mx-auto mb-5 text-center select-none flex flex-col items-center justify-center">
+                        <span class="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-slate-950 tracking-tight leading-[1.06] whitespace-nowrap">Move first.</span>
+                        <span class="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-violet-600 tracking-tight leading-[1.06] mt-1 sm:mt-2 whitespace-nowrap">Apply unseen!</span>
                     </h1>
 
-                    <!-- Narrative Copy: Clear Visual Hierarchy & Generous Line Leading -->
-                    <div class="max-w-2xl mx-auto text-center space-y-3.5 mb-7">
-                        <p class="text-base sm:text-lg md:text-xl text-slate-800 font-semibold leading-relaxed">
-                            Legacy job middlemen get you a job with <span class="whitespace-nowrap text-violet-700 font-black underline decoration-violet-300 decoration-2 underline-offset-4">20% to 35%</span> of your first-year salary as agency markup.
-                        </p>
-                        <p class="text-xs sm:text-sm md:text-base text-slate-500 font-normal leading-relaxed">
-                            Almond Jobs indexes 3.3M+ direct enterprise <strong class="text-slate-800 font-bold">live feeds</strong> in real-time—connecting you straight to internal engineering leadership at Ashby, Lever, Greenhouse, and Workday with zero middlemen, zero recruiter markups, and zero dead listings.
-                        </p>
-                    </div>
+                    <!-- Narrative Subheadline: Double Quotes & Bold "We don't!" with Exclamation -->
+                    <p class="text-base sm:text-lg md:text-xl text-slate-600 font-medium max-w-3xl mx-auto leading-relaxed mb-8">
+                        &ldquo;Legacy job middlemen get you a job with <span class="text-violet-700 font-bold">20% to 35%</span> of your first-year salary as agency markup&rdquo; &mdash; <strong class="text-slate-950 font-black">We don't!</strong>
+                    </p>
 
-                    <!-- Action CTA: Centered Configure Profile Alone -->
-                    <div class="flex items-center justify-center mb-5">
-                        <button type="button" onclick="goToSlide(1)" class="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-sm sm:text-base px-9 py-4 rounded-full shadow-xl shadow-violet-500/30 hover:shadow-violet-500/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-2.5 cursor-pointer">
-                            <span>Configure Profile ↓</span>
+                    <!-- Action CTA: Configure Profile with Downward Arrow -->
+                    <div class="flex items-center justify-center mb-8">
+                        <button type="button" onclick="goToSlide(2)" class="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-sm sm:text-base px-9 py-4 rounded-full shadow-xl shadow-violet-500/30 hover:shadow-violet-500/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-2.5 cursor-pointer">
+                            <span>Configure Profile</span>
+                            <i data-lucide="arrow-down" class="w-4 h-4 text-white stroke-[2.5]"></i>
                         </button>
                     </div>
 
-                    <!-- Direct Curated Feeds Explorer Badges (Available BEFORE Resume Upload) -->
-                    <div class="flex items-center justify-center flex-wrap gap-2 sm:gap-2.5 mb-7">
-                        <span class="text-[11px] font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5 mr-1">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Live Directories:
+                    <!-- Direct Curated Feeds Explorer Badges: Increased Sizing for Prominence -->
+                    <div class="flex items-center justify-center flex-wrap gap-3 sm:gap-4">
+                        <span class="text-xs sm:text-sm font-black uppercase text-slate-600 tracking-wider flex items-center gap-2 mr-1">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Live Free Directories:
                         </span>
-                        <button type="button" id="heroBadge_internships" onclick="openCuratedFeedsModal('internships')" class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white/95 hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 border border-slate-300 hover:border-emerald-400 shadow-2xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Explore 5,100+ direct corporate summer internships">
-                            <span>🌱 Summer Internships</span>
-                            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-1.5 py-0.2 rounded-full">5,100+</span>
+                        <button type="button" id="heroBadge_internships" onclick="openCuratedFeedsModal('internships')" class="px-5 py-2.5 sm:px-6 sm:py-3 rounded-full text-sm sm:text-base font-bold bg-white/95 hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 border border-slate-200 hover:border-emerald-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-2.5" title="Explore 5,100+ direct corporate internships">
+                            <span>💼 Direct Internships</span>
+                            <span class="bg-emerald-100 text-emerald-800 text-xs sm:text-sm font-black px-2.5 py-0.5 rounded-full">5,100+</span>
                         </button>
-                        <button type="button" id="heroBadge_aiml" onclick="openCuratedFeedsModal('aiml')" class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white/95 hover:bg-violet-50 text-slate-800 hover:text-violet-950 border border-slate-300 hover:border-violet-400 shadow-2xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Explore 530+ verified AI, ML, & LLM engineering openings">
+                        <button type="button" id="heroBadge_aiml" onclick="openCuratedFeedsModal('aiml')" class="px-5 py-2.5 sm:px-6 sm:py-3 rounded-full text-sm sm:text-base font-bold bg-white/95 hover:bg-violet-50 text-slate-800 hover:text-violet-950 border border-slate-200 hover:border-violet-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-2.5" title="Explore 530+ verified AI, Machine Learning & LLM engineering portals">
                             <span>🤖 AI/ML Specialist</span>
-                            <span class="bg-violet-100 text-violet-800 text-[10px] font-black px-1.5 py-0.2 rounded-full">530+</span>
+                            <span class="bg-violet-100 text-violet-800 text-xs sm:text-sm font-black px-2.5 py-0.5 rounded-full">530+</span>
                         </button>
-                        <button type="button" id="heroBadge_entrylevel" onclick="openCuratedFeedsModal('entrylevel')" class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white/95 hover:bg-indigo-50 text-slate-800 hover:text-indigo-950 border border-slate-300 hover:border-indigo-400 shadow-2xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Explore 3,100+ verified entry-level & new grad engineering portals">
+                        <button type="button" id="heroBadge_entrylevel" onclick="openCuratedFeedsModal('entrylevel')" class="px-5 py-2.5 sm:px-6 sm:py-3 rounded-full text-sm sm:text-base font-bold bg-white/95 hover:bg-indigo-50 text-slate-800 hover:text-indigo-950 border border-slate-200 hover:border-indigo-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-2.5" title="Explore 3,100+ verified entry-level & new grad engineering portals">
                             <span>🎓 Entry-Level &amp; New Grad</span>
-                            <span class="bg-indigo-100 text-indigo-800 text-[10px] font-black px-1.5 py-0.2 rounded-full">3,100+</span>
+                            <span class="bg-indigo-100 text-indigo-800 text-xs sm:text-sm font-black px-2.5 py-0.5 rounded-full">3,100+</span>
                         </button>
-                    </div>
-
-                    <!-- 3 Feature Advantage Cards (Standard Frosted SaaS Cards) -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full max-w-3xl mx-auto text-left mb-6">
-                        <div class="kage-card rounded-2xl p-4 border border-slate-200/90 bg-white/90 backdrop-blur-md shadow-xs hover:border-violet-300 hover:shadow-md transition">
-                            <div class="flex items-center gap-2 mb-1.5">
-                                <span class="w-2 h-2 rounded-full bg-violet-600"></span>
-                                <span class="text-[11px] font-bold uppercase text-violet-700 tracking-wider">0% Recruiter Spread</span>
-                            </div>
-                            <span class="text-xs sm:text-sm font-semibold text-slate-900 leading-snug block">Keep 100% of your negotiated compensation.</span>
-                        </div>
-                        <div class="kage-card rounded-2xl p-4 border border-slate-200/90 bg-white/90 backdrop-blur-md shadow-xs hover:border-violet-300 hover:shadow-md transition">
-                            <div class="flex items-center gap-2 mb-1.5">
-                                <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
-                                <span class="text-[11px] font-bold uppercase text-emerald-700 tracking-wider">Verified Compensation</span>
-                            </div>
-                            <span class="text-xs sm:text-sm font-semibold text-slate-900 leading-snug block">Strict salary thresholds in INR, USD, EUR, GBP.</span>
-                        </div>
-                        <div class="kage-card rounded-2xl p-4 border border-slate-200/90 bg-white/90 backdrop-blur-md shadow-xs hover:border-violet-300 hover:shadow-md transition">
-                            <div class="flex items-center gap-2 mb-1.5">
-                                <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
-                                <span class="text-[11px] font-bold uppercase text-indigo-700 tracking-wider">Founder Direct Access</span>
-                            </div>
-                            <span class="text-xs sm:text-sm font-semibold text-slate-900 leading-snug block">Live Y Combinator &amp; Hacker News founder feed with zero agents.</span>
-                        </div>
-                    </div>
-
-                    <!-- Trusted By Senior Engineers Proof -->
-                    <div class="flex items-center justify-center gap-2.5 text-xs text-slate-500 font-medium">
-                        <div class="flex -space-x-2 overflow-hidden">
-                            <div class="inline-block h-5 w-5 rounded-full ring-2 ring-white bg-gradient-to-tr from-violet-600 to-indigo-400"></div>
-                            <div class="inline-block h-5 w-5 rounded-full ring-2 ring-white bg-gradient-to-tr from-amber-500 to-amber-200"></div>
-                            <div class="inline-block h-5 w-5 rounded-full ring-2 ring-white bg-gradient-to-tr from-emerald-600 to-teal-300"></div>
-                        </div>
-                        <span>Trusted by <strong class="text-slate-800 font-semibold">7,000+ senior engineers</strong> across top tech companies</span>
                     </div>
 
                 </div>
-
             </section>
 
-    <!-- 4. PAGE 2: DIRECT APPLICATION CONFIGURATION & PROFILE LANDSCAPE (SLIDE 2) -->
-    <section id="workspace" class="story-page w-full h-full relative overflow-hidden bg-[#0e160f]">
-        
-        <!-- DUAL-TONE SPLIT CRACK BACKGROUND (Cream Left, Dark Green Right with Golden Jagged Crack) -->
-        <div class="split-crack-bg absolute inset-0 pointer-events-none z-0 overflow-hidden" style="background-color: #0e160f;">
-            <!-- Right Side: Optimized Hardware-Accelerated Ambient Green Gradients (0ms blur penalty) -->
-            <div class="absolute inset-0" style="background: 
-                radial-gradient(circle at 90% 25%, rgba(74, 222, 128, 0.16) 0%, transparent 45%),
-                radial-gradient(circle at 74% 88%, rgba(134, 239, 172, 0.11) 0%, transparent 40%),
-                radial-gradient(circle at 95% 65%, rgba(49, 64, 41, 0.65) 0%, transparent 35%),
-                radial-gradient(circle at 82% 28%, #274026 0%, #182819 45%, #0e150f 85%);"></div>
+            <!-- 3.5. NEW PAGE 2: DIRECT INTELLIGENCE & DISCOVERY BENTO GRID -->
+            <section id="discovery" class="story-page w-full h-full relative overflow-hidden bg-transparent flex flex-col justify-center items-center">
 
-            <!-- SVG Split with Left Cream Gradient & Gold Jagged Crack -->
+                <!-- Bento Grid Content Container -->
+                <div class="max-w-6xl mx-auto w-full relative z-10 px-5 sm:px-8 pt-20 sm:pt-24 pb-6 flex flex-col justify-center h-full">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 lg:gap-x-5 gap-y-6 lg:gap-y-7 w-full">
+                        
+                        <!-- CARD 1: 3.3M+ Live Jobs (Top-Left, Spans 2 Columns - 63,196 LIVE removed) -->
+                        <div class="md:col-span-2 bg-white/95 rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg transition flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center mb-2.5">
+                                    <span class="text-xs font-black uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        LIVE DIRECTORIES
+                                    </span>
+                                </div>
+                                <h3 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-950 tracking-tight mb-2.5">
+                                    3.3M+ Live Jobs
+                                </h3>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
+                                    Almond Jobs indexes 3.3M+ direct enterprise live feeds in real-time&mdash;connecting you straight to internal engineering leadership at Ashby, Lever, Greenhouse, and Workday with zero middlemen, zero recruiter markups, and zero dead listings.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- CARD 2: Entry-Level Role Search (Right Column, Tall Spanning 2 Rows) -->
+                        <div class="md:col-span-1 md:row-span-2 bg-white/95 rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg transition flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center gap-1.5 mb-2.5 text-xs font-black uppercase tracking-wider text-violet-700">
+                                    <span class="w-2 h-2 rounded-full bg-violet-600"></span>
+                                    SEARCH
+                                </div>
+                                <h3 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight leading-snug mb-2">
+                                    Search directly where elites apply
+                                </h3>
+                                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-800 text-[11px] font-bold mb-3">
+                                    <span>🎓 Entry-Level &amp; New Grad Direct Feeds</span>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="relative">
+                                    <input type="text" id="p2RoleSearchInput" placeholder="Search entry-level &amp; new grad roles..." onkeydown="if(event.key==='Enter') executeP2EntrySearch()" class="w-full pl-4 pr-11 py-3 rounded-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-xs text-slate-900 transition font-medium">
+                                    <button type="button" onclick="executeP2EntrySearch()" class="absolute right-1.5 top-1.5 w-8 h-8 rounded-full bg-violet-600 hover:bg-violet-500 text-white flex items-center justify-center transition cursor-pointer shadow-xs" title="Search entry-level roles">
+                                        <i data-lucide="search" class="w-4 h-4 text-white"></i>
+                                    </button>
+                                </div>
+                                <span class="text-[11px] text-slate-400 font-medium mt-2.5 block flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                                    Advanced filters available
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- CARD 3: Direct Internships Search (Middle-Left, Col 1) -->
+                        <div onclick="openCuratedFeedsModal('internships')" class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg hover:border-emerald-300 transition cursor-pointer flex flex-col justify-between group">
+                            <div>
+                                <span class="text-xs font-black uppercase tracking-wider text-emerald-700 flex items-center gap-1.5 mb-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    LIVE JOBS
+                                </span>
+                                <h4 class="text-base sm:text-lg font-black text-slate-950 tracking-tight group-hover:text-emerald-900 transition">
+                                    Direct internships search
+                                </h4>
+                            </div>
+                            <div class="flex items-center gap-1 text-[11px] font-bold text-emerald-700 mt-3">
+                                <span>5,125 direct openings</span>
+                                <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                        </div>
+
+                        <!-- CARD 4: Quick Search on Intern Jobs (Middle-Center, Col 2) -->
+                        <div class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg transition flex flex-col justify-between">
+                            <div>
+                                <span class="text-xs font-black uppercase tracking-wider text-emerald-700 flex items-center gap-1.5 mb-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    QUICK SEARCH ON INTERN JOBS
+                                </span>
+                            </div>
+                            <div class="relative mt-2">
+                                <input type="text" id="p2QuickKeywordInput" placeholder="Quick search on intern jobs..." onkeydown="if(event.key==='Enter') executeP2InternSearch()" class="w-full pl-4 pr-11 py-2.5 rounded-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-xs text-slate-900 transition font-medium">
+                                <button type="button" onclick="executeP2InternSearch()" class="absolute right-1 top-1 w-7 h-7 rounded-full bg-violet-600 hover:bg-violet-500 text-white flex items-center justify-center transition cursor-pointer shadow-xs" title="Search intern jobs">
+                                    <i data-lucide="search" class="w-3.5 h-3.5 text-white"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- CARD 5: 0% Recruiter Spread (Bottom-Left, Col 1) -->
+                        <div onclick="openHeroInfoModal('middlemen')" class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg hover:border-violet-300 transition cursor-pointer group">
+                            <div class="flex items-center gap-1.5 mb-1.5 text-xs font-black uppercase tracking-wider text-violet-700">
+                                <span class="w-2 h-2 rounded-full bg-violet-600"></span>
+                                0% RECRUITER SPREAD
+                            </div>
+                            <p class="text-xs sm:text-sm font-bold text-slate-900 leading-snug group-hover:text-violet-950 transition">
+                                Keep 100% of your negotiated compensation.
+                            </p>
+                        </div>
+
+                        <!-- CARD 6: Verified Compensation (Bottom-Center, Col 2) -->
+                        <div onclick="openHeroInfoModal('brokers')" class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg hover:border-emerald-300 transition cursor-pointer group">
+                            <div class="flex items-center gap-1.5 mb-1.5 text-xs font-black uppercase tracking-wider text-emerald-700">
+                                <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+                                VERIFIED COMPENSATION
+                            </div>
+                            <p class="text-xs sm:text-sm font-bold text-slate-900 leading-snug group-hover:text-emerald-950 transition">
+                                Strict salary thresholds in INR, USD, EUR, GBP.
+                            </p>
+                        </div>
+
+                        <!-- CARD 7: Founder Direct Access (Bottom-Right, Col 3) -->
+                        <div onclick="openHeroInfoModal('deadposts')" class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg hover:border-indigo-300 transition cursor-pointer group">
+                            <div class="flex items-center gap-1.5 mb-1.5 text-xs font-black uppercase tracking-wider text-indigo-700">
+                                <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+                                FOUNDER DIRECT ACCESS
+                            </div>
+                            <p class="text-xs sm:text-sm font-bold text-slate-900 leading-snug group-hover:text-indigo-950 transition">
+                                Live Y Combinator &amp; Hacker News founder feed with zero agents.
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <!-- Subtle bottom hint to advance to workspace -->
+                    <div class="flex items-center justify-center mt-5">
+                        <button type="button" onclick="goToSlide(2)" class="text-xs font-bold text-slate-400 hover:text-violet-700 flex items-center gap-1.5 transition cursor-pointer group py-1">
+                            <span>Upload Resume &amp; Configure Profile</span>
+                            <i data-lucide="arrow-down" class="w-3.5 h-3.5 group-hover:translate-y-0.5 transition-transform"></i>
+                        </button>
+                    </div>
+
+                </div>
+            </section>
+
+
+    <!-- 4. PAGE 3: DIRECT APPLICATION CONFIGURATION & PROFILE LANDSCAPE (SLIDE 2) -->
+    <section id="workspace" class="story-page w-full h-full relative overflow-hidden bg-transparent">
+        
+        <!-- DUAL-TONE SPLIT BACKGROUND (Left: Continuous Page 2 Hero Background | Right: Restored Forest Green Atmosphere) -->
+        <div class="split-crack-bg absolute inset-0 pointer-events-none z-0 overflow-hidden">
+            <!-- SVG Split with Right Green Atmosphere & Central Golden Jagged Crack -->
             <svg class="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 1000 1000">
                 <defs>
-                    <!-- Warm Cream to Slightly Darker Cream / Stone Gradient -->
-                    <linearGradient id="splitCreamGrad_ws" x1="0%" y1="0%" x2="70%" y2="100%">
-                        <stop offset="0%" stop-color="#f7f2e4" />
-                        <stop offset="35%" stop-color="#efe7ce" />
-                        <stop offset="70%" stop-color="#e4d9c0" />
-                        <stop offset="100%" stop-color="#d6cca8" />
-                    </linearGradient>
+                    <!-- Right Side Clip Path along Jagged Golden Seam -->
+                    <clipPath id="rightGreenClip_ws">
+                        <path d="
+                            M 500 0 
+                            L 1000 0 
+                            L 1000 1000 
+                            L 500 1000 
+                            L 506 955 
+                            L 492 895 
+                            L 508 820 
+                            L 492 735 
+                            L 509 655 
+                            L 491 570 
+                            L 508 490 
+                            L 492 410 
+                            L 509 330 
+                            L 491 255 
+                            L 509 185 
+                            L 492 115 
+                            L 508 55 
+                            Z
+                        " />
+                    </clipPath>
 
-                    <!-- Soft organic circular tint on cream side (matching user reference) -->
-                    <radialGradient id="creamBlobTop_ws" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stop-color="#d7d7ba" stop-opacity="0.75" />
-                        <stop offset="100%" stop-color="#efe7ce" stop-opacity="0" />
+                    <!-- Radial Gradients for Restored Right Green Atmosphere -->
+                    <radialGradient id="greenGlowTop_ws" cx="85%" cy="28%" r="45%">
+                        <stop offset="0%" stop-color="#2a4729" stop-opacity="0.9" />
+                        <stop offset="50%" stop-color="#182819" stop-opacity="0.95" />
+                        <stop offset="85%" stop-color="#0e160f" stop-opacity="1" />
                     </radialGradient>
-                    <radialGradient id="creamBlobBot_ws" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stop-color="#dad2cc" stop-opacity="0.7" />
-                        <stop offset="100%" stop-color="#e4d9c0" stop-opacity="0" />
+                    <radialGradient id="greenGlowEmerald_ws" cx="90%" cy="25%" r="35%">
+                        <stop offset="0%" stop-color="#4ade80" stop-opacity="0.22" />
+                        <stop offset="100%" stop-color="#4ade80" stop-opacity="0" />
+                    </radialGradient>
+                    <radialGradient id="greenGlowBot_ws" cx="74%" cy="88%" r="40%">
+                        <stop offset="0%" stop-color="#86efac" stop-opacity="0.14" />
+                        <stop offset="100%" stop-color="#86efac" stop-opacity="0" />
                     </radialGradient>
 
                     <!-- Gold Ochre Crack Gradient -->
@@ -375,39 +495,23 @@
                         <stop offset="100%" stop-color="#dfa432" />
                     </linearGradient>
 
-                    <!-- Drop Shadow on Right Side -->
+                    <!-- Drop Shadow on Golden Crack -->
                     <filter id="crackShadow_ws" x="-20%" y="-20%" width="170%" height="170%">
-                        <feDropShadow dx="8" dy="2" stdDeviation="8" flood-color="#000000" flood-opacity="0.7" />
+                        <feDropShadow dx="4" dy="2" stdDeviation="6" flood-color="#000000" flood-opacity="0.5" />
                     </filter>
                 </defs>
 
-                <!-- Left Cream Polygon with Jagged Crack Seam (Centered at 500) -->
-                <path d="
-                    M 0 0 
-                    L 500 0 
-                    L 508 55 
-                    L 492 115 
-                    L 509 185 
-                    L 491 255 
-                    L 509 330 
-                    L 492 410 
-                    L 508 490 
-                    L 491 570 
-                    L 509 655 
-                    L 492 735 
-                    L 508 820 
-                    L 492 895 
-                    L 506 955 
-                    L 500 1000 
-                    L 0 1000 
-                    Z
-                " fill="url(#splitCreamGrad_ws)" />
+                <!-- RIGHT SIDE RESTORED GREEN BACKGROUND CLIPPED TO JAGGED SEAM -->
+                <g clip-path="url(#rightGreenClip_ws)">
+                    <!-- Base Deep Forest Green -->
+                    <rect x="0" y="0" width="1000" height="1000" fill="#0e160f" />
+                    <!-- Ambient Tonal Glows -->
+                    <rect x="0" y="0" width="1000" height="1000" fill="url(#greenGlowTop_ws)" />
+                    <rect x="0" y="0" width="1000" height="1000" fill="url(#greenGlowEmerald_ws)" />
+                    <rect x="0" y="0" width="1000" height="1000" fill="url(#greenGlowBot_ws)" />
+                </g>
 
-                <!-- Ambient Tonal Organic Circles on Cream Side -->
-                <circle cx="270" cy="160" r="145" fill="url(#creamBlobTop_ws)" />
-                <circle cx="100" cy="820" r="210" fill="url(#creamBlobBot_ws)" />
-
-                <!-- Golden Jagged Seam Stroke with Drop Shadow -->
+                <!-- Central Golden Jagged Seam Stroke with Drop Shadow (Centered at 500) -->
                 <path d="
                     M 500 0 
                     L 508 55 
@@ -431,107 +535,104 @@
         <div class="max-w-[1360px] mx-auto w-full relative z-10 px-6 sm:px-8 pt-20 pb-4 flex flex-col justify-start">
             
             <!-- Section Header (Centered in the middle over the background split crack) -->
-            <div class="flex flex-col items-center justify-center text-center w-full mb-5">
-                <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-200/95 text-amber-950 text-[11px] font-black uppercase tracking-wider border border-amber-300 shadow-xs mb-1.5">
-                    <span>Direct Live Feed Intelligence Deck</span>
-                </div>
-                <h2 class="text-xl sm:text-2xl md:text-3xl font-black tracking-tight flex items-center justify-center flex-wrap gap-x-2">
+            <div class="flex flex-col items-center justify-center text-center w-full mb-6">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight flex items-center justify-center flex-wrap gap-x-2">
                     <span class="text-slate-950 font-black">Configure Your Direct</span>
                     <span class="text-[#f5f0e6] font-black drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">Application Landscape</span>
                 </h2>
             </div>
 
-        <!-- Landscape 2-Column Responsive Grid (Left on Cream, Right on Forest Green with Wide Spacing) -->
+        <!-- Landscape 2-Column Responsive Grid (Left on Hero Canvas, Right on Forest Green with Wide Spacing) -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-stretch">
             
             <!-- Left Column: Resume Upload (Top) + Derived Intelligence & Core Skills (Bottom) -> DEEP GREEN CONTAINERS (Shifted Left) -->
             <div class="flex flex-col gap-4 lg:pr-2">
                 
                 <!-- 1. Resume Upload Card (Top Left) -> Deep Forest Green Container -->
-                <div class="rounded-3xl p-6 border shadow-2xl flex flex-col backdrop-blur-xl text-white" style="background: linear-gradient(160deg, #112215 0%, #0a160d 100%); border-color: rgba(74, 222, 128, 0.35); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+                <div class="rounded-3xl p-6 border shadow-2xl flex flex-col text-white" style="background: linear-gradient(160deg, #112215 0%, #0a160d 100%); border-color: rgba(74, 222, 128, 0.45); box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.6);">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center space-x-3">
-                            <span class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white flex items-center justify-center font-black text-xs ring-4 ring-violet-500/20 border border-violet-400 shadow-md">1</span>
+                            <span class="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white flex items-center justify-center font-black text-sm ring-4 ring-violet-500/25 border border-violet-400 shadow-md">1</span>
                             <div>
-                                <h3 class="font-extrabold text-white text-base">Candidate Profile</h3>
-                                <p class="text-xs text-emerald-200/80 font-medium">Sandboxed text vectorization</p>
+                                <h3 class="font-black text-white text-base sm:text-lg tracking-tight">Candidate Profile</h3>
+                                <p class="text-xs sm:text-sm text-emerald-300 font-bold">Sandboxed text vectorization</p>
                             </div>
                         </div>
-                        <span id="uploadStatusText" class="text-[11px] font-mono font-bold text-emerald-300 bg-emerald-950/80 px-2.5 py-1 rounded-full border border-emerald-500/40">PDF, DOCX, TXT</span>
+                        <span id="uploadStatusText" class="text-xs font-black tracking-wider text-emerald-300 bg-emerald-950 px-3 py-1 rounded-full border border-emerald-500/50 uppercase">PDF, DOCX, TXT</span>
                     </div>
 
                     <!-- Drag & Drop Zone -->
-                    <div id="dropZone" class="border-2 border-dashed rounded-2xl p-6 text-center hover:border-emerald-400 transition-all cursor-pointer relative group flex-1 flex flex-col justify-center" style="background-color: rgba(19, 38, 23, 0.6); border-color: rgba(74, 222, 128, 0.45);">
+                    <div id="dropZone" class="border-2 border-dashed rounded-2xl p-6 text-center hover:border-emerald-400 transition-all cursor-pointer relative group flex-1 flex flex-col justify-center" style="background-color: rgba(19, 38, 23, 0.85); border-color: rgba(74, 222, 128, 0.5);">
                         <input type="file" id="resumeFileInput" class="hidden" accept=".pdf,.docx,.doc,.txt">
                         <div id="uploadPlaceholder">
-                            <div class="w-12 h-12 bg-emerald-900/60 text-emerald-300 rounded-2xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-105 transition-transform border border-emerald-500/30 shadow-md">
+                            <div class="w-12 h-12 bg-emerald-900/80 text-emerald-300 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition-transform border border-emerald-500/40 shadow-md">
                                 <i data-lucide="upload-cloud" class="w-6 h-6"></i>
                             </div>
-                            <p class="text-sm font-bold text-white">Drop resume here, or <span class="text-emerald-400 underline font-extrabold">browse files</span></p>
-                            <p class="text-xs text-emerald-300/70 mt-1 font-medium">E.g. Sridhar_S_Resume.pdf</p>
+                            <p class="text-sm sm:text-base font-extrabold text-white">Drop resume here, or <span class="text-emerald-400 underline font-black">browse files</span></p>
+                            <p class="text-xs sm:text-sm text-emerald-300 font-semibold mt-1">E.g. Sridhar_S_Resume.pdf</p>
                         </div>
                         <div id="uploadLoading" class="hidden py-4">
                             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400 mx-auto mb-2"></div>
-                            <p class="text-xs font-bold text-emerald-300">Extracting skills &amp; structuring profile...</p>
+                            <p class="text-xs sm:text-sm font-bold text-emerald-300">Extracting skills &amp; structuring profile...</p>
                         </div>
                         <div id="uploadedInfo" class="hidden text-left bg-[#122216] border-2 border-emerald-400 rounded-xl p-3 shadow-sm">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-2.5 truncate">
-                                    <div class="w-7 h-7 rounded-lg bg-emerald-900/80 text-emerald-300 flex items-center justify-center flex-shrink-0 border border-emerald-500/40">
+                                    <div class="w-8 h-8 rounded-lg bg-emerald-900/80 text-emerald-300 flex items-center justify-center flex-shrink-0 border border-emerald-500/40">
                                         <i data-lucide="file-check" class="w-4 h-4"></i>
                                     </div>
-                                    <span id="fileNameDisplay" class="text-sm font-black text-white truncate">resume.pdf</span>
+                                    <span id="fileNameDisplay" class="text-sm sm:text-base font-black text-white truncate">resume.pdf</span>
                                 </div>
-                                <button type="button" id="reuploadBtn" class="text-xs text-emerald-300 hover:text-white flex-shrink-0 ml-2 font-bold px-2 py-1 bg-emerald-950/80 border border-emerald-500/40 rounded-lg">Change</button>
+                                <button type="button" id="reuploadBtn" class="text-xs sm:text-sm text-emerald-300 hover:text-white flex-shrink-0 ml-2 font-bold px-3 py-1.5 bg-emerald-950 border border-emerald-500/50 rounded-xl cursor-pointer">Change</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 2. Derived Intelligence & Core Skills Card (Bottom Left) -> Deep Forest Green Container -->
-                <div class="rounded-3xl p-6 border shadow-2xl flex-1 flex flex-col justify-between backdrop-blur-xl text-white" style="background: linear-gradient(160deg, #112215 0%, #0a160d 100%); border-color: rgba(74, 222, 128, 0.35); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+                <div class="rounded-3xl p-6 border shadow-2xl flex-1 flex flex-col justify-between text-white" style="background: linear-gradient(160deg, #112215 0%, #0a160d 100%); border-color: rgba(74, 222, 128, 0.45); box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.6);">
                     <div>
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center space-x-2">
-                                <i data-lucide="cpu" class="w-4 h-4 text-emerald-400"></i>
-                                <h3 class="font-black text-white text-sm uppercase tracking-wider">Derived Skills &amp; Profile Vector</h3>
+                        <div class="flex items-center justify-between mb-3.5">
+                            <div class="flex items-center space-x-2.5">
+                                <i data-lucide="cpu" class="w-5 h-5 text-emerald-400"></i>
+                                <h3 class="font-black text-white text-sm sm:text-base uppercase tracking-wider">Derived Skills &amp; Profile Vector</h3>
                             </div>
-                            <span class="text-[10px] text-emerald-300 font-black bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-500/40">Verified Vector</span>
+                            <span class="text-xs text-emerald-300 font-black bg-emerald-950 px-3 py-1 rounded-full border border-emerald-500/50 uppercase tracking-wider">Verified Vector</span>
                         </div>
 
                         <!-- Parsed Profile Snapshot -->
                         <div id="parsedProfileSection" class="space-y-3">
-                            <div class="rounded-2xl p-4 border space-y-2" style="background-color: rgba(19, 38, 23, 0.7); border-color: rgba(74, 222, 128, 0.3);">
-                                <div class="flex justify-between items-center text-xs">
-                                    <span class="text-emerald-300/80 font-semibold">Identified Candidate:</span>
-                                    <span id="profileName" class="font-black text-white bg-[#0a140d] px-2.5 py-0.5 rounded-lg border border-emerald-800/60 shadow-sm">Waiting for upload...</span>
+                            <div class="rounded-2xl p-4 border space-y-2.5" style="background-color: rgba(19, 38, 23, 0.85); border-color: rgba(74, 222, 128, 0.4);">
+                                <div class="flex justify-between items-center text-xs sm:text-sm">
+                                    <span class="text-emerald-200 font-bold">Identified Candidate:</span>
+                                    <span id="profileName" class="font-black text-xs sm:text-sm text-white bg-[#0a140d] px-3 py-1 rounded-xl border border-emerald-700 shadow-xs">Waiting for upload...</span>
                                 </div>
-                                <div class="flex justify-between items-center text-xs">
-                                    <span class="text-emerald-300/80 font-semibold">Verified Experience:</span>
-                                    <span id="profileYoe" class="font-extrabold text-emerald-200 bg-emerald-900/60 px-2.5 py-0.5 rounded-lg border border-emerald-600/50">—</span>
+                                <div class="flex justify-between items-center text-xs sm:text-sm">
+                                    <span class="text-emerald-200 font-bold">Verified Experience:</span>
+                                    <span id="profileYoe" class="font-black text-xs sm:text-sm text-emerald-200 bg-emerald-900/80 px-3 py-1 rounded-xl border border-emerald-600/70">—</span>
                                 </div>
-                                <div class="flex justify-between items-center text-xs">
-                                    <span class="text-emerald-300/80 font-semibold">Target Engineering Role:</span>
-                                    <span id="profileRole" class="font-extrabold text-emerald-100 truncate max-w-[180px]">—</span>
+                                <div class="flex justify-between items-center text-xs sm:text-sm">
+                                    <span class="text-emerald-200 font-bold">Target Engineering Role:</span>
+                                    <span id="profileRole" class="font-black text-xs sm:text-sm text-emerald-100 truncate max-w-[200px]">—</span>
                                 </div>
                             </div>
 
                             <div>
                                 <div class="flex items-center justify-between mb-2">
-                                    <span class="text-xs font-black text-emerald-200 uppercase tracking-wider">Derived Core Skills:</span>
-                                    <span id="skillsCountBadge" class="text-[10px] font-mono font-bold text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/40">0 extracted</span>
+                                    <span class="text-xs sm:text-sm font-black text-emerald-300 uppercase tracking-wider">Derived Core Skills:</span>
+                                    <span id="skillsCountBadge" class="text-xs font-black text-emerald-300 bg-emerald-950 px-2.5 py-0.5 rounded-full border border-emerald-500/50">0 extracted</span>
                                 </div>
-                                <div id="profileSkillsBadges" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1 mb-2.5">
-                                    <span class="text-xs text-emerald-300/60 italic font-medium">Skills extracted from resume will be rendered here automatically.</span>
+                                <div id="profileSkillsBadges" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1 mb-3">
+                                    <span class="text-xs sm:text-sm text-emerald-300/80 font-medium">Skills extracted from resume will be rendered here automatically.</span>
                                 </div>
 
                                 <!-- Interactive Add Missing Skill Bar -->
-                                <div class="flex items-center space-x-2 pt-2 border-t border-emerald-800/60">
+                                <div class="flex items-center space-x-2 pt-2.5 border-t border-emerald-800/80">
                                     <div class="relative flex-1">
-                                        <input type="text" id="addSkillInput" placeholder="Add missing skill (e.g. Flutter, React, AWS)..." class="w-full px-3 py-1.5 text-xs font-semibold rounded-xl bg-[#0a160d] text-white border border-emerald-600/50 focus:outline-none focus:border-emerald-400 placeholder:text-emerald-400/50">
+                                        <input type="text" id="addSkillInput" placeholder="Add missing skill (e.g. Flutter, React, AWS)..." class="w-full px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl bg-[#0a160d] text-white border-2 border-emerald-600/60 focus:outline-none focus:border-emerald-400 placeholder:text-emerald-400/60 shadow-xs">
                                     </div>
-                                    <button type="button" id="addSkillBtn" class="px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs rounded-xl shadow-md flex items-center space-x-1 cursor-pointer transition flex-shrink-0">
-                                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                    <button type="button" id="addSkillBtn" class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-md flex items-center space-x-1.5 cursor-pointer transition flex-shrink-0">
+                                        <i data-lucide="plus" class="w-4 h-4"></i>
                                         <span>Add Skill</span>
                                     </button>
                                 </div>
@@ -539,12 +640,12 @@
                         </div>
                     </div>
 
-                    <div class="mt-4 pt-3 border-t border-emerald-800/60 flex items-center justify-between text-[11px] text-emerald-300/70 font-medium">
-                        <span class="flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <div class="mt-4 pt-3 border-t border-emerald-800/80 flex items-center justify-between text-xs sm:text-sm text-emerald-300 font-bold">
+                        <span class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
                             <span>Direct Feed Matching Ready (Ashby, Workday, Lever)</span>
                         </span>
-                        <button type="button" onclick="openAtsModal()" class="font-mono text-emerald-400 hover:text-white font-bold underline cursor-pointer">Who We Are</button>
+                        <button type="button" onclick="openAtsModal()" class="text-xs sm:text-sm font-black text-emerald-300 hover:text-white underline cursor-pointer">Who We Are</button>
                     </div>
                 </div>
 
@@ -552,36 +653,36 @@
 
             <!-- Right Column: Target Compensation, Locations & Search Button (Right Side) -> WHITE / FROSTED WHITE CONTAINER (Shifted Right) -->
             <div class="flex flex-col lg:pl-2">
-                <div id="criteria-deck" class="glass-panel rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-2xl space-y-5 h-full flex flex-col justify-between bg-white/95 backdrop-blur-xl text-slate-950">
+                <div id="criteria-deck" class="rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-2xl space-y-5 h-full flex flex-col justify-between bg-white text-slate-950">
                     
                     <div class="space-y-4">
                         <div class="flex items-center space-x-3 mb-1">
-                            <span class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white flex items-center justify-center font-black text-xs ring-4 ring-violet-500/15 border border-violet-400 shadow-md">2</span>
+                            <span class="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white flex items-center justify-center font-black text-sm ring-4 ring-violet-500/20 border border-violet-400 shadow-md">2</span>
                             <div>
-                                <h3 class="font-extrabold text-slate-950 text-base">Target Compensation &amp; Geography</h3>
-                                <p class="text-xs text-slate-500 font-medium">Multi-currency salary threshold &amp; global bounds</p>
+                                <h3 class="font-black text-slate-950 text-base sm:text-lg tracking-tight">Target Compensation &amp; Geography</h3>
+                                <p class="text-xs sm:text-sm text-slate-500 font-bold">Multi-currency salary threshold &amp; global bounds</p>
                             </div>
                         </div>
 
                         <!-- 1. Compensation Filter -->
                         <div class="space-y-3">
                             <div class="flex justify-between items-center">
-                                <label class="text-xs font-black uppercase tracking-wider text-slate-700 block">Minimum Expected Package</label>
-                                <div class="flex items-center space-x-1.5 bg-emerald-50 border-2 border-emerald-300 rounded-xl px-3 py-1 shadow-sm">
-                                    <span id="currencySymbol" class="text-sm font-black text-emerald-800">₹</span>
-                                    <input type="number" id="packageNumberInput" min="0" max="500" step="1" value="15" class="w-20 text-right font-black text-sm text-emerald-950 bg-transparent focus:outline-none">
-                                    <span id="currencyUnit" class="text-xs font-mono font-bold text-emerald-800">LPA</span>
+                                <label class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 block">Minimum Expected Package</label>
+                                <div class="flex items-center space-x-1.5 bg-emerald-50 border-2 border-emerald-300 rounded-xl px-3.5 py-1.5 shadow-xs">
+                                    <span id="currencySymbol" class="text-base sm:text-lg font-black text-emerald-800">₹</span>
+                                    <input type="number" id="packageNumberInput" min="0" max="500" step="1" value="15" class="w-20 text-right font-black text-base sm:text-lg text-emerald-950 bg-transparent focus:outline-none">
+                                    <span id="currencyUnit" class="text-xs sm:text-sm font-black text-emerald-800">LPA</span>
                                 </div>
                             </div>
 
                             <!-- Currency Selector Tabs -->
-                            <div class="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl text-xs font-bold text-slate-700 border border-slate-200">
-                                <button type="button" class="currency-tab active flex-1 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/20 transition font-black" data-curr="INR">₹ INR</button>
-                                <button type="button" class="currency-tab flex-1 py-1.5 rounded-lg hover:text-violet-700 transition text-slate-700" data-curr="USD_YR">$ USD</button>
-                                <button type="button" class="currency-tab flex-1 py-1.5 rounded-lg hover:text-violet-700 transition text-slate-700" data-curr="EUR">€ EUR</button>
-                                <button type="button" class="currency-tab flex-1 py-1.5 rounded-lg hover:text-violet-700 transition text-slate-700" data-curr="GBP">£ GBP</button>
+                            <div class="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 border border-slate-200">
+                                <button type="button" class="currency-tab active flex-1 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25 transition font-black text-xs sm:text-sm cursor-pointer" data-curr="INR">₹ INR</button>
+                                <button type="button" class="currency-tab flex-1 py-2 rounded-xl hover:text-violet-700 transition text-slate-800 font-bold text-xs sm:text-sm cursor-pointer" data-curr="USD_YR">$ USD</button>
+                                <button type="button" class="currency-tab flex-1 py-2 rounded-xl hover:text-violet-700 transition text-slate-800 font-bold text-xs sm:text-sm cursor-pointer" data-curr="EUR">€ EUR</button>
+                                <button type="button" class="currency-tab flex-1 py-2 rounded-xl hover:text-violet-700 transition text-slate-800 font-bold text-xs sm:text-sm cursor-pointer" data-curr="GBP">£ GBP</button>
                                 
-                                <select id="moreCurrenciesSelect" class="bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-violet-500 transition cursor-pointer shadow-sm">
+                                <select id="moreCurrenciesSelect" class="bg-white border-2 border-slate-200 rounded-xl px-2.5 py-2 text-xs sm:text-sm font-black text-slate-800 focus:outline-none focus:border-violet-500 transition cursor-pointer shadow-2xs">
                                     <option value="" disabled selected>More ▾</option>
                                     <option value="CAD">C$ CAD</option>
                                     <option value="AUD">A$ AUD</option>
@@ -593,7 +694,7 @@
 
                             <!-- Range Slider -->
                             <div class="py-1">
-                                <input type="range" id="packageRangeSlider" min="0" max="150" step="1" value="15" class="w-full accent-violet-600">
+                                <input type="range" id="packageRangeSlider" min="0" max="150" step="1" value="15" class="w-full accent-violet-600 cursor-pointer">
                             </div>
 
                             <!-- Quick Presets -->
@@ -601,54 +702,54 @@
                         </div>
 
                         <!-- 2. Worldwide Locations A to Z with Typeahead -->
-                        <div class="space-y-2 pt-3 border-t border-slate-200/90 relative">
-                            <label class="text-xs font-black uppercase tracking-wider text-slate-700 block">Worldwide Locations (A-Z)</label>
+                        <div class="space-y-2 pt-3 border-t border-slate-200 relative">
+                            <label class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 block">Worldwide Locations (A-Z)</label>
                             
                             <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                                     <i data-lucide="search" class="w-4 h-4"></i>
                                 </div>
-                                <input type="text" id="locationSearchInput" autocomplete="off" placeholder="Type city or country (e.g. Chennai, Berlin, USA)..." class="w-full pl-9 pr-3 py-2 text-xs sm:text-sm font-semibold border border-slate-200 rounded-xl focus:outline-none focus:border-violet-500 shadow-sm bg-white text-slate-900 placeholder:text-slate-400">
+                                <input type="text" id="locationSearchInput" autocomplete="off" placeholder="Type city or country (e.g. Chennai, Berlin, USA)..." class="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm font-bold border-2 border-slate-200 rounded-xl focus:outline-none focus:border-violet-500 shadow-xs bg-white text-slate-950 placeholder:text-slate-400">
                                 <div id="locationDropdown" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 loc-dropdown divide-y divide-slate-100 text-slate-900"></div>
                             </div>
 
                             <!-- Active Tags -->
                             <div>
-                                <span class="text-xs font-semibold text-slate-500 block mb-1">Active Target Locations:</span>
-                                <div id="selectedLocationsTags" class="flex flex-wrap gap-1.5 min-h-[32px] p-2 bg-slate-50 border border-slate-200 rounded-xl"></div>
+                                <span class="text-xs sm:text-sm font-black text-slate-700 block mb-1.5">Active Target Locations:</span>
+                                <div id="selectedLocationsTags" class="flex flex-wrap gap-1.5 min-h-[36px] p-2 bg-slate-50 border border-slate-200 rounded-xl"></div>
                             </div>
 
                             <!-- Quick Preset Pills -->
                             <div class="pt-0.5">
                                 <div class="flex flex-wrap gap-1.5" id="quickLocationPills">
-                                    <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:border-violet-300 hover:bg-violet-50/50 transition cursor-pointer" data-loc="Worldwide Remote">🌐 Worldwide Remote</button>
-                                    <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:border-violet-300 hover:bg-violet-50/50 transition" data-loc="All India">🇮🇳 All India</button>
-                                    <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:border-violet-300 hover:bg-violet-50/50 transition" data-loc="Coimbatore">Coimbatore</button>
-                                    <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:border-violet-300 hover:bg-violet-50/50 transition" data-loc="Chennai">Chennai</button>
-                                    <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:border-violet-300 hover:bg-violet-50/50 transition" data-loc="Bengaluru">Bengaluru</button>
-                                    <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:border-violet-300 hover:bg-violet-50/50 transition" data-loc="United States">🇺🇸 United States</button>
+                                    <button type="button" class="quick-pill text-xs sm:text-sm px-3.5 py-1.5 rounded-full border border-slate-300 bg-white text-slate-900 font-bold hover:border-violet-400 hover:bg-violet-50 shadow-2xs transition cursor-pointer" data-loc="Worldwide Remote">🌐 Worldwide Remote</button>
+                                    <button type="button" class="quick-pill text-xs sm:text-sm px-3.5 py-1.5 rounded-full border border-slate-300 bg-white text-slate-900 font-bold hover:border-violet-400 hover:bg-violet-50 shadow-2xs transition cursor-pointer" data-loc="All India">🇮🇳 All India</button>
+                                    <button type="button" class="quick-pill text-xs sm:text-sm px-3.5 py-1.5 rounded-full border border-slate-300 bg-white text-slate-900 font-bold hover:border-violet-400 hover:bg-violet-50 shadow-2xs transition cursor-pointer" data-loc="Coimbatore">Coimbatore</button>
+                                    <button type="button" class="quick-pill text-xs sm:text-sm px-3.5 py-1.5 rounded-full border border-slate-300 bg-white text-slate-900 font-bold hover:border-violet-400 hover:bg-violet-50 shadow-2xs transition cursor-pointer" data-loc="Chennai">Chennai</button>
+                                    <button type="button" class="quick-pill text-xs sm:text-sm px-3.5 py-1.5 rounded-full border border-slate-300 bg-white text-slate-900 font-bold hover:border-violet-400 hover:bg-violet-50 shadow-2xs transition cursor-pointer" data-loc="Bengaluru">Bengaluru</button>
+                                    <button type="button" class="quick-pill text-xs sm:text-sm px-3.5 py-1.5 rounded-full border border-slate-300 bg-white text-slate-900 font-bold hover:border-violet-400 hover:bg-violet-50 shadow-2xs transition cursor-pointer" data-loc="United States">🇺🇸 United States</button>
                                 </div>
                             </div>
                         </div>
 
                         <!-- 3. Work Arrangement & Modes -->
-                        <div class="space-y-2.5 pt-3 border-t border-slate-200/90">
+                        <div class="space-y-2.5 pt-3 border-t border-slate-200">
                             <div>
-                                <label class="text-xs font-black uppercase tracking-wider text-slate-700 block mb-1">Work Arrangement</label>
-                                <div class="grid grid-cols-4 gap-1.5 text-xs font-extrabold">
-                                    <label class="border border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-800">
+                                <label class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 block mb-1.5">Work Arrangement</label>
+                                <div class="grid grid-cols-4 gap-2 text-xs sm:text-sm font-black">
+                                    <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-900 shadow-2xs">
                                         <input type="radio" name="work_mode" value="all" checked class="hidden">
                                         <span>All</span>
                                     </label>
-                                    <label class="border border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-800">
+                                    <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-900 shadow-2xs">
                                         <input type="radio" name="work_mode" value="remote" class="hidden">
                                         <span>Remote</span>
                                     </label>
-                                    <label class="border border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-800">
+                                    <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-900 shadow-2xs">
                                         <input type="radio" name="work_mode" value="hybrid" class="hidden">
                                         <span>Hybrid</span>
                                     </label>
-                                    <label class="border border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-800">
+                                    <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-900 shadow-2xs">
                                         <input type="radio" name="work_mode" value="onsite" class="hidden">
                                         <span>Onsite</span>
                                     </label>
@@ -656,17 +757,17 @@
                             </div>
 
                             <div>
-                                <label class="text-xs font-black uppercase tracking-wider text-slate-700 block mb-1">Contract Type</label>
-                                <div class="grid grid-cols-3 gap-1.5 text-xs font-extrabold">
-                                    <label class="border border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-800">
+                                <label class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 block mb-1.5">Contract Type</label>
+                                <div class="grid grid-cols-3 gap-2 text-xs sm:text-sm font-black">
+                                    <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-900 shadow-2xs">
                                         <input type="radio" name="employment_type" value="all" checked class="hidden">
                                         <span>All Types</span>
                                     </label>
-                                    <label class="border border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-800">
+                                    <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-900 shadow-2xs">
                                         <input type="radio" name="employment_type" value="contract" class="hidden">
                                         <span>Contract</span>
                                     </label>
-                                    <label class="border border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-800">
+                                    <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-900 shadow-2xs">
                                         <input type="radio" name="employment_type" value="full-time" class="hidden">
                                         <span>Full-Time</span>
                                     </label>
@@ -676,30 +777,29 @@
                     </div>
 
                     <!-- Primary Action Button: Find Verified Direct Jobs -->
-                    <button type="button" id="searchJobsBtn" class="w-full py-4 px-5 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-violet-600/30 flex items-center justify-center space-x-2.5 transition transform active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed mt-3 cursor-pointer">
+                    <button type="button" id="searchJobsBtn" class="w-full py-4 px-6 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-sm sm:text-base uppercase tracking-wider rounded-2xl shadow-xl shadow-violet-600/35 flex items-center justify-center space-x-2.5 transition transform active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed mt-3 cursor-pointer">
                         <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
                         <span>Find Verified Direct Jobs ↓</span>
                     </button>
 
                     <!-- Navigation helper between Page 1 and Page 3 -->
-                    <div class="flex items-center justify-between pt-2.5 text-xs font-bold text-slate-500">
+                    <div class="flex items-center justify-between pt-2.5 text-xs sm:text-sm font-bold text-slate-500">
                         <button type="button" onclick="goToSlide(0)" class="hover:text-violet-700 flex items-center gap-1 cursor-pointer transition">
                             <span>↑ Return to Home</span>
                         </button>
-                        <button type="button" onclick="goToSlide(2)" class="hover:text-violet-700 flex items-center gap-1 cursor-pointer transition">
-                            <span>Live Direct Feeds (Page 3) ↓</span>
+                        <button type="button" onclick="goToSlide(3)" class="hover:text-violet-700 flex items-center gap-1 cursor-pointer transition">
+                            <span>Live Direct Feeds (Page 4) ↓</span>
                         </button>
                     </div>
 
                 </div>
+
             </div>
-
         </div>
-        </div> <!-- /max-w-[1360px] -->
+    </div>
+</section>
 
-    </section>
-
-    <!-- 5. PAGE 3: LIVE MATCHED OPPORTUNITIES STREAM (SLIDE 3) -->
+<!-- 5. PAGE 3: LIVE MATCHED OPPORTUNITIES STREAM (SLIDE 3) -->
     <section id="results-stream" class="story-page w-full h-full relative overflow-hidden bg-[#0e160f]">
         
         <!-- DUAL-TONE SPLIT CRACK BACKGROUND (Cream Left, Dark Green Right with Golden Jagged Crack) -->
@@ -800,31 +900,31 @@
         <div class="glass-panel rounded-3xl p-5 border border-slate-200/90 shadow-sm mb-4 flex flex-col gap-4">
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
-                    <h2 class="text-lg sm:text-xl font-black text-slate-950 flex items-center space-x-2.5">
+                    <h2 class="text-xl sm:text-2xl font-black text-slate-950 flex items-center space-x-2.5 tracking-tight">
                         <span>Matched Opportunities — Direct Live Feeds</span>
-                        <span id="resultsCountBadge" class="bg-violet-50 text-violet-800 text-xs font-black px-3 py-1 rounded-full border border-violet-200 shadow-xs">0 Verified Postings</span>
+                        <span id="resultsCountBadge" class="bg-violet-100 text-violet-950 text-xs sm:text-sm font-black px-3.5 py-1.5 rounded-full border border-violet-300 shadow-xs">0 Verified Postings</span>
                     </h2>
-                    <p class="text-xs font-bold text-slate-500 mt-0.5">Direct Enterprise Portals (Ashby, Greenhouse, Workday, Lever) &amp; Founder Direct — 0% Recruiter Spread</p>
+                    <p class="text-xs sm:text-sm font-bold text-slate-600 mt-1">Direct Enterprise Portals (Ashby, Greenhouse, Workday, Lever) &amp; Founder Direct — 0% Recruiter Spread</p>
                 </div>
 
                 <!-- Right Controls: Dossier Exports -->
                 <div class="flex items-center space-x-2.5 flex-wrap sm:flex-nowrap gap-y-2">
                     <!-- Dossier Export Actions -->
                     <div class="flex items-center space-x-1.5">
-                        <button id="openTechDossierBtn" type="button" onclick="openTechDossierModal()" title="Export 1-Page Silicon Valley Standard Tech Dossier" class="px-3 py-1.5 rounded-xl border border-violet-300 text-violet-900 bg-violet-50 hover:bg-violet-100 text-xs font-black flex items-center space-x-1.5 transition shadow-xs cursor-pointer">
-                            <i data-lucide="file-check" class="w-3.5 h-3.5 text-violet-700"></i>
+                        <button id="openTechDossierBtn" type="button" onclick="openTechDossierModal()" title="Export 1-Page Silicon Valley Standard Tech Dossier" class="px-3.5 py-2 rounded-xl border border-violet-300 text-violet-950 bg-violet-100 hover:bg-violet-200 text-xs sm:text-sm font-black flex items-center space-x-1.5 transition shadow-xs cursor-pointer">
+                            <i data-lucide="file-check" class="w-4 h-4 text-violet-700"></i>
                             <span>1-Page Dossier</span>
                         </button>
-                        <button type="button" id="exportPdfBtn" title="Download PDF Dossier" class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-800 text-xs font-black hover:bg-violet-50 hover:border-violet-300 disabled:opacity-40 flex items-center space-x-1 transition bg-white shadow-xs cursor-pointer">
-                            <i data-lucide="download" class="w-3.5 h-3.5 text-red-600"></i>
+                        <button type="button" id="exportPdfBtn" title="Download PDF Dossier" class="px-3.5 py-2 rounded-xl border border-slate-300 text-slate-900 text-xs sm:text-sm font-black hover:bg-violet-50 hover:border-violet-300 disabled:opacity-40 flex items-center space-x-1.5 transition bg-white shadow-xs cursor-pointer">
+                            <i data-lucide="download" class="w-4 h-4 text-red-600"></i>
                             <span>PDF</span>
                         </button>
-                        <button type="button" id="exportDocxBtn" title="Download Word Document" class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-800 text-xs font-black hover:bg-violet-50 hover:border-violet-300 disabled:opacity-40 flex items-center space-x-1 transition bg-white shadow-xs cursor-pointer">
-                            <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-600"></i>
+                        <button type="button" id="exportDocxBtn" title="Download Word Document" class="px-3.5 py-2 rounded-xl border border-slate-300 text-slate-900 text-xs sm:text-sm font-black hover:bg-violet-50 hover:border-violet-300 disabled:opacity-40 flex items-center space-x-1.5 transition bg-white shadow-xs cursor-pointer">
+                            <i data-lucide="file-text" class="w-4 h-4 text-blue-600"></i>
                             <span>Word</span>
                         </button>
-                        <button type="button" id="exportCsvBtn" title="Download CSV Tracker" class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-800 text-xs font-black hover:bg-violet-50 hover:border-violet-300 disabled:opacity-40 flex items-center space-x-1 transition bg-white shadow-xs cursor-pointer">
-                            <i data-lucide="table" class="w-3.5 h-3.5 text-emerald-600"></i>
+                        <button type="button" id="exportCsvBtn" title="Download CSV Tracker" class="px-3.5 py-2 rounded-xl border border-slate-300 text-slate-900 text-xs sm:text-sm font-black hover:bg-violet-50 hover:border-violet-300 disabled:opacity-40 flex items-center space-x-1.5 transition bg-white shadow-xs cursor-pointer">
+                            <i data-lucide="table" class="w-4 h-4 text-emerald-600"></i>
                             <span>Tracker</span>
                         </button>
                     </div>
@@ -833,21 +933,21 @@
             </div>
 
             <!-- View Switcher Tabs -->
-            <div class="flex items-center space-x-2 border-t border-slate-100 pt-3 flex-wrap gap-y-2">
-                <button type="button" id="tabAtsJobs" class="tab-btn px-4 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/20 flex items-center space-x-2 transition cursor-pointer">
+            <div class="flex items-center space-x-2.5 border-t border-slate-100 pt-3 flex-wrap gap-y-2">
+                <button type="button" id="tabAtsJobs" class="tab-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/20 flex items-center space-x-2 transition cursor-pointer">
                     <i data-lucide="shield-check" class="w-4 h-4"></i>
                     <span>Direct Live Feeds</span>
-                    <span id="atsCountBadge" class="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full ml-1 font-bold">0</span>
+                    <span id="atsCountBadge" class="bg-white/25 text-white text-xs px-2.5 py-0.5 rounded-full ml-1 font-black">0</span>
                 </button>
-                <button type="button" id="tabFounderJobs" class="tab-btn px-4 py-2 rounded-xl text-xs font-black bg-white border border-slate-200 text-slate-700 hover:border-violet-300 hover:bg-violet-50/50 flex items-center space-x-2 transition cursor-pointer">
-                    <span class="text-orange-500 font-bold">🚀</span>
+                <button type="button" id="tabFounderJobs" class="tab-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black bg-white border border-slate-300 text-slate-800 hover:border-violet-400 hover:bg-violet-50/50 flex items-center space-x-2 transition cursor-pointer">
+                    <span class="text-orange-500 font-bold text-sm">🚀</span>
                     <span>Y Combinator &amp; Hacker News Founder Direct</span>
-                    <span id="founderCountBadge" class="bg-orange-100 text-orange-800 text-[10px] px-2 py-0.5 rounded-full ml-1 font-bold">0</span>
+                    <span id="founderCountBadge" class="bg-orange-100 text-orange-950 text-xs px-2.5 py-0.5 rounded-full ml-1 font-black">0</span>
                 </button>
-                <button type="button" id="tabKanbanTracker" class="tab-btn px-4 py-2 rounded-xl text-xs font-black bg-white border border-slate-200 text-slate-700 hover:border-violet-300 hover:bg-violet-50/50 flex items-center space-x-2 transition cursor-pointer">
+                <button type="button" id="tabKanbanTracker" class="tab-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black bg-white border border-slate-300 text-slate-800 hover:border-violet-400 hover:bg-violet-50/50 flex items-center space-x-2 transition cursor-pointer">
                     <i data-lucide="layout-grid" class="w-4 h-4 text-violet-600"></i>
                     <span>My Application Kanban</span>
-                    <span id="kanbanCountBadge" class="bg-violet-100 text-violet-800 text-[10px] px-2 py-0.5 rounded-full ml-1 font-bold">0</span>
+                    <span id="kanbanCountBadge" class="bg-violet-100 text-violet-950 text-xs px-2.5 py-0.5 rounded-full ml-1 font-black">0</span>
                 </button>
             </div>
         </div>
@@ -857,20 +957,20 @@
 
         <!-- Empty State -->
         <div id="emptyState" class="glass-panel rounded-3xl p-12 text-center border border-slate-200/90 shadow-sm">
-            <div class="w-16 h-16 bg-violet-50 text-violet-700 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-violet-200 shadow-md">
+            <div class="w-16 h-16 bg-violet-100 text-violet-700 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-violet-300 shadow-md">
                 <i data-lucide="inbox" class="w-8 h-8"></i>
             </div>
-            <h3 class="text-lg font-black text-slate-950">No Postings Loaded</h3>
-            <p class="text-xs sm:text-sm text-slate-600 mt-1.5 max-w-md mx-auto leading-relaxed font-medium">
-                Upload your resume above, set your compensation threshold, and Almond will query live broker-free direct company &amp; founder postings.
+            <h3 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">No Postings Loaded</h3>
+            <p class="text-sm sm:text-base text-slate-700 mt-2 max-w-lg mx-auto leading-relaxed font-bold">
+                Upload your resume on Slide 3, set your compensation threshold, and Almond will query live broker-free direct company &amp; founder postings.
             </p>
         </div>
 
         <!-- Loading State -->
         <div id="jobsLoading" class="hidden glass-panel rounded-3xl p-12 text-center border border-slate-200/90 shadow-sm">
-            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-violet-600 mx-auto mb-4"></div>
-            <h3 class="text-base sm:text-lg font-black text-slate-950">Querying 3.3M+ Live Feeds &amp; Founder Direct Streams...</h3>
-            <p class="text-xs text-slate-600 mt-2 font-medium">Filtering direct enterprise endpoints (Ashby, Workday, Lever), Y Combinator &amp; Hacker News founder threads, evaluating locations, and scoring match percentages.</p>
+            <div class="animate-spin rounded-full h-12 w-12 border-b-3 border-violet-600 mx-auto mb-4"></div>
+            <h3 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">Querying 3.3M+ Live Feeds &amp; Founder Direct Streams...</h3>
+            <p class="text-xs sm:text-sm text-slate-700 mt-2 font-bold max-w-xl mx-auto">Filtering direct enterprise endpoints (Ashby, Workday, Lever), Y Combinator &amp; Hacker News founder threads, evaluating locations, and scoring match percentages.</p>
         </div>
 
         <!-- Tab View 1: Direct Live Feeds Container -->
@@ -885,7 +985,7 @@
                 <div>
                     <div class="flex items-center space-x-2">
                         <h4 class="text-sm font-black text-white">Include Auxiliary LinkedIn Job Postings</h4>
-                        <span class="text-[10px] font-mono font-bold text-amber-300 bg-amber-950/90 px-2 py-0.5 rounded border border-amber-500/50 uppercase">Secondary Feed</span>
+                        <span class="text-xs font-black text-amber-300 bg-amber-950/90 px-2.5 py-0.5 rounded border border-amber-500/50 uppercase">Secondary Feed</span>
                     </div>
                     <p class="text-xs text-slate-300 font-medium mt-0.5">Verified direct company postings are listed above. Toggle to query &amp; append third-party LinkedIn listings below.</p>
                 </div>
@@ -910,7 +1010,7 @@
                     <div>
                         <div class="flex items-center space-x-2">
                             <h3 class="text-sm font-black text-white">Third-Party LinkedIn Job Feed (10 Postings)</h3>
-                            <span class="text-[10px] font-mono font-bold text-amber-300 bg-amber-950/90 px-2 py-0.5 rounded border border-amber-500/50 uppercase">Auxiliary Listing</span>
+                            <span class="text-xs font-black text-amber-300 bg-amber-950/90 px-2.5 py-0.5 rounded border border-amber-500/50 uppercase">Auxiliary Listing</span>
                         </div>
                         <p class="text-xs text-slate-300 mt-1 font-medium">
                             <strong class="text-emerald-400 font-bold">Direct company postings above are 100% verified.</strong> Third-party LinkedIn listings are aggregated from external feeds and may contain agency markups or recruiter spreads.
@@ -1062,7 +1162,7 @@
             </div>
 
             <!-- Pitch Content Area -->
-            <textarea id="pitchTextarea" rows="12" class="w-full text-xs sm:text-sm font-mono bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 text-slate-900 focus:outline-none focus:border-violet-500 leading-relaxed font-medium"></textarea>
+            <textarea id="pitchTextarea" rows="12" class="w-full text-xs sm:text-sm font-sans bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 text-slate-900 focus:outline-none focus:border-violet-500 leading-relaxed font-semibold"></textarea>
 
             <div class="flex items-center justify-between mt-4 pt-4 border-t-2 border-slate-100">
                 <span class="text-xs font-bold text-slate-600">Directly pasteable into hiring emails or application portals.</span>
@@ -1196,7 +1296,7 @@
                     <span>✕ No Dead Posts</span>
                 </button>
                 <button type="button" onclick="switchHeroModalTab('ats')" id="tabAts" class="hero-modal-tab px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1">
-                    <span>Who We Are</span>
+                    <span>Who We Are?</span>
                 </button>
             </div>
 
@@ -1207,7 +1307,7 @@
 
             <!-- Modal Footer -->
             <div class="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between shrink-0">
-                <span class="text-xs text-slate-500 font-mono">100% Direct Corporate Feeds</span>
+                <span class="text-xs text-slate-700 font-black">✓ 100% Direct Corporate Feeds</span>
                 <button type="button" onclick="closeHeroInfoModal()" class="px-5 py-2.5 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs rounded-xl shadow-md shadow-violet-500/25 cursor-pointer transition">
                     Got it, Continue
                 </button>
@@ -1250,7 +1350,7 @@
                             3,315,000+ Direct Enterprise Openings
                         </div>
                         <p class="text-[11px] sm:text-xs text-slate-600 font-medium" id="vipBannerSubtext">
-                            First 3 postings previewed free. Choose any plan below to unlock all remaining direct application links, 0% recruiter markup, and tailored STAR Pitches.
+                            First 10 postings previewed free. Choose any plan below to unlock all remaining direct application links, 0% recruiter markup, and tailored STAR Pitches.
                         </p>
                     </div>
                 </div>
@@ -1412,7 +1512,7 @@
                     </div>
                     <div>
                         <h3 id="modalTitleText" class="text-base font-black text-slate-950">Candidate Account</h3>
-                        <p id="modalSubtitleText" class="text-xs text-slate-500 font-mono">Sign in or create free account</p>
+                        <p id="modalSubtitleText" class="text-xs text-slate-600 font-bold">Sign in or create free account</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeProfileModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer font-bold text-sm">✕</button>
@@ -1705,7 +1805,7 @@
                         <span id="curatedModalIcon">🌱</span>
                     </div>
                     <div>
-                        <h3 id="curatedModalTitle" class="text-base sm:text-lg font-black text-slate-950">Summer 2027 Direct Internships</h3>
+                        <h3 id="curatedModalTitle" class="text-base sm:text-lg font-black text-slate-950">Direct Internships</h3>
                         <p id="curatedModalSubtitle" class="text-xs text-emerald-800 font-bold">5,125 Active Portals &bull; 0% Recruiter Spread &bull; Direct Corporate Feeds</p>
                     </div>
                 </div>
@@ -1719,7 +1819,7 @@
                 <!-- Tabs -->
                 <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-black">
                     <button type="button" onclick="switchCuratedFeedTab('internships')" id="curatedTab_internships" class="curated-tab-btn px-4 py-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm">
-                        <span>🌱 Summer Internships</span>
+                        <span>🌱 Direct Internships</span>
                         <span class="text-[10px] bg-white/20 px-1.5 py-0.2 rounded-full">5,100+</span>
                     </button>
                     <button type="button" onclick="switchCuratedFeedTab('aiml')" id="curatedTab_aiml" class="curated-tab-btn px-4 py-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100">
@@ -1760,6 +1860,29 @@
                 </div>
             </div>
 
+            <!-- Curating Special Jobs Bespoke AI Loading Screen (2-3s Tailored UX) -->
+            <div id="curatedLoadingScreen" class="hidden p-8 sm:p-14 flex flex-col items-center justify-center text-center max-h-[55vh] min-h-[340px]">
+                <div class="relative w-16 h-16 mb-5 flex items-center justify-center">
+                    <div class="absolute inset-0 rounded-full border-4 border-violet-100 border-t-violet-600 animate-spin"></div>
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-violet-500/30">
+                        <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+                    </div>
+                </div>
+                <h4 id="curatedLoadingHeadline" class="text-base sm:text-lg font-black text-slate-950 tracking-tight">
+                    Curating latest special jobs for you...
+                </h4>
+                <p id="curatedLoadingSubtitle" class="text-xs sm:text-sm font-semibold text-violet-700 mt-1.5 transition-all">
+                    Scanning 3.3M+ direct enterprise feeds &amp; filtering 0% recruiter spreads...
+                </p>
+                <!-- Sleek animated progress bar -->
+                <div class="w-64 sm:w-80 h-2 bg-slate-100 rounded-full overflow-hidden mt-5 border border-slate-200 shadow-inner">
+                    <div id="curatedProgressBar" class="h-full bg-gradient-to-r from-violet-600 via-purple-600 to-emerald-500 rounded-full transition-all duration-300" style="width: 15%;"></div>
+                </div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-3">
+                    Direct Corporate Feed Intelligence &bull; Zero Recruiter Siphon
+                </span>
+            </div>
+
             <!-- Scrollable Cards Grid -->
             <div id="curatedCardsContainer" class="p-5 sm:p-6 overflow-y-auto max-h-[55vh] space-y-3.5">
                 <!-- Rendered dynamically -->
@@ -1770,7 +1893,7 @@
                 <span class="text-xs text-slate-600 font-semibold text-center sm:text-left">
                     Want roles matched strictly to your resume skills vector &amp; target compensation?
                 </span>
-                <button type="button" onclick="closeCuratedFeedsModal(); goToSlide(1);" class="px-5 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs shadow-md shadow-violet-500/20 hover:scale-105 active:scale-95 transition cursor-pointer shrink-0">
+                <button type="button" onclick="closeCuratedFeedsModal(); goToSlide(2);" class="px-5 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs shadow-md shadow-violet-500/20 hover:scale-105 active:scale-95 transition cursor-pointer shrink-0">
                     Configure Candidate Profile &rarr;
                 </button>
             </div>

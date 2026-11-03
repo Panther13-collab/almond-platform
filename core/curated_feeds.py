@@ -15,18 +15,28 @@ INTERNSHIPS_URL = "https://raw.githubusercontent.com/SimplifyJobs/Summer2025-Int
 NEW_GRAD_URL = "https://raw.githubusercontent.com/SimplifyJobs/New-Grad-Positions/dev/.github/scripts/listings.json"
 AI_COLLEGE_URL = "https://raw.githubusercontent.com/speedyapply/2025-AI-College-Jobs/main/README.md"
 
+# 3 Times Per Day = Every 8 Hours (24 / 3 = 8 hours = 28,800 seconds)
+SYNC_INTERVAL = 8 * 3600
+
 _MEMORY_CACHE: Dict[str, Dict[str, Any]] = {
     "internships": {"data": [], "timestamp": 0},
     "entrylevel": {"data": [], "timestamp": 0},
     "aiml": {"data": [], "timestamp": 0}
 }
+_LAST_SYNC_TIMES: Dict[str, float] = {
+    "internships": 0,
+    "entrylevel": 0,
+    "aiml": 0
+}
 _CACHE_LOCK = threading.Lock()
-_CACHE_TTL = 7200  # 2 hours in seconds
+_SYNC_LOCK = threading.Lock()
+_IS_SYNCING = False
+_SCHEDULER_STARTED = False
 
-def _fetch_url_with_timeout(url: str, timeout: int = 10) -> str:
+def _fetch_url_with_timeout(url: str, timeout: int = 12) -> str:
     req = urllib.request.Request(
         url,
-        headers={"User-Agent": "AlmondJobs/1.0 (Direct Corporate Career Engine)"}
+        headers={"User-Agent": "AlmondJobs/2.0 (Direct Corporate Career Engine)"}
     )
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return resp.read().decode("utf-8")
@@ -75,7 +85,7 @@ def _normalize_simplify_listing(item: Dict[str, Any], feed_type: str) -> Optiona
     category = item.get("category") or "Engineering"
 
     return {
-        "id": f"{feed_type}_{item.get('id', str(hash(cleaned_url))[:12])}",
+        "id": f"{feed_type}_{item.get('id', str(abs(hash(cleaned_url)))[:12])}",
         "company": item.get("company_name") or "Corporate Hiring Team",
         "role": item.get("title") or "Engineering Opportunity",
         "category": category,
@@ -93,6 +103,7 @@ def _normalize_simplify_listing(item: Dict[str, Any], feed_type: str) -> Optiona
 def _parse_speedyapply_ai(md_content: str) -> List[Dict[str, Any]]:
     results = []
     lines = md_content.split("\n")
+    now_ts = int(time.time())
     for line in lines:
         if "|" not in line or "http" not in line:
             continue
@@ -106,7 +117,6 @@ def _parse_speedyapply_ai(md_content: str) -> List[Dict[str, Any]]:
             link = clean_job_url(link_m.group(1) if link_m else "")
             date_p = cols[5] if len(cols) > 5 else "Recent"
             if link and link.startswith("http") and role.lower() != "role":
-                # Detect provider
                 lower_url = link.lower()
                 provider = "Direct Portal"
                 if "greenhouse.io" in lower_url:
@@ -127,38 +137,28 @@ def _parse_speedyapply_ai(md_content: str) -> List[Dict[str, Any]]:
                     "locations_list": [loc] if loc else ["Remote"],
                     "url": link,
                     "provider": provider,
-                    "date_posted_ts": int(time.time()),
-                    "date_posted_str": date_p or "Recent",
+                    "date_posted_ts": now_ts,
+                    "date_posted_str": "Today",
                     "sponsorship": "Standard",
                     "feed_type": "aiml",
                     "is_locked": False
                 })
     return results
 
-def get_feed_data(feed_type: str) -> List[Dict[str, Any]]:
-    """Retrieve verified feed data with local disk and memory caching."""
-    now = time.time()
-    with _CACHE_LOCK:
-        cached = _MEMORY_CACHE.get(feed_type)
-        if cached and cached["data"] and (now - cached["timestamp"] < _CACHE_TTL):
-            return cached["data"]
-
-    # Check local disk cache
+def _sync_single_feed(feed_type: str):
+    """Internal sync logic executed in the background 3 times per day."""
     disk_file = os.path.join(CACHE_DIR, f"{feed_type}_cache.json")
+    existing_items = []
     if os.path.exists(disk_file):
         try:
-            mtime = os.path.getmtime(disk_file)
-            if now - mtime < _CACHE_TTL:
-                with open(disk_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    with _CACHE_LOCK:
-                        _MEMORY_CACHE[feed_type] = {"data": data, "timestamp": mtime}
-                    return data
-        except Exception as e:
-            print(f"[CURATED FEEDS] Disk cache read warning ({feed_type}): {e}")
+            with open(disk_file, "r", encoding="utf-8") as f:
+                existing_items = json.load(f)
+        except Exception:
+            existing_items = []
 
-    # Fetch from live source
-    data = []
+    existing_urls = {item.get("url"): idx for idx, item in enumerate(existing_items) if item.get("url")}
+    fetched_items = []
+
     try:
         if feed_type == "internships":
             raw_text = _fetch_url_with_timeout(INTERNSHIPS_URL, timeout=12)
@@ -166,7 +166,7 @@ def get_feed_data(feed_type: str) -> List[Dict[str, Any]]:
             for item in raw_json:
                 norm = _normalize_simplify_listing(item, "internships")
                 if norm:
-                    data.append(norm)
+                    fetched_items.append(norm)
 
         elif feed_type == "entrylevel":
             raw_text = _fetch_url_with_timeout(NEW_GRAD_URL, timeout=12)
@@ -174,32 +174,118 @@ def get_feed_data(feed_type: str) -> List[Dict[str, Any]]:
             for item in raw_json:
                 norm = _normalize_simplify_listing(item, "entrylevel")
                 if norm:
-                    data.append(norm)
+                    fetched_items.append(norm)
 
         elif feed_type == "aiml":
             raw_md = _fetch_url_with_timeout(AI_COLLEGE_URL, timeout=10)
-            data = _parse_speedyapply_ai(raw_md)
+            fetched_items = _parse_speedyapply_ai(raw_md)
 
-        # Write to disk cache
-        if data:
+        # Merge newly discovered listings with existing cache
+        new_jobs = []
+        for item in fetched_items:
+            url = item.get("url")
+            if url and url not in existing_urls:
+                # Newly discovered opening
+                item["date_posted_ts"] = int(time.time())
+                item["date_posted_str"] = "Today"
+                new_jobs.append(item)
+                existing_urls[url] = len(existing_items)
+
+        if new_jobs:
+            print(f"[CURATED SYNC] Discovered {len(new_jobs)} new live listings for '{feed_type}'")
+            merged = new_jobs + existing_items
+        else:
+            merged = existing_items if existing_items else fetched_items
+
+        if merged:
             with open(disk_file, "w", encoding="utf-8") as f:
-                json.dump(data, f)
+                json.dump(merged, f)
             with _CACHE_LOCK:
-                _MEMORY_CACHE[feed_type] = {"data": data, "timestamp": now}
-            print(f"[CURATED FEEDS] Successfully loaded and cached {len(data)} items for '{feed_type}'")
+                _MEMORY_CACHE[feed_type] = {"data": merged, "timestamp": time.time()}
+            _LAST_SYNC_TIMES[feed_type] = time.time()
+            print(f"[CURATED SYNC] Synced '{feed_type}': total {len(merged)} active stored listings.")
     except Exception as e:
-        print(f"[CURATED FEEDS] Live fetch failed for '{feed_type}': {e}")
-        # If live fetch fails, fallback to stale disk cache if available
-        if os.path.exists(disk_file):
+        print(f"[CURATED SYNC] Live fetch warning for '{feed_type}': {e} (continuing with cached items)")
+
+def sync_all_feeds_background():
+    """Background routine to sync all 3 feeds 3 times daily without blocking user requests."""
+    global _IS_SYNCING
+    with _SYNC_LOCK:
+        if _IS_SYNCING:
+            return
+        _IS_SYNCING = True
+
+    try:
+        print("[CURATED SYNC] Starting background 3x-daily feed synchronization...")
+        for ft in ["internships", "aiml", "entrylevel"]:
             try:
-                with open(disk_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
+                _sync_single_feed(ft)
+            except Exception as e:
+                print(f"[CURATED SYNC] Error syncing {ft}: {e}")
+        print("[CURATED SYNC] Completed 3x-daily background feed check.")
+    finally:
+        with _SYNC_LOCK:
+            _IS_SYNCING = False
+
+def start_curated_feed_scheduler():
+    """Starts the 3x per day background sync daemon (runs every 8 hours)."""
+    global _SCHEDULER_STARTED
+    if _SCHEDULER_STARTED:
+        return
+    _SCHEDULER_STARTED = True
+
+    def _daemon_loop():
+        # First check on startup in background (delay 5s to avoid blocking server boot)
+        time.sleep(5)
+        sync_all_feeds_background()
+        
+        # Then loop every 8 hours (3 times per day)
+        while True:
+            time.sleep(SYNC_INTERVAL)
+            try:
+                print("[CURATED SYNC] Scheduled 3x-daily sync timer triggered.")
+                sync_all_feeds_background()
+            except Exception as err:
+                print(f"[CURATED SYNC] Scheduled sync error: {err}")
+
+    t = threading.Thread(target=_daemon_loop, daemon=True, name="CuratedFeedsSyncDaemon")
+    t.start()
+    print("[CURATED SYNC] Curated feeds background 3x/day scheduler initialized.")
+
+def get_feed_data(feed_type: str) -> List[Dict[str, Any]]:
+    """Retrieve verified feed data with local disk and memory caching (instant, non-blocking)."""
+    now = time.time()
+
+    # 1. Check in-memory cache first (sub-millisecond)
+    with _CACHE_LOCK:
+        cached = _MEMORY_CACHE.get(feed_type)
+        if cached and cached.get("data"):
+            # Check if 8 hours have passed since last sync
+            if (now - _LAST_SYNC_TIMES.get(feed_type, 0)) > SYNC_INTERVAL:
+                threading.Thread(target=sync_all_feeds_background, daemon=True).start()
+            return cached["data"]
+
+    # 2. Check local disk cache (instant disk load, 5-10ms)
+    disk_file = os.path.join(CACHE_DIR, f"{feed_type}_cache.json")
+    if os.path.exists(disk_file):
+        try:
+            with open(disk_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if data:
                     with _CACHE_LOCK:
                         _MEMORY_CACHE[feed_type] = {"data": data, "timestamp": now}
-            except Exception:
-                pass
+                    _LAST_SYNC_TIMES[feed_type] = os.path.getmtime(disk_file)
+                    # Trigger background sync if older than 8h
+                    if (now - _LAST_SYNC_TIMES[feed_type]) > SYNC_INTERVAL:
+                        threading.Thread(target=sync_all_feeds_background, daemon=True).start()
+                    return data
+        except Exception as e:
+            print(f"[CURATED FEEDS] Disk cache read warning ({feed_type}): {e}")
 
-    return data
+    # 3. If disk cache is completely missing on first run, do a quick load or fallback
+    _sync_single_feed(feed_type)
+    with _CACHE_LOCK:
+        return _MEMORY_CACHE.get(feed_type, {}).get("data", [])
 
 def query_curated_feed(
     feed_type: str = "internships",
@@ -263,15 +349,24 @@ def query_curated_feed(
 
         filtered.append(item)
 
+    # Always sort by freshness (latest first) by default
+    filtered.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=True)
+
     total_count = len(filtered)
     page_slice = filtered[offset : offset + limit]
 
-    # Apply free preview vs VIP locking (free users see first 3 unlocked)
+    # Apply free preview vs VIP locking (first 10 jobs 100% unlocked with direct links across all tabs & categories)
     processed_items = []
     for idx, item in enumerate(page_slice):
         item_copy = dict(item)
+        # Recalculate dynamic freshness relative to right now
+        posted_ts = item_copy.get("date_posted_ts", 0)
+        if posted_ts and posted_ts > 100000:
+            diff_days = max(0, (now_ts - posted_ts) // 86400)
+            item_copy["date_posted_str"] = f"{diff_days}d ago" if diff_days > 0 else "Today"
+
         absolute_idx = offset + idx
-        if not user_is_paid and absolute_idx >= 3:
+        if not user_is_paid and absolute_idx >= 10:
             item_copy["is_locked"] = True
             item_copy["real_url"] = item_copy.get("url")
             item_copy["url"] = "#unlock-pro"

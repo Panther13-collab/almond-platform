@@ -9,10 +9,12 @@ from typing import Optional
 import json
 
 from core.parser import extract_text_from_file, parse_candidate_profile
-from core.job_engine import search_matching_jobs, fetch_linkedin_postings
+import threading
+import time
+from core.job_engine import search_matching_jobs, fetch_linkedin_postings, _get_skills_fingerprint
 from core.pitch_generator import generate_star_pitch, generate_tailored_cover_letter
 from core.founder_engine import fetch_hn_founder_jobs
-from core.curated_feeds import query_curated_feed
+from core.curated_feeds import query_curated_feed, start_curated_feed_scheduler
 from core.doc_exporter import (
     export_to_docx, export_to_pdf_async, export_to_csv,
     export_tech_dossier_pdf_async, export_tech_dossier_pdf,
@@ -26,6 +28,11 @@ from core.auth_db import (
 )
 from core.payment import create_razorpay_order, verify_razorpay_signature
 from core.security import BotShieldMiddleware, validate_uploaded_file, acquire_search_slot, release_search_slot
+
+# In-Memory Cache for Composite Candidate Search Results
+_API_SEARCH_CACHE = {}
+_API_SEARCH_CACHE_LOCK = threading.Lock()
+_API_SEARCH_CACHE_TTL = 7200  # 2 Hours
 
 app = FastAPI(title="Almond Jobs - Direct Corporate Career Engine", version="2.0.0")
 
@@ -61,6 +68,10 @@ os.makedirs(STATIC_DIR, exist_ok=True)
 os.makedirs(TEMPLATES_DIR, exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+@app.on_event("startup")
+async def on_startup():
+    start_curated_feed_scheduler()
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
@@ -285,16 +296,40 @@ async def find_jobs(payload: dict = Body(...)):
 
     try:
         user_is_paid = is_user_paid(user_id) if user_id else False
-        result = search_matching_jobs(profile, preferences)
-        ats_jobs = result.get("ats_jobs", [])
-        linkedin_jobs = result.get("linkedin_jobs", [])
+        cache_key = _get_skills_fingerprint(profile, preferences)
 
-        # Fetch direct YC & Hacker News Founder Direct opportunities
-        founder_jobs = []
-        try:
-            founder_jobs = fetch_hn_founder_jobs(profile, preferences)
-        except Exception as fe:
-            print(f"[SEARCH] Founder direct fetch error: {fe}")
+        ats_jobs = None
+        linkedin_jobs = None
+        founder_jobs = None
+
+        with _API_SEARCH_CACHE_LOCK:
+            cached = _API_SEARCH_CACHE.get(cache_key)
+            if cached and (time.time() - cached.get("timestamp", 0) < _API_SEARCH_CACHE_TTL):
+                cached_data = cached["data"]
+                ats_jobs = [dict(j) for j in cached_data.get("ats_jobs", [])]
+                linkedin_jobs = [dict(j) for j in cached_data.get("linkedin_jobs", [])]
+                founder_jobs = [dict(j) for j in cached_data.get("founder_jobs", [])]
+
+        if ats_jobs is None:
+            result = search_matching_jobs(profile, preferences)
+            ats_jobs = result.get("ats_jobs", [])
+            linkedin_jobs = result.get("linkedin_jobs", [])
+
+            founder_jobs = []
+            try:
+                founder_jobs = fetch_hn_founder_jobs(profile, preferences)
+            except Exception as fe:
+                print(f"[SEARCH] Founder direct fetch error: {fe}")
+
+            with _API_SEARCH_CACHE_LOCK:
+                _API_SEARCH_CACHE[cache_key] = {
+                    "timestamp": time.time(),
+                    "data": {
+                        "ats_jobs": [dict(j) for j in ats_jobs],
+                        "linkedin_jobs": [dict(j) for j in linkedin_jobs],
+                        "founder_jobs": [dict(j) for j in founder_jobs]
+                    }
+                }
 
         # If user has not purchased Pro access, lock jobs past index 3
         if not user_is_paid:
