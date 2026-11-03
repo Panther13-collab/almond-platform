@@ -4910,6 +4910,10 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
 
 
                             </span>
+                            <button type="button" onclick="window.toggleSkillGapDrawer('${containerId}_${globalIdx}')" class="text-xs font-bold px-2.5 py-1.5 rounded-xl border border-violet-300 bg-violet-50 hover:bg-violet-100 text-violet-900 shadow-2xs flex items-center gap-1 transition cursor-pointer" title="Inspect matched skills vs missing keywords">
+                                <i data-lucide="scan-search" class="w-3.5 h-3.5 text-violet-600"></i>
+                                <span>Skill Gap</span>
+                            </button>
 
 
 
@@ -5041,6 +5045,39 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
 
 
 
+                    <!-- Skill Gap Inspector Drawer -->
+                    <div id="skillGapDrawer_${containerId}_${globalIdx}" class="hidden mt-3 p-3.5 rounded-2xl bg-slate-50 border border-violet-200 text-xs transition-all">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-black text-slate-950 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-violet-600 animate-pulse"></span>
+                                Resume Matcher &bull; Skill Gap Breakdown
+                            </span>
+                            <span class="text-[10px] font-bold text-slate-500">Vector Keyword Optimizer</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2.5">
+                            <div class="p-2.5 rounded-xl bg-white border border-emerald-200">
+                                <span class="text-[10px] font-black uppercase text-emerald-800 tracking-wider block mb-1">✓ Matched in Your Profile</span>
+                                <div class="flex flex-wrap gap-1">
+                                    ${(job.matched_skills || []).slice(0, 6).map(s => `<span class="px-2 py-0.5 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded font-bold text-[10px]">${s}</span>`).join('') || '<span class="text-slate-400 text-[10px]">Core stack matched</span>'}
+                                </div>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-white border border-amber-300">
+                                <span class="text-[10px] font-black uppercase text-amber-900 tracking-wider block mb-1">+ Missing Gap Keywords to Highlight</span>
+                                <div class="flex flex-wrap gap-1">
+                                    ${(job.gap_skills || ['Docker', 'Kubernetes', 'Cloud']).slice(0, 4).map(s => `<span class="px-2 py-0.5 bg-amber-50 text-amber-950 border border-amber-300 rounded font-bold text-[10px]">+ ${s}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between pt-1 flex-wrap gap-2 border-t border-slate-200">
+                            <p class="text-[11px] text-slate-700 font-medium">
+                                <strong>Advantage:</strong> Mentioning these gap keywords raises screening match from <strong>${job.cvmatch_score}%</strong> to <strong>90%+</strong>.
+                            </p>
+                            <button type="button" onclick="window.generatePitchWithGaps('${containerId}', ${globalIdx})" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1">
+                                <span>✨ AI Pitch (Inject Gaps)</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Left Bottom Buttons: AI Pitch, Cover Letter, Save -->
 
 
@@ -5105,6 +5142,10 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
 
 
 
+                            </div>
+                            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100/80 text-emerald-950 text-[10px] font-black border border-emerald-300 mt-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                <span>P75 Market Comp &bull; 0% Recruiter Spread</span>
                             </div>
 
 
@@ -9874,3 +9915,276 @@ window.goToKanbanTabAndScroll = function() {
 };
 
 window.trackJobApplication = trackJobApplication;
+
+// ==========================================
+// CURATED DIRECT FEEDS DIRECTORY CONTROLLER
+// ==========================================
+let currentCuratedFeedType = 'internships';
+let curatedDebounceTimer = null;
+
+const CURATED_FEED_META = {
+    internships: {
+        title: "Summer 2027 Direct Internships",
+        icon: "🌱",
+        subtitle: "5,125 Active Portals • 0% Recruiter Spread • Direct Corporate Feeds",
+        badge: "5,100+",
+        activeClass: "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm"
+    },
+    aiml: {
+        title: "AI & Machine Learning Specialist Feeds",
+        icon: "🤖",
+        subtitle: "530+ Verified AI/ML, PyTorch & LLM Engineering Portals",
+        badge: "530+",
+        activeClass: "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-sm"
+    },
+    entrylevel: {
+        title: "Entry-Level & New Grad Direct Feeds",
+        icon: "🎓",
+        subtitle: "3,111 Active Software, Data & Quant Roles for New Graduates",
+        badge: "3,100+",
+        activeClass: "bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-sm"
+    }
+};
+
+window.openCuratedFeedsModal = function(feedType) {
+    const modal = document.getElementById('curatedFeedsModal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    switchCuratedFeedTab(feedType || 'internships');
+};
+
+window.closeCuratedFeedsModal = function() {
+    const modal = document.getElementById('curatedFeedsModal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.switchCuratedFeedTab = function(feedType) {
+    currentCuratedFeedType = feedType || 'internships';
+    
+    // Update tabs styling
+    ['internships', 'aiml', 'entrylevel'].forEach(t => {
+        const btn = document.getElementById(`curatedTab_${t}`);
+        if (!btn) return;
+        if (t === currentCuratedFeedType) {
+            btn.className = `curated-tab-btn px-4 py-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 ${CURATED_FEED_META[t].activeClass}`;
+        } else {
+            btn.className = "curated-tab-btn px-4 py-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100";
+        }
+    });
+
+    // Update header meta
+    const meta = CURATED_FEED_META[currentCuratedFeedType] || CURATED_FEED_META.internships;
+    const titleEl = document.getElementById('curatedModalTitle');
+    const subEl = document.getElementById('curatedModalSubtitle');
+    const iconEl = document.getElementById('curatedModalIcon');
+    if (titleEl) titleEl.textContent = meta.title;
+    if (subEl) subEl.textContent = meta.subtitle;
+    if (iconEl) iconEl.textContent = meta.icon;
+
+    loadCuratedFeeds();
+};
+
+window.handleCuratedSearchDebounced = function(val) {
+    if (curatedDebounceTimer) clearTimeout(curatedDebounceTimer);
+    curatedDebounceTimer = setTimeout(() => {
+        loadCuratedFeeds();
+    }, 250);
+};
+
+window.handleCuratedFilterChange = function() {
+    loadCuratedFeeds();
+};
+
+async function loadCuratedFeeds() {
+    const container = document.getElementById('curatedCardsContainer');
+    if (!container) return;
+
+    const query = document.getElementById('curatedSearchInput')?.value || '';
+    const category = document.getElementById('curatedCategorySelect')?.value || 'All';
+    const timeFilter = document.getElementById('curatedTimeSelect')?.value || 'all';
+    const userId = getCandidateUserId();
+
+    container.innerHTML = `
+        <div class="py-12 flex flex-col items-center justify-center space-y-3">
+            <span class="w-7 h-7 rounded-full border-2 border-emerald-600 border-t-transparent animate-spin"></span>
+            <p class="text-xs font-bold text-slate-500">Querying live direct feed index...</p>
+        </div>
+    `;
+
+    try {
+        const params = new URLSearchParams({
+            feed_type: currentCuratedFeedType,
+            query: query,
+            category: category,
+            time_filter: timeFilter,
+            limit: 30,
+            offset: 0
+        });
+        if (userId) params.append('user_id', userId);
+
+        const resp = await fetch(`/api/curated-feeds?${params.toString()}`);
+        if (!resp.ok) throw new Error("Failed to load curated feeds.");
+
+        const data = await resp.json();
+        const result = data.result || {};
+        renderCuratedCards(result.items || [], result.total || 0);
+    } catch (err) {
+        container.innerHTML = `
+            <div class="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
+                <p class="text-xs font-bold text-rose-600">Failed to load direct feeds: ${err.message}</p>
+                <button type="button" onclick="loadCuratedFeeds()" class="mt-3 px-4 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold">Retry</button>
+            </div>
+        `;
+    }
+}
+
+function renderCuratedCards(items, total) {
+    const container = document.getElementById('curatedCardsContainer');
+    if (!container) return;
+
+    if (!items || items.length === 0) {
+        container.innerHTML = `
+            <div class="p-10 text-center bg-slate-50 rounded-2xl border border-slate-200">
+                <p class="text-sm font-black text-slate-800">No matching direct portals found with current filters.</p>
+                <p class="text-xs text-slate-500 mt-1">Try clearing the search box or selecting "All Categories".</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = `
+        <div class="flex items-center justify-between pb-1 text-xs font-bold text-slate-500">
+            <span>Showing ${items.length} of ${total.toLocaleString()} Verified Portals</span>
+            <span class="text-emerald-700">✓ 100% Direct Corporate Links</span>
+        </div>
+    `;
+
+    items.forEach((item, idx) => {
+        const isLocked = Boolean(item.is_locked);
+        const provider = item.provider || 'Direct Portal';
+        const sponsorshipBadge = item.sponsorship === 'Visa Sponsored'
+            ? `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-300 text-[10px] font-black">🛂 Visa Sponsored</span>`
+            : '';
+
+        let actionBtn = '';
+        if (isLocked) {
+            actionBtn = `
+                <button type="button" onclick="openVipPricingModal()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black text-xs shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5 shrink-0">
+                    <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                    <span>Unlock Portal (VIP)</span>
+                </button>
+            `;
+        } else {
+            actionBtn = `
+                <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-xs hover:scale-105 active:scale-95 transition flex items-center gap-1.5 shrink-0">
+                    <span>Direct Application Portal &rarr;</span>
+                </a>
+            `;
+        }
+
+        html += `
+            <div class="curated-job-card p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:border-violet-300 hover:shadow-sm transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="space-y-1 min-w-0 flex-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xs font-black text-slate-900">${item.company}</span>
+                        <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-bold uppercase tracking-wide">DIRECT FEED • ${provider.toUpperCase()}</span>
+                        ${sponsorshipBadge}
+                        <span class="text-[10px] text-slate-400 font-semibold">${item.date_posted_str}</span>
+                    </div>
+                    <h4 class="text-sm font-extrabold text-slate-950 truncate">${item.role}</h4>
+                    <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                        <span>📍 ${item.location}</span>
+                        <span>•</span>
+                        <span class="text-violet-700 font-bold">${item.category}</span>
+                    </div>
+                </div>
+                ${actionBtn}
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+    if (window.lucide && typeof lucide.createIcons === 'function') {
+        lucide.createIcons();
+    }
+}
+
+window.toggleSkillGapDrawer = function(drawerKey) {
+    const el = document.getElementById(`skillGapDrawer_${drawerKey}`);
+    if (!el) return;
+    el.classList.toggle('hidden');
+    if (window.lucide && typeof lucide.createIcons === 'function') {
+        lucide.createIcons();
+    }
+};
+
+window.generatePitchWithGaps = function(containerId, idx) {
+    const jobList = (containerId === "jobListContainer") ? (window.currentJobs || []) : (window.currentLinkedinJobs || []);
+    const job = jobList[idx];
+    if (!job) return;
+
+    const augmentedJob = {
+        ...job,
+        target_gap_skills: job.gap_skills || []
+    };
+    if (typeof openPitchModal === "function") {
+        openPitchModal(augmentedJob);
+    }
+};
+
+window.openTechDossierModal = function() {
+    const modal = document.getElementById('techDossierModal');
+    if (!modal) return;
+    if (!currentProfile) {
+        alert("Please upload your resume first on Page 2 to generate your verified 1-Page Tech Dossier.");
+        window.goToSlide(1);
+        return;
+    }
+    modal.classList.remove('hidden');
+};
+
+window.closeTechDossierModal = function() {
+    const modal = document.getElementById('techDossierModal');
+    if (modal) modal.classList.add('hidden');
+};
+
+window.downloadTechDossier = async function() {
+    if (!currentProfile) {
+        alert("Please upload your resume first.");
+        return;
+    }
+    const btn = document.getElementById('downloadDossierPdfBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin mr-1.5"></span> Synthesizing Dossier...`;
+    }
+
+    try {
+        const resp = await fetch("/api/export-tech-dossier", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profile: currentProfile })
+        });
+        if (!resp.ok) throw new Error("Failed to generate PDF dossier.");
+
+        const blob = await resp.blob();
+        const candName = (currentProfile.name || "Candidate").replace(/\s+/g, '_');
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${candName}_1Page_Tech_Dossier.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        closeTechDossierModal();
+    } catch (err) {
+        alert("Dossier generation failed: " + err.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="download" class="w-4 h-4"></i><span>Download 1-Page PDF</span>`;
+            if (window.lucide && typeof lucide.createIcons === 'function') lucide.createIcons();
+        }
+    }
+};

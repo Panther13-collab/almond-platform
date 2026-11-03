@@ -268,9 +268,29 @@
                     </div>
 
                     <!-- Action CTA: Centered Configure Profile Alone -->
-                    <div class="flex items-center justify-center mb-7">
+                    <div class="flex items-center justify-center mb-5">
                         <button type="button" onclick="goToSlide(1)" class="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-sm sm:text-base px-9 py-4 rounded-full shadow-xl shadow-violet-500/30 hover:shadow-violet-500/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-2.5 cursor-pointer">
                             <span>Configure Profile ↓</span>
+                        </button>
+                    </div>
+
+                    <!-- Direct Curated Feeds Explorer Badges (Available BEFORE Resume Upload) -->
+                    <div class="flex items-center justify-center flex-wrap gap-2 sm:gap-2.5 mb-7">
+                        <span class="text-[11px] font-black uppercase text-slate-500 tracking-wider flex items-center gap-1.5 mr-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Live Directories:
+                        </span>
+                        <button type="button" id="heroBadge_internships" onclick="openCuratedFeedsModal('internships')" class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white/95 hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 border border-slate-300 hover:border-emerald-400 shadow-2xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Explore 5,100+ direct corporate summer internships">
+                            <span>🌱 Summer Internships</span>
+                            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-1.5 py-0.2 rounded-full">5,100+</span>
+                        </button>
+                        <button type="button" id="heroBadge_aiml" onclick="openCuratedFeedsModal('aiml')" class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white/95 hover:bg-violet-50 text-slate-800 hover:text-violet-950 border border-slate-300 hover:border-violet-400 shadow-2xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Explore 530+ verified AI, ML, & LLM engineering openings">
+                            <span>🤖 AI/ML Specialist</span>
+                            <span class="bg-violet-100 text-violet-800 text-[10px] font-black px-1.5 py-0.2 rounded-full">530+</span>
+                        </button>
+                        <button type="button" id="heroBadge_entrylevel" onclick="openCuratedFeedsModal('entrylevel')" class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white/95 hover:bg-indigo-50 text-slate-800 hover:text-indigo-950 border border-slate-300 hover:border-indigo-400 shadow-2xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Explore 3,100+ verified entry-level & new grad engineering portals">
+                            <span>🎓 Entry-Level &amp; New Grad</span>
+                            <span class="bg-indigo-100 text-indigo-800 text-[10px] font-black px-1.5 py-0.2 rounded-full">3,100+</span>
                         </button>
                     </div>
 
@@ -796,6 +816,10 @@
 
                     <!-- Dossier Export Actions -->
                     <div class="flex items-center space-x-1.5">
+                        <button id="openTechDossierBtn" type="button" onclick="openTechDossierModal()" title="Export 1-Page Silicon Valley Standard Tech Dossier" class="px-3 py-1.5 rounded-xl border border-violet-300 text-violet-900 bg-violet-50 hover:bg-violet-100 text-xs font-black flex items-center space-x-1.5 transition shadow-xs cursor-pointer">
+                            <i data-lucide="file-check" class="w-3.5 h-3.5 text-violet-700"></i>
+                            <span>1-Page Dossier</span>
+                        </button>
                         <button type="button" id="exportPdfBtn" title="Download PDF Dossier" class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-800 text-xs font-black hover:bg-violet-50 hover:border-violet-300 disabled:opacity-40 flex items-center space-x-1 transition bg-white shadow-xs cursor-pointer">
                             <i data-lucide="download" class="w-3.5 h-3.5 text-red-600"></i>
                             <span>PDF</span>
@@ -1546,9 +1570,152 @@
     </div>
 
         <!-- Scripts with Cache Busting Parameter -->
-    <script src="/static/app.js?v=20261103_1000"></script>
+    <script src="/static/app.js?v=20261103_1100"></script>
     <script>
         lucide.createIcons();
     </script>
+
+    <!-- 11. MODAL: CURATED DIRECT FEEDS DIRECTORY (Internships, AI/ML Specialist, Entry-Level) -->
+    <div id="curatedFeedsModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-5">
+        <div class="rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col border border-slate-200/90 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 bg-white/95 backdrop-blur-2xl my-auto overflow-hidden">
+            <!-- Modal Header -->
+            <div class="p-5 sm:p-6 border-b border-slate-200 flex items-center justify-between bg-white/80 shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-300 flex items-center justify-center text-xl shrink-0">
+                        <span id="curatedModalIcon">🌱</span>
+                    </div>
+                    <div>
+                        <h3 id="curatedModalTitle" class="text-base sm:text-lg font-black text-slate-950">Summer 2027 Direct Internships</h3>
+                        <p id="curatedModalSubtitle" class="text-xs text-emerald-800 font-bold">5,125 Active Portals &bull; 0% Recruiter Spread &bull; Direct Corporate Feeds</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCuratedFeedsModal()" class="text-slate-400 hover:text-slate-900 p-2 rounded-xl hover:bg-slate-100 transition cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Feed Tabs & Filter Bar -->
+            <div class="px-5 sm:px-6 pt-4 pb-3 border-b border-slate-100 bg-slate-50/70 shrink-0 space-y-3">
+                <!-- Tabs -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-black">
+                    <button type="button" onclick="switchCuratedFeedTab('internships')" id="curatedTab_internships" class="curated-tab-btn px-4 py-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm">
+                        <span>🌱 Summer Internships</span>
+                        <span class="text-[10px] bg-white/20 px-1.5 py-0.2 rounded-full">5,100+</span>
+                    </button>
+                    <button type="button" onclick="switchCuratedFeedTab('aiml')" id="curatedTab_aiml" class="curated-tab-btn px-4 py-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100">
+                        <span>🤖 AI/ML Specialist</span>
+                        <span class="text-[10px] bg-slate-200 text-slate-800 px-1.5 py-0.2 rounded-full">530+</span>
+                    </button>
+                    <button type="button" onclick="switchCuratedFeedTab('entrylevel')" id="curatedTab_entrylevel" class="curated-tab-btn px-4 py-2 rounded-xl transition cursor-pointer flex items-center gap-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100">
+                        <span>🎓 Entry-Level &amp; New Grad</span>
+                        <span class="text-[10px] bg-slate-200 text-slate-800 px-1.5 py-0.2 rounded-full">3,100+</span>
+                    </button>
+                </div>
+
+                <!-- Search & Filters Row -->
+                <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                    <!-- Search Input -->
+                    <div class="relative flex-1 min-w-[200px]">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" id="curatedSearchInput" oninput="handleCuratedSearchDebounced(this.value)" placeholder="Search role, company, or keyword (e.g. Python, AI, 3D, Quantitative)..." class="w-full pl-9 pr-4 py-2 text-xs font-semibold rounded-xl border border-slate-300 bg-white focus:outline-none focus:border-violet-500 shadow-2xs text-slate-900 placeholder:text-slate-400">
+                    </div>
+
+                    <!-- Category Filter -->
+                    <select id="curatedCategorySelect" onchange="handleCuratedFilterChange()" class="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-violet-500 shadow-2xs">
+                        <option value="All">All Categories</option>
+                        <option value="Software">Software &amp; Tech</option>
+                        <option value="AI">AI / ML / Data</option>
+                        <option value="Hardware">Hardware &amp; Systems</option>
+                        <option value="Quant">Quant &amp; Trading</option>
+                        <option value="Product">Product Management</option>
+                    </select>
+
+                    <!-- Recency Filter -->
+                    <select id="curatedTimeSelect" onchange="handleCuratedFilterChange()" class="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-violet-500 shadow-2xs">
+                        <option value="all">All Active</option>
+                        <option value="24h">Past 24 Hours</option>
+                        <option value="7d">Past 7 Days</option>
+                        <option value="30d">Past 30 Days</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Scrollable Cards Grid -->
+            <div id="curatedCardsContainer" class="p-5 sm:p-6 overflow-y-auto max-h-[55vh] space-y-3.5">
+                <!-- Rendered dynamically -->
+            </div>
+
+            <!-- Footer Conversion Banner -->
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+                <span class="text-xs text-slate-600 font-semibold text-center sm:text-left">
+                    Want roles matched strictly to your resume skills vector &amp; target compensation?
+                </span>
+                <button type="button" onclick="closeCuratedFeedsModal(); goToSlide(1);" class="px-5 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs shadow-md shadow-violet-500/20 hover:scale-105 active:scale-95 transition cursor-pointer shrink-0">
+                    Configure Candidate Profile &rarr;
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 12. MODAL: 1-PAGE TECH DOSSIER EXPLANATION & EXPORT -->
+    <div id="techDossierModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="rounded-3xl max-w-lg w-full p-6 sm:p-7 border border-violet-200/90 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 bg-white/95 backdrop-blur-2xl my-auto text-left">
+            <div class="flex items-center justify-between pb-3.5 border-b border-slate-200 mb-4">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-violet-100 text-violet-800 flex items-center justify-center font-black">
+                        <i data-lucide="file-check" class="w-5 h-5 text-violet-700"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-slate-950">1-Page Tech Dossier</h3>
+                        <p class="text-[11px] font-bold text-violet-700 uppercase tracking-wide">Single-Page Silicon Valley Standard</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeTechDossierModal()" class="text-slate-400 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Short, Elite Explanation -->
+            <div class="space-y-3 text-xs text-slate-700 leading-relaxed mb-5">
+                <p>
+                    <strong>Why this matters:</strong> Top engineering hiring managers spend an average of <strong>6 seconds</strong> reviewing an initial application. Multi-page resumes often get skipped or trigger formatting parsing errors.
+                </p>
+                <p>
+                    The <strong>1-Page Tech Dossier</strong> condenses your verified skills, production metrics, and target engineering roles into the exact high-contrast, single-page format favored by technical leadership at top companies.
+                </p>
+                
+                <div class="grid grid-cols-2 gap-2 pt-1 text-[11px] font-bold">
+                    <div class="p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-1.5">
+                        <span class="text-emerald-600 font-black">✓</span>
+                        <span>100% Single-Page A4</span>
+                    </div>
+                    <div class="p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-1.5">
+                        <span class="text-emerald-600 font-black">✓</span>
+                        <span>0% Agency Fluff</span>
+                    </div>
+                    <div class="p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-1.5">
+                        <span class="text-emerald-600 font-black">✓</span>
+                        <span>Verified Vector Seal</span>
+                    </div>
+                    <div class="p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-1.5">
+                        <span class="text-emerald-600 font-black">✓</span>
+                        <span>Direct Portal Ready</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Area -->
+            <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeTechDossierModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer">
+                    Cancel
+                </button>
+                <button type="button" id="downloadDossierPdfBtn" onclick="downloadTechDossier()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs shadow-md shadow-violet-500/20 hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    <span>Download 1-Page PDF</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

@@ -349,7 +349,22 @@ def calculate_cvmatch_score(job, candidate_profile):
     matched_skills = job_skills.intersection(candidate_skills) if job_skills else set()
     keyword_score = (len(matched_skills) / max(len(job_skills), 1)) * 30 if job_skills else 15
 
-    # 2. Requirements Coverage (40 pts)
+    # 2. High-Value Skill Gaps Analysis
+    gap_skills = list(job_skills.difference(candidate_skills))
+    TECH_BENCHMARKS = [
+        "kubernetes", "docker", "aws", "gcp", "azure", "terraform", "kafka", "redis", 
+        "graphql", "postgresql", "fastapi", "react", "typescript", "golang", "python", 
+        "microservices", "ci/cd", "helm", "spark", "pytorch", "grpc", "distributed systems",
+        "sql", "nosql", "linux", "git", "rest api"
+    ]
+    desc_text = f"{title} {' '.join(r.get('text', '') for r in reqs)}".lower()
+    for tech in TECH_BENCHMARKS:
+        if tech in desc_text and tech not in candidate_skills and tech not in gap_skills:
+            gap_skills.append(tech)
+            if len(gap_skills) >= 4:
+                break
+
+    # 3. Requirements Coverage (40 pts)
     req_pts = 0
     if reqs:
         matched_reqs = 0
@@ -361,7 +376,7 @@ def calculate_cvmatch_score(job, candidate_profile):
     else:
         req_pts = 25 if any(s in title for s in candidate_skills) else 15
 
-    # 3. Title Match (20 pts)
+    # 4. Title Match (20 pts)
     cand_role = (candidate_profile.get("current_role") or "").lower()
     title_pts = 10
     cand_tokens = [w for w in re.split(r'\W+', cand_role) if len(w) > 2]
@@ -370,11 +385,11 @@ def calculate_cvmatch_score(job, candidate_profile):
     elif any(s in title for s in candidate_skills):
         title_pts = 16
 
-    # 4. Experience Seniority (10 pts)
+    # 5. Experience Seniority (10 pts)
     sen_pts = 10
 
     total_score = round(keyword_score + req_pts + title_pts + sen_pts)
-    return min(total_score, 99), list(matched_skills)
+    return min(total_score, 99), list(matched_skills), gap_skills[:4]
 
 def generate_dynamic_search_queries(candidate_profile, pref_locations=None):
     cand_skills = candidate_profile.get("skills", [])
@@ -659,13 +674,14 @@ def search_matching_jobs(candidate_profile, preferences):
         if not comp_ok:
             continue
 
-        # Match score
-        score, matched_skills = calculate_cvmatch_score(j, candidate_profile)
+        # Match score & Skill Gap analysis
+        score, matched_skills, gap_skills = calculate_cvmatch_score(j, candidate_profile)
         if score < 45:
             continue
 
         j["cvmatch_score"] = score
         j["matched_skills"] = matched_skills
+        j["gap_skills"] = gap_skills
         j["location_tag"] = loc_tag
         j["comp_display"] = comp_display
         j["employment_type_tag"] = type_tag

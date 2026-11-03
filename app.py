@@ -1,17 +1,22 @@
 import os
 import shutil
 import uuid
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Body
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Body, Query
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional
 import json
 
 from core.parser import extract_text_from_file, parse_candidate_profile
 from core.job_engine import search_matching_jobs, fetch_linkedin_postings
 from core.pitch_generator import generate_star_pitch, generate_tailored_cover_letter
 from core.founder_engine import fetch_hn_founder_jobs
-from core.doc_exporter import export_to_docx, export_to_pdf_async, export_to_csv
+from core.curated_feeds import query_curated_feed
+from core.doc_exporter import (
+    export_to_docx, export_to_pdf_async, export_to_csv,
+    export_tech_dossier_pdf_async, export_tech_dossier_pdf
+)
 from core.config import Config
 from core.auth_db import (
     signup_user, login_user, is_user_paid, verify_session_token, get_user_profile,
@@ -390,6 +395,47 @@ async def download_dossier(payload: dict = Body(...)):
         out_path = os.path.join(UPLOAD_DIR, out_name)
         await export_to_pdf_async(profile, jobs, out_path)
         return FileResponse(out_path, filename=out_name, media_type="application/pdf")
+
+@app.get("/api/curated-feeds")
+async def get_curated_feeds(
+    feed_type: str = Query("internships"),
+    query: str = Query(""),
+    category: str = Query("All"),
+    time_filter: str = Query("all"),
+    limit: int = Query(25),
+    offset: int = Query(0),
+    user_id: Optional[str] = Query(None)
+):
+    """Retrieve filtered, high-freshness direct corporate feeds (Internships, Entry-Level, AI/ML Specialist)."""
+    user_paid = is_user_paid(user_id) if user_id else False
+    res = query_curated_feed(
+        feed_type=feed_type,
+        query=query,
+        category=category,
+        time_filter=time_filter,
+        limit=min(limit, 100),
+        offset=offset,
+        user_is_paid=user_paid
+    )
+    return JSONResponse(content={"status": "success", "result": res})
+
+@app.post("/api/export-tech-dossier")
+async def export_tech_dossier(payload: dict = Body(...)):
+    """Generate and return a clean, single-page Silicon Valley technical dossier PDF."""
+    profile = payload.get("profile", {})
+    if not profile:
+        raise HTTPException(status_code=400, detail="Candidate profile is required.")
+
+    cand_slug = (profile.get("name") or "Candidate").replace(" ", "_")
+    out_name = f"{cand_slug}_1Page_Tech_Dossier.pdf"
+    out_path = os.path.join(UPLOAD_DIR, out_name)
+    try:
+        await export_tech_dossier_pdf_async(profile, out_path)
+    except Exception as e:
+        print(f"[EXPORT_TECH_DOSSIER] Playwright async failed ({e}), using sync fallback.")
+        export_tech_dossier_pdf(profile, out_path)
+
+    return FileResponse(out_path, filename=out_name, media_type="application/pdf")
 
 if __name__ == "__main__":
     import uvicorn

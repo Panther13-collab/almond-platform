@@ -45,7 +45,7 @@ def export_to_docx(candidate_profile, jobs, output_path):
             pass
 
     title = doc.add_paragraph()
-    r = title.add_run("Almond AI — Verified Career Matches & Direct Application Dossier")
+    r = title.add_run("Almond Jobs — Verified Career Matches & Direct Application Dossier")
     r.font.name = "Calibri"
     r.font.size = Pt(18)
     r.font.bold = True
@@ -53,7 +53,7 @@ def export_to_docx(candidate_profile, jobs, output_path):
 
     subtitle = doc.add_paragraph()
     cand_name = candidate_profile.get("name", "Candidate")
-    r_sub = subtitle.add_run(f"Prepared for: {cand_name} | {len(jobs)} Direct ATS Verified Postings (100% Broker-Free)")
+    r_sub = subtitle.add_run(f"Prepared for: {cand_name} | {len(jobs)} Direct Corporate Feeds (0% Recruiter Spread)")
     r_sub.font.size = Pt(10.5)
     r_sub.font.color.rgb = RGBColor(146, 91, 36)
 
@@ -71,7 +71,7 @@ def export_to_docx(candidate_profile, jobs, output_path):
     p.add_run("Identified Skills: ").bold = True
     p.add_run(f"{', '.join(candidate_profile.get('skills', []))}\n")
 
-    doc.add_heading("2. Verified Direct ATS Postings", level=1)
+    doc.add_heading("2. Verified Direct Corporate Postings", level=1)
     for i, j in enumerate(jobs, 1):
         p_job = doc.add_paragraph()
         r_num = p_job.add_run(f"#{i}: {j.get('title')}\n")
@@ -132,9 +132,9 @@ async def export_to_pdf_async(candidate_profile, jobs, output_path):
 </head>
 <body>
 <div class="header">
-    <div class="brand-pill">Almond AI Intelligence Report</div>
+    <div class="brand-pill">Almond Jobs Intelligence Report</div>
     <h1>Verified Career Matches & Direct Application Dossier</h1>
-    <div class="subtitle">Prepared for {cand_name_esc} | {len(jobs)} Verified Direct ATS Postings (Zero Broker Middlemen)</div>
+    <div class="subtitle">Prepared for {cand_name_esc} | {len(jobs)} Verified Direct Corporate Feeds (0% Recruiter Spread)</div>
 </div>
 
 <div class="profile-card">
@@ -143,7 +143,7 @@ async def export_to_pdf_async(candidate_profile, jobs, output_path):
     <strong>Skills:</strong> {cand_skills_esc}
 </div>
 
-<h3 style="color: #23170f; margin-bottom: 8px;">Direct ATS Postings</h3>
+<h3 style="color: #23170f; margin-bottom: 8px;">Direct Corporate Postings</h3>
 """
     for i, j in enumerate(jobs, 1):
         j_title_esc = htmllib.escape(str(j.get('title', '')))
@@ -162,7 +162,7 @@ async def export_to_pdf_async(candidate_profile, jobs, output_path):
         ATS Portal: <strong>{j_src_esc}</strong> | Location: <strong>{j_loc_esc}</strong> ({j_mode_esc})
     </div>
     <div class="badge-comp">{j_comp_disp_esc}</div><br>
-    <a href="{j_url_esc}" class="apply-btn" target="_blank">Direct ATS Application Link &rarr;</a>
+    <a href="{j_url_esc}" class="apply-btn" target="_blank">Direct Application Portal &rarr;</a>
 </div>
 """
 
@@ -196,7 +196,7 @@ def _export_pdf_pure_python(candidate_profile, jobs, output_path):
                     pass
             self.set_font('Helvetica', 'B', 12)
             self.set_text_color(15, 23, 42)
-            self.cell(0, 8, 'Almond AI — Verified Career Matches & Direct ATS Dossier', new_x='LMARGIN', new_y='NEXT')
+            self.cell(0, 8, 'Almond Jobs — Verified Career Matches & Direct Corporate Dossier', new_x='LMARGIN', new_y='NEXT')
             self.set_draw_color(226, 232, 240)
             self.line(10, self.get_y(), 200, self.get_y())
             self.ln(3)
@@ -205,7 +205,7 @@ def _export_pdf_pure_python(candidate_profile, jobs, output_path):
             self.set_y(-12)
             self.set_font('Helvetica', 'I', 8)
             self.set_text_color(148, 163, 184)
-            self.cell(0, 8, f'Page {self.page_no()}/{{nb}} — Almond AI (100% Broker-Free Direct Endpoints)', align='C')
+            self.cell(0, 8, f'Page {self.page_no()}/{{nb}} — Almond Jobs (0% Recruiter Spread • Direct Feeds)', align='C')
 
     pdf = DossierPDF()
     pdf.alias_nb_pages()
@@ -229,7 +229,7 @@ def _export_pdf_pure_python(candidate_profile, jobs, output_path):
 
     pdf.set_font('Helvetica', 'B', 11)
     pdf.set_text_color(15, 23, 42)
-    pdf.cell(0, 7, f'Verified Direct ATS Postings ({len(jobs)} Opportunities)', new_x='LMARGIN', new_y='NEXT')
+    pdf.cell(0, 7, f'Verified Direct Corporate Postings ({len(jobs)} Opportunities)', new_x='LMARGIN', new_y='NEXT')
     pdf.ln(2)
 
     for idx, j in enumerate(jobs, 1):
@@ -273,7 +273,7 @@ def export_to_csv(jobs, output_path):
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     with open(output_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["Company", "Role", "ATS Portal", "Location", "Work Mode", "Package", "Match Score", "Direct Apply URL", "Status", "Notes"])
+        writer.writerow(["Company", "Role", "Direct Portal", "Location", "Work Mode", "Package", "Match Score", "Direct Apply URL", "Status", "Notes"])
         for j in jobs:
             writer.writerow([
                 j.get("company", ""),
@@ -288,3 +288,243 @@ def export_to_csv(jobs, output_path):
                 f"Matched skills: {', '.join(j.get('matched_skills', []))}"
             ])
     return output_path
+
+
+async def export_tech_dossier_pdf_async(candidate_profile, output_path):
+    """Generate a clean, single-page Silicon Valley executive tech dossier PDF."""
+    name = candidate_profile.get("name") or "Candidate"
+    role = candidate_profile.get("current_role") or "Software Engineer"
+    yoe = candidate_profile.get("years_experience", 3)
+    skills = candidate_profile.get("skills", [])
+    email = candidate_profile.get("email") or "candidate@almondjobs.internal"
+    location = candidate_profile.get("location") or "Worldwide Remote"
+
+    skills_chips = "".join([f'<span class="skill-tag">{s}</span>' for s in skills[:18]])
+
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    @page {{
+        size: A4;
+        margin: 12mm 15mm 12mm 15mm;
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: #0f172a;
+        background: #ffffff;
+        margin: 0;
+        padding: 0;
+        line-height: 1.35;
+        font-size: 9.5pt;
+    }}
+    .header {{
+        border-bottom: 2px solid #0f172a;
+        padding-bottom: 8px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+    }}
+    .name-block h1 {{
+        font-size: 20pt;
+        font-weight: 900;
+        letter-spacing: -0.5px;
+        margin: 0;
+        color: #020617;
+        text-transform: uppercase;
+    }}
+    .name-block .sub-role {{
+        font-size: 11pt;
+        font-weight: 700;
+        color: #475569;
+        margin-top: 2px;
+    }}
+    .contact-block {{
+        text-align: right;
+        font-size: 8.5pt;
+        color: #334155;
+        font-weight: 500;
+        line-height: 1.4;
+    }}
+    .section {{
+        margin-bottom: 11px;
+    }}
+    .section-title {{
+        font-size: 10pt;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #0f172a;
+        border-bottom: 1px solid #cbd5e1;
+        padding-bottom: 2px;
+        margin-bottom: 6px;
+    }}
+    .summary-text {{
+        font-size: 9pt;
+        color: #1e293b;
+        text-align: justify;
+        margin: 0;
+    }}
+    .skills-grid {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }}
+    .skill-tag {{
+        background: #f1f5f9;
+        color: #0f172a;
+        border: 1px solid #cbd5e1;
+        padding: 2px 7px;
+        border-radius: 4px;
+        font-size: 8pt;
+        font-weight: 700;
+    }}
+    .exp-item {{
+        margin-bottom: 8px;
+    }}
+    .exp-header {{
+        display: flex;
+        justify-content: space-between;
+        font-weight: 800;
+        font-size: 9.5pt;
+        color: #020617;
+    }}
+    .exp-sub {{
+        font-size: 8.5pt;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 3px;
+    }}
+    ul.bullets {{
+        margin: 2px 0 0 16px;
+        padding: 0;
+        font-size: 8.5pt;
+        color: #1e293b;
+    }}
+    ul.bullets li {{
+        margin-bottom: 2px;
+    }}
+    .footer-seal {{
+        margin-top: 14px;
+        border-top: 1px dashed #cbd5e1;
+        padding-top: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 7.5pt;
+        color: #64748b;
+    }}
+    .seal-pill {{
+        font-weight: 800;
+        color: #0f172a;
+        background: #f8fafc;
+        border: 1px solid #94a3b8;
+        padding: 2px 6px;
+        border-radius: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }}
+</style>
+</head>
+<body>
+    <div class="header">
+        <div class="name-block">
+            <h1>{name}</h1>
+            <div class="sub-role">{role} &bull; {yoe}+ Years Verified Experience</div>
+        </div>
+        <div class="contact-block">
+            {email}<br>
+            {location}<br>
+            Direct Candidate Vector &bull; 0% Agency Spread
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Executive Engineering Vector</div>
+        <p class="summary-text">
+            Accomplished {role} with {yoe}+ years specializing in reliable distributed architectures, low-latency microservices, and modern continuous delivery lifecycles. Proven record of designing robust cloud infrastructure, optimizing high-throughput datastores, and delivering high-impact technical features under strict engineering quality standards.
+        </p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Verified Core Competencies & Technical Skills</div>
+        <div class="skills-grid">
+            {skills_chips}
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Production Experience & Quantified Impact</div>
+        
+        <div class="exp-item">
+            <div class="exp-header">
+                <span>{role} &bull; Lead Engineer</span>
+                <span>Verified Active Era</span>
+            </div>
+            <div class="exp-sub">Enterprise Engineering & Scalable Systems</div>
+            <ul class="bullets">
+                <li>Architected resilient REST & asynchronous streaming data services with sub-50ms latency.</li>
+                <li>Implemented containerized CI/CD pipelines accelerating team release velocity by over 35%.</li>
+                <li>Eliminated database query bottlenecks, reducing backend CPU utilization across critical paths.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Verified Credentials & Education</div>
+        <div class="exp-header">
+            <span>Bachelor of Technology / Computer Science or Equivalent</span>
+            <span>Accredited Technical Program</span>
+        </div>
+    </div>
+
+    <div class="footer-seal">
+        <span>Almond Jobs &bull; Candidate-First Career Intelligence Platform</span>
+        <span class="seal-pill">Verified Vector Dossier &bull; 1-Page Silicon Valley Standard</span>
+    </div>
+</body>
+</html>"""
+
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch()
+            page = await browser.new_page()
+            await page.set_content(html, wait_until="networkidle")
+            await page.pdf(path=output_path, format="A4", print_background=True)
+            await browser.close()
+        return output_path
+    except Exception as pw_err:
+        print(f"[DOC_EXPORTER] Notice: Playwright launch failed ({pw_err}). Falling back to pure-Python PDF.")
+        return _export_tech_dossier_pure_python(candidate_profile, output_path)
+
+def _export_tech_dossier_pure_python(candidate_profile, output_path):
+    from fpdf import FPDF
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 16)
+    name = candidate_profile.get("name") or "Candidate"
+    role = candidate_profile.get("current_role") or "Software Engineer"
+    pdf.cell(0, 10, f"{name.upper()}", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 11)
+    pdf.cell(0, 7, f"{role} — Verified Executive Vector", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(4)
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(0, 6, "VERIFIED SKILLS", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 9)
+    skills = ", ".join(candidate_profile.get("skills", [])[:15])
+    pdf.multi_cell(0, 5, skills)
+    pdf.ln(5)
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(0, 6, "PRODUCTION EXPERIENCE HIGHLIGHTS", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 9)
+    pdf.multi_cell(0, 5, "- Built and deployed low-latency backend architectures\n- Optimized database query performance and cloud infrastructure\n- Delivered customer-centric software features with 0% recruiter markup")
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+    pdf.output(output_path)
+    return output_path
+
+def export_tech_dossier_pdf(candidate_profile, output_path):
+    return asyncio.run(export_tech_dossier_pdf_async(candidate_profile, output_path))

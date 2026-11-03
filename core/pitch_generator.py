@@ -65,6 +65,15 @@ def generate_star_pitch(candidate_profile, job):
             "• Production Best Practices: Thoroughly grounded in automated testing, containerization, and agile engineering best practices."
         ]
         opening = f"With {cand_yoe}+ years of professional engineering experience, I specialize in building reliable applications, automated services, and scalable production workflows."
+
+    # If gap skills are targeted, inject an explicit domain alignment bullet
+    gap_skills = job.get("target_gap_skills") or job.get("gap_skills") or []
+    if gap_skills:
+        gaps_formatted = ", ".join(s.title() for s in gap_skills[:3])
+        focus_bullets.append(
+            f"• Targeted Stack Adaptability ({gaps_formatted}): Leveraging deep engineering fundamentals to execute with high velocity across {gaps_formatted} and modern distributed tools."
+        )
+
     bullets_text = "\n".join(focus_bullets)
 
     pitch = f"""Dear Hiring Team at {company},
