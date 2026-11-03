@@ -1,9 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Almond AI — Enterprise Direct ATS Career Intelligence</title>
+    <title>Almond Jobs — Move First. Apply Unseen.</title>
+    
+    <!-- Sharp Golden Almond Tab Favicons with Warm Royal Gold Box -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=4">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png?v=4">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png?v=4">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png?v=4">
+    <link rel="shortcut icon" href="/favicon.ico?v=4">
+    <meta name="theme-color" content="#ffffff">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -11,94 +20,149 @@
             theme: {
                 extend: {
                     colors: {
-                        brandNavy: '#0a0f1d',
-                        brandBlue: '#1d4ed8',
-                        brandElectric: '#2563eb',
-                        brandIndigo: '#4338ca',
-                        brandLavender: '#7c3aed',
-                        brandViolet: '#6d28d9',
-                        lavenderBg: '#f5f3ff',
-                        lavenderBorder: '#c4b5fd',
-                        lavenderText: '#5b21b6'
+                        kage: {
+                            bg: '#ffffff',
+                            surface: '#ffffff',
+                            card: 'rgba(255, 255, 255, 0.95)',
+                            border: 'rgba(226, 232, 240, 0.95)',
+                            violet: '#7c3aed',
+                            violetHover: '#6d28d9',
+                            violetGlow: 'rgba(124, 58, 237, 0.25)',
+                            gold: '#c5a059',
+                            goldHover: '#d4af37'
+                        },
+                        brandObsidian: '#070b14',
+                        brandViolet: '#7c3aed',
+                        brandVioletHover: '#6d28d9',
+                        brandGold: '#c5a059',
+                        brandSlate: '#0f172a'
                     },
                     fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+                        sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
                     }
                 }
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Razorpay Checkout SDK -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
     <style>
+        html, body {
+            height: 100vh;
+            max-height: 100vh;
+            width: 100vw;
+            max-width: 100vw;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
         body { 
-            font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; 
-            background-color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #070b14;
             color: #0f172a;
-            overflow-x: hidden;
         }
 
-        /* Futuristic Cyber Ambient Canvas */
-        .cyber-canvas {
-            background-color: #f8fafc;
-            background-image: 
-                radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.08) 0px, transparent 45%),
-                radial-gradient(circle at 85% 15%, rgba(124, 58, 237, 0.09) 0px, transparent 45%),
-                radial-gradient(circle at 50% 90%, rgba(59, 130, 246, 0.07) 0px, transparent 55%),
-                linear-gradient(to right, rgba(226, 232, 240, 0.3) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(226, 232, 240, 0.3) 1px, transparent 1px);
-            background-size: 100% 100%, 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+        /* Full-Screen Reel / Slide Viewport & Kinetic Track */
+        #story-viewport {
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+            overflow: hidden;
+            background-color: #070b14;
         }
 
-        /* Futuristic Glass Cards with Specular Highlight Edge */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.94);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(203, 213, 225, 0.9);
+        #story-track {
+            height: 100%;
+            width: 100%;
+            transform: translateY(0%);
+            transition: transform 0.75s cubic-bezier(0.25, 1, 0.3, 1);
+            will-change: transform;
+        }
+
+        .story-page {
+            height: 100vh;
+            max-height: 100vh;
+            width: 100vw;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        /* Frosted White Capsule Navigation */
+        .kage-glass-nav {
+            background: rgba(255, 255, 255, 0.90);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(226, 232, 240, 0.95);
+            box-shadow: 0 10px 30px -10px rgba(124, 58, 237, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+
+        /* Frosted White Luxury Cards with Violet Glow on Hover */
+        .glass-panel, .kage-card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(226, 232, 240, 0.95);
             box-shadow: 
-                0 1px 2px 0 rgba(15, 23, 42, 0.04),
-                0 8px 24px -4px rgba(37, 99, 235, 0.06),
-                inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+                0 1px 3px 0 rgba(15, 23, 42, 0.03),
+                0 12px 30px -6px rgba(15, 23, 42, 0.04),
+                inset 0 1px 0 0 rgba(255, 255, 255, 1);
             transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .glass-panel:hover {
-            border-color: rgba(147, 112, 219, 0.75);
+        .glass-panel:hover, .kage-card:hover {
+            border-color: rgba(124, 58, 237, 0.45);
             box-shadow: 
-                0 4px 12px 0 rgba(15, 23, 42, 0.06),
-                0 16px 36px -4px rgba(79, 70, 229, 0.12),
+                0 4px 14px 0 rgba(15, 23, 42, 0.04),
+                0 20px 45px -8px rgba(124, 58, 237, 0.12),
                 inset 0 1px 0 0 rgba(255, 255, 255, 1);
         }
 
-        /* Futuristic Command HUD Strip */
-        .hud-strip {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(245, 243, 255, 0.94) 100%);
-            border: 1px solid rgba(196, 181, 253, 0.85);
-            box-shadow: 0 10px 30px -5px rgba(124, 58, 237, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1);
+        .kage-card-subtle {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(226, 232, 240, 0.9);
         }
 
-        /* Glowing Pulse Orb */
-        .glow-dot-live {
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.8), 0 0 20px rgba(16, 185, 129, 0.4);
+        /* Vibrant Violet Range Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            background: rgba(226, 232, 240, 0.95);
+            height: 6px;
+            border-radius: 9999px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #7c3aed;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 12px rgba(124, 58, 237, 0.6);
+            cursor: pointer;
+            transition: transform 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #6d28d9;
         }
 
-        .glow-dot-ai {
-            box-shadow: 0 0 10px rgba(139, 92, 246, 0.8), 0 0 20px rgba(139, 92, 246, 0.4);
+        /* Ambient Glow Pulse */
+        @keyframes subtle-pulse {
+            0%, 100% { opacity: 0.15; transform: scale(1); }
+            50% { opacity: 0.30; transform: scale(1.05); }
         }
-
-        /* 3D Slow Float */
-        @keyframes float3D {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-6px) rotate(0.5deg); }
-        }
-
-        .float-3d {
-            animation: float3D 6s ease-in-out infinite;
+        .animate-ambient {
+            animation: subtle-pulse 10s ease-in-out infinite;
         }
 
         .loc-dropdown { 
@@ -106,449 +170,884 @@
             overflow-y: auto; 
             scrollbar-width: thin; 
         }
-
-        /* High contrast focus ring */
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.35);
-        }
-
-        /* Custom Modern Range Slider */
-        input[type="range"]::-webkit-slider-thumb {
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #2563eb;
-            border: 2px solid #ffffff;
-            box-shadow: 0 0 10px rgba(37, 99, 235, 0.6);
-            cursor: pointer;
-            transition: transform 0.15s ease;
-        }
-        input[type="range"]::-webkit-slider-thumb:hover {
-            transform: scale(1.18);
-            background: #7c3aed;
-        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col relative cyber-canvas text-slate-900 selection:bg-violet-200 selection:text-violet-900">
+<body class="min-h-screen flex flex-col relative selection:bg-violet-200 selection:text-violet-950">
 
-    <!-- 3D Volumetric Ambient Lighting Layers -->
-    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <!-- Top Left Royal Blue Orb -->
-        <div class="absolute -top-32 -left-32 w-[580px] h-[580px] rounded-full bg-gradient-to-br from-blue-500/15 via-indigo-500/10 to-transparent blur-[110px]"></div>
-        <!-- Top Right Cyber Lavender Orb -->
-        <div class="absolute -top-24 -right-28 w-[640px] h-[640px] rounded-full bg-gradient-to-bl from-violet-500/18 via-purple-400/12 to-transparent blur-[125px]"></div>
-        <!-- Center Bottom Soft Cyan/Electric Orb -->
-        <div class="absolute -bottom-48 left-1/4 w-[750px] h-[450px] rounded-full bg-gradient-to-tr from-cyan-400/10 via-blue-500/10 to-transparent blur-[130px]"></div>
-    </div>
 
-    <!-- Futuristic Almond Navbar -->
-    <header class="bg-slate-950/95 backdrop-blur-xl border-b border-slate-800 text-white sticky top-0 z-50 shadow-xl">
-        <div class="max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between relative z-10 py-2.5">
-            
-            <!-- Almond AI Brand Identity -->
-            <div class="flex items-center space-x-3.5">
-                <div class="bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-500 w-11 h-11 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30 ring-2 ring-violet-400/30">
-                    <i data-lucide="sparkles" class="w-6 h-6 text-white animate-pulse"></i>
+    <!-- 2. FLOATING FROSTED PEARL CAPSULE NAVBAR WITH VIBRANT VIOLET TOUCHES -->
+    <header class="fixed top-4 inset-x-0 z-50 flex justify-center px-4">
+        <nav class="kage-glass-nav rounded-full px-5 sm:px-7 py-2.5 max-w-5xl w-full flex items-center justify-between transition-all duration-300">
+            <!-- Brand & Golden Emblem + Violet Badge (Left) -->
+            <button type="button" onclick="goToSlide(0)" class="flex items-center gap-3 group cursor-pointer text-left">
+                <div class="relative w-8 h-8 flex items-center justify-center">
+                    <img src="/static/logo.png" alt="Almond Logo" class="w-7 h-7 object-contain drop-shadow-[0_0_8px_rgba(223,183,108,0.7)] group-hover:scale-105 transition-transform">
                 </div>
-                <div>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-2xl font-black tracking-tight bg-gradient-to-r from-white via-slate-100 to-violet-200 bg-clip-text text-transparent">Almond</span>
-                        <span class="px-2 py-0.5 text-xs font-black rounded-md bg-violet-600/30 text-violet-300 border border-violet-400/50 uppercase tracking-widest">AI</span>
-                    </div>
-                    <span class="text-xs text-blue-400 font-bold uppercase tracking-wider block">Enterprise Direct ATS Intelligence Platform</span>
+                <div class="flex items-baseline">
+                    <span class="font-black tracking-tight text-slate-950 text-base sm:text-lg">Almond Job<span class="text-violet-600">s</span></span>
                 </div>
+            </button>
+
+            <!-- Telemetry Feed (Middle): Incrementing & Decrementing Live Feed Counter -->
+            <div class="flex items-center gap-2 text-xs font-mono text-emerald-800 bg-emerald-50/90 border border-emerald-300/80 px-3.5 py-1.5 rounded-full shadow-xs">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                <span id="livePostingsCount" class="font-black text-slate-950">3,315,258</span>
+                <span class="text-emerald-800 font-bold">Live Feed</span>
+                <span id="livePostingDelta" class="text-[10px] text-emerald-600 font-bold opacity-0 transition-opacity duration-300">+12</span>
             </div>
 
-            <!-- Telemetry & Status Badges -->
-            <div class="flex items-center space-x-3">
-                <div class="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-emerald-950/90 text-emerald-300 border border-emerald-700/80 shadow-md">
-                    <span class="w-2.5 h-2.5 mr-2 bg-emerald-400 rounded-full glow-dot-live animate-ping"></span>
-                    <span class="w-2.5 h-2.5 mr-2 bg-emerald-400 rounded-full glow-dot-live"></span>
-                    <span id="livePostingsCount" class="font-mono tracking-tight text-white font-black text-sm">3,314,842</span>
-                    <span class="ml-1 text-emerald-300">Live Postings</span>
-                    <span id="livePostingDelta" class="ml-1.5 text-[10px] font-mono text-emerald-400 opacity-0 transition-opacity duration-300 font-bold">+12</span>
-                </div>
-                <div class="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-violet-950/90 text-violet-200 border border-violet-700/80 shadow-md hidden sm:inline-flex">
-                    <i data-lucide="shield-check" class="w-4 h-4 mr-1.5 text-violet-400"></i>
-                    <span>100% Direct Endpoints (Zero Recruiter Spread)</span>
-                </div>
+            <!-- Action Area (Right): Who We Are + VIP Access + Profile Icon Button -->
+            <div class="flex items-center gap-2 sm:gap-2.5">
+                <button type="button" onclick="openHeroInfoModal('ats')" class="px-3 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-bold text-slate-800 hover:text-emerald-900 bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5" title="Learn more about Almond Jobs & our mission">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    <span>Who We Are</span>
+                </button>
+                <button type="button" onclick="openVipPricingModal()" class="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs px-3.5 sm:px-5 py-2 rounded-full shadow-md shadow-violet-500/25 hover:scale-105 active:scale-95 transition-all cursor-pointer">
+                    VIP Access
+                </button>
+                <button type="button" id="topProfileBtn" onclick="openProfileModal()" class="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 hover:bg-violet-50 border border-slate-300 hover:border-violet-300 text-slate-700 hover:text-violet-700 flex items-center justify-center transition shadow-2xs cursor-pointer group" title="Candidate Profile & Settings">
+                    <i id="topProfileIcon" data-lucide="user" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
+                    <span id="topProfileInitials" class="hidden text-[10px] font-black text-violet-800 uppercase">CA</span>
+                    <span id="profileActiveIndicator" class="hidden absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white shadow-xs"></span>
+                </button>
             </div>
-
-        </div>
+        </nav>
     </header>
 
-    <!-- Main Enterprise Dashboard Canvas -->
-    <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-7 relative z-10">
+    <!-- KINETIC REEL / STORY PRESENTATION VIEWPORT -->
+    <div id="story-viewport" class="relative w-full h-screen overflow-hidden">
+        <div id="story-track" class="w-full h-full">
+
+            <!-- 3. PAGE 1: HERO (STANDARD PROFESSIONAL SAAS HERO - TRUE VERTICAL & HORIZONTAL CENTER) -->
+            <section id="hero" class="story-page w-full h-full relative overflow-hidden bg-white">
+                
+                <!-- Clean white canvas with warrior silhouette and subtle natural color (Page 1 only) -->
+                <div class="absolute inset-0 pointer-events-none z-0 overflow-hidden bg-[#fafaf9]">
+                    <video autoplay loop muted playsinline preload="auto" poster="/static/warrior_clean.png?v=20261103_700" class="w-full h-full object-cover object-center opacity-30 transition-opacity duration-300">
+                        <source src="/static/kage_clean.webm?v=20261103_700" type="video/webm">
+                        <source src="/static/kage_clean.mp4?v=20261103_700" type="video/mp4">
+                    </video>
+                    <!-- Pure white atmospheric washes providing crisp background and clear silhouette visibility -->
+                    <div class="absolute inset-0 bg-white/45"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-white via-transparent to-white/70"></div>
+                </div>
+
+                <!-- Centered Hero Content -->
+                <div class="max-w-5xl mx-auto w-full relative z-10 flex flex-col justify-center items-center text-center h-full px-6 lg:px-8 pt-28 sm:pt-32 pb-6">
+                    
+                    <!-- Value Proposition Interactive Pills (Centrally Aligned) -->
+                    <div class="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 mb-5 mx-auto w-full text-center">
+                        <button type="button" onclick="openHeroInfoModal('brokers')" class="px-3.5 py-1.5 rounded-full text-[11px] font-extrabold tracking-wider uppercase bg-red-100/90 hover:bg-red-200 text-red-800 border border-red-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Click to view broker breakdown">
+                            <span>✕ NO BROKERS</span>
+                            <span class="text-[9px] bg-red-200 text-red-950 px-1.5 py-0.5 rounded-full font-black">WHAT'S THIS? ℹ</span>
+                        </button>
+                        <button type="button" onclick="openHeroInfoModal('middlemen')" class="px-3.5 py-1.5 rounded-full text-[11px] font-extrabold tracking-wider uppercase bg-red-100/90 hover:bg-red-200 text-red-800 border border-red-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Click to view middlemen breakdown">
+                            <span>✕ NO MIDDLEMEN</span>
+                            <span class="text-[9px] bg-red-200 text-red-950 px-1.5 py-0.5 rounded-full font-black">WHAT'S THIS? ℹ</span>
+                        </button>
+                        <button type="button" onclick="openHeroInfoModal('deadposts')" class="px-3.5 py-1.5 rounded-full text-[11px] font-extrabold tracking-wider uppercase bg-red-100/90 hover:bg-red-200 text-red-800 border border-red-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Click to view ghost jobs breakdown">
+                            <span>✕ NO DEAD POSTS</span>
+                            <span class="text-[9px] bg-red-200 text-red-950 px-1.5 py-0.5 rounded-full font-black">WHAT'S THIS? ℹ</span>
+                        </button>
+                    </div>
+
+                    <!-- Expansive Headline: Very Large "Move First" Statement -->
+                    <h1 class="tracking-tight text-slate-950 max-w-4xl mx-auto mb-5 text-center">
+                        <span class="block text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black text-slate-950 tracking-tight leading-[1.06] pb-1">Move first.</span>
+                        <span class="inline-block text-3xl sm:text-4xl md:text-5xl font-black bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent tracking-tight leading-normal pt-1 pb-3 px-2" style="-webkit-box-decoration-break: clone; box-decoration-break: clone;">Apply unseen.</span>
+                    </h1>
+
+                    <!-- Narrative Copy: Clear Visual Hierarchy & Generous Line Leading -->
+                    <div class="max-w-2xl mx-auto text-center space-y-3.5 mb-7">
+                        <p class="text-base sm:text-lg md:text-xl text-slate-800 font-semibold leading-relaxed">
+                            Legacy job middlemen get you a job with <span class="whitespace-nowrap text-violet-700 font-black underline decoration-violet-300 decoration-2 underline-offset-4">20% to 35%</span> of your first-year salary as agency markup.
+                        </p>
+                        <p class="text-xs sm:text-sm md:text-base text-slate-500 font-normal leading-relaxed">
+                            Almond Jobs indexes 3.3M+ direct enterprise <strong class="text-slate-800 font-bold">live feeds</strong> in real-time—connecting you straight to internal engineering leadership at Ashby, Lever, Greenhouse, and Workday with zero middlemen, zero recruiter markups, and zero dead listings.
+                        </p>
+                    </div>
+
+                    <!-- Action CTA: Centered Configure Profile Alone -->
+                    <div class="flex items-center justify-center mb-7">
+                        <button type="button" onclick="goToSlide(1)" class="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-sm sm:text-base px-9 py-4 rounded-full shadow-xl shadow-violet-500/30 hover:shadow-violet-500/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-2.5 cursor-pointer">
+                            <span>Configure Profile ↓</span>
+                        </button>
+                    </div>
+
+                    <!-- 3 Feature Advantage Cards (Standard Frosted SaaS Cards) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full max-w-3xl mx-auto text-left mb-6">
+                        <div class="kage-card rounded-2xl p-4 border border-slate-200/90 bg-white/90 backdrop-blur-md shadow-xs hover:border-violet-300 hover:shadow-md transition">
+                            <div class="flex items-center gap-2 mb-1.5">
+                                <span class="w-2 h-2 rounded-full bg-violet-600"></span>
+                                <span class="text-[11px] font-bold uppercase text-violet-700 tracking-wider">0% Recruiter Spread</span>
+                            </div>
+                            <span class="text-xs sm:text-sm font-semibold text-slate-900 leading-snug block">Keep 100% of your negotiated compensation.</span>
+                        </div>
+                        <div class="kage-card rounded-2xl p-4 border border-slate-200/90 bg-white/90 backdrop-blur-md shadow-xs hover:border-violet-300 hover:shadow-md transition">
+                            <div class="flex items-center gap-2 mb-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+                                <span class="text-[11px] font-bold uppercase text-emerald-700 tracking-wider">Verified Compensation</span>
+                            </div>
+                            <span class="text-xs sm:text-sm font-semibold text-slate-900 leading-snug block">Strict salary thresholds in INR, USD, EUR, GBP.</span>
+                        </div>
+                        <div class="kage-card rounded-2xl p-4 border border-slate-200/90 bg-white/90 backdrop-blur-md shadow-xs hover:border-violet-300 hover:shadow-md transition">
+                            <div class="flex items-center gap-2 mb-1.5">
+                                <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+                                <span class="text-[11px] font-bold uppercase text-indigo-700 tracking-wider">Founder Direct Access</span>
+                            </div>
+                            <span class="text-xs sm:text-sm font-semibold text-slate-900 leading-snug block">Live Y Combinator &amp; Hacker News founder feed with zero agents.</span>
+                        </div>
+                    </div>
+
+                    <!-- Trusted By Senior Engineers Proof -->
+                    <div class="flex items-center justify-center gap-2.5 text-xs text-slate-500 font-medium">
+                        <div class="flex -space-x-2 overflow-hidden">
+                            <div class="inline-block h-5 w-5 rounded-full ring-2 ring-white bg-gradient-to-tr from-violet-600 to-indigo-400"></div>
+                            <div class="inline-block h-5 w-5 rounded-full ring-2 ring-white bg-gradient-to-tr from-amber-500 to-amber-200"></div>
+                            <div class="inline-block h-5 w-5 rounded-full ring-2 ring-white bg-gradient-to-tr from-emerald-600 to-teal-300"></div>
+                        </div>
+                        <span>Trusted by <strong class="text-slate-800 font-semibold">7,000+ senior engineers</strong> across top tech companies</span>
+                    </div>
+
+                </div>
+
+            </section>
+
+    <!-- 4. PAGE 2: DIRECT APPLICATION CONFIGURATION & PROFILE LANDSCAPE (SLIDE 2) -->
+    <section id="workspace" class="story-page w-full h-full relative overflow-hidden bg-[#0e160f]">
         
-        <!-- Enterprise Header Command Strip (High Contrast & Futuristic HUD) -->
-        <div class="mb-7 hud-strip rounded-3xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5 border border-violet-300/80">
-            <div class="space-y-1.5">
-                <div class="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-violet-100 text-violet-900 border border-violet-300 text-xs font-black tracking-wide">
-                    <span class="flex h-2.5 w-2.5 relative">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-500 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-violet-700"></span>
-                    </span>
-                    <span>ALMOND ENTERPRISE TERMINAL</span>
-                    <span class="text-violet-400">•</span>
-                    <span>DIRECT BROKER-FREE CAREER DISCOVERY</span>
-                </div>
-                <h1 class="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight leading-snug">
-                    Direct ATS Endpoints. <span class="bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 bg-clip-text text-transparent">Verified Compensation.</span> Zero Middleman Cut.
-                </h1>
-                <p class="text-sm font-semibold text-slate-700 max-w-4xl leading-relaxed">
-                    Almond crawls live enterprise ATS infrastructures (Ashby, Workday, Lever, SmartRecruiters, Greenhouse) in real-time. Uncapped global search, deterministic CV match scores, and verified direct applications.
-                </p>
-            </div>
-            <div class="flex items-center gap-3 flex-wrap lg:flex-nowrap">
-                <div class="bg-white/95 border-2 border-slate-200/90 rounded-2xl px-4 py-2.5 text-center flex-1 sm:flex-initial shadow-sm">
-                    <span class="block text-sm font-black text-slate-950">3,300,000+</span>
-                    <span class="block text-xs text-slate-600 font-bold uppercase tracking-wider">Live Postings</span>
-                </div>
-                <div class="bg-white/95 border-2 border-emerald-200/90 rounded-2xl px-4 py-2.5 text-center flex-1 sm:flex-initial shadow-sm">
-                    <span class="block text-sm font-black text-emerald-700">100% Direct</span>
-                    <span class="block text-xs text-emerald-800 font-bold uppercase tracking-wider">ATS Gateways</span>
-                </div>
-                <div class="bg-white/95 border-2 border-blue-200/90 rounded-2xl px-4 py-2.5 text-center flex-1 sm:flex-initial shadow-sm">
-                    <span class="block text-sm font-black text-blue-700">0% Spread</span>
-                    <span class="block text-xs text-blue-800 font-bold uppercase tracking-wider">Broker Cut</span>
-                </div>
-            </div>
+        <!-- DUAL-TONE SPLIT CRACK BACKGROUND (Cream Left, Dark Green Right with Golden Jagged Crack) -->
+        <div class="split-crack-bg absolute inset-0 pointer-events-none z-0 overflow-hidden" style="background-color: #0e160f;">
+            <!-- Right Side: Optimized Hardware-Accelerated Ambient Green Gradients (0ms blur penalty) -->
+            <div class="absolute inset-0" style="background: 
+                radial-gradient(circle at 90% 25%, rgba(74, 222, 128, 0.16) 0%, transparent 45%),
+                radial-gradient(circle at 74% 88%, rgba(134, 239, 172, 0.11) 0%, transparent 40%),
+                radial-gradient(circle at 95% 65%, rgba(49, 64, 41, 0.65) 0%, transparent 35%),
+                radial-gradient(circle at 82% 28%, #274026 0%, #182819 45%, #0e150f 85%);"></div>
+
+            <!-- SVG Split with Left Cream Gradient & Gold Jagged Crack -->
+            <svg class="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 1000 1000">
+                <defs>
+                    <!-- Warm Cream to Slightly Darker Cream / Stone Gradient -->
+                    <linearGradient id="splitCreamGrad_ws" x1="0%" y1="0%" x2="70%" y2="100%">
+                        <stop offset="0%" stop-color="#f7f2e4" />
+                        <stop offset="35%" stop-color="#efe7ce" />
+                        <stop offset="70%" stop-color="#e4d9c0" />
+                        <stop offset="100%" stop-color="#d6cca8" />
+                    </linearGradient>
+
+                    <!-- Soft organic circular tint on cream side (matching user reference) -->
+                    <radialGradient id="creamBlobTop_ws" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#d7d7ba" stop-opacity="0.75" />
+                        <stop offset="100%" stop-color="#efe7ce" stop-opacity="0" />
+                    </radialGradient>
+                    <radialGradient id="creamBlobBot_ws" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#dad2cc" stop-opacity="0.7" />
+                        <stop offset="100%" stop-color="#e4d9c0" stop-opacity="0" />
+                    </radialGradient>
+
+                    <!-- Gold Ochre Crack Gradient -->
+                    <linearGradient id="goldCrackGrad_ws" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#f2c544" />
+                        <stop offset="25%" stop-color="#cf9826" />
+                        <stop offset="50%" stop-color="#ecc04f" />
+                        <stop offset="75%" stop-color="#be871f" />
+                        <stop offset="100%" stop-color="#dfa432" />
+                    </linearGradient>
+
+                    <!-- Drop Shadow on Right Side -->
+                    <filter id="crackShadow_ws" x="-20%" y="-20%" width="170%" height="170%">
+                        <feDropShadow dx="8" dy="2" stdDeviation="8" flood-color="#000000" flood-opacity="0.7" />
+                    </filter>
+                </defs>
+
+                <!-- Left Cream Polygon with Jagged Crack Seam (Centered at 500) -->
+                <path d="
+                    M 0 0 
+                    L 500 0 
+                    L 508 55 
+                    L 492 115 
+                    L 509 185 
+                    L 491 255 
+                    L 509 330 
+                    L 492 410 
+                    L 508 490 
+                    L 491 570 
+                    L 509 655 
+                    L 492 735 
+                    L 508 820 
+                    L 492 895 
+                    L 506 955 
+                    L 500 1000 
+                    L 0 1000 
+                    Z
+                " fill="url(#splitCreamGrad_ws)" />
+
+                <!-- Ambient Tonal Organic Circles on Cream Side -->
+                <circle cx="270" cy="160" r="145" fill="url(#creamBlobTop_ws)" />
+                <circle cx="100" cy="820" r="210" fill="url(#creamBlobBot_ws)" />
+
+                <!-- Golden Jagged Seam Stroke with Drop Shadow -->
+                <path d="
+                    M 500 0 
+                    L 508 55 
+                    L 492 115 
+                    L 509 185 
+                    L 491 255 
+                    L 509 330 
+                    L 492 410 
+                    L 508 490 
+                    L 491 570 
+                    L 509 655 
+                    L 492 735 
+                    L 508 820 
+                    L 492 895 
+                    L 506 955 
+                    L 500 1000
+                " fill="none" stroke="url(#goldCrackGrad_ws)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" filter="url(#crackShadow_ws)" />
+            </svg>
         </div>
 
-        <!-- 2-Column Responsive Workspace Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-7 items-start">
+        <div class="max-w-[1360px] mx-auto w-full relative z-10 px-6 sm:px-8 pt-20 pb-4 flex flex-col justify-start">
             
-            <!-- Left Column: Controls & Filters (5 cols on md, 4 cols on lg/xl) -->
-            <div class="col-span-12 md:col-span-5 lg:col-span-4 space-y-5">
+            <!-- Section Header (Centered in the middle over the background split crack) -->
+            <div class="flex flex-col items-center justify-center text-center w-full mb-5">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-200/95 text-amber-950 text-[11px] font-black uppercase tracking-wider border border-amber-300 shadow-xs mb-1.5">
+                    <span>Direct Live Feed Intelligence Deck</span>
+                </div>
+                <h2 class="text-xl sm:text-2xl md:text-3xl font-black tracking-tight flex items-center justify-center flex-wrap gap-x-2">
+                    <span class="text-slate-950 font-black">Configure Your Direct</span>
+                    <span class="text-[#f5f0e6] font-black drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]">Application Landscape</span>
+                </h2>
+            </div>
+
+        <!-- Landscape 2-Column Responsive Grid (Left on Cream, Right on Forest Green with Wide Spacing) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-stretch">
+            
+            <!-- Left Column: Resume Upload (Top) + Derived Intelligence & Core Skills (Bottom) -> DEEP GREEN CONTAINERS (Shifted Left) -->
+            <div class="flex flex-col gap-4 lg:pr-2">
                 
-                <!-- 1. Resume Upload Card -->
-                <div class="glass-panel rounded-3xl p-6 border-2 border-slate-200/90">
+                <!-- 1. Resume Upload Card (Top Left) -> Deep Forest Green Container -->
+                <div class="rounded-3xl p-6 border shadow-2xl flex flex-col backdrop-blur-xl text-white" style="background: linear-gradient(160deg, #112215 0%, #0a160d 100%); border-color: rgba(74, 222, 128, 0.35); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
                     <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center space-x-2.5">
-                            <span class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-black text-xs ring-4 ring-blue-100 shadow-sm">1</span>
-                            <h2 class="font-extrabold text-slate-950 text-base">Candidate Profile</h2>
+                        <div class="flex items-center space-x-3">
+                            <span class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white flex items-center justify-center font-black text-xs ring-4 ring-violet-500/20 border border-violet-400 shadow-md">1</span>
+                            <div>
+                                <h3 class="font-extrabold text-white text-base">Candidate Profile</h3>
+                                <p class="text-xs text-emerald-200/80 font-medium">Sandboxed text vectorization</p>
+                            </div>
                         </div>
-                        <span id="uploadStatusText" class="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">PDF, DOCX, TXT</span>
+                        <span id="uploadStatusText" class="text-[11px] font-mono font-bold text-emerald-300 bg-emerald-950/80 px-2.5 py-1 rounded-full border border-emerald-500/40">PDF, DOCX, TXT</span>
                     </div>
 
                     <!-- Drag & Drop Zone -->
-                    <div id="dropZone" class="border-2 border-dashed border-blue-300/80 rounded-2xl p-5 text-center hover:border-blue-600 hover:bg-blue-50/60 transition-all cursor-pointer relative group bg-blue-50/30">
+                    <div id="dropZone" class="border-2 border-dashed rounded-2xl p-6 text-center hover:border-emerald-400 transition-all cursor-pointer relative group flex-1 flex flex-col justify-center" style="background-color: rgba(19, 38, 23, 0.6); border-color: rgba(74, 222, 128, 0.45);">
                         <input type="file" id="resumeFileInput" class="hidden" accept=".pdf,.docx,.doc,.txt">
                         <div id="uploadPlaceholder">
-                            <div class="w-12 h-12 bg-white text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-110 transition-transform shadow-md border border-blue-100">
+                            <div class="w-12 h-12 bg-emerald-900/60 text-emerald-300 rounded-2xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-105 transition-transform border border-emerald-500/30 shadow-md">
                                 <i data-lucide="upload-cloud" class="w-6 h-6"></i>
                             </div>
-                            <p class="text-sm font-bold text-slate-900">Drop resume here, or <span class="text-blue-600 underline">browse files</span></p>
-                            <p class="text-xs text-slate-600 mt-1 font-medium">E.g. Sridhar_S_Resume.pdf</p>
+                            <p class="text-sm font-bold text-white">Drop resume here, or <span class="text-emerald-400 underline font-extrabold">browse files</span></p>
+                            <p class="text-xs text-emerald-300/70 mt-1 font-medium">E.g. Sridhar_S_Resume.pdf</p>
                         </div>
                         <div id="uploadLoading" class="hidden py-4">
-                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
-                            <p class="text-xs font-bold text-slate-800">Almond analyzing text layer & extracting skills...</p>
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400 mx-auto mb-2"></div>
+                            <p class="text-xs font-bold text-emerald-300">Extracting skills &amp; structuring profile...</p>
                         </div>
-                        <div id="uploadedInfo" class="hidden text-left bg-white border-2 border-emerald-300 rounded-xl p-3 shadow-sm">
+                        <div id="uploadedInfo" class="hidden text-left bg-[#122216] border-2 border-emerald-400 rounded-xl p-3 shadow-sm">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-2.5 truncate">
-                                    <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
+                                    <div class="w-7 h-7 rounded-lg bg-emerald-900/80 text-emerald-300 flex items-center justify-center flex-shrink-0 border border-emerald-500/40">
                                         <i data-lucide="file-check" class="w-4 h-4"></i>
                                     </div>
-                                    <span id="fileNameDisplay" class="text-sm font-black text-slate-950 truncate">resume.pdf</span>
+                                    <span id="fileNameDisplay" class="text-sm font-black text-white truncate">resume.pdf</span>
                                 </div>
-                                <button type="button" id="reuploadBtn" class="text-xs text-blue-700 hover:text-indigo-800 hover:underline flex-shrink-0 ml-2 font-bold px-2 py-1 bg-blue-50 rounded-lg">Change</button>
+                                <button type="button" id="reuploadBtn" class="text-xs text-emerald-300 hover:text-white flex-shrink-0 ml-2 font-bold px-2 py-1 bg-emerald-950/80 border border-emerald-500/40 rounded-lg">Change</button>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Parsed Profile Snapshot -->
-                    <div id="parsedProfileSection" class="hidden mt-4 pt-4 border-t-2 border-slate-100 space-y-3">
-                        <div class="bg-slate-50/90 rounded-2xl p-3.5 border border-slate-200/90 space-y-2">
-                            <div class="flex justify-between items-center text-sm">
-                                <span class="text-slate-600 font-bold">Candidate:</span>
-                                <span id="profileName" class="font-black text-slate-950 bg-white px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-sm"></span>
-                            </div>
-                            <div class="flex justify-between items-center text-sm">
-                                <span class="text-slate-600 font-bold">Experience:</span>
-                                <span id="profileYoe" class="font-extrabold text-blue-800 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200"></span>
-                            </div>
-                            <div class="flex justify-between items-center text-sm">
-                                <span class="text-slate-600 font-bold">Target Role:</span>
-                                <span id="profileRole" class="font-extrabold text-slate-900 truncate max-w-[200px]"></span>
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-xs font-black text-slate-700 uppercase tracking-wider">Extracted Core Skills:</span>
-                                <span class="text-xs text-violet-800 font-black bg-violet-100 px-2 py-0.5 rounded-md border border-violet-300">Live AI Parsed</span>
-                            </div>
-                            <div id="profileSkillsBadges" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 2. Target Criteria & Unrestricted Filters -->
-                <div class="glass-panel rounded-3xl p-6 border-2 border-slate-200/90 space-y-5">
-                    <div class="flex items-center space-x-2.5 mb-2">
-                        <span class="w-7 h-7 rounded-full bg-violet-600 text-white flex items-center justify-center font-black text-xs ring-4 ring-violet-100 shadow-sm">2</span>
-                        <h2 class="font-extrabold text-slate-950 text-base">Target Criteria & Compensation</h2>
-                    </div>
-
-                    <!-- 1. Compensation Filter -->
-                    <div class="space-y-2.5">
-                        <div class="flex justify-between items-center">
-                            <label class="text-xs font-black uppercase tracking-wider text-slate-700">Minimum Expected Package</label>
-                            <div class="flex items-center space-x-1.5 bg-emerald-50 border-2 border-emerald-300 rounded-xl px-2.5 py-1 shadow-sm">
-                                <span id="currencySymbol" class="text-sm font-black text-emerald-800">₹</span>
-                                <input type="number" id="packageNumberInput" min="0" max="500" step="1" value="15" class="w-20 text-right font-black text-sm text-emerald-900 bg-transparent focus:outline-none">
-                                <span id="currencyUnit" class="text-xs font-black text-emerald-800">LPA</span>
+                <!-- 2. Derived Intelligence & Core Skills Card (Bottom Left) -> Deep Forest Green Container -->
+                <div class="rounded-3xl p-6 border shadow-2xl flex-1 flex flex-col justify-between backdrop-blur-xl text-white" style="background: linear-gradient(160deg, #112215 0%, #0a160d 100%); border-color: rgba(74, 222, 128, 0.35); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="cpu" class="w-4 h-4 text-emerald-400"></i>
+                                <h3 class="font-black text-white text-sm uppercase tracking-wider">Derived Skills &amp; Profile Vector</h3>
                             </div>
+                            <span class="text-[10px] text-emerald-300 font-black bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-500/40">Verified Vector</span>
                         </div>
 
-                        <!-- Currency Selector Tabs (Tactile & High Contrast Multi-Currency) -->
-                        <div class="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl text-xs font-black text-slate-700 border border-slate-200">
-                            <button type="button" class="currency-tab active flex-1 py-1.5 rounded-lg bg-white text-blue-700 shadow-sm transition border border-slate-200" data-curr="INR">₹ INR</button>
-                            <button type="button" class="currency-tab flex-1 py-1.5 rounded-lg hover:text-slate-950 transition" data-curr="USD_YR">$ USD</button>
-                            <button type="button" class="currency-tab flex-1 py-1.5 rounded-lg hover:text-slate-950 transition" data-curr="EUR">€ EUR</button>
-                            <button type="button" class="currency-tab flex-1 py-1.5 rounded-lg hover:text-slate-950 transition" data-curr="GBP">£ GBP</button>
-                            
-                            <!-- More Global Currencies Dropdown -->
-                            <select id="moreCurrenciesSelect" class="bg-white border-2 border-slate-200 rounded-lg px-2 py-1.5 text-xs font-black text-slate-800 focus:outline-none focus:border-blue-600 transition shadow-sm cursor-pointer">
-                                <option value="" disabled selected>More ▾</option>
-                                <option value="CAD">C$ CAD</option>
-                                <option value="AUD">A$ AUD</option>
-                                <option value="AED">AED</option>
-                                <option value="USD_MO">$ / Mo</option>
-                                <option value="ANY">No Min</option>
-                            </select>
-                        </div>
-
-                        <!-- Range Slider -->
-                        <div class="py-1">
-                            <input type="range" id="packageRangeSlider" min="0" max="150" step="1" value="15" class="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer">
-                        </div>
-
-                        <!-- Quick Presets -->
-                        <div id="salaryPresetsContainer" class="flex flex-wrap gap-1.5 pt-1"></div>
-                    </div>
-
-                    <!-- 2. Worldwide Locations A to Z with Typeahead -->
-                    <div class="space-y-2 pt-2 border-t border-slate-200/80 relative">
-                        <label class="text-xs font-black uppercase tracking-wider text-slate-700 block">Worldwide Locations (A-Z Autocomplete)</label>
-                        
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-                                <i data-lucide="search" class="w-4 h-4"></i>
+                        <!-- Parsed Profile Snapshot -->
+                        <div id="parsedProfileSection" class="space-y-3">
+                            <div class="rounded-2xl p-4 border space-y-2" style="background-color: rgba(19, 38, 23, 0.7); border-color: rgba(74, 222, 128, 0.3);">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-emerald-300/80 font-semibold">Identified Candidate:</span>
+                                    <span id="profileName" class="font-black text-white bg-[#0a140d] px-2.5 py-0.5 rounded-lg border border-emerald-800/60 shadow-sm">Waiting for upload...</span>
+                                </div>
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-emerald-300/80 font-semibold">Verified Experience:</span>
+                                    <span id="profileYoe" class="font-extrabold text-emerald-200 bg-emerald-900/60 px-2.5 py-0.5 rounded-lg border border-emerald-600/50">—</span>
+                                </div>
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-emerald-300/80 font-semibold">Target Engineering Role:</span>
+                                    <span id="profileRole" class="font-extrabold text-emerald-100 truncate max-w-[180px]">—</span>
+                                </div>
                             </div>
-                            <input type="text" id="locationSearchInput" autocomplete="off" placeholder="Type city or country (e.g. Chennai, Berlin, USA)..." class="w-full pl-9 pr-3 py-2.5 text-sm font-semibold border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 shadow-sm bg-white text-slate-900 placeholder:text-slate-400">
-                            <div id="locationDropdown" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border-2 border-slate-200 rounded-2xl shadow-2xl z-50 loc-dropdown divide-y divide-slate-100"></div>
-                        </div>
 
-                        <!-- Active Tags -->
-                        <div>
-                            <span class="text-xs font-bold text-slate-600 block mb-1">Active Target Locations:</span>
-                            <div id="selectedLocationsTags" class="flex flex-wrap gap-1.5 min-h-[34px] p-2 bg-slate-50 border border-slate-200 rounded-xl"></div>
-                        </div>
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-black text-emerald-200 uppercase tracking-wider">Derived Core Skills:</span>
+                                    <span id="skillsCountBadge" class="text-[10px] font-mono font-bold text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/40">0 extracted</span>
+                                </div>
+                                <div id="profileSkillsBadges" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1 mb-2.5">
+                                    <span class="text-xs text-emerald-300/60 italic font-medium">Skills extracted from resume will be rendered here automatically.</span>
+                                </div>
 
-                        <!-- Quick Preset Pills -->
-                        <div class="pt-1">
-                            <div class="flex flex-wrap gap-1.5" id="quickLocationPills">
-                                <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border-2 border-violet-300 bg-violet-100 text-violet-900 font-extrabold hover:bg-violet-200 transition" data-loc="Worldwide Remote">🌐 Worldwide Remote</button>
-                                <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:bg-slate-100 transition" data-loc="All India">🇮🇳 All India</button>
-                                <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:bg-slate-100 transition" data-loc="Coimbatore">Coimbatore</button>
-                                <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:bg-slate-100 transition" data-loc="Chennai">Chennai</button>
-                                <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:bg-slate-100 transition" data-loc="Bengaluru">Bengaluru</button>
-                                <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:bg-slate-100 transition" data-loc="United States">🇺🇸 United States</button>
+                                <!-- Interactive Add Missing Skill Bar -->
+                                <div class="flex items-center space-x-2 pt-2 border-t border-emerald-800/60">
+                                    <div class="relative flex-1">
+                                        <input type="text" id="addSkillInput" placeholder="Add missing skill (e.g. Flutter, React, AWS)..." class="w-full px-3 py-1.5 text-xs font-semibold rounded-xl bg-[#0a160d] text-white border border-emerald-600/50 focus:outline-none focus:border-emerald-400 placeholder:text-emerald-400/50">
+                                    </div>
+                                    <button type="button" id="addSkillBtn" class="px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs rounded-xl shadow-md flex items-center space-x-1 cursor-pointer transition flex-shrink-0">
+                                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                        <span>Add Skill</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 3. Work Arrangement & Employment Modes -->
-                    <div class="space-y-3 pt-3 border-t border-slate-200/80">
-                        <div>
-                            <label class="text-xs font-black uppercase tracking-wider text-slate-700 block mb-1.5">Work Arrangement</label>
-                            <div class="grid grid-cols-4 gap-1.5 text-xs font-extrabold">
-                                <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center has-[:checked]:border-blue-600 has-[:checked]:bg-blue-100 has-[:checked]:text-blue-900 transition">
-                                    <input type="radio" name="work_mode" value="all" checked class="hidden">
-                                    <span>All</span>
-                                </label>
-                                <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-100 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-violet-100 has-[:checked]:text-violet-900 transition">
-                                    <input type="radio" name="work_mode" value="remote" class="hidden">
-                                    <span>Remote</span>
-                                </label>
-                                <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center has-[:checked]:border-blue-600 has-[:checked]:bg-blue-100 has-[:checked]:text-blue-900 transition">
-                                    <input type="radio" name="work_mode" value="hybrid" class="hidden">
-                                    <span>Hybrid</span>
-                                </label>
-                                <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center has-[:checked]:border-blue-600 has-[:checked]:bg-blue-100 has-[:checked]:text-blue-900 transition">
-                                    <input type="radio" name="work_mode" value="onsite" class="hidden">
-                                    <span>Onsite</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="text-xs font-black uppercase tracking-wider text-slate-700 block mb-1.5">Contract / Engagement Type</label>
-                            <div class="grid grid-cols-3 gap-1.5 text-xs font-extrabold">
-                                <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center has-[:checked]:border-blue-600 has-[:checked]:bg-blue-100 has-[:checked]:text-blue-900 transition">
-                                    <input type="radio" name="employment_type" value="all" checked class="hidden">
-                                    <span>All Types</span>
-                                </label>
-                                <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-100 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-violet-100 has-[:checked]:text-violet-900 transition">
-                                    <input type="radio" name="employment_type" value="contract" class="hidden">
-                                    <span>Freelance</span>
-                                </label>
-                                <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center has-[:checked]:border-blue-600 has-[:checked]:bg-blue-100 has-[:checked]:text-blue-900 transition">
-                                    <input type="radio" name="employment_type" value="full-time" class="hidden">
-                                    <span>Full-Time</span>
-                                </label>
-                            </div>
-                        </div>
+                    <div class="mt-4 pt-3 border-t border-emerald-800/60 flex items-center justify-between text-[11px] text-emerald-300/70 font-medium">
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>Direct Feed Matching Ready (Ashby, Workday, Lever)</span>
+                        </span>
+                        <button type="button" onclick="openAtsModal()" class="font-mono text-emerald-400 hover:text-white font-bold underline cursor-pointer">Who We Are</button>
                     </div>
-
-                    <!-- Search Button (Futuristic Electric Glow) -->
-                    <button type="button" id="searchJobsBtn" class="w-full py-4 px-5 bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 hover:from-blue-800 hover:via-indigo-700 hover:to-violet-800 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-indigo-500/25 flex items-center justify-center space-x-2.5 transition transform active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <i data-lucide="sparkles" class="w-5 h-5 text-violet-200"></i>
-                        <span>Find Verified Direct ATS Jobs</span>
-                    </button>
-
                 </div>
 
             </div>
 
-            <!-- Right Column: Results & Operational Workspace (7 cols on md, 8 cols on lg/xl) -->
-            <div class="col-span-12 md:col-span-7 lg:col-span-8 space-y-6">
-                
-                <!-- Results Command Toolbar -->
-                <div class="glass-panel rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 border-2 border-slate-200/90">
-                    <div>
-                        <h2 class="text-lg sm:text-xl font-black text-slate-950 flex items-center space-x-2.5">
-                            <span>Matched Opportunities</span>
-                            <span id="resultsCountBadge" class="bg-blue-100 text-blue-900 text-xs font-black px-3 py-1 rounded-full border border-blue-300">0 Verified Direct ATS</span>
-                        </h2>
-                        <p class="text-xs font-bold text-slate-600 mt-0.5">Live endpoints queried (Ashby, Workday, Lever, SmartRecruiters)</p>
-                    </div>
-
-                    <!-- Right Controls: Post-Search LinkedIn Toggle & Export Actions -->
-                    <div class="flex items-center space-x-2.5 flex-wrap sm:flex-nowrap gap-y-2">
-                        
-                        <!-- LinkedIn Postings Toggle (Shown ONLY when results are displayed) -->
-                        <div id="linkedinToggleToolbar" class="hidden flex items-center space-x-2.5 px-3.5 py-2 rounded-xl bg-slate-100 border-2 border-slate-300 hover:border-slate-400 transition shadow-sm">
-                            <div class="w-6 h-6 rounded-md bg-[#0A66C2] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-sm">
-                                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.6 1.6 0 0 0-1.6 1.6 1.6 1.6 0 0 0 1.6-1.6 1.6 1.6 0 0 0 1.6-1.6Z"/></svg>
-                            </div>
-                            <label for="resultsLinkedinToggle" class="text-xs font-extrabold text-slate-900 cursor-pointer select-none">Show LinkedIn Feed (10 Posts)</label>
-                            <label class="relative inline-flex items-center cursor-pointer ml-1">
-                                <input type="checkbox" id="resultsLinkedinToggle" class="sr-only peer">
-                                <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0A66C2]"></div>
-                            </label>
-                        </div>
-
-                        <!-- Dossier Export Actions -->
-                        <div class="flex items-center space-x-2">
-                            <button type="button" id="exportPdfBtn" title="Download PDF Dossier" class="px-3 py-2 rounded-xl border-2 border-slate-200 text-slate-800 text-xs font-black hover:bg-slate-100 hover:border-slate-300 disabled:opacity-40 flex items-center space-x-1.5 transition shadow-sm bg-white">
-                                <i data-lucide="download" class="w-4 h-4 text-red-600"></i>
-                                <span>PDF</span>
-                            </button>
-                            <button type="button" id="exportDocxBtn" title="Download Word Document" class="px-3 py-2 rounded-xl border-2 border-slate-200 text-slate-800 text-xs font-black hover:bg-slate-100 hover:border-slate-300 disabled:opacity-40 flex items-center space-x-1.5 transition shadow-sm bg-white">
-                                <i data-lucide="file-text" class="w-4 h-4 text-blue-600"></i>
-                                <span>Word</span>
-                            </button>
-                            <button type="button" id="exportCsvBtn" title="Download CSV Tracker" class="px-3 py-2 rounded-xl border-2 border-slate-200 text-slate-800 text-xs font-black hover:bg-slate-100 hover:border-slate-300 disabled:opacity-40 flex items-center space-x-1.5 transition shadow-sm bg-white">
-                                <i data-lucide="table" class="w-4 h-4 text-emerald-600"></i>
-                                <span>Tracker</span>
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- Empty State -->
-                <div id="emptyState" class="glass-panel rounded-3xl p-14 text-center border-2 border-slate-200/90">
-                    <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-5 border-2 border-blue-200 float-3d shadow-md">
-                        <i data-lucide="inbox" class="w-10 h-10"></i>
-                    </div>
-                    <h3 class="text-lg font-black text-slate-950">No Postings Loaded</h3>
-                    <p class="text-sm font-semibold text-slate-600 mt-1.5 max-w-md mx-auto leading-relaxed">
-                        Upload candidate resume on the left, set your compensation threshold and target locations, and Almond will query live broker-free postings.
-                    </p>
-                </div>
-
-                <!-- Loading State -->
-                <div id="jobsLoading" class="hidden glass-panel rounded-3xl p-14 text-center border-2 border-slate-200/90">
-                    <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-indigo-600 mx-auto mb-4"></div>
-                    <h3 class="text-lg font-black text-slate-950">Almond Querying 3.3M+ Live Global Postings...</h3>
-                    <p class="text-sm font-semibold text-slate-600 mt-2">Filtering direct enterprise ATS endpoints (Ashby, Workday, Lever), evaluating locations, and computing deterministic cvmatch scores.</p>
-                </div>
-
-                <!-- Direct ATS Job Cards Container -->
-                <div id="jobListContainer" class="space-y-5"></div>
-
-                <!-- Dedicated LinkedIn Feed Section (Rendered below direct ATS jobs when user toggles switch) -->
-                <div id="linkedinSectionContainer" class="hidden mt-10 pt-8 border-t-2 border-dashed border-slate-300 space-y-5">
+            <!-- Right Column: Target Compensation, Locations & Search Button (Right Side) -> WHITE / FROSTED WHITE CONTAINER (Shifted Right) -->
+            <div class="flex flex-col lg:pl-2">
+                <div id="criteria-deck" class="glass-panel rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-2xl space-y-5 h-full flex flex-col justify-between bg-white/95 backdrop-blur-xl text-slate-950">
                     
-                    <!-- Prominent LinkedIn Advisory Warning Banner -->
-                    <div class="glass-panel rounded-3xl p-5 bg-amber-50/90 border-2 border-amber-300 text-amber-950 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div class="flex items-start space-x-3">
-                            <div class="w-9 h-9 rounded-xl bg-amber-200 text-amber-900 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-                            </div>
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-3 mb-1">
+                            <span class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white flex items-center justify-center font-black text-xs ring-4 ring-violet-500/15 border border-violet-400 shadow-md">2</span>
                             <div>
-                                <h3 class="text-sm font-black text-amber-950 flex items-center space-x-2">
-                                    <span>Third-Party LinkedIn Job Feed (10 Additional Matches)</span>
-                                </h3>
-                                <p class="text-xs text-amber-900 mt-1 font-bold leading-relaxed">
-                                    These posters may not be valid since these are posted in a third party. Verified Direct ATS postings above are always recommended.
-                                </p>
+                                <h3 class="font-extrabold text-slate-950 text-base">Target Compensation &amp; Geography</h3>
+                                <p class="text-xs text-slate-500 font-medium">Multi-currency salary threshold &amp; global bounds</p>
                             </div>
                         </div>
-                        <span class="px-3.5 py-1.5 rounded-xl bg-[#0A66C2] text-white text-xs font-black flex items-center space-x-2 flex-shrink-0 shadow-md">
-                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.6 1.6 0 0 0-1.6 1.6 1.6 1.6 0 0 0 1.6-1.6 1.6 1.6 0 0 0 1.6-1.6Z"/></svg>
-                            <span>10 LinkedIn Posts Loaded</span>
-                        </span>
+
+                        <!-- 1. Compensation Filter -->
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-black uppercase tracking-wider text-slate-700 block">Minimum Expected Package</label>
+                                <div class="flex items-center space-x-1.5 bg-emerald-50 border-2 border-emerald-300 rounded-xl px-3 py-1 shadow-sm">
+                                    <span id="currencySymbol" class="text-sm font-black text-emerald-800">₹</span>
+                                    <input type="number" id="packageNumberInput" min="0" max="500" step="1" value="15" class="w-20 text-right font-black text-sm text-emerald-950 bg-transparent focus:outline-none">
+                                    <span id="currencyUnit" class="text-xs font-mono font-bold text-emerald-800">LPA</span>
+                                </div>
+                            </div>
+
+                            <!-- Currency Selector Tabs -->
+                            <div class="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl text-xs font-bold text-slate-700 border border-slate-200">
+                                <button type="button" class="currency-tab active flex-1 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/20 transition font-black" data-curr="INR">₹ INR</button>
+                                <button type="button" class="currency-tab flex-1 py-1.5 rounded-lg hover:text-violet-700 transition text-slate-700" data-curr="USD_YR">$ USD</button>
+                                <button type="button" class="currency-tab flex-1 py-1.5 rounded-lg hover:text-violet-700 transition text-slate-700" data-curr="EUR">€ EUR</button>
+                                <button type="button" class="currency-tab flex-1 py-1.5 rounded-lg hover:text-violet-700 transition text-slate-700" data-curr="GBP">£ GBP</button>
+                                
+                                <select id="moreCurrenciesSelect" class="bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-violet-500 transition cursor-pointer shadow-sm">
+                                    <option value="" disabled selected>More ▾</option>
+                                    <option value="CAD">C$ CAD</option>
+                                    <option value="AUD">A$ AUD</option>
+                                    <option value="AED">AED</option>
+                                    <option value="USD_MO">$ / Mo</option>
+                                    <option value="ANY">No Min</option>
+                                </select>
+                            </div>
+
+                            <!-- Range Slider -->
+                            <div class="py-1">
+                                <input type="range" id="packageRangeSlider" min="0" max="150" step="1" value="15" class="w-full accent-violet-600">
+                            </div>
+
+                            <!-- Quick Presets -->
+                            <div id="salaryPresetsContainer" class="flex flex-wrap gap-1.5 pt-0.5"></div>
+                        </div>
+
+                        <!-- 2. Worldwide Locations A to Z with Typeahead -->
+                        <div class="space-y-2 pt-3 border-t border-slate-200/90 relative">
+                            <label class="text-xs font-black uppercase tracking-wider text-slate-700 block">Worldwide Locations (A-Z)</label>
+                            
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                    <i data-lucide="search" class="w-4 h-4"></i>
+                                </div>
+                                <input type="text" id="locationSearchInput" autocomplete="off" placeholder="Type city or country (e.g. Chennai, Berlin, USA)..." class="w-full pl-9 pr-3 py-2 text-xs sm:text-sm font-semibold border border-slate-200 rounded-xl focus:outline-none focus:border-violet-500 shadow-sm bg-white text-slate-900 placeholder:text-slate-400">
+                                <div id="locationDropdown" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 loc-dropdown divide-y divide-slate-100 text-slate-900"></div>
+                            </div>
+
+                            <!-- Active Tags -->
+                            <div>
+                                <span class="text-xs font-semibold text-slate-500 block mb-1">Active Target Locations:</span>
+                                <div id="selectedLocationsTags" class="flex flex-wrap gap-1.5 min-h-[32px] p-2 bg-slate-50 border border-slate-200 rounded-xl"></div>
+                            </div>
+
+                            <!-- Quick Preset Pills -->
+                            <div class="pt-0.5">
+                                <div class="flex flex-wrap gap-1.5" id="quickLocationPills">
+                                    <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:border-violet-300 hover:bg-violet-50/50 transition cursor-pointer" data-loc="Worldwide Remote">🌐 Worldwide Remote</button>
+                                    <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:border-violet-300 hover:bg-violet-50/50 transition" data-loc="All India">🇮🇳 All India</button>
+                                    <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:border-violet-300 hover:bg-violet-50/50 transition" data-loc="Coimbatore">Coimbatore</button>
+                                    <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:border-violet-300 hover:bg-violet-50/50 transition" data-loc="Chennai">Chennai</button>
+                                    <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:border-violet-300 hover:bg-violet-50/50 transition" data-loc="Bengaluru">Bengaluru</button>
+                                    <button type="button" class="quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:border-violet-300 hover:bg-violet-50/50 transition" data-loc="United States">🇺🇸 United States</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Work Arrangement & Modes -->
+                        <div class="space-y-2.5 pt-3 border-t border-slate-200/90">
+                            <div>
+                                <label class="text-xs font-black uppercase tracking-wider text-slate-700 block mb-1">Work Arrangement</label>
+                                <div class="grid grid-cols-4 gap-1.5 text-xs font-extrabold">
+                                    <label class="border border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-800">
+                                        <input type="radio" name="work_mode" value="all" checked class="hidden">
+                                        <span>All</span>
+                                    </label>
+                                    <label class="border border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-800">
+                                        <input type="radio" name="work_mode" value="remote" class="hidden">
+                                        <span>Remote</span>
+                                    </label>
+                                    <label class="border border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-800">
+                                        <input type="radio" name="work_mode" value="hybrid" class="hidden">
+                                        <span>Hybrid</span>
+                                    </label>
+                                    <label class="border border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-800">
+                                        <input type="radio" name="work_mode" value="onsite" class="hidden">
+                                        <span>Onsite</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="text-xs font-black uppercase tracking-wider text-slate-700 block mb-1">Contract Type</label>
+                                <div class="grid grid-cols-3 gap-1.5 text-xs font-extrabold">
+                                    <label class="border border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-800">
+                                        <input type="radio" name="employment_type" value="all" checked class="hidden">
+                                        <span>All Types</span>
+                                    </label>
+                                    <label class="border border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-800">
+                                        <input type="radio" name="employment_type" value="contract" class="hidden">
+                                        <span>Contract</span>
+                                    </label>
+                                    <label class="border border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-800">
+                                        <input type="radio" name="employment_type" value="full-time" class="hidden">
+                                        <span>Full-Time</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- LinkedIn Loading Indicator -->
-                    <div id="linkedinLoading" class="hidden glass-panel rounded-3xl p-10 text-center border-2 border-slate-200">
-                        <div class="animate-spin rounded-full h-10 w-10 border-b-3 border-[#0A66C2] mx-auto mb-3"></div>
-                        <p class="text-sm font-bold text-slate-800">Querying live LinkedIn guest search feed...</p>
-                    </div>
+                    <!-- Primary Action Button: Find Verified Direct Jobs -->
+                    <button type="button" id="searchJobsBtn" class="w-full py-4 px-5 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-violet-600/30 flex items-center justify-center space-x-2.5 transition transform active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed mt-3 cursor-pointer">
+                        <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+                        <span>Find Verified Direct Jobs ↓</span>
+                    </button>
 
-                    <!-- LinkedIn Cards List -->
-                    <div id="linkedinCardsContainer" class="space-y-5"></div>
+                    <!-- Navigation helper between Page 1 and Page 3 -->
+                    <div class="flex items-center justify-between pt-2.5 text-xs font-bold text-slate-500">
+                        <button type="button" onclick="goToSlide(0)" class="hover:text-violet-700 flex items-center gap-1 cursor-pointer transition">
+                            <span>↑ Return to Home</span>
+                        </button>
+                        <button type="button" onclick="goToSlide(2)" class="hover:text-violet-700 flex items-center gap-1 cursor-pointer transition">
+                            <span>Live Direct Feeds (Page 3) ↓</span>
+                        </button>
+                    </div>
 
                 </div>
-
             </div>
 
         </div>
+        </div> <!-- /max-w-[1360px] -->
 
-    </main>
+    </section>
 
-    <!-- Modal: Tailored STAR Application Pitch -->
-    <div id="pitchModal" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-3xl w-full p-7 shadow-2xl border-2 border-slate-200 relative animate-in fade-in zoom-in-95 duration-200">
-            <div class="flex items-center justify-between pb-4 border-b-2 border-slate-100 mb-5">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-xl bg-violet-100 text-violet-800 flex items-center justify-center shadow-sm">
-                        <i data-lucide="file-check" class="w-5 h-5"></i>
+    <!-- 5. PAGE 3: LIVE MATCHED OPPORTUNITIES STREAM (SLIDE 3) -->
+    <section id="results-stream" class="story-page w-full h-full relative overflow-hidden bg-[#0e160f]">
+        
+        <!-- DUAL-TONE SPLIT CRACK BACKGROUND (Cream Left, Dark Green Right with Golden Jagged Crack) -->
+        <div class="split-crack-bg absolute inset-0 pointer-events-none z-0 overflow-hidden" style="background-color: #0e160f;">
+            <!-- Right Side: Optimized Hardware-Accelerated Ambient Green Gradients (0ms blur penalty) -->
+            <div class="absolute inset-0" style="background: 
+                radial-gradient(circle at 90% 25%, rgba(74, 222, 128, 0.16) 0%, transparent 45%),
+                radial-gradient(circle at 74% 88%, rgba(134, 239, 172, 0.11) 0%, transparent 40%),
+                radial-gradient(circle at 95% 65%, rgba(49, 64, 41, 0.65) 0%, transparent 35%),
+                radial-gradient(circle at 82% 28%, #274026 0%, #182819 45%, #0e150f 85%);"></div>
+
+            <!-- SVG Split with Left Cream Gradient & Gold Jagged Crack -->
+            <svg class="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 1000 1000">
+                <defs>
+                    <!-- Warm Cream to Slightly Darker Cream / Stone Gradient -->
+                    <linearGradient id="splitCreamGrad_rs" x1="0%" y1="0%" x2="70%" y2="100%">
+                        <stop offset="0%" stop-color="#f7f2e4" />
+                        <stop offset="35%" stop-color="#efe7ce" />
+                        <stop offset="70%" stop-color="#e4d9c0" />
+                        <stop offset="100%" stop-color="#d6cca8" />
+                    </linearGradient>
+
+                    <!-- Soft organic circular tint on cream side (matching user reference) -->
+                    <radialGradient id="creamBlobTop_rs" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#d7d7ba" stop-opacity="0.75" />
+                        <stop offset="100%" stop-color="#efe7ce" stop-opacity="0" />
+                    </radialGradient>
+                    <radialGradient id="creamBlobBot_rs" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#dad2cc" stop-opacity="0.7" />
+                        <stop offset="100%" stop-color="#e4d9c0" stop-opacity="0" />
+                    </radialGradient>
+
+                    <!-- Gold Ochre Crack Gradient -->
+                    <linearGradient id="goldCrackGrad_rs" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#f2c544" />
+                        <stop offset="25%" stop-color="#cf9826" />
+                        <stop offset="50%" stop-color="#ecc04f" />
+                        <stop offset="75%" stop-color="#be871f" />
+                        <stop offset="100%" stop-color="#dfa432" />
+                    </linearGradient>
+
+                    <!-- Drop Shadow on Right Side -->
+                    <filter id="crackShadow_rs" x="-20%" y="-20%" width="170%" height="170%">
+                        <feDropShadow dx="8" dy="2" stdDeviation="8" flood-color="#000000" flood-opacity="0.7" />
+                    </filter>
+                </defs>
+
+                <!-- Left Cream Polygon with Jagged Crack Seam (Centered at 500) -->
+                <path d="
+                    M 0 0 
+                    L 500 0 
+                    L 508 55 
+                    L 492 115 
+                    L 509 185 
+                    L 491 255 
+                    L 509 330 
+                    L 492 410 
+                    L 508 490 
+                    L 491 570 
+                    L 509 655 
+                    L 492 735 
+                    L 508 820 
+                    L 492 895 
+                    L 506 955 
+                    L 500 1000 
+                    L 0 1000 
+                    Z
+                " fill="url(#splitCreamGrad_rs)" />
+
+                <!-- Ambient Tonal Organic Circles on Cream Side -->
+                <circle cx="270" cy="160" r="145" fill="url(#creamBlobTop_rs)" />
+                <circle cx="100" cy="820" r="210" fill="url(#creamBlobBot_rs)" />
+
+                <!-- Golden Jagged Seam Stroke with Drop Shadow -->
+                <path d="
+                    M 500 0 
+                    L 508 55 
+                    L 492 115 
+                    L 509 185 
+                    L 491 255 
+                    L 509 330 
+                    L 492 410 
+                    L 508 490 
+                    L 491 570 
+                    L 509 655 
+                    L 492 735 
+                    L 508 820 
+                    L 492 895 
+                    L 506 955 
+                    L 500 1000
+                " fill="none" stroke="url(#goldCrackGrad_rs)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" filter="url(#crackShadow_rs)" />
+            </svg>
+        </div>
+
+        <div class="max-w-7xl mx-auto w-full relative z-10 px-8 pt-20 pb-4 flex flex-col justify-start h-screen">
+        
+        <!-- Results Command Toolbar & Navigation Tabs -->
+        <div class="glass-panel rounded-3xl p-5 border border-slate-200/90 shadow-sm mb-4 flex flex-col gap-4">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg sm:text-xl font-black text-slate-950 flex items-center space-x-2.5">
+                        <span>Matched Opportunities — Direct Live Feeds</span>
+                        <span id="resultsCountBadge" class="bg-violet-50 text-violet-800 text-xs font-black px-3 py-1 rounded-full border border-violet-200 shadow-xs">0 Verified Postings</span>
+                    </h2>
+                    <p class="text-xs font-bold text-slate-500 mt-0.5">Direct Enterprise Portals (Ashby, Greenhouse, Workday, Lever) &amp; Founder Direct — 0% Recruiter Spread</p>
+                </div>
+
+                <!-- Right Controls: Dossier Exports & Who We Are -->
+                <div class="flex items-center space-x-2.5 flex-wrap sm:flex-nowrap gap-y-2">
+                    <button type="button" onclick="openAtsModal()" class="px-3 py-1.5 rounded-xl border border-emerald-300 text-emerald-900 bg-emerald-50 text-xs font-black hover:bg-emerald-100 flex items-center space-x-1.5 transition shadow-xs cursor-pointer">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                        <span>Who We Are</span>
+                    </button>
+
+                    <!-- Dossier Export Actions -->
+                    <div class="flex items-center space-x-1.5">
+                        <button type="button" id="exportPdfBtn" title="Download PDF Dossier" class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-800 text-xs font-black hover:bg-violet-50 hover:border-violet-300 disabled:opacity-40 flex items-center space-x-1 transition bg-white shadow-xs cursor-pointer">
+                            <i data-lucide="download" class="w-3.5 h-3.5 text-red-600"></i>
+                            <span>PDF</span>
+                        </button>
+                        <button type="button" id="exportDocxBtn" title="Download Word Document" class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-800 text-xs font-black hover:bg-violet-50 hover:border-violet-300 disabled:opacity-40 flex items-center space-x-1 transition bg-white shadow-xs cursor-pointer">
+                            <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-600"></i>
+                            <span>Word</span>
+                        </button>
+                        <button type="button" id="exportCsvBtn" title="Download CSV Tracker" class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-800 text-xs font-black hover:bg-violet-50 hover:border-violet-300 disabled:opacity-40 flex items-center space-x-1 transition bg-white shadow-xs cursor-pointer">
+                            <i data-lucide="table" class="w-3.5 h-3.5 text-emerald-600"></i>
+                            <span>Tracker</span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- View Switcher Tabs -->
+            <div class="flex items-center space-x-2 border-t border-slate-100 pt-3 flex-wrap gap-y-2">
+                <button type="button" id="tabAtsJobs" class="tab-btn px-4 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/20 flex items-center space-x-2 transition cursor-pointer">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    <span>Direct Live Feeds</span>
+                    <span id="atsCountBadge" class="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full ml-1 font-bold">0</span>
+                </button>
+                <button type="button" id="tabFounderJobs" class="tab-btn px-4 py-2 rounded-xl text-xs font-black bg-white border border-slate-200 text-slate-700 hover:border-violet-300 hover:bg-violet-50/50 flex items-center space-x-2 transition cursor-pointer">
+                    <span class="text-orange-500 font-bold">🚀</span>
+                    <span>Y Combinator &amp; Hacker News Founder Direct</span>
+                    <span id="founderCountBadge" class="bg-orange-100 text-orange-800 text-[10px] px-2 py-0.5 rounded-full ml-1 font-bold">0</span>
+                </button>
+                <button type="button" id="tabKanbanTracker" class="tab-btn px-4 py-2 rounded-xl text-xs font-black bg-white border border-slate-200 text-slate-700 hover:border-violet-300 hover:bg-violet-50/50 flex items-center space-x-2 transition cursor-pointer">
+                    <i data-lucide="layout-grid" class="w-4 h-4 text-violet-600"></i>
+                    <span>My Application Kanban</span>
+                    <span id="kanbanCountBadge" class="bg-violet-100 text-violet-800 text-[10px] px-2 py-0.5 rounded-full ml-1 font-bold">0</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Scrollable Results Container for Page 3 -->
+        <div id="resultsScrollContainer" class="flex-1 overflow-y-auto max-h-[calc(100vh-175px)] pr-2 loc-dropdown space-y-4 pb-16">
+
+        <!-- Empty State -->
+        <div id="emptyState" class="glass-panel rounded-3xl p-12 text-center border border-slate-200/90 shadow-sm">
+            <div class="w-16 h-16 bg-violet-50 text-violet-700 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-violet-200 shadow-md">
+                <i data-lucide="inbox" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-lg font-black text-slate-950">No Postings Loaded</h3>
+            <p class="text-xs sm:text-sm text-slate-600 mt-1.5 max-w-md mx-auto leading-relaxed font-medium">
+                Upload your resume above, set your compensation threshold, and Almond will query live broker-free direct company &amp; founder postings.
+            </p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="jobsLoading" class="hidden glass-panel rounded-3xl p-12 text-center border border-slate-200/90 shadow-sm">
+            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-violet-600 mx-auto mb-4"></div>
+            <h3 class="text-base sm:text-lg font-black text-slate-950">Querying 3.3M+ Live Feeds &amp; Founder Direct Streams...</h3>
+            <p class="text-xs text-slate-600 mt-2 font-medium">Filtering direct enterprise endpoints (Ashby, Workday, Lever), Y Combinator &amp; Hacker News founder threads, evaluating locations, and scoring match percentages.</p>
+        </div>
+
+        <!-- Tab View 1: Direct Live Feeds Container -->
+        <div id="jobListContainer" class="space-y-4"></div>
+
+        <!-- Dedicated End-of-List LinkedIn Toggle Card (Appears after Direct Jobs are rendered) -->
+        <div id="bottomLinkedinToggleCard" class="hidden mt-6 mb-2 p-5 rounded-3xl border shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #081018 100%); border-color: rgba(10, 102, 194, 0.45); box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.5);">
+            <div class="flex items-center space-x-3.5">
+                <div class="w-10 h-10 rounded-2xl bg-[#0A66C2] text-white flex items-center justify-center font-bold text-lg shadow-lg shadow-[#0A66C2]/30 flex-shrink-0">
+                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.6 1.6 0 0 0-1.6 1.6 1.6 1.6 0 0 0 1.6-1.6Z"/></svg>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h4 class="text-sm font-black text-white">Include Auxiliary LinkedIn Job Postings</h4>
+                        <span class="text-[10px] font-mono font-bold text-amber-300 bg-amber-950/90 px-2 py-0.5 rounded border border-amber-500/50 uppercase">Secondary Feed</span>
+                    </div>
+                    <p class="text-xs text-slate-300 font-medium mt-0.5">Verified direct company postings are listed above. Toggle to query &amp; append third-party LinkedIn listings below.</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 flex-shrink-0 self-end sm:self-center">
+                <span class="text-xs font-bold text-slate-300">Show Feed</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="resultsLinkedinToggle" class="sr-only peer">
+                    <div class="w-12 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0A66C2]"></div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Dedicated LinkedIn Feed Section (Below Toggle) -->
+        <div id="linkedinSectionContainer" class="hidden mt-4 space-y-4">
+            <!-- High-Contrast Warning Banner (Midnight Obsidian / Navy with vivid amber accents) -->
+            <div class="rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xl border-2" style="background: linear-gradient(135deg, #0d1b2a 0%, #081018 100%); border-color: rgba(245, 158, 11, 0.7); box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.6);">
+                <div class="flex items-start space-x-3.5">
+                    <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0 border border-amber-400/50 mt-0.5">
+                        <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400"></i>
                     </div>
                     <div>
-                        <h3 class="font-black text-slate-950 text-base">Almond Tailored Application Pitch (STAR Grounded)</h3>
-                        <p id="pitchJobSub" class="text-xs font-bold text-slate-600">Custom pitch</p>
+                        <div class="flex items-center space-x-2">
+                            <h3 class="text-sm font-black text-white">Third-Party LinkedIn Job Feed (10 Postings)</h3>
+                            <span class="text-[10px] font-mono font-bold text-amber-300 bg-amber-950/90 px-2 py-0.5 rounded border border-amber-500/50 uppercase">Auxiliary Listing</span>
+                        </div>
+                        <p class="text-xs text-slate-300 mt-1 font-medium">
+                            <strong class="text-emerald-400 font-bold">Direct company postings above are 100% verified.</strong> Third-party LinkedIn listings are aggregated from external feeds and may contain agency markups or recruiter spreads.
+                        </p>
                     </div>
                 </div>
-                <button type="button" id="closePitchModal" class="text-slate-500 hover:text-slate-900 p-2 rounded-xl hover:bg-slate-100 transition">
-                    <i data-lucide="x" class="w-6 h-6"></i>
+                <div class="flex items-center space-x-2 flex-shrink-0 self-end sm:self-center">
+                    <span class="px-3.5 py-1.5 rounded-xl bg-[#0A66C2] text-white text-xs font-black flex items-center space-x-1.5 shadow-md shadow-[#0A66C2]/40 border border-blue-400/30">
+                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.6 1.6 0 0 0-1.6 1.6 1.6 1.6 0 0 0 1.6-1.6Z"/></svg>
+                        <span id="linkedinCountBadge">10 External Posts</span>
+                    </span>
+                </div>
+            </div>
+
+            <div id="linkedinLoading" class="hidden rounded-2xl p-8 text-center border shadow-xl" style="background: linear-gradient(135deg, #0d1b2a 0%, #081018 100%); border-color: rgba(10, 102, 194, 0.5);">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0A66C2] mx-auto mb-2"></div>
+                <p class="text-xs font-bold text-white">Querying live external LinkedIn feed...</p>
+            </div>
+
+            <div id="linkedinCardsContainer" class="space-y-4"></div>
+
+            <!-- LinkedIn Load More / Pagination Container -->
+            <div id="linkedinLoadMoreContainer" class="hidden text-center pt-2 pb-6">
+                <button type="button" id="loadMoreLinkedinBtn" class="px-6 py-3 rounded-2xl bg-[#0A66C2] hover:bg-[#004182] text-white text-xs sm:text-sm font-black inline-flex items-center space-x-2 shadow-lg shadow-blue-600/30 transition transform active:scale-95 cursor-pointer">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    <span id="loadMoreLinkedinText">Show More LinkedIn Postings (+10 More)</span>
+                </button>
+                <div id="linkedinLoadMoreLoading" class="hidden py-3">
+                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#0A66C2] mx-auto mb-1"></div>
+                    <p class="text-xs font-bold text-slate-300">Fetching next tier of matching auxiliary postings...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab View 2: YC & HN Founder Direct Container -->
+        <div id="founderListContainer" class="hidden space-y-4">
+            <div class="glass-panel rounded-2xl p-4 bg-orange-50/80 border-2 border-orange-200 text-orange-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm mb-4">
+                <div class="flex items-start space-x-3">
+                    <span class="text-xl">🚀</span>
+                    <div>
+                        <h3 class="text-xs font-black text-orange-950">Direct Founder &amp; Executive Postings (Hacker News &amp; Y Combinator)</h3>
+                        <p class="text-[11px] text-orange-900 mt-0.5 font-bold">100% Direct contact with startup founders and engineering leaders. Zero recruiters, zero agency commissions.</p>
+                    </div>
+                </div>
+                <span class="px-3 py-1 rounded-full bg-orange-500 text-white text-[11px] font-black flex items-center space-x-1 flex-shrink-0 shadow-xs">
+                    <span>Direct Founder Access</span>
+                </span>
+            </div>
+            <div id="founderCardsWrapper" class="space-y-4"></div>
+        </div>
+
+        <!-- Tab View 3: Application Kanban Tracker (100% Client-Side LocalStorage Tracker) -->
+        <div id="kanbanBoardContainer" class="hidden space-y-4">
+            <!-- Privacy notice pill -->
+            <div class="p-3.5 rounded-2xl bg-violet-50/80 border border-violet-200 text-xs text-violet-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="flex items-center space-x-2.5">
+                    <i data-lucide="lock" class="w-4 h-4 text-violet-600 flex-shrink-0"></i>
+                    <span class="font-medium"><strong>Zero Server Overhead:</strong> Your tracker is stored privately in your browser's local memory. Clicks on "Direct Apply" auto-track into "Applied".</span>
+                </div>
+                <button type="button" id="clearKanbanBtn" class="text-[11px] font-bold text-slate-500 hover:text-red-600 transition underline cursor-pointer">Reset Local Tracker</button>
+            </div>
+
+            <!-- 4-Column Responsive Kanban Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Column 1: Saved -->
+                <div class="glass-panel rounded-2xl p-4 border border-slate-200/90 flex flex-col min-h-[420px] bg-slate-50/60">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                            <h3 class="font-black text-xs uppercase tracking-wider text-slate-700">📌 Saved / Target</h3>
+                        </div>
+                        <span id="colCountSaved" class="text-xs font-black text-slate-500 bg-white px-2 py-0.5 rounded-full border border-slate-200">0</span>
+                    </div>
+                    <div id="kanbanColSaved" class="space-y-3 flex-1 overflow-y-auto max-h-[600px] pr-1"></div>
+                </div>
+
+                <!-- Column 2: Applied (Auto-Tracked) -->
+                <div class="glass-panel rounded-2xl p-4 border border-violet-200/90 flex flex-col min-h-[420px] bg-violet-50/30">
+                    <div class="flex items-center justify-between pb-3 border-b border-violet-200 mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-violet-600"></span>
+                            <h3 class="font-black text-xs uppercase tracking-wider text-violet-900">📤 Applied (Auto)</h3>
+                        </div>
+                        <span id="colCountApplied" class="text-xs font-black text-violet-700 bg-white px-2 py-0.5 rounded-full border border-violet-200">0</span>
+                    </div>
+                    <div id="kanbanColApplied" class="space-y-3 flex-1 overflow-y-auto max-h-[600px] pr-1"></div>
+                </div>
+
+                <!-- Column 3: Interview Scheduled -->
+                <div class="glass-panel rounded-2xl p-4 border border-amber-200/90 flex flex-col min-h-[420px] bg-amber-50/30">
+                    <div class="flex items-center justify-between pb-3 border-b border-amber-200 mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                            <h3 class="font-black text-xs uppercase tracking-wider text-amber-900">🎯 Interview</h3>
+                        </div>
+                        <span id="colCountInterview" class="text-xs font-black text-amber-700 bg-white px-2 py-0.5 rounded-full border border-amber-200">0</span>
+                    </div>
+                    <div id="kanbanColInterview" class="space-y-3 flex-1 overflow-y-auto max-h-[600px] pr-1"></div>
+                </div>
+
+                <!-- Column 4: Offer / Final -->
+                <div class="glass-panel rounded-2xl p-4 border border-emerald-200/90 flex flex-col min-h-[420px] bg-emerald-50/30">
+                    <div class="flex items-center justify-between pb-3 border-b border-emerald-200 mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                            <h3 class="font-black text-xs uppercase tracking-wider text-emerald-900">🎉 Offer / Closed</h3>
+                        </div>
+                        <span id="colCountOffer" class="text-xs font-black text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-200">0</span>
+                    </div>
+                    <div id="kanbanColOffer" class="space-y-3 flex-1 overflow-y-auto max-h-[600px] pr-1"></div>
+                </div>
+            </div>
+        </div>
+
+
+
+        </div> <!-- /#resultsScrollContainer -->
+        </div> <!-- /max-w-6xl -->
+
+        <!-- Permanent Watermark / Declaration Anchored at the Bottom of Page 3 -->
+        <footer class="absolute bottom-3 inset-x-0 z-20 flex items-center justify-center pointer-events-none text-xs px-4">
+            <div class="flex items-center gap-2.5 px-5 py-2 rounded-full bg-white/95 border border-slate-300 shadow-md backdrop-blur-md pointer-events-auto">
+                <img src="/static/logo.png" alt="Almond Logo" class="w-4 h-4 object-contain">
+                <span class="font-bold text-slate-800 tracking-wide text-[11px] sm:text-xs">© 2026 Almond Job<span class="text-violet-600">s</span> — Direct Corporate Career Feeds.</span>
+            </div>
+        </footer>
+
+    </section>
+
+        </div> <!-- /#story-track -->
+    </div> <!-- /#story-viewport -->
+
+    <!-- 5. MODAL: TAILORED STAR APPLICATION PITCH -->
+    <div id="pitchModal" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-7 shadow-2xl border-2 border-slate-200 relative animate-in fade-in zoom-in-95 duration-200 text-slate-900">
+            <div class="flex items-center justify-between pb-4 border-b-2 border-slate-100 mb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl overflow-hidden ring-2 ring-violet-400/40 bg-[#070b14] p-0.5 flex-shrink-0">
+                        <img src="/static/logo.png" alt="Almond Jobs" class="w-full h-full object-cover rounded-xl">
+                    </div>
+                    <div>
+                        <h3 class="font-black text-slate-950 text-base">Almond STAR Pitch Synthesizer</h3>
+                        <p id="pitchJobSub" class="text-xs font-bold text-slate-600">Strictly grounded in candidate verified achievements</p>
+                    </div>
+                </div>
+                <button type="button" id="closePitchModal" class="text-slate-400 hover:text-slate-900 p-2 rounded-xl hover:bg-slate-100 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
             <!-- Pitch Content Area -->
-            <textarea id="pitchTextarea" rows="13" class="w-full text-sm font-mono bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 text-slate-900 focus:outline-none focus:border-indigo-600 leading-relaxed font-medium"></textarea>
+            <textarea id="pitchTextarea" rows="12" class="w-full text-xs sm:text-sm font-mono bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 text-slate-900 focus:outline-none focus:border-violet-500 leading-relaxed font-medium"></textarea>
 
-            <div class="flex items-center justify-between mt-5 pt-4 border-t-2 border-slate-100">
-                <span class="text-xs font-bold text-slate-600">Strictly grounded in candidate verified achievements. Zero hallucinations.</span>
-                <button type="button" id="copyPitchBtn" class="px-5 py-2.5 bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 hover:from-blue-800 hover:to-violet-800 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl flex items-center space-x-2 shadow-lg transition">
+            <div class="flex items-center justify-between mt-4 pt-4 border-t-2 border-slate-100">
+                <span class="text-xs font-bold text-slate-600">Directly pasteable into hiring emails or application portals.</span>
+                <button type="button" id="copyPitchBtn" class="px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl flex items-center space-x-2 shadow-lg shadow-violet-500/20 transition cursor-pointer">
                     <i data-lucide="copy" class="w-4 h-4"></i>
                     <span id="copyBtnText">Copy to Clipboard</span>
                 </button>
@@ -556,33 +1055,71 @@
         </div>
     </div>
 
-    <!-- Modal: Hold to Verify Human Presence (Anti-Bot Barrier) -->
+    <!-- 6. MODAL: TAILORED EXECUTIVE COVER LETTER -->
+    <div id="coverLetterModal" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-7 shadow-2xl border-2 border-slate-200 relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between pb-4 border-b-2 border-slate-100 mb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl overflow-hidden ring-2 ring-violet-400/40 bg-[#070b14] p-0.5 flex-shrink-0">
+                        <img src="/static/logo.png" alt="Almond Jobs" class="w-full h-full object-cover rounded-xl">
+                    </div>
+                    <div>
+                        <h3 class="font-black text-slate-950 text-base">Tailored Executive Cover Letter</h3>
+                        <p id="coverLetterSub" class="text-xs font-bold text-slate-600">Role-specific engineering narrative grounded in verified profile</p>
+                    </div>
+                </div>
+                <button type="button" id="closeCoverLetterModal" class="text-slate-400 hover:text-slate-900 p-2 rounded-xl hover:bg-slate-100 transition cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <textarea id="coverLetterTextarea" rows="14" class="w-full text-xs sm:text-sm font-sans bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 text-slate-900 focus:outline-none focus:border-violet-500 leading-relaxed font-medium flex-1 overflow-y-auto"></textarea>
+
+            <div class="flex items-center justify-between mt-4 pt-4 border-t-2 border-slate-100 flex-wrap gap-2">
+                <span class="text-xs font-bold text-slate-600">Formatted for instant submission on enterprise application portals.</span>
+                <div class="flex items-center space-x-2">
+                    <button type="button" id="downloadCoverLetterBtn" class="px-4 py-2 bg-white border border-slate-300 hover:border-violet-400 text-slate-800 font-extrabold text-xs uppercase tracking-wider rounded-xl flex items-center space-x-1.5 transition cursor-pointer shadow-xs">
+                        <i data-lucide="download" class="w-3.5 h-3.5 text-violet-600"></i>
+                        <span>Download .txt</span>
+                    </button>
+                    <button type="button" id="copyCoverLetterBtn" class="px-5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl flex items-center space-x-1.5 shadow-lg shadow-violet-500/20 transition cursor-pointer">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                        <span id="copyCoverLetterBtnText">Copy Letter</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. MODAL: HOLD TO VERIFY HUMAN PROOF (BOT BARRIER) -->
     <div id="humanVerifyModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-        <div class="bg-[#181a20] rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-700/80 relative text-slate-100 animate-in fade-in zoom-in-95 duration-150 select-none">
+        <div class="bg-[#0c101d] rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-violet-500/40 relative text-slate-100 animate-in fade-in zoom-in-95 duration-150 select-none">
             
             <!-- Modal Header (Centered) -->
             <div class="relative text-center mb-6 pt-1">
                 <button type="button" id="closeVerifyModal" class="absolute -top-1.5 right-0 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
+                <div class="w-14 h-14 rounded-2xl overflow-hidden mx-auto mb-3 ring-2 ring-violet-400/50 shadow-xl shadow-violet-500/20 bg-[#070b14] p-0.5">
+                    <img src="/static/logo.png" alt="Almond Jobs" class="w-full h-full object-cover rounded-xl">
+                </div>
                 <h3 class="font-extrabold text-white text-xl tracking-tight">Verify to proceed</h3>
-                <p class="text-xs text-slate-400 mt-1 font-medium">A quick check that you're human.</p>
+                <p class="text-xs text-violet-200/80 mt-1 font-medium">A quick check that you're human.</p>
             </div>
 
             <!-- Central Hold to Verify Button -->
             <div class="relative mb-2">
-                <button type="button" id="holdVerifyBtn" class="w-full py-4 px-6 bg-[#1e222d] hover:bg-[#252a37] active:bg-[#1a1e29] border-2 border-blue-500/80 rounded-2xl flex items-center justify-center space-x-3 transition-all relative overflow-hidden group shadow-lg shadow-blue-500/10 cursor-pointer outline-none focus:ring-2 focus:ring-blue-400 select-none">
+                <button type="button" id="holdVerifyBtn" class="w-full py-4 px-6 bg-slate-900 hover:bg-slate-800/80 border-2 border-violet-400/70 rounded-2xl flex items-center justify-center space-x-3 transition-all relative overflow-hidden group shadow-lg cursor-pointer outline-none select-none">
                     
-                    <!-- Full-Box Background Fill (Expands left to right, then reverses right to left) -->
-                    <div id="holdBgFill" class="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-700 via-indigo-600 to-cyan-500 w-0 transition-none z-0 opacity-80 pointer-events-none"></div>
+                    <!-- Full-Box Background Fill (Vibrant Violet Gradient) -->
+                    <div id="holdBgFill" class="absolute inset-y-0 left-0 bg-gradient-to-r from-violet-600 via-purple-500 to-indigo-500 w-0 transition-none z-0 opacity-80 pointer-events-none"></div>
 
-                    <!-- Content Overlay (z-10) -->
+                    <!-- Content Overlay -->
                     <div class="relative z-10 flex items-center justify-center space-x-3 pointer-events-none">
-                        <!-- Circular Indicator -->
                         <div class="relative w-6 h-6 flex-shrink-0 flex items-center justify-center">
                             <svg class="w-6 h-6 transform -rotate-90" viewBox="0 0 24 24">
                                 <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" class="text-slate-700 fill-none" />
-                                <circle id="holdRingCircle" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" stroke-dasharray="56.548" stroke-dashoffset="56.548" stroke-linecap="round" class="text-cyan-300 fill-none transition-none" />
+                                <circle id="holdRingCircle" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" stroke-dasharray="56.548" stroke-dashoffset="56.548" stroke-linecap="round" class="text-violet-300 fill-none transition-none" />
                             </svg>
                             <i id="holdVerifySuccessIcon" data-lucide="check" class="hidden w-4 h-4 text-emerald-300 absolute"></i>
                         </div>
@@ -604,14 +1141,412 @@
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
                     <span class="font-bold text-slate-300">Almond Bot Barrier</span>
                 </span>
-                <span class="font-mono text-slate-400">Entropy: Verified Active</span>
+                <span class="font-mono text-slate-400">Entropy Verified</span>
             </div>
 
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="/static/app.js"></script>
+    <!-- 7. MODAL: VALUE PROPOSITION EDUCATIONAL EXPLORER (No Brokers, No Middlemen, No Dead Posts, Who We Are) -->
+    <div id="heroInfoModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col p-6 sm:p-7 border border-slate-200/90 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 bg-white/95 backdrop-blur-2xl my-auto overflow-hidden">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5 shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div id="heroModalIcon" class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-800 flex items-center justify-center border border-emerald-300 shadow-2xs">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-emerald-700"></i>
+                    </div>
+                    <div>
+                        <h3 id="heroModalTitle" class="text-base sm:text-lg font-black text-slate-950">Who We Are</h3>
+                        <p id="heroModalSubtitle" class="text-xs text-emerald-800 font-bold">Direct Corporate Feeds • Our Philosophy & Mission</p>
+                    </div>
+                </div>
+                <button type="button" id="closeHeroInfoModal" onclick="closeHeroInfoModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-900 flex items-center justify-center transition cursor-pointer font-bold text-sm">✕</button>
+            </div>
+
+            <!-- 4 Nav Tabs Inside Modal -->
+            <div class="flex items-center space-x-1 sm:space-x-2 border-b border-slate-100 pb-3 mb-3.5 overflow-x-auto text-xs font-black shrink-0">
+                <button type="button" onclick="switchHeroModalTab('brokers')" id="tabBrokers" class="hero-modal-tab px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1">
+                    <span>✕ No Brokers</span>
+                </button>
+                <button type="button" onclick="switchHeroModalTab('middlemen')" id="tabMiddlemen" class="hero-modal-tab px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1">
+                    <span>✕ No Middlemen</span>
+                </button>
+                <button type="button" onclick="switchHeroModalTab('deadposts')" id="tabDeadposts" class="hero-modal-tab px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1">
+                    <span>✕ No Dead Posts</span>
+                </button>
+                <button type="button" onclick="switchHeroModalTab('ats')" id="tabAts" class="hero-modal-tab px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1">
+                    <span>Who We Are</span>
+                </button>
+            </div>
+
+            <!-- Dynamic Body Content -->
+            <div id="heroModalBody" class="space-y-3 text-xs sm:text-[13px] leading-relaxed text-slate-700 font-medium overflow-y-auto pr-1.5 custom-scrollbar max-h-[52vh]">
+                <!-- Dynamically populated via switchHeroModalTab() -->
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between shrink-0">
+                <span class="text-xs text-slate-500 font-mono">100% Direct Corporate Feeds</span>
+                <button type="button" onclick="closeHeroInfoModal()" class="px-5 py-2.5 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs rounded-xl shadow-md shadow-violet-500/25 cursor-pointer transition">
+                    Got it, Continue
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 8. MODAL: VIP ACCESS, MEMBERSHIP PLANS & PRICING -->
+    <div id="vipPricingModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col p-6 sm:p-8 border border-slate-200/90 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 bg-white/95 backdrop-blur-2xl my-auto overflow-hidden">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4 shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-violet-500/30">
+                        <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg font-black text-slate-950">Almond VIP Access</h3>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-violet-700 bg-violet-100 px-2 py-0.5 rounded-full border border-violet-200">Candidate-First Pass</span>
+                        </div>
+                        <p class="text-xs text-slate-500 font-semibold">Direct corporate portal delivery • 0% recruiter markup • Unlimited STAR Pitches</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeVipPricingModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer font-bold text-sm">✕</button>
+            </div>
+
+                        <!-- Scrollable Content Section -->
+            <div class="overflow-y-auto pr-1 custom-scrollbar space-y-4">
+                
+                <!-- Dynamic Opportunity & Unlocking Status Banner -->
+                <div id="vipLockedPostsAlert" class="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-violet-50 via-purple-50 to-indigo-50 border border-violet-200/90 flex items-center gap-3.5 shadow-xs">
+                    <div class="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="text-xs sm:text-sm font-black text-slate-950" id="vipBannerHeading">
+                            3,315,000+ Direct Enterprise Openings
+                        </div>
+                        <p class="text-[11px] sm:text-xs text-slate-600 font-medium" id="vipBannerSubtext">
+                            First 3 postings previewed free. Choose any plan below to unlock all remaining direct application links, 0% recruiter markup, and tailored STAR Pitches.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Why Almond VIP vs Brokers/Middlemen Comparison Banner -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200/90 text-xs">
+                    <div class="space-y-1.5 border-b md:border-b-0 md:border-r border-slate-200 pb-3 md:pb-0 md:pr-3">
+                        <div class="flex items-center gap-1.5 font-black text-red-700 uppercase tracking-wider text-[11px]">
+                            <i data-lucide="x-circle" class="w-4 h-4 text-red-500"></i>
+                            <span>Legacy Boards & Headhunters</span>
+                        </div>
+                        <p class="text-slate-600 leading-relaxed font-normal">
+                            Pocket <strong>20% to 35%</strong> of your negotiated salary as agency markup. Siphon negotiation leverage, harvest resumes for third-party lists, and ghost you on expired dead listings.
+                        </p>
+                    </div>
+                    <div class="space-y-1.5 md:pl-2">
+                        <div class="flex items-center gap-1.5 font-black text-emerald-800 uppercase tracking-wider text-[11px]">
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+                            <span>Almond VIP Direct Access</span>
+                        </div>
+                        <p class="text-slate-600 leading-relaxed font-normal">
+                            <strong>0% Recruiter Spread.</strong> You negotiate directly and keep 100% of your compensation. Real-time active application links (Ashby, Greenhouse, Lever, Workday) with instant tailored pitches.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Plan Selection Cards (3 Durations) -->
+                <div>
+                    <label class="block text-xs font-black text-slate-800 uppercase tracking-wider mb-2.5">
+                        Select Your Access Duration:
+                    </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="vipPlanCards">
+                        
+                        <!-- Plan 1: Day Pass -->
+                        <div onclick="selectVipPlan('day', 199, '24-Hour Day Sprint')" id="planCard-day" class="vip-plan-card p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-violet-300 transition-all cursor-pointer relative flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">Day Sprint</span>
+                                    <span id="planRadio-day" class="w-4 h-4 rounded-full border-2 border-slate-300 flex items-center justify-center"></span>
+                                </div>
+                                <div class="text-2xl font-black text-slate-950 mb-0.5">₹199</div>
+                                <div class="text-[11px] font-bold text-slate-500 mb-2">24 Hours Unlimited</div>
+                                <ul class="space-y-1 text-[11px] text-slate-600 leading-snug">
+                                    <li class="flex items-center gap-1.5">✓ 24h Full Direct Application Portals</li>
+                                    <li class="flex items-center gap-1.5">✓ 10 Tailored STAR Pitches</li>
+                                    <li class="flex items-center gap-1.5">✓ Instant Activation</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Plan 2: 1 Month Pro Hunt (Default Selected) -->
+                        <div onclick="selectVipPlan('month', 699, '1-Month Pro Hunt')" id="planCard-month" class="vip-plan-card p-4 rounded-2xl border-2 border-violet-600 bg-violet-50/40 shadow-sm transition-all cursor-pointer relative flex flex-col justify-between ring-2 ring-violet-500/20">
+                            <div class="absolute -top-2.5 right-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow-xs tracking-wider">
+                                Most Popular
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[10px] font-black uppercase tracking-wider text-violet-800 bg-violet-100 px-2 py-0.5 rounded-full">30-Day Pro</span>
+                                    <span id="planRadio-month" class="w-4 h-4 rounded-full bg-violet-600 border-2 border-violet-600 flex items-center justify-center">
+                                        <span class="w-1.5 h-1.5 bg-white rounded-full"></span>
+                                    </span>
+                                </div>
+                                <div class="text-2xl font-black text-slate-950 mb-0.5">₹699</div>
+                                <div class="text-[11px] font-bold text-violet-700 mb-2">Full Job Search Cycle</div>
+                                <ul class="space-y-1 text-[11px] text-slate-700 leading-snug font-medium">
+                                    <li class="flex items-center gap-1.5">✓ 30 Days Unlimited Unlocks</li>
+                                    <li class="flex items-center gap-1.5">✓ Unlimited Tailored STAR Pitches</li>
+                                    <li class="flex items-center gap-1.5">✓ Tailored Cover Letters</li>
+                                    <li class="flex items-center gap-1.5">✓ Kanban Board Exports</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Plan 3: 3 Months Career Mastery -->
+                        <div onclick="selectVipPlan('quarter', 1499, '3-Month Career Mastery')" id="planCard-quarter" class="vip-plan-card p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-violet-300 transition-all cursor-pointer relative flex flex-col justify-between">
+                            <div class="absolute -top-2.5 right-3 bg-emerald-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow-xs tracking-wider">
+                                Save 30%
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">90-Day Transition</span>
+                                    <span id="planRadio-quarter" class="w-4 h-4 rounded-full border-2 border-slate-300 flex items-center justify-center"></span>
+                                </div>
+                                <div class="text-2xl font-black text-slate-950 mb-0.5">₹1,499</div>
+                                <div class="text-[11px] font-bold text-slate-500 mb-2">3 Months Full Buffer</div>
+                                <ul class="space-y-1 text-[11px] text-slate-600 leading-snug">
+                                    <li class="flex items-center gap-1.5">✓ 90 Days Unlimited Access</li>
+                                    <li class="flex items-center gap-1.5">✓ Priority Portal Feed Sync</li>
+                                    <li class="flex items-center gap-1.5">✓ Founder Direct Outreach</li>
+                                    <li class="flex items-center gap-1.5">✓ Continuous New Alerts</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Promo / Coupon Code Box -->
+                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="relative flex-1">
+                            <input type="text" id="vipCouponInput" placeholder="Enter coupon code (e.g. FIRST50, ALMOND50)" class="w-full text-xs font-bold px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white focus:outline-hidden focus:border-violet-500 uppercase tracking-wider text-slate-900 placeholder:normal-case placeholder:font-normal placeholder:text-slate-400">
+                        </div>
+                        <button type="button" onclick="applyVipCoupon()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition cursor-pointer shrink-0 shadow-xs">
+                            Apply Code
+                        </button>
+                    </div>
+                    <div id="vipCouponMessage" class="hidden text-[11px] font-bold mt-2 flex items-center gap-1"></div>
+                </div>
+
+                <!-- Order Summary Breakdown -->
+                <div class="p-3.5 rounded-2xl bg-violet-50/60 border border-violet-200 flex items-center justify-between text-xs">
+                    <div>
+                        <span class="font-bold text-slate-700 block" id="vipSummaryPlanName">1-Month Pro Hunt (30 Days)</span>
+                        <span class="text-[11px] text-slate-500" id="vipSummarySubtext">Single one-time payment • No auto-renewal traps</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[11px] text-slate-400 line-through hidden" id="vipOriginalPriceLine">₹699</div>
+                        <div class="text-xl font-black text-violet-950" id="vipFinalAmountDisplay">₹699</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer & Checkout Action -->
+            <div class="mt-4 pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+                <div class="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+                    <span>256-Bit SSL Encrypted • Instant Activation</span>
+                </div>
+                <button type="button" onclick="proceedToCheckoutFromModal()" class="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg shadow-violet-500/25 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    <i data-lucide="lock" class="w-4 h-4 text-violet-200"></i>
+                    <span id="vipCheckoutBtnLabel">Proceed to Secure Checkout — ₹699</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 9. MODAL: CANDIDATE PROFILE & AUTHENTICATION DASHBOARD -->
+    <div id="profileModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="rounded-3xl max-w-md w-full p-6 sm:p-7 border border-slate-200/90 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 bg-white/95 backdrop-blur-2xl my-auto">
+            
+            <!-- Contextual Banner: Displays when intercepted from clicking Search on Page 2 -->
+            <div id="authContextNotice" class="hidden mb-4 p-3.5 rounded-2xl bg-violet-50/90 border border-violet-200/80 text-violet-950 flex items-start gap-2.5 shadow-2xs">
+                <i data-lucide="sparkles" class="w-5 h-5 text-violet-600 shrink-0 mt-0.5"></i>
+                <div>
+                    <p class="text-xs font-black text-violet-900">Sign in to Unlock Your Direct Application Pipeline</p>
+                    <p class="text-[11px] text-violet-700 font-medium leading-relaxed mt-0.5">Your parsed skills vector and compensation bounds are preserved and will be securely tied to your candidate profile.</p>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <div class="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
+                <div class="flex items-center space-x-3">
+                    <div id="modalUserAvatarBox" class="w-10 h-10 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center border border-violet-200 shadow-2xs">
+                        <span id="modalUserAvatarInitials" class="hidden text-xs font-black tracking-wider text-violet-800">CA</span>
+                        <i id="modalUserAvatarIcon" data-lucide="user" class="w-5 h-5 text-violet-600"></i>
+                    </div>
+                    <div>
+                        <h3 id="modalTitleText" class="text-base font-black text-slate-950">Candidate Account</h3>
+                        <p id="modalSubtitleText" class="text-xs text-slate-500 font-mono">Sign in or create free account</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeProfileModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer font-bold text-sm">✕</button>
+            </div>
+
+            <!-- VIEW 1: AUTHENTICATION FORM (Shown when guest / logged out) -->
+            <div id="authFormView" class="space-y-4">
+                <!-- Tab Switcher: Log In vs Sign Up -->
+                <div class="flex rounded-xl bg-slate-100 p-1 border border-slate-200/80">
+                    <button type="button" id="tabBtnLogin" onclick="switchAuthTab('login')" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer">
+                        Log In
+                    </button>
+                    <button type="button" id="tabBtnSignup" onclick="switchAuthTab('signup')" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-950 cursor-pointer">
+                        Create Account
+                    </button>
+                </div>
+
+                <!-- Error Message Banner -->
+                <div id="authErrorMessage" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+                    <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
+                    <span id="authErrorText">Invalid credentials</span>
+                </div>
+
+                <!-- Form Fields -->
+                <form id="candidateAuthForm" onsubmit="handleAuthSubmit(event)" class="space-y-3">
+                    <div id="signupNameField" class="hidden space-y-1">
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Full Name</label>
+                        <div class="relative">
+                            <i data-lucide="user-check" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+                            <input type="text" id="authFullNameInput" placeholder="e.g. Sridhar S" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-xs text-slate-900 transition">
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Email Address</label>
+                        <div class="relative">
+                            <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+                            <input type="email" id="authEmailInput" required placeholder="name@company.com" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-xs text-slate-900 transition">
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Password</label>
+                        <div class="relative">
+                            <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+                            <input type="password" id="authPasswordInput" required minlength="6" placeholder="At least 6 characters" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-xs text-slate-900 transition">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="authSubmitBtn" class="w-full mt-2 py-3 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md shadow-violet-600/25 transition transform active:scale-98 cursor-pointer flex items-center justify-center gap-2">
+                        <span id="authSubmitBtnText">Log In to Almond Jobs</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4 text-white"></i>
+                    </button>
+                </form>
+
+                <div class="pt-2 text-center">
+                    <p id="authToggleHint" class="text-xs text-slate-500 font-medium">
+                        Don't have an account? <button type="button" onclick="switchAuthTab('signup')" class="text-violet-700 font-bold hover:underline cursor-pointer">Sign up free</button>
+                    </p>
+                </div>
+            </div>
+
+            <!-- VIEW 2: LOGGED-IN CANDIDATE DASHBOARD (Shown when authenticated) -->
+            <div id="authProfileView" class="hidden space-y-4">
+                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-600">Membership Tier:</span>
+                        <span id="profileStatusBadge" class="px-2.5 py-1 rounded-full text-[11px] font-black bg-slate-200 text-slate-700">Free Tier</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-slate-600 font-medium">Verified Skills Extracted:</span>
+                        <span id="profileVectorCount" class="font-mono font-bold text-slate-950">0 Skills</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-slate-600 font-medium">Active Target Locations:</span>
+                        <span id="profileLocationsCount" class="font-mono font-bold text-slate-950">Worldwide</span>
+                    </div>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-slate-600 font-medium">Direct Pipeline Access:</span>
+                        <span id="profileAccessLevel" class="font-bold text-violet-700">3 Matches Preview</span>
+                    </div>
+                </div>
+
+                <div id="profileUpgradeSection" class="p-4 rounded-2xl bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 text-center space-y-2">
+                    <div class="flex items-center justify-center gap-1.5 text-xs font-black text-violet-950">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-violet-700"></i>
+                        <span>Upgrade to Direct Portal VIP Pass</span>
+                    </div>
+                    <p class="text-[11px] text-violet-800 leading-snug">Unlock unlimited direct corporate application portals, bypass all headhunter markups, and activate instant application feeds.</p>
+                    <button type="button" onclick="closeProfileModal(); openVipPricingModal();" class="w-full mt-1 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs rounded-xl shadow-md transition cursor-pointer">
+                        View VIP Membership Plans
+                    </button>
+                </div>
+
+                <div class="pt-2 flex items-center justify-between gap-3">
+                    <button type="button" onclick="closeProfileModal()" class="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer">
+                        Close
+                    </button>
+                    <button type="button" onclick="handleLogout()" class="py-2 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs transition cursor-pointer flex items-center gap-1.5">
+                        <i data-lucide="log-out" class="w-3.5 h-3.5 text-rose-600"></i>
+                        <span>Log Out</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    
+    <!-- 10. MODAL: PAYMENT EXIT-INTENT RETENTION (COFFEE / MOVIE TICKET / DINNER) -->
+    <div id="paymentExitIntentModal" class="hidden fixed inset-0 bg-slate-900/65 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="rounded-3xl max-w-md w-full p-6 sm:p-7 border border-amber-200/90 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 bg-white/95 backdrop-blur-2xl my-auto text-center">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center border border-amber-300 shadow-xs mb-3.5">
+                <span id="exitIntentEmoji" class="text-2xl">☕</span>
+            </div>
+            
+            <span id="exitIntentBadge" class="inline-block text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100/90 border border-amber-300 px-3 py-1 rounded-full mb-2">
+                Special Career Opportunity
+            </span>
+            
+            <h3 id="exitIntentTitle" class="text-lg font-black text-slate-950 mb-1.5">
+                Wait! Your New Life Deserves This.
+            </h3>
+            
+            <p id="exitIntentMessage" class="text-xs text-slate-600 font-medium leading-relaxed px-2 mb-4">
+                Your new life beginning with us deserves at least the price of a coffee. Don't let a few rupees stand between you and a broker-free direct enterprise career.
+            </p>
+
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 mb-5 text-left flex items-center justify-between">
+                <div>
+                    <span id="exitIntentPlanName" class="text-xs font-black text-slate-950 block">Day Sprint Pass</span>
+                    <span id="exitIntentPlanSub" class="text-[11px] text-slate-500 font-semibold">24 Hours Unlimited Direct Portal Access</span>
+                </div>
+                <div class="text-right">
+                    <span id="exitIntentPrice" class="text-base font-black text-violet-700">₹99</span>
+                    <span id="exitIntentDiscountNote" class="text-[10px] font-bold text-emerald-600 block">50% Off Applied</span>
+                </div>
+            </div>
+
+            <div class="space-y-2.5">
+                <button type="button" onclick="resumePaymentFromExitIntent()" class="w-full py-3.5 px-5 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-violet-600/30 transition transform active:scale-98 cursor-pointer flex items-center justify-center gap-2">
+                    <span>Complete My Pass & Unlock Jobs</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4 text-white"></i>
+                </button>
+                <button type="button" onclick="closeExitIntentModal()" class="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition cursor-pointer">
+                    No thanks, I will stick with 3 limited matches for now
+                </button>
+            </div>
+        </div>
+    </div>
+
+        <!-- Scripts with Cache Busting Parameter -->
+    <script src="/static/app.js?v=20261103_1000"></script>
     <script>
         lucide.createIcons();
     </script>

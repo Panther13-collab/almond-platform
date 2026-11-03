@@ -9,14 +9,18 @@ import json
 
 from core.parser import extract_text_from_file, parse_candidate_profile
 from core.job_engine import search_matching_jobs, fetch_linkedin_postings
-from core.pitch_generator import generate_star_pitch
+from core.pitch_generator import generate_star_pitch, generate_tailored_cover_letter
+from core.founder_engine import fetch_hn_founder_jobs
 from core.doc_exporter import export_to_docx, export_to_pdf_async, export_to_csv
 from core.config import Config
-from core.auth_db import signup_user, login_user, is_user_paid
+from core.auth_db import (
+    signup_user, login_user, is_user_paid, verify_session_token, get_user_profile,
+    get_user_kanban, save_user_kanban_application, sync_full_kanban
+)
 from core.payment import create_razorpay_order, verify_razorpay_signature
 from core.security import BotShieldMiddleware, validate_uploaded_file, acquire_search_slot, release_search_slot
 
-app = FastAPI(title="Almond AI - Direct ATS Global Job Engine", version="2.0.0")
+app = FastAPI(title="Almond Jobs - Direct Corporate Career Engine", version="2.0.0")
 
 # Security Hardening: Bot Shield & Rate Limiting Middleware
 app.add_middleware(BotShieldMiddleware)
@@ -31,6 +35,15 @@ app.add_middleware(
     expose_headers=["Content-Disposition", "X-Almond-Shield"],
 )
 
+@app.middleware("http")
+async def add_dev_cache_headers(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/static") or request.url.path == "/":
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
@@ -42,13 +55,20 @@ os.makedirs(TEMPLATES_DIR, exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    fav_path = os.path.join(STATIC_DIR, "favicon.ico")
+    if os.path.exists(fav_path):
+        return FileResponse(fav_path, media_type="image/x-icon")
+    return FileResponse(os.path.join(STATIC_DIR, "logo.png"), media_type="image/png")
+
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
     index_file = os.path.join(TEMPLATES_DIR, "index.html")
     if os.path.exists(index_file):
         with open(index_file, "r", encoding="utf-8") as f:
             return f.read()
-    return "<h1>Almond AI Platform is starting up...</h1>"
+    return "<h1>Almond Jobs Platform is starting up...</h1>"
 
 @app.get("/template/{template_id}", response_class=HTMLResponse)
 async def serve_template(template_id: int):
@@ -67,6 +87,14 @@ async def serve_template(template_id: int):
         with open(filepath, "r", encoding="utf-8") as f:
             return f.read()
     raise HTTPException(status_code=404, detail=f"Template file {filename} not found.")
+
+@app.get("/kage-preview", response_class=HTMLResponse)
+async def serve_kage_preview():
+    filepath = os.path.join(TEMPLATES_DIR, "kage_preview.html")
+    if os.path.exists(filepath):
+        with open(filepath, "r", encoding="utf-8") as f:
+            return f.read()
+    raise HTTPException(status_code=404, detail="kage_preview.html not found.")
 
 @app.post("/api/upload-resume")
 async def upload_resume(file: UploadFile = File(...)):
@@ -114,12 +142,37 @@ async def api_login(payload: dict = Body(...)):
 
 @app.post("/api/auth/me")
 async def api_me(payload: dict = Body(...)):
+    token = payload.get("token", "")
     user_id = payload.get("user_id", "")
-    paid = is_user_paid(user_id) if user_id else False
+    
+    user_data = None
+    if token:
+        user_data = verify_session_token(token)
+    elif user_id:
+        user_data = get_user_profile(user_id)
+        
+    if user_data:
+        actual_id = user_data.get("id") or user_data.get("user_id")
+        paid = is_user_paid(actual_id)
+        profile = get_user_profile(actual_id) or user_data
+        return JSONResponse(content={
+            "status": "success",
+            "is_authenticated": True,
+            "user_id": actual_id,
+            "email": profile.get("email", ""),
+            "full_name": profile.get("full_name", ""),
+            "plan": profile.get("plan", "free"),
+            "paid_until": profile.get("paid_until", 0),
+            "remaining_str": profile.get("remaining_str", ""),
+            "is_paid": paid,
+            "price_inr": Config.PRICE_INR,
+            "price_usd": Config.PRICE_USD
+        })
+
     return JSONResponse(content={
-        "status": "success", 
-        "user_id": user_id, 
-        "is_paid": paid,
+        "status": "success",
+        "is_authenticated": False,
+        "is_paid": False,
         "price_inr": Config.PRICE_INR,
         "price_usd": Config.PRICE_USD
     })
@@ -140,14 +193,50 @@ async def api_verify_payment(payload: dict = Body(...)):
     payment_id = payload.get("payment_id", "")
     signature = payload.get("signature", "")
     amount_inr = int(payload.get("amount_inr", Config.PRICE_INR))
+    plan_name = payload.get("plan_name", "")
 
     if not order_id or not payment_id:
         raise HTTPException(status_code=400, detail="Missing payment verification fields.")
 
-    res = verify_razorpay_signature(user_id, order_id, payment_id, signature, amount_inr)
+    res = verify_razorpay_signature(user_id, order_id, payment_id, signature, amount_inr, plan_name)
     if res.get("status") == "error":
         raise HTTPException(status_code=400, detail=res.get("message"))
     return JSONResponse(content=res)
+
+@app.post("/api/kanban/get")
+async def api_get_kanban(payload: dict = Body(...)):
+    token = payload.get("token", "")
+    user_id = payload.get("user_id", "")
+    if token:
+        user_data = verify_session_token(token)
+        if user_data:
+            user_id = user_data.get("id") or user_data.get("user_id")
+    data = get_user_kanban(user_id)
+    return JSONResponse(content={"status": "success", "kanban": data})
+
+@app.post("/api/kanban/sync")
+async def api_sync_kanban(payload: dict = Body(...)):
+    token = payload.get("token", "")
+    user_id = payload.get("user_id", "")
+    if token:
+        user_data = verify_session_token(token)
+        if user_data:
+            user_id = user_data.get("id") or user_data.get("user_id")
+    kanban = payload.get("kanban", {})
+    updated = sync_full_kanban(user_id, kanban)
+    return JSONResponse(content={"status": "success", "kanban": updated})
+
+@app.post("/api/kanban/add")
+async def api_add_kanban(payload: dict = Body(...)):
+    token = payload.get("token", "")
+    user_id = payload.get("user_id", "")
+    if token:
+        user_data = verify_session_token(token)
+        if user_data:
+            user_id = user_data.get("id") or user_data.get("user_id")
+    application = payload.get("application", {})
+    res = save_user_kanban_application(user_id, application)
+    return JSONResponse(content={"status": "success", "result": res})
 
 @app.post("/api/find-jobs")
 async def find_jobs(payload: dict = Body(...)):
@@ -169,6 +258,13 @@ async def find_jobs(payload: dict = Body(...)):
         result = search_matching_jobs(profile, preferences)
         ats_jobs = result.get("ats_jobs", [])
         linkedin_jobs = result.get("linkedin_jobs", [])
+
+        # Fetch direct YC & Hacker News Founder Direct opportunities
+        founder_jobs = []
+        try:
+            founder_jobs = fetch_hn_founder_jobs(profile, preferences)
+        except Exception as fe:
+            print(f"[SEARCH] Founder direct fetch error: {fe}")
 
         # If user has not purchased Pro access, lock jobs past index 3
         if not user_is_paid:
@@ -198,6 +294,7 @@ async def find_jobs(payload: dict = Body(...)):
             "total": len(ats_jobs), 
             "jobs": ats_jobs,
             "linkedin_jobs": linkedin_jobs,
+            "founder_jobs": founder_jobs,
             "is_paid": user_is_paid,
             "price_inr": Config.PRICE_INR,
             "price_usd": Config.PRICE_USD
@@ -207,6 +304,47 @@ async def find_jobs(payload: dict = Body(...)):
 
 @app.post("/api/find-linkedin-jobs")
 async def find_linkedin_jobs(payload: dict = Body(...)):
+    profile = payload.get("profile")
+    preferences = payload.get("preferences", {})
+    offset = int(payload.get("offset", 0))
+    limit = int(payload.get("limit", 10))
+    if not profile:
+        raise HTTPException(status_code=400, detail="Candidate profile is required.")
+
+    if not acquire_search_slot():
+        raise HTTPException(
+            status_code=429, 
+            detail="Platform is experiencing high query volume. Please try again in a few seconds."
+        )
+
+    try:
+        li_jobs, has_more, total_found = fetch_linkedin_postings(profile, preferences, limit=limit, offset=offset)
+        return JSONResponse(content={
+            "status": "success", 
+            "total": total_found, 
+            "jobs": li_jobs,
+            "has_more": has_more,
+            "offset": offset + len(li_jobs)
+        })
+    finally:
+        release_search_slot()
+
+@app.post("/api/get-pitch")
+async def get_pitch(payload: dict = Body(...)):
+    profile = payload.get("profile", {})
+    job = payload.get("job", {})
+    pitch = generate_star_pitch(profile, job)
+    return JSONResponse(content={"status": "success", "pitch": pitch})
+
+@app.post("/api/get-cover-letter")
+async def get_cover_letter(payload: dict = Body(...)):
+    profile = payload.get("profile", {})
+    job = payload.get("job", {})
+    cover_letter = generate_tailored_cover_letter(profile, job)
+    return JSONResponse(content={"status": "success", "cover_letter": cover_letter})
+
+@app.post("/api/find-founder-jobs")
+async def find_founder_jobs(payload: dict = Body(...)):
     profile = payload.get("profile")
     preferences = payload.get("preferences", {})
     if not profile:
@@ -219,17 +357,10 @@ async def find_linkedin_jobs(payload: dict = Body(...)):
         )
 
     try:
-        li_jobs = fetch_linkedin_postings(profile, preferences, limit=10)
-        return JSONResponse(content={"status": "success", "total": len(li_jobs), "jobs": li_jobs})
+        founder_jobs = fetch_hn_founder_jobs(profile, preferences)
+        return JSONResponse(content={"status": "success", "total": len(founder_jobs), "jobs": founder_jobs})
     finally:
         release_search_slot()
-
-@app.post("/api/get-pitch")
-async def get_pitch(payload: dict = Body(...)):
-    profile = payload.get("profile", {})
-    job = payload.get("job", {})
-    pitch = generate_star_pitch(profile, job)
-    return JSONResponse(content={"status": "success", "pitch": pitch})
 
 @app.post("/api/download-dossier")
 async def download_dossier(payload: dict = Body(...)):

@@ -59,7 +59,7 @@ def create_razorpay_order(user_id: str, amount_inr: int = 699):
         "is_sandbox": True
     }
 
-def verify_razorpay_signature(user_id: str, order_id: str, payment_id: str, signature: str, amount_inr: int = 699):
+def verify_razorpay_signature(user_id: str, order_id: str, payment_id: str, signature: str, amount_inr: int = 699, plan_name: str = ""):
     """
     Verify payment signature returned by Razorpay Checkout modal via HMAC SHA256.
     """
@@ -72,7 +72,7 @@ def verify_razorpay_signature(user_id: str, order_id: str, payment_id: str, sign
                 'razorpay_signature': signature
             })
             # Signature verified! Upgrade user in database
-            record_successful_payment(user_id, payment_id, order_id, amount_inr)
+            record_successful_payment(user_id, payment_id, order_id, amount_inr, plan_name)
             return {"status": "success", "message": "Payment verified and account upgraded."}
         except razorpay.errors.SignatureVerificationError:
             return {"status": "error", "message": "Invalid payment signature verification failed."}
@@ -81,7 +81,7 @@ def verify_razorpay_signature(user_id: str, order_id: str, payment_id: str, sign
 
     # Sandbox / Local Testing verification
     if order_id.startswith("order_sandbox_"):
-        record_successful_payment(user_id, payment_id, order_id, amount_inr)
+        record_successful_payment(user_id, payment_id, order_id, amount_inr, plan_name)
         return {"status": "success", "message": "Sandbox payment approved and account upgraded."}
 
     return {"status": "error", "message": "Payment verification could not be processed."}

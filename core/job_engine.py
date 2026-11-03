@@ -62,7 +62,27 @@ STATE_REGION_MAP = {
     "washington": ["seattle", "bellevue", "redmond", "wa"]
 }
 
-def query_freehire(params):
+_FEED_CACHE = {}
+_CACHE_TTL = 1800  # 30 minutes in seconds
+
+def clean_job_url(raw_url: str) -> str:
+    if not raw_url:
+        return ""
+    # Strip utm_source=freehire.me or any tracking tags
+    cleaned = re.sub(r'[?&]utm_source=freehire\.me(&|$)?', '', raw_url)
+    cleaned = re.sub(r'[?&]utm_[^&]+(&|$)?', '', cleaned)
+    if cleaned.endswith('?') or cleaned.endswith('&'):
+        cleaned = cleaned[:-1]
+    return cleaned
+
+def query_enterprise_feed(params):
+    cache_key = urllib.parse.urlencode(sorted(params.items()))
+    now = time.time()
+    if cache_key in _FEED_CACHE:
+        cached_time, cached_data = _FEED_CACHE[cache_key]
+        if now - cached_time < _CACHE_TTL:
+            return cached_data
+
     base_url = "https://freehire.me/api/v1/jobs/search"
     url = f"{base_url}?{urllib.parse.urlencode(params)}"
     req = urllib.request.Request(
@@ -72,9 +92,18 @@ def query_freehire(params):
     try:
         with urllib.request.urlopen(req, timeout=12) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            return data.get("data", [])
+            jobs = data.get("data", [])
+            for j in jobs:
+                if "url" in j:
+                    j["url"] = clean_job_url(j["url"])
+                if "apply_url" in j:
+                    j["apply_url"] = clean_job_url(j["apply_url"])
+            _FEED_CACHE[cache_key] = (now, jobs)
+            return jobs
     except Exception as e:
-        print(f"Error querying FreeHire {params}: {e}")
+        print(f"Error querying live feed {params}: {e}")
+        if cache_key in _FEED_CACHE:
+            return _FEED_CACHE[cache_key][1]
         return []
 
 def evaluate_location_match(job, pref_locations, pref_work_mode):
@@ -294,7 +323,7 @@ def evaluate_compensation(job, currency, min_val):
         elif currency == "USD_YR" and min_val > 0:
             display = f"Estimated ${int(min_val):,}+ / yr (Enterprise Band)"
         elif currency == "INR" and min_val > 0:
-            display = f"Estimated > {min_val} LPA (Market Standard for Candidate YOE)"
+            display = f"Estimated > {min_val} LPA (Market Standard for Candidate Years of Experience)"
         elif currency == "EUR" and min_val > 0:
             display = f"Estimated €{int(min_val):,}+ / yr (EU Standard)"
         elif currency == "GBP" and min_val > 0:
@@ -428,6 +457,16 @@ def generate_dynamic_search_queries(candidate_profile, pref_locations=None):
         if clean_role and not any(clean_role.lower() in q.get("q", "").lower() for q in queries):
             queries.append({"q": clean_role[:30], "limit": 40})
 
+    # Dynamic queries from candidate skills (including user-added skills)
+    for s in cand_skills:
+        s_clean = s.strip()
+        if len(s_clean) >= 2:
+            s_lower = s_clean.lower()
+            if not any(s_lower in q.get("q", "").lower() for q in queries):
+                queries.append({"q": f"{s_clean} developer", "limit": 40})
+                if len(queries) >= 16:
+                    break
+
     if not queries:
         queries = [{"q": "software engineer", "limit": 40}]
 
@@ -457,7 +496,11 @@ def query_linkedin_jobs(query, location="Worldwide", limit=12):
                     t_text = title_el.text.strip()
                     c_text = comp_el.text.strip() if comp_el else "Confidential"
                     l_text = loc_el.text.strip() if loc_el else "Worldwide"
-                    p_date = time_el.get("datetime", "") if time_el else ""
+                    p_date = ""
+                    if time_el:
+                        p_date = time_el.get("datetime") or time_el.text.strip()
+                    if not p_date:
+                        p_date = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
                     id_match = re.search(r"-(\d+)$", clean_link)
                     jid = id_match.group(1) if id_match else str(abs(hash(clean_link)))
@@ -488,7 +531,7 @@ def query_linkedin_jobs(query, location="Worldwide", limit=12):
         print(f"Error querying LinkedIn for '{query}': {e}")
     return jobs
 
-def fetch_linkedin_postings(candidate_profile, preferences, limit=10):
+def fetch_linkedin_postings(candidate_profile, preferences, limit=10, offset=0):
     currency = preferences.get("currency", "INR")
     min_val = float(preferences.get("min_package", 15.0))
     pref_locations = preferences.get("locations", ["Worldwide Remote"])
@@ -518,13 +561,14 @@ def fetch_linkedin_postings(candidate_profile, preferences, limit=10):
 
     linkedin_results = []
     seen_li_urls = set()
-    per_loc_quota = max(3, (limit + len(target_locations) - 1) // len(target_locations))
+    pool_target = max(limit + offset + 15, 35)
+    per_loc_quota = max(6, (pool_target + len(target_locations) - 1) // len(target_locations))
     for loc in target_locations:
         loc_count = 0
-        for q_str in base_queries[:3]:
-            if loc_count >= per_loc_quota or len(linkedin_results) >= limit:
+        for q_str in base_queries[:5]:
+            if loc_count >= per_loc_quota or len(linkedin_results) >= pool_target:
                 break
-            li_jobs = query_linkedin_jobs(q_str, location=loc, limit=6)
+            li_jobs = query_linkedin_jobs(q_str, location=loc, limit=10)
             for lj in li_jobs:
                 if lj["url"] in seen_li_urls:
                     continue
@@ -563,7 +607,9 @@ def fetch_linkedin_postings(candidate_profile, preferences, limit=10):
                     break
 
     linkedin_results.sort(key=lambda x: (x.get("cvmatch_score", 0), x.get("posted_at") or ""), reverse=True)
-    return linkedin_results[:limit]
+    sliced = linkedin_results[offset : offset + limit]
+    has_more = len(linkedin_results) > (offset + limit)
+    return sliced, has_more, len(linkedin_results)
 
 def search_matching_jobs(candidate_profile, preferences):
     currency = preferences.get("currency", "INR")
@@ -578,7 +624,7 @@ def search_matching_jobs(candidate_profile, preferences):
 
     all_jobs = {}
     for q in search_queries[:12]:
-        jobs = query_freehire(q)
+        jobs = query_enterprise_feed(q)
         for j in jobs:
             slug = j.get("public_slug")
             if slug and slug not in all_jobs:
@@ -630,7 +676,8 @@ def search_matching_jobs(candidate_profile, preferences):
 
     linkedin_results = []
     if include_linkedin:
-        linkedin_results = fetch_linkedin_postings(candidate_profile, preferences, limit=10)
+        li_res, _, _ = fetch_linkedin_postings(candidate_profile, preferences, limit=10, offset=0)
+        linkedin_results = li_res
 
     return {
         "ats_jobs": verified_results,

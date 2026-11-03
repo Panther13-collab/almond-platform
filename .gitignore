@@ -3,13 +3,18 @@
 .env.local
 .env.*.local
 
+# Local SQLite databases and candidate session data
+data/
+*.db
+*.sqlite3
+
 # Python bytecode
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 
-# Uploads and temporary exports
+# Uploads and temporary candidate resumes
 uploads/*
 !uploads/.gitkeep
 
@@ -23,3 +28,26 @@ Thumbs.db
 venv/
 .venv/
 env/
+
+# Scratch files and temporary image processing artifacts
+capture_*.py
+templates/kage_preview.html
+kage.webm
+static/test_*
+static/check_*
+static/almond_*
+static/kage_frames/
+static/kage_cropped*
+static/kage_original*
+static/man_crop.png
+static/motion_mask.png
+static/warrior_isolated.png
+static/warrior_live_crop.png
+static/preview_*
+static/clean_hero_frame.png
+static/full_frame.png
+static/left_half_preview.png
+static/page1_preview_clean.png
+
+static/kage.mp4
+static/kage_clean_hero.mp4

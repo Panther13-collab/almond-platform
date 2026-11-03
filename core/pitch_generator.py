@@ -1,3 +1,5 @@
+import datetime
+
 def generate_star_pitch(candidate_profile, job):
     cand_name = candidate_profile.get("name", "Applicant")
     cand_role = candidate_profile.get("current_role", "Software Engineer")
@@ -79,3 +81,114 @@ Sincerely,
 {cand_loc} | {cand_phone} | {cand_email}"""
 
     return pitch.strip()
+
+def generate_tailored_cover_letter(candidate_profile, job):
+    """
+    Generates a formal, tailored executive cover letter grounded in candidate profile
+    and mapped directly to the target company and role.
+    """
+    today_str = datetime.date.today().strftime("%B %d, %Y")
+    cand_name = candidate_profile.get("name", "Applicant")
+    cand_role = candidate_profile.get("current_role", "Software Engineer")
+    cand_yoe = candidate_profile.get("years_experience", 3)
+    cand_skills = candidate_profile.get("skills", [])
+    cand_loc = candidate_profile.get("location", "India")
+    cand_email = candidate_profile.get("email", "")
+    cand_phone = candidate_profile.get("phone", "")
+
+    job_title = job.get("title", "Software Engineer")
+    company = job.get("company", "Hiring Organization")
+    job_loc = job.get("location", "Remote / Onsite")
+    enr = job.get("enrichment") or {}
+    job_skills = job.get("skills", [])
+    if not job_skills and enr.get("tech_stack"):
+        job_skills = enr.get("tech_stack")
+
+    # Match common skills between candidate and job
+    matched_skills = [s for s in cand_skills if any(js.lower() in s.lower() or s.lower() in js.lower() for js in job_skills)]
+    if not matched_skills:
+        matched_skills = cand_skills[:4] if cand_skills else ["Full-Stack Architecture", "System Design", "Cloud Infrastructure"]
+
+    skills_highlight = ", ".join(matched_skills[:4])
+    title_lower = job_title.lower()
+
+    if any(k in title_lower for k in ["cad", "catia", "design engineer", "mechanical", "trim", "plastic", "nx", "solidworks", "creo", "automotive"]):
+        domain_narrative = (
+            f"Over the course of {cand_yoe}+ years specializing in mechanical engineering and automotive interior trim design at L&T Technology Services, "
+            f"I have led end-to-end 3D CAD modeling, master section development, and manufacturing tooling feasibility for complex plastic components "
+            f"including Center Pillar modules, trim panels, and B-surface structural attachments (ribs, doghouses, screw bosses, and clip towers)."
+        )
+        impact_narrative = (
+            f"At {company}, technical precision and Design for Manufacturing & Assembly (DFMEA/DMDR) standards are vital. "
+            f"My deep fluency in CATIA V5 and UG NX—combined with rigorous draft analysis, mold parting direction verification, "
+            f"and strict adherence to OEM engineering tolerances—ensures rapid prototyping and seamless handover to tooling suppliers with minimal revision cycles."
+        )
+    elif any(k in title_lower for k in ["ai", "automation", "agent", "llm"]):
+        domain_narrative = (
+            f"With {cand_yoe}+ years of focused engineering experience building production automation and intelligent agentic workflows, "
+            f"I bridge the critical gap between state-of-the-art LLM capabilities and high-availability enterprise backend infrastructure. "
+            f"My day-to-day focus centers on deploying fault-tolerant microservices, robust API integrations, and scalable data processing pipelines."
+        )
+        impact_narrative = (
+            f"What attracts me specifically to {company} is your commitment to modern engineering velocity and high-impact automation. "
+            f"Leveraging my hands-on background in {skills_highlight}, I bring a structured approach to designing resilient autonomous tasks, "
+            f"optimizing context pipelines, and safeguarding system reliability under real-world load."
+        )
+    elif any(k in title_lower for k in ["mobile", "flutter", "ios", "android", "swift", "react native"]):
+        domain_narrative = (
+            f"With {cand_yoe}+ years dedicated to architecting and publishing high-performance mobile applications, "
+            f"I have delivered cross-platform and native solutions that balance fluid, responsive UX with clean, modular system architecture. "
+            f"My technical toolkit includes advanced state management, offline-first data synchronization, and automated CI/CD deployment pipelines."
+        )
+        impact_narrative = (
+            f"In reviewing {company}'s current technical landscape, the {job_title} role aligns directly with my core competency. "
+            f"I bring deep practical experience building with {skills_highlight}, ensuring that every user-facing interaction "
+            f"is intuitive, battery-efficient, and engineered to enterprise reliability standards."
+        )
+    else:
+        domain_narrative = (
+            f"Over {cand_yoe}+ years of software engineering experience, I have developed and deployed mission-critical systems, "
+            f"scalable backend services, and automated data pipelines. My engineering philosophy is anchored in clean architecture, "
+            f"defensive error handling, and building tools that empower users with exceptional reliability."
+        )
+        impact_narrative = (
+            f"The opportunity to contribute to {company} as {job_title} stands out because of the high technical bar and impact of your products. "
+            f"With proven mastery across {skills_highlight}, I am prepared to step in, ramp up quickly, and deliver immediate value across your engineering roadmap."
+        )
+
+    contact_info_line = f"{cand_email}"
+    if cand_phone:
+        contact_info_line += f" • {cand_phone}"
+    if cand_loc:
+        contact_info_line += f" • {cand_loc}"
+
+    cover_letter = f"""{cand_name}
+{contact_info_line}
+
+{today_str}
+
+Hiring Team / Engineering Leadership
+{company}
+{job_loc}
+
+RE: Application for {job_title} (Verified Direct ATS Position)
+
+Dear Hiring Team,
+
+I am writing to submit my application for the {job_title} position at {company}. Having followed {company}'s industry trajectory and engineering initiatives, I am eager to contribute my technical foundation and execution rigor to your engineering team.
+
+{domain_narrative}
+
+{impact_narrative}
+
+Throughout my career, I have prided myself on ownership, cross-functional collaboration, and the ability to solve ambiguous engineering problems with surgical clarity. Whether optimizing database query latency, engineering robust CAD assemblies, or deploying cloud automations, I maintain an unrelenting focus on system longevity and end-user excellence.
+
+I would welcome the opportunity to speak with you regarding how my technical background in {skills_highlight} directly supports {company}'s current goals for the {job_title} position. Thank you for your time, consideration, and dedication to direct, merit-based hiring.
+
+Sincerely,
+
+{cand_name}
+{cand_email} | {cand_phone}"""
+
+    return cover_letter.strip()
+

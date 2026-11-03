@@ -37,6 +37,13 @@ def export_to_docx(candidate_profile, jobs, output_path):
         s.left_margin = Inches(0.8)
         s.right_margin = Inches(0.8)
 
+    logo_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static", "logo.png")
+    if os.path.exists(logo_file):
+        try:
+            doc.add_picture(logo_file, width=Inches(0.65))
+        except Exception:
+            pass
+
     title = doc.add_paragraph()
     r = title.add_run("Almond AI — Verified Career Matches & Direct Application Dossier")
     r.font.name = "Calibri"
@@ -180,7 +187,14 @@ def _export_pdf_pure_python(candidate_profile, jobs, output_path):
 
     class DossierPDF(FPDF):
         def header(self):
-            self.set_font('Helvetica', 'B', 13)
+            logo_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static", "logo.png")
+            if os.path.exists(logo_file):
+                try:
+                    self.image(logo_file, x=10, y=7, w=7)
+                    self.set_x(19)
+                except Exception:
+                    pass
+            self.set_font('Helvetica', 'B', 12)
             self.set_text_color(15, 23, 42)
             self.cell(0, 8, 'Almond AI — Verified Career Matches & Direct ATS Dossier', new_x='LMARGIN', new_y='NEXT')
             self.set_draw_color(226, 232, 240)
