@@ -234,8 +234,8 @@ def send_signup_otp(email: str) -> dict:
         "email_delivery": email_delivery
     }
 
-    # If in local dev or SMTP unconfigured, attach dev_otp for seamless testing
-    if not email_delivery.get("delivered") or Config.ENV == "development":
+    # Only attach dev_otp fallback if email could not be delivered via SMTP
+    if not email_delivery.get("delivered"):
         resp["dev_otp"] = otp_code
 
     return resp

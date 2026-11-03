@@ -113,6 +113,9 @@ def build_otp_html(otp_code: str, to_email: str) -> str:
                             <div style="font-size: 11px; color: #64748b; margin-bottom: 12px;">
                                 Direct Enterprise Application Portals &bull; <a href="https://almondsjob.com" style="color: #7c3aed; text-decoration: none; font-weight: 600;">almondsjob.com</a>
                             </div>
+                            <div style="font-size: 11px; color: #64748b; background-color: #f1f5f9; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; text-align: left; line-height: 1.5;">
+                                &#128161; <strong>Inbox Deliverability Tip:</strong> If this code arrived in your Spam / Junk folder, please click <em>"Report Not Spam"</em> and add <strong style="color: #0f172a;">almondjobs.official@gmail.com</strong> to your contacts to guarantee all future direct corporate feeds arrive straight into your primary inbox.
+                            </div>
                             <div style="font-size: 10.5px; color: #94a3b8; line-height: 1.4;">
                                 &copy; 2026 Almond Jobs. All rights reserved.<br>
                                 Automated Security System &bull; Please do not reply directly to this transmission.
@@ -150,6 +153,11 @@ def send_otp_email(to_email: str, otp_code: str) -> dict:
         msg_root["Subject"] = f"Your Almond Jobs Verification Code: {otp_code}"
         msg_root["From"] = Config.SMTP_FROM or f"Almond Jobs <{Config.SMTP_USER}>"
         msg_root["To"] = clean_email
+        msg_root["Reply-To"] = Config.SMTP_USER
+        msg_root["Auto-Submitted"] = "auto-generated"
+        msg_root["X-Auto-Response-Suppress"] = "All"
+        msg_root["Importance"] = "high"
+        msg_root["Priority"] = "urgent"
 
         # Multipart alternative container for plain text and HTML
         msg_alt = MIMEMultipart("alternative")

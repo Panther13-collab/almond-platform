@@ -8297,6 +8297,8 @@ window.openProfileModal = function(contextReason = "") {
         }
     }
 
+    const welcomeView = document.getElementById("authWelcomeView");
+    if (welcomeView) welcomeView.classList.add("hidden");
     const authFormView = document.getElementById("authFormView");
     const authProfileView = document.getElementById("authProfileView");
     const modalTitle = document.getElementById("modalTitleText");
@@ -8377,6 +8379,61 @@ window.closeProfileModal = function() {
     if (modal) modal.classList.add("hidden");
     const errBox = document.getElementById("authErrorMessage");
     if (errBox) errBox.classList.add("hidden");
+    const welcomeView = document.getElementById("authWelcomeView");
+    if (welcomeView) welcomeView.classList.add("hidden");
+};
+
+
+window.startResendOtpTimer = function(durationSecs = 120) {
+    if (window._resendOtpInterval) {
+        clearInterval(window._resendOtpInterval);
+        window._resendOtpInterval = null;
+    }
+    const timerNotice = document.getElementById("resendTimerNotice");
+    const activeBtn = document.getElementById("resendActiveBtn");
+    const timerSecs = document.getElementById("resendTimerSecs");
+    const spamText = document.getElementById("authSpamNoticeText");
+
+    if (timerNotice) timerNotice.classList.remove("hidden");
+    if (activeBtn) activeBtn.classList.add("hidden");
+    if (timerSecs) timerSecs.textContent = durationSecs;
+    if (spamText) {
+        spamText.innerHTML = `Please check your <strong>Spam / Junk</strong> folder. If it arrived there, tap <em>"Report Not Spam"</em> so future job alerts and direct portals reach you instantly.`;
+    }
+
+    let remaining = durationSecs;
+    window._resendOtpInterval = setInterval(() => {
+        remaining -= 1;
+        if (timerSecs) timerSecs.textContent = remaining;
+        if (remaining <= 0) {
+            clearInterval(window._resendOtpInterval);
+            window._resendOtpInterval = null;
+            if (timerNotice) timerNotice.classList.add("hidden");
+            if (activeBtn) activeBtn.classList.remove("hidden");
+            if (spamText) {
+                spamText.innerHTML = `120 seconds elapsed. If still not visible in your inbox or spam folder, tap <strong>Resend OTP Code</strong> above.`;
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+    }, 1000);
+};
+
+window.handleWelcomeDone = function() {
+    const authWelcomeView = document.getElementById("authWelcomeView");
+    if (authWelcomeView) authWelcomeView.classList.add("hidden");
+    window.cancelOtpVerification();
+    window.closeProfileModal();
+    window.updateTopProfileBar();
+
+    // Resume pending search if any
+    if (window._pendingJobSearch) {
+        window._pendingJobSearch = false;
+        const searchBtn = document.getElementById("searchJobsBtn");
+        if (searchBtn && typeof executeSearch === "function") {
+            executeSearch();
+            window.goToSlide(2);
+        }
+    }
 };
 
 window.handleAuthSubmit = async function(e) {
@@ -8444,6 +8501,10 @@ window.handleAuthSubmit = async function(e) {
             if (otpInput) {
                 otpInput.value = "";
                 setTimeout(() => otpInput.focus(), 150);
+            }
+
+            if (typeof window.startResendOtpTimer === "function") {
+                window.startResendOtpTimer(120);
             }
 
             // If dev_otp provided (local development or SMTP unconfigured), show hint banner
@@ -8576,21 +8637,29 @@ window.handleVerifyOtpSubmit = async function() {
         if (data.full_name) localStorage.setItem("almond_user_name", data.full_name);
         localStorage.setItem("almond_is_paid", data.is_paid ? "true" : "false");
 
-        window.cancelOtpVerification();
-        window.updateTopProfileBar();
-        window.closeProfileModal();
-
-        alert(`Welcome to Almond Jobs, ${data.full_name || 'Candidate'}! Your account has been verified.`);
-
-        // Resume pending search if any
-        if (window._pendingJobSearch) {
-            window._pendingJobSearch = false;
-            const searchBtn = document.getElementById("searchJobsBtn");
-            if (searchBtn && typeof executeSearch === "function") {
-                executeSearch();
-                window.goToSlide(2);
-            }
+        if (window._resendOtpInterval) {
+            clearInterval(window._resendOtpInterval);
+            window._resendOtpInterval = null;
         }
+
+        // Show celebratory in-app Welcome View instead of browser alert()
+        const authFormView = document.getElementById("authFormView");
+        const authContextNotice = document.getElementById("authContextNotice");
+        const authWelcomeView = document.getElementById("authWelcomeView");
+        const welcomeUserName = document.getElementById("welcomeUserName");
+        const modalTitleText = document.getElementById("modalTitleText");
+        const modalSubtitleText = document.getElementById("modalSubtitleText");
+
+        if (authFormView) authFormView.classList.add("hidden");
+        if (authContextNotice) authContextNotice.classList.add("hidden");
+        if (modalTitleText) modalTitleText.textContent = "Welcome to Almond Jobs";
+        if (modalSubtitleText) modalSubtitleText.textContent = "Account Verified & Active";
+        if (welcomeUserName) welcomeUserName.textContent = data.full_name || "Candidate";
+        if (authWelcomeView) authWelcomeView.classList.remove("hidden");
+        if (window.lucide) lucide.createIcons();
+
+        // Update brand bar indicators immediately
+        window.updateTopProfileBar();
     } catch (err) {
         if (errBox && errText) {
             errText.textContent = err.message || "Verification failed.";
@@ -8610,6 +8679,7 @@ window.handleResendOtp = async function() {
     const emailInput = document.getElementById("authEmailInput");
     const errBox = document.getElementById("authErrorMessage");
     const errText = document.getElementById("authErrorText");
+    const spamText = document.getElementById("authSpamNoticeText");
     const email = (emailInput?.value || "").trim().toLowerCase();
 
     if (!email) return;
@@ -8623,7 +8693,15 @@ window.handleResendOtp = async function() {
         const data = await resp.json();
         if (!resp.ok || data.status === "error") throw new Error(data.detail || data.message);
 
-        alert(`New 6-digit verification code sent to ${email}.`);
+        // Restart 120-second timer
+        if (typeof window.startResendOtpTimer === "function") {
+            window.startResendOtpTimer(120);
+        }
+
+        // Show feedback inside spam notice box
+        if (spamText) {
+            spamText.innerHTML = `<span class="text-emerald-800 font-bold">&#10003; Fresh 6-digit verification code sent to ${email}!</span> Please check your inbox or spam folder.`;
+        }
     } catch (err) {
         if (errBox && errText) {
             errText.textContent = err.message || "Failed to resend code.";
@@ -8633,6 +8711,10 @@ window.handleResendOtp = async function() {
 };
 
 window.cancelOtpVerification = function() {
+    if (window._resendOtpInterval) {
+        clearInterval(window._resendOtpInterval);
+        window._resendOtpInterval = null;
+    }
     const form = document.getElementById("candidateAuthForm");
     const otpStep = document.getElementById("authOtpStep");
     const otpInput = document.getElementById("authOtpInput");
