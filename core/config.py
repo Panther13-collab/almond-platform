@@ -22,6 +22,13 @@ class Config:
     RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "rzp_test_placeholder").strip()
     RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "test_secret_placeholder").strip()
 
+    # Outbound Transactional Email (SMTP - Gmail, Resend, Brevo, SendGrid, Amazon SES)
+    SMTP_HOST = os.getenv("SMTP_HOST", "").strip()
+    SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
+    SMTP_USER = os.getenv("SMTP_USER", "").strip()
+    SMTP_PASS = os.getenv("SMTP_PASS", "").strip()
+    SMTP_FROM = os.getenv("SMTP_FROM", "").strip() or f"Almond Jobs <{os.getenv('SMTP_USER', 'noreply@almondjobs.com')}>"
+
     @classmethod
     def is_supabase_configured(cls) -> bool:
         return bool(cls.SUPABASE_URL and cls.SUPABASE_ANON_KEY)
@@ -29,3 +36,7 @@ class Config:
     @classmethod
     def is_razorpay_configured(cls) -> bool:
         return bool(cls.RAZORPAY_KEY_ID and not cls.RAZORPAY_KEY_ID.startswith("rzp_test_placeholder"))
+
+    @classmethod
+    def is_smtp_configured(cls) -> bool:
+        return bool(cls.SMTP_HOST and cls.SMTP_USER and cls.SMTP_PASS)

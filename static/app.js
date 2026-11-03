@@ -8446,9 +8446,15 @@ window.handleAuthSubmit = async function(e) {
                 setTimeout(() => otpInput.focus(), 150);
             }
 
-            // In dev mode, if server returned dev_otp, log to console
-            if (data.dev_otp) {
+            // If dev_otp provided (local development or SMTP unconfigured), show hint banner
+            const devBanner = document.getElementById("authDevOtpBanner");
+            const devCodeDisplay = document.getElementById("devOtpCodeDisplay");
+            if (data.dev_otp && devBanner && devCodeDisplay) {
+                devCodeDisplay.textContent = data.dev_otp;
+                devBanner.classList.remove("hidden");
                 console.log(`[ALMOND AUTH] Development OTP Code: ${data.dev_otp}`);
+            } else if (devBanner) {
+                devBanner.classList.add("hidden");
             }
         } catch (err) {
             if (errBox && errText) {
@@ -8636,6 +8642,8 @@ window.cancelOtpVerification = function() {
     if (otpStep) otpStep.classList.add("hidden");
     if (otpInput) otpInput.value = "";
     if (errBox) errBox.classList.add("hidden");
+    const devBanner = document.getElementById("authDevOtpBanner");
+    if (devBanner) devBanner.classList.add("hidden");
 };
 
 window.handleLogout = function() {

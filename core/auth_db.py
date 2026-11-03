@@ -223,12 +223,22 @@ def send_signup_otp(email: str) -> dict:
     print(f"[AUTH_OTP] VERIFICATION CODE FOR {clean_email}: {otp_code}")
     print(f"=======================================================\n")
 
-    return {
+    # Attempt live email delivery via SMTP (Gmail, Resend, Brevo, SendGrid)
+    from core.email_sender import send_otp_email
+    email_delivery = send_otp_email(clean_email, otp_code)
+
+    resp = {
         "status": "success",
         "message": f"6-digit verification code sent to {clean_email}.",
         "email": clean_email,
-        "dev_otp": otp_code
+        "email_delivery": email_delivery
     }
+
+    # If in local dev or SMTP unconfigured, attach dev_otp for seamless testing
+    if not email_delivery.get("delivered") or Config.ENV == "development":
+        resp["dev_otp"] = otp_code
+
+    return resp
 
 def verify_otp_and_signup(email: str, otp_code: str, password: str, full_name: str = "") -> dict:
     """Verify submitted 6-digit OTP code and create candidate account."""
