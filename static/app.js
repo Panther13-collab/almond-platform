@@ -118,13 +118,10 @@ window.goToSlide = function(slideIdx) {
             // Page 1: Standard scale and position
             persistentBg.style.transform = "scale(1.0) translate(0, 0)";
             persistentBg.style.opacity = "1";
-        } else if (currentSlide === 1 || currentSlide === 2) {
-            // Page 2 & Page 3: Identical hero background zoom & position maintained seamlessly (no zoom out)
+        } else if (currentSlide === 1 || currentSlide === 2 || currentSlide === 3) {
+            // Page 2, Page 3 & Page 4: Identical hero background zoom & position maintained seamlessly (no zoom out)
             persistentBg.style.transform = "scale(1.28) translate(-8.5%, 0)";
             persistentBg.style.opacity = "1";
-        } else {
-            // Page 4 (Slide 3: Results Stream Vault): Dark theme, fade out video
-            persistentBg.style.opacity = "0";
         }
     }
 
