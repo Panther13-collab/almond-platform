@@ -807,13 +807,8 @@
                     <p class="text-xs font-bold text-slate-500 mt-0.5">Direct Enterprise Portals (Ashby, Greenhouse, Workday, Lever) &amp; Founder Direct — 0% Recruiter Spread</p>
                 </div>
 
-                <!-- Right Controls: Dossier Exports & Who We Are -->
+                <!-- Right Controls: Dossier Exports -->
                 <div class="flex items-center space-x-2.5 flex-wrap sm:flex-nowrap gap-y-2">
-                    <button type="button" onclick="openAtsModal()" class="px-3 py-1.5 rounded-xl border border-emerald-300 text-emerald-900 bg-emerald-50 text-xs font-black hover:bg-emerald-100 flex items-center space-x-1.5 transition shadow-xs cursor-pointer">
-                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
-                        <span>Who We Are</span>
-                    </button>
-
                     <!-- Dossier Export Actions -->
                     <div class="flex items-center space-x-1.5">
                         <button id="openTechDossierBtn" type="button" onclick="openTechDossierModal()" title="Export 1-Page Silicon Valley Standard Tech Dossier" class="px-3 py-1.5 rounded-xl border border-violet-300 text-violet-900 bg-violet-50 hover:bg-violet-100 text-xs font-black flex items-center space-x-1.5 transition shadow-xs cursor-pointer">
@@ -1452,11 +1447,15 @@
                     </div>
 
                     <div class="space-y-1">
-                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Email Address</label>
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Personal Email Address</label>
                         <div class="relative">
                             <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
-                            <input type="email" id="authEmailInput" required placeholder="name@company.com" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-xs text-slate-900 transition">
+                            <input type="email" id="authEmailInput" required placeholder="name@gmail.com" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-xs text-slate-900 transition">
                         </div>
+                        <p id="authEmailHelpText" class="text-[10px] text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                            <i data-lucide="info" class="w-3.5 h-3.5 text-violet-600 shrink-0"></i>
+                            <span>Use your personal mail to receive updates on new openings or updates on your applied jobs.</span>
+                        </p>
                     </div>
 
                     <div class="space-y-1">
@@ -1472,6 +1471,41 @@
                         <i data-lucide="arrow-right" class="w-4 h-4 text-white"></i>
                     </button>
                 </form>
+
+                <!-- OTP VERIFICATION STEP (Shown during sign up after submitting email) -->
+                <div id="authOtpStep" class="hidden space-y-3.5 pt-1">
+                    <div class="p-3 bg-violet-50/90 border border-violet-200 rounded-xl text-center">
+                        <p class="text-xs font-black text-violet-950 flex items-center justify-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>Verification Code Sent</span>
+                        </p>
+                        <p class="text-[11px] text-slate-600 mt-0.5">
+                            Enter the 6-digit OTP code sent to <strong id="otpEmailDisplay" class="text-violet-900 font-black"></strong>
+                        </p>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600">6-Digit Verification Code</label>
+                        <div class="relative">
+                            <i data-lucide="key-round" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+                            <input type="text" id="authOtpInput" maxlength="6" placeholder="• • • • • •" class="w-full text-center tracking-widest text-base font-black pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-slate-900">
+                        </div>
+                    </div>
+
+                    <button type="button" id="authVerifyOtpBtn" onclick="handleVerifyOtpSubmit()" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition transform active:scale-98 cursor-pointer flex items-center justify-center gap-2">
+                        <span id="authVerifyOtpBtnText">Verify OTP & Create Account</span>
+                        <i data-lucide="check-circle-2" class="w-4 h-4 text-white"></i>
+                    </button>
+
+                    <div class="flex items-center justify-between text-[11px] pt-1">
+                        <button type="button" onclick="handleResendOtp()" class="text-violet-700 font-bold hover:underline cursor-pointer">
+                            Resend Code
+                        </button>
+                        <button type="button" onclick="cancelOtpVerification()" class="text-slate-500 hover:text-slate-800 cursor-pointer">
+                            &larr; Change Email
+                        </button>
+                    </div>
+                </div>
 
                 <div class="pt-2 text-center">
                     <p id="authToggleHint" class="text-xs text-slate-500 font-medium">

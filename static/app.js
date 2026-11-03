@@ -5068,13 +5068,11 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between pt-1 flex-wrap gap-2 border-t border-slate-200">
+                        <div class="pt-1.5 border-t border-slate-200 flex items-center justify-between">
                             <p class="text-[11px] text-slate-700 font-medium">
-                                <strong>Advantage:</strong> Mentioning these gap keywords raises screening match from <strong>${job.cvmatch_score}%</strong> to <strong>90%+</strong>.
+                                <strong class="text-violet-950 font-bold">Screening Advantage:</strong> Mentioning these gap keywords lifts screening pass rate from <strong>${job.cvmatch_score}%</strong> to <strong>90%+</strong>.
                             </p>
-                            <button type="button" onclick="window.generatePitchWithGaps('${containerId}', ${globalIdx})" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1">
-                                <span>✨ AI Pitch (Inject Gaps)</span>
-                            </button>
+                            <span class="text-[10px] font-bold text-slate-400">Direct ATS Vector</span>
                         </div>
                     </div>
 
@@ -7583,7 +7581,15 @@ function initExports() {
 
 
 
-                    format: format
+                    format: format,
+
+
+
+                    user_id: getCandidateUserId(),
+
+
+
+                    is_paid: Boolean(localStorage.getItem('almond_is_paid') === 'true')
 
 
 
@@ -8261,11 +8267,13 @@ window.switchAuthTab = function(tab) {
     const errBox = document.getElementById("authErrorMessage");
     if (errBox) errBox.classList.add("hidden");
 
+    if (window.cancelOtpVerification) window.cancelOtpVerification();
+
     if (tab === 'signup') {
         if (tabLogin) tabLogin.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-950 cursor-pointer";
         if (tabSignup) tabSignup.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer";
         if (nameField) nameField.classList.remove("hidden");
-        if (submitBtnText) submitBtnText.textContent = "Create Free Candidate Account";
+        if (submitBtnText) submitBtnText.textContent = "Send Verification OTP →";
         if (toggleHint) toggleHint.innerHTML = `Already have an account? <button type="button" onclick="switchAuthTab('login')" class="text-violet-700 font-bold hover:underline cursor-pointer">Log in</button>`;
     } else {
         if (tabLogin) tabLogin.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer";
@@ -8380,32 +8388,95 @@ window.handleAuthSubmit = async function(e) {
     const errText = document.getElementById("authErrorText");
     const submitBtn = document.getElementById("authSubmitBtn");
 
-    const email = (emailInput?.value || "").trim();
+    const email = (emailInput?.value || "").trim().toLowerCase();
     const password = passInput?.value || "";
     const fullName = (nameInput?.value || "").trim();
 
-    if (!email || !password) {
+    if (errBox) errBox.classList.add("hidden");
+
+    // Strict personal email validation
+    const emailRegex = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+    if (!email || !emailRegex.test(email)) {
         if (errBox && errText) {
-            errText.textContent = "Please fill in all required fields.";
+            errText.textContent = "Please enter a valid personal email address (e.g. name@gmail.com).";
             errBox.classList.remove("hidden");
         }
         return;
     }
 
-    const endpoint = window.activeAuthTab === "signup" ? "/api/auth/signup" : "/api/auth/login";
-    const payload = { email, password };
-    if (window.activeAuthTab === "signup") payload.full_name = fullName;
+    if (!password || password.length < 6) {
+        if (errBox && errText) {
+            errText.textContent = "Password must be at least 6 characters long.";
+            errBox.classList.remove("hidden");
+        }
+        return;
+    }
 
+    // SIGN UP: Request OTP verification first
+    if (window.activeAuthTab === "signup") {
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add("opacity-70");
+            submitBtn.innerHTML = `<span class="animate-spin mr-1">⌛</span> Sending Verification OTP...`;
+        }
+
+        try {
+            const resp = await fetch("/api/auth/send-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: email })
+            });
+            const data = await resp.json();
+
+            if (!resp.ok || data.status === "error") {
+                throw new Error(data.detail || data.message || "Failed to send verification code.");
+            }
+
+            // Transition form to OTP step
+            const form = document.getElementById("candidateAuthForm");
+            const otpStep = document.getElementById("authOtpStep");
+            const displayEl = document.getElementById("otpEmailDisplay");
+            const otpInput = document.getElementById("authOtpInput");
+
+            if (form) form.classList.add("hidden");
+            if (otpStep) otpStep.classList.remove("hidden");
+            if (displayEl) displayEl.textContent = email;
+            if (otpInput) {
+                otpInput.value = "";
+                setTimeout(() => otpInput.focus(), 150);
+            }
+
+            // In dev mode, if server returned dev_otp, log to console
+            if (data.dev_otp) {
+                console.log(`[ALMOND AUTH] Development OTP Code: ${data.dev_otp}`);
+            }
+        } catch (err) {
+            if (errBox && errText) {
+                errText.textContent = err.message || "Failed to dispatch verification code.";
+                errBox.classList.remove("hidden");
+            }
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove("opacity-70");
+                submitBtn.innerHTML = `<span id="authSubmitBtnText">Send Verification OTP &rarr;</span><i data-lucide="arrow-right" class="w-4 h-4 text-white"></i>`;
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+        return;
+    }
+
+    // LOG IN: Direct authentication
     if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.classList.add("opacity-70");
     }
 
     try {
-        const resp = await fetch(endpoint, {
+        const resp = await fetch("/api/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ email, password })
         });
         const data = await resp.json();
 
@@ -8443,6 +8514,128 @@ window.handleAuthSubmit = async function(e) {
             submitBtn.classList.remove("opacity-70");
         }
     }
+};
+
+window.handleVerifyOtpSubmit = async function() {
+    const emailInput = document.getElementById("authEmailInput");
+    const passInput = document.getElementById("authPasswordInput");
+    const nameInput = document.getElementById("authFullNameInput");
+    const otpInput = document.getElementById("authOtpInput");
+    const errBox = document.getElementById("authErrorMessage");
+    const errText = document.getElementById("authErrorText");
+    const verifyBtn = document.getElementById("authVerifyOtpBtn");
+
+    const email = (emailInput?.value || "").trim().toLowerCase();
+    const password = passInput?.value || "";
+    const fullName = (nameInput?.value || "").trim();
+    const otp = (otpInput?.value || "").trim();
+
+    if (errBox) errBox.classList.add("hidden");
+
+    if (!otp || otp.length !== 6) {
+        if (errBox && errText) {
+            errText.textContent = "Please enter the complete 6-digit verification code.";
+            errBox.classList.remove("hidden");
+        }
+        return;
+    }
+
+    if (verifyBtn) {
+        verifyBtn.disabled = true;
+        verifyBtn.classList.add("opacity-70");
+        verifyBtn.innerHTML = `<span class="animate-spin mr-1">⌛</span> Verifying & Creating Account...`;
+    }
+
+    try {
+        const resp = await fetch("/api/auth/verify-otp-and-signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: email,
+                otp: otp,
+                password: password,
+                full_name: fullName
+            })
+        });
+        const data = await resp.json();
+
+        if (!resp.ok || data.status === "error") {
+            throw new Error(data.detail || data.message || "Verification failed. Incorrect or expired code.");
+        }
+
+        // Account verified & created! Store session
+        if (data.token) localStorage.setItem("almond_session_token", data.token);
+        if (data.user_id) localStorage.setItem("almond_user_id", data.user_id);
+        if (data.email) localStorage.setItem("almond_user_email", data.email);
+        if (data.full_name) localStorage.setItem("almond_user_name", data.full_name);
+        localStorage.setItem("almond_is_paid", data.is_paid ? "true" : "false");
+
+        window.cancelOtpVerification();
+        window.updateTopProfileBar();
+        window.closeProfileModal();
+
+        alert(`Welcome to Almond Jobs, ${data.full_name || 'Candidate'}! Your account has been verified.`);
+
+        // Resume pending search if any
+        if (window._pendingJobSearch) {
+            window._pendingJobSearch = false;
+            const searchBtn = document.getElementById("searchJobsBtn");
+            if (searchBtn && typeof executeSearch === "function") {
+                executeSearch();
+                window.goToSlide(2);
+            }
+        }
+    } catch (err) {
+        if (errBox && errText) {
+            errText.textContent = err.message || "Verification failed.";
+            errBox.classList.remove("hidden");
+        }
+    } finally {
+        if (verifyBtn) {
+            verifyBtn.disabled = false;
+            verifyBtn.classList.remove("opacity-70");
+            verifyBtn.innerHTML = `<span>Verify OTP & Create Account</span><i data-lucide="check-circle-2" class="w-4 h-4 text-white"></i>`;
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+};
+
+window.handleResendOtp = async function() {
+    const emailInput = document.getElementById("authEmailInput");
+    const errBox = document.getElementById("authErrorMessage");
+    const errText = document.getElementById("authErrorText");
+    const email = (emailInput?.value || "").trim().toLowerCase();
+
+    if (!email) return;
+
+    try {
+        const resp = await fetch("/api/auth/send-otp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        });
+        const data = await resp.json();
+        if (!resp.ok || data.status === "error") throw new Error(data.detail || data.message);
+
+        alert(`New 6-digit verification code sent to ${email}.`);
+    } catch (err) {
+        if (errBox && errText) {
+            errText.textContent = err.message || "Failed to resend code.";
+            errBox.classList.remove("hidden");
+        }
+    }
+};
+
+window.cancelOtpVerification = function() {
+    const form = document.getElementById("candidateAuthForm");
+    const otpStep = document.getElementById("authOtpStep");
+    const otpInput = document.getElementById("authOtpInput");
+    const errBox = document.getElementById("authErrorMessage");
+
+    if (form) form.classList.remove("hidden");
+    if (otpStep) otpStep.classList.add("hidden");
+    if (otpInput) otpInput.value = "";
+    if (errBox) errBox.classList.add("hidden");
 };
 
 window.handleLogout = function() {
@@ -10188,3 +10381,17 @@ window.downloadTechDossier = async function() {
         }
     }
 };
+
+// Auto-open VIP modal if URL has ?action=vip (from exported PDF/Word/Tracker)
+document.addEventListener("DOMContentLoaded", () => {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("action") === "vip") {
+            setTimeout(() => {
+                if (typeof openVipPricingModal === "function") {
+                    openVipPricingModal();
+                }
+            }, 600);
+        }
+    } catch (e) {}
+});

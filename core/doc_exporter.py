@@ -7,6 +7,34 @@ from docx.oxml.ns import qn
 import asyncio
 from playwright.async_api import async_playwright
 
+def latin_safe(text: str) -> str:
+    """Sanitize unicode strings into Latin-1 compatible text for standard FPDF fonts."""
+    if not text:
+        return ""
+    text = str(text)
+    replacements = {
+        '\u2013': '-',
+        '\u2014': '--',
+        '\u2018': "'",
+        '\u2019': "'",
+        '\u201c': '"',
+        '\u201d': '"',
+        '\u2022': '*',
+        '\u2026': '...',
+        '\u20b9': 'INR ',
+        '\u2192': '->',
+        '\u2190': '<-',
+        '\u2713': 'OK',
+        '\u2714': 'OK',
+        '\u2715': 'X',
+        '\u2716': 'X',
+        '\u200b': '',
+        '\xa0': ' '
+    }
+    for k, v in replacements.items():
+        text = text.replace(k, v)
+    return text.encode('latin-1', 'replace').decode('latin-1')
+
 def add_hyperlink(paragraph, url, text, color="B47B38", underline=True):
     part = paragraph.part
     r_id = part.relate_to(url, docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
@@ -28,7 +56,9 @@ def add_hyperlink(paragraph, url, text, color="B47B38", underline=True):
     paragraph._p.append(hyperlink)
     return hyperlink
 
-def export_to_docx(candidate_profile, jobs, output_path):
+VIP_PORTAL_URL = "http://127.0.0.1:8000/?action=vip"
+
+def export_to_docx(candidate_profile, jobs, output_path, is_paid: bool = False):
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     doc = docx.Document()
     for s in doc.sections:
@@ -57,7 +87,7 @@ def export_to_docx(candidate_profile, jobs, output_path):
     r_sub.font.size = Pt(10.5)
     r_sub.font.color.rgb = RGBColor(146, 91, 36)
 
-    doc.add_paragraph("—" * 50)
+    doc.add_paragraph("-" * 50)
 
     # Candidate Summary
     doc.add_heading("1. Candidate Profile Overview", level=1)
@@ -73,6 +103,8 @@ def export_to_docx(candidate_profile, jobs, output_path):
 
     doc.add_heading("2. Verified Direct Corporate Postings", level=1)
     for i, j in enumerate(jobs, 1):
+        is_locked = (not is_paid) and (i > 3)
+
         p_job = doc.add_paragraph()
         r_num = p_job.add_run(f"#{i}: {j.get('title')}\n")
         r_num.bold = True
@@ -81,7 +113,7 @@ def export_to_docx(candidate_profile, jobs, output_path):
 
         p_job.add_run("Company: ").bold = True
         p_job.add_run(f"{j.get('company')} | ")
-        p_job.add_run("ATS System: ").bold = True
+        p_job.add_run("Direct Portal: ").bold = True
         p_job.add_run(f"{j.get('source')} | ")
         p_job.add_run("Match Score: ").bold = True
         p_job.add_run(f"{j.get('cvmatch_score', 0)}%\n")
@@ -94,14 +126,19 @@ def export_to_docx(candidate_profile, jobs, output_path):
         r_comp.font.color.rgb = RGBColor(22, 101, 52)
         r_comp.bold = True
 
-        p_job.add_run("Direct ATS Link: ").bold = True
-        add_hyperlink(p_job, j.get("url", "#"), f"Open {j.get('company')} {j.get('source')} Portal")
+        if is_locked:
+            p_job.add_run("Direct Corporate Portal: ").bold = True
+            add_hyperlink(p_job, VIP_PORTAL_URL, "[LOCKED] Unlock Direct Portal (VIP Access Required) ->", color="7C3AED")
+        else:
+            p_job.add_run("Direct Corporate Portal: ").bold = True
+            add_hyperlink(p_job, j.get("url", "#"), f"Open {j.get('company')} {j.get('source')} Portal")
+
         doc.add_paragraph("." * 40)
 
     doc.save(output_path)
     return output_path
 
-async def export_to_pdf_async(candidate_profile, jobs, output_path):
+async def export_to_pdf_async(candidate_profile, jobs, output_path, is_paid: bool = False):
     import html as htmllib
     cand_name_esc = htmllib.escape(str(candidate_profile.get('name', 'Candidate')))
     cand_role_esc = htmllib.escape(str(candidate_profile.get('current_role', 'N/A')))
@@ -128,6 +165,7 @@ async def export_to_pdf_async(candidate_profile, jobs, output_path):
     .badge-comp {{ background: #dcfce7; color: #15803d; font-weight: bold; padding: 2px 6px; border-radius: 4px; font-size: 8.5pt; display: inline-block; margin-top: 4px; }}
     .badge-score {{ background: #faeed7; color: #8c5825; font-weight: bold; padding: 2px 6px; border-radius: 4px; font-size: 8.5pt; border: 1px solid #ebd09c; }}
     .apply-btn {{ display: inline-block; background: #b47b38; color: white !important; text-decoration: none; padding: 4px 10px; font-size: 8.5pt; font-weight: bold; border-radius: 4px; margin-top: 6px; }}
+    .apply-btn-locked {{ display: inline-block; background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white !important; text-decoration: none; padding: 4px 10px; font-size: 8.5pt; font-weight: bold; border-radius: 4px; margin-top: 6px; }}
 </style>
 </head>
 <body>
@@ -138,7 +176,7 @@ async def export_to_pdf_async(candidate_profile, jobs, output_path):
 </div>
 
 <div class="profile-card">
-    <strong>Candidate:</strong> {cand_name_esc} ({cand_role_esc} · {cand_yoe_esc}+ YOE)<br>
+    <strong>Candidate:</strong> {cand_name_esc} ({cand_role_esc} - {cand_yoe_esc}+ YOE)<br>
     <strong>Contact:</strong> {cand_email_esc} | {cand_phone_esc} | {cand_loc_esc}<br>
     <strong>Skills:</strong> {cand_skills_esc}
 </div>
@@ -146,23 +184,29 @@ async def export_to_pdf_async(candidate_profile, jobs, output_path):
 <h3 style="color: #23170f; margin-bottom: 8px;">Direct Corporate Postings</h3>
 """
     for i, j in enumerate(jobs, 1):
+        is_locked = (not is_paid) and (i > 3)
         j_title_esc = htmllib.escape(str(j.get('title', '')))
         j_comp_esc = htmllib.escape(str(j.get('company', '')))
-        j_src_esc = htmllib.escape(str(j.get('source', 'ATS')))
+        j_src_esc = htmllib.escape(str(j.get('source', 'Corporate Feed')))
         j_loc_esc = htmllib.escape(str(j.get('location_tag', j.get('location', 'Remote'))))
         j_mode_esc = htmllib.escape(str(j.get('work_mode', 'N/A')))
         j_comp_disp_esc = htmllib.escape(str(j.get('comp_display', 'Market Competitive')))
         j_url_esc = htmllib.escape(str(j.get('url', '#')))
         j_score = int(j.get('cvmatch_score', 0))
 
+        if is_locked:
+            btn_html = f'<a href="{VIP_PORTAL_URL}" class="apply-btn-locked" target="_blank">[LOCKED] Unlock Direct Portal (VIP Access Required) &rarr;</a>'
+        else:
+            btn_html = f'<a href="{j_url_esc}" class="apply-btn" target="_blank">Direct Application Portal &rarr;</a>'
+
         html += f"""
 <div class="job-card">
     <div class="job-title">#{i}: {j_title_esc} @ {j_comp_esc} <span class="badge-score">Match: {j_score}%</span></div>
     <div style="font-size: 8.5pt; color: #574133; margin-top: 2px;">
-        ATS Portal: <strong>{j_src_esc}</strong> | Location: <strong>{j_loc_esc}</strong> ({j_mode_esc})
+        Portal: <strong>{j_src_esc}</strong> | Location: <strong>{j_loc_esc}</strong> ({j_mode_esc})
     </div>
     <div class="badge-comp">{j_comp_disp_esc}</div><br>
-    <a href="{j_url_esc}" class="apply-btn" target="_blank">Direct Application Portal &rarr;</a>
+    {btn_html}
 </div>
 """
 
@@ -173,15 +217,15 @@ async def export_to_pdf_async(candidate_profile, jobs, output_path):
         async with async_playwright() as p:
             browser = await p.chromium.launch()
             page = await browser.new_page()
-            await page.set_content(html, wait_until="networkidle")
+            await page.set_content(html, wait_until="load", timeout=12000)
             await page.pdf(path=output_path, format="A4", print_background=True)
             await browser.close()
         return output_path
     except Exception as pw_err:
-        print(f"[DOC_EXPORTER] Notice: Playwright browser launch unavailable ({pw_err}). Using pure-Python PDF synthesizer.")
-        return _export_pdf_pure_python(candidate_profile, jobs, output_path)
+        print(f"[DOC_EXPORTER] Notice: Playwright PDF conversion fallback ({pw_err}). Using pure-Python PDF synthesizer.")
+        return _export_pdf_pure_python(candidate_profile, jobs, output_path, is_paid=is_paid)
 
-def _export_pdf_pure_python(candidate_profile, jobs, output_path):
+def _export_pdf_pure_python(candidate_profile, jobs, output_path, is_paid: bool = False):
     """Zero-dependency pure-Python PDF generation fallback for cloud containers."""
     from fpdf import FPDF
 
@@ -196,7 +240,7 @@ def _export_pdf_pure_python(candidate_profile, jobs, output_path):
                     pass
             self.set_font('Helvetica', 'B', 12)
             self.set_text_color(15, 23, 42)
-            self.cell(0, 8, 'Almond Jobs — Verified Career Matches & Direct Corporate Dossier', new_x='LMARGIN', new_y='NEXT')
+            self.cell(0, 8, 'Almond Jobs - Verified Career Matches & Direct Corporate Dossier', new_x='LMARGIN', new_y='NEXT')
             self.set_draw_color(226, 232, 240)
             self.line(10, self.get_y(), 200, self.get_y())
             self.ln(3)
@@ -205,17 +249,17 @@ def _export_pdf_pure_python(candidate_profile, jobs, output_path):
             self.set_y(-12)
             self.set_font('Helvetica', 'I', 8)
             self.set_text_color(148, 163, 184)
-            self.cell(0, 8, f'Page {self.page_no()}/{{nb}} — Almond Jobs (0% Recruiter Spread • Direct Feeds)', align='C')
+            self.cell(0, 8, f'Page {self.page_no()}/{{nb}} - Almond Jobs (0% Recruiter Spread - Direct Feeds)', align='C')
 
     pdf = DossierPDF()
     pdf.alias_nb_pages()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
 
-    cand_name = candidate_profile.get("name", "Candidate")
-    yoe = candidate_profile.get("years_experience", 3)
-    role = candidate_profile.get("current_role", "Software Engineer")
-    skills = ", ".join(candidate_profile.get("skills", [])[:10])
+    cand_name = latin_safe(candidate_profile.get("name", "Candidate"))
+    yoe = latin_safe(str(candidate_profile.get("years_experience", 3)))
+    role = latin_safe(candidate_profile.get("current_role", "Software Engineer"))
+    skills = latin_safe(", ".join(candidate_profile.get("skills", [])[:10]))
 
     pdf.set_fill_color(248, 250, 252)
     pdf.rect(10, pdf.get_y(), 190, 20, 'F')
@@ -236,9 +280,11 @@ def _export_pdf_pure_python(candidate_profile, jobs, output_path):
         if pdf.get_y() > 245:
             pdf.add_page()
 
+        is_locked = (not is_paid) and (idx > 3)
+
         pdf.set_font('Helvetica', 'B', 10)
         pdf.set_text_color(30, 58, 138)
-        title = f"#{idx}: {j.get('title', '')} @ {j.get('company', '')}"
+        title = latin_safe(f"#{idx}: {j.get('title', '')} @ {j.get('company', '')}")
         score = f"{j.get('cvmatch_score', 0)}% Match"
         pdf.cell(150, 5.5, title[:65], new_x='RIGHT')
         pdf.set_font('Helvetica', 'B', 8.5)
@@ -247,17 +293,22 @@ def _export_pdf_pure_python(candidate_profile, jobs, output_path):
 
         pdf.set_font('Helvetica', '', 8)
         pdf.set_text_color(71, 85, 105)
-        portal = (j.get('source') or 'ATS').upper()
-        loc = j.get('location_tag', j.get('location', 'Remote'))
-        mode = j.get('work_mode', 'Remote')
-        comp = j.get('comp_display', 'Market Competitive')
+        portal = latin_safe((j.get('source') or 'Corporate Feed').upper())
+        loc = latin_safe(j.get('location_tag', j.get('location', 'Remote')))
+        mode = latin_safe(j.get('work_mode', 'Remote'))
+        comp = latin_safe(j.get('comp_display', 'Market Competitive'))
         pdf.cell(0, 4.5, f'Portal: {portal} | Location: {loc} ({mode}) | Package: {comp}', new_x='LMARGIN', new_y='NEXT')
 
-        url = j.get('url', '')
-        if url and url.startswith('http'):
-            pdf.set_font('Helvetica', 'U', 7.5)
-            pdf.set_text_color(79, 70, 229)
-            pdf.cell(0, 4.5, 'Direct Apply URL: ' + url[:90], link=url, new_x='LMARGIN', new_y='NEXT')
+        if is_locked:
+            pdf.set_font('Helvetica', 'B', 8)
+            pdf.set_text_color(124, 58, 237)
+            pdf.cell(0, 4.5, '[LOCKED] Upgrade to VIP to Unlock Direct Portal -> Click to Open', link=VIP_PORTAL_URL, new_x='LMARGIN', new_y='NEXT')
+        else:
+            url = j.get('url', '')
+            if url and url.startswith('http'):
+                pdf.set_font('Helvetica', 'U', 7.5)
+                pdf.set_text_color(79, 70, 229)
+                pdf.cell(0, 4.5, 'Direct Apply URL: ' + latin_safe(url[:90]), link=url, new_x='LMARGIN', new_y='NEXT')
 
         pdf.ln(2.5)
 
@@ -265,16 +316,23 @@ def _export_pdf_pure_python(candidate_profile, jobs, output_path):
     pdf.output(output_path)
     return output_path
 
-def export_to_pdf(candidate_profile, jobs, output_path):
-    asyncio.run(export_to_pdf_async(candidate_profile, jobs, output_path))
-    return output_path
+def export_to_pdf(candidate_profile, jobs, output_path, is_paid: bool = False):
+    return asyncio.run(export_to_pdf_async(candidate_profile, jobs, output_path, is_paid=is_paid))
 
-def export_to_csv(jobs, output_path):
+def export_to_csv(jobs, output_path, is_paid: bool = False):
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     with open(output_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["Company", "Role", "Direct Portal", "Location", "Work Mode", "Package", "Match Score", "Direct Apply URL", "Status", "Notes"])
-        for j in jobs:
+        for idx, j in enumerate(jobs):
+            is_locked = (not is_paid) and (idx >= 3)
+            if is_locked:
+                apply_url = f"LOCKED (VIP Required: {VIP_PORTAL_URL})"
+                status_str = "VIP Locked Portal"
+            else:
+                apply_url = j.get("url", "")
+                status_str = "Ready to Apply"
+
             writer.writerow([
                 j.get("company", ""),
                 j.get("title", ""),
@@ -283,12 +341,11 @@ def export_to_csv(jobs, output_path):
                 j.get("work_mode", ""),
                 j.get("comp_display", ""),
                 f"{j.get('cvmatch_score', 0)}%",
-                j.get("url", ""),
-                "Ready to Apply",
+                apply_url,
+                status_str,
                 f"Matched skills: {', '.join(j.get('matched_skills', []))}"
             ])
     return output_path
-
 
 async def export_tech_dossier_pdf_async(candidate_profile, output_path):
     """Generate a clean, single-page Silicon Valley executive tech dossier PDF."""
@@ -461,7 +518,7 @@ async def export_tech_dossier_pdf_async(candidate_profile, output_path):
         
         <div class="exp-item">
             <div class="exp-header">
-                <span>{role} &bull; Lead Engineer</span>
+                <span>{role} &bull; Lead Systems Engineer</span>
                 <span>Verified Active Era</span>
             </div>
             <div class="exp-sub">Enterprise Engineering & Scalable Systems</div>
@@ -493,7 +550,7 @@ async def export_tech_dossier_pdf_async(candidate_profile, output_path):
         async with async_playwright() as p:
             browser = await p.chromium.launch()
             page = await browser.new_page()
-            await page.set_content(html, wait_until="networkidle")
+            await page.set_content(html, wait_until="load", timeout=12000)
             await page.pdf(path=output_path, format="A4", print_background=True)
             await browser.close()
         return output_path
@@ -506,25 +563,43 @@ def _export_tech_dossier_pure_python(candidate_profile, output_path):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Helvetica", "B", 16)
-    name = candidate_profile.get("name") or "Candidate"
-    role = candidate_profile.get("current_role") or "Software Engineer"
+    name = latin_safe(candidate_profile.get("name") or "Candidate")
+    role = latin_safe(candidate_profile.get("current_role") or "Software Engineer")
+    yoe = latin_safe(str(candidate_profile.get("years_experience", 3)))
     pdf.cell(0, 10, f"{name.upper()}", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("Helvetica", "", 11)
-    pdf.cell(0, 7, f"{role} — Verified Executive Vector", new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(4)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(0, 6, f"{role} - {yoe}+ Years Verified Experience | 0% Agency Spread", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(3)
+
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(0, 6, "EXECUTIVE ENGINEERING VECTOR", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 8.5)
+    pdf.multi_cell(0, 4.5, latin_safe(f"Accomplished {role} specializing in reliable distributed architectures, low-latency microservices, and modern continuous delivery lifecycles. Proven record of designing robust cloud infrastructure, optimizing datastores, and delivering high-impact features with 0% recruiter spread."))
+    pdf.ln(3)
+
     pdf.set_font("Helvetica", "B", 11)
     pdf.cell(0, 6, "VERIFIED SKILLS", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("Helvetica", "", 9)
-    skills = ", ".join(candidate_profile.get("skills", [])[:15])
-    pdf.multi_cell(0, 5, skills)
-    pdf.ln(5)
+    pdf.set_font("Helvetica", "", 8.5)
+    skills = latin_safe(", ".join(candidate_profile.get("skills", [])[:18]))
+    pdf.multi_cell(0, 4.5, skills)
+    pdf.ln(3)
+
     pdf.set_font("Helvetica", "B", 11)
-    pdf.cell(0, 6, "PRODUCTION EXPERIENCE HIGHLIGHTS", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("Helvetica", "", 9)
-    pdf.multi_cell(0, 5, "- Built and deployed low-latency backend architectures\n- Optimized database query performance and cloud infrastructure\n- Delivered customer-centric software features with 0% recruiter markup")
+    pdf.cell(0, 6, "PRODUCTION EXPERIENCE & QUANTIFIED IMPACT", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 8.5)
+    pdf.multi_cell(0, 4.5, "- Architected resilient REST & streaming data services with sub-50ms latency\n- Implemented containerized CI/CD pipelines accelerating release velocity by over 35%\n- Eliminated database query bottlenecks, reducing CPU utilization across critical paths")
+    pdf.ln(4)
+
+    pdf.set_font("Helvetica", "I", 7.5)
+    pdf.set_text_color(100, 116, 139)
+    pdf.cell(0, 5, "Almond Jobs - 1-Page Silicon Valley Standard Tech Dossier", new_x="LMARGIN", new_y="NEXT")
+
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     pdf.output(output_path)
     return output_path
 
 def export_tech_dossier_pdf(candidate_profile, output_path):
-    return asyncio.run(export_tech_dossier_pdf_async(candidate_profile, output_path))
+    try:
+        return asyncio.run(export_tech_dossier_pdf_async(candidate_profile, output_path))
+    except Exception:
+        return _export_tech_dossier_pure_python(candidate_profile, output_path)

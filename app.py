@@ -15,12 +15,14 @@ from core.founder_engine import fetch_hn_founder_jobs
 from core.curated_feeds import query_curated_feed
 from core.doc_exporter import (
     export_to_docx, export_to_pdf_async, export_to_csv,
-    export_tech_dossier_pdf_async, export_tech_dossier_pdf
+    export_tech_dossier_pdf_async, export_tech_dossier_pdf,
+    _export_pdf_pure_python, _export_tech_dossier_pure_python
 )
 from core.config import Config
 from core.auth_db import (
     signup_user, login_user, is_user_paid, verify_session_token, get_user_profile,
-    get_user_kanban, save_user_kanban_application, sync_full_kanban
+    get_user_kanban, save_user_kanban_application, sync_full_kanban,
+    send_signup_otp, verify_otp_and_signup
 )
 from core.payment import create_razorpay_order, verify_razorpay_signature
 from core.security import BotShieldMiddleware, validate_uploaded_file, acquire_search_slot, release_search_slot
@@ -121,6 +123,29 @@ async def upload_resume(file: UploadFile = File(...)):
     profile["file_id"] = file_id
 
     return JSONResponse(content={"status": "success", "profile": profile})
+
+@app.post("/api/auth/send-otp")
+async def api_send_otp(payload: dict = Body(...)):
+    email = payload.get("email", "")
+    if not email:
+        raise HTTPException(status_code=400, detail="Please enter your personal email address.")
+    res = send_signup_otp(email)
+    if res.get("status") == "error":
+        raise HTTPException(status_code=400, detail=res.get("message"))
+    return JSONResponse(content=res)
+
+@app.post("/api/auth/verify-otp-and-signup")
+async def api_verify_otp_and_signup(payload: dict = Body(...)):
+    email = payload.get("email", "")
+    otp = payload.get("otp", "")
+    password = payload.get("password", "")
+    full_name = payload.get("full_name", "")
+    if not email or not otp or not password:
+        raise HTTPException(status_code=400, detail="Email, verification code, and password are required.")
+    res = verify_otp_and_signup(email, otp, password, full_name)
+    if res.get("status") == "error":
+        raise HTTPException(status_code=400, detail=res.get("message"))
+    return JSONResponse(content=res)
 
 @app.post("/api/auth/signup")
 async def api_signup(payload: dict = Body(...)):
@@ -372,28 +397,36 @@ async def download_dossier(payload: dict = Body(...)):
     profile = payload.get("profile", {})
     jobs = payload.get("jobs", [])
     doc_format = payload.get("format", "pdf").lower()
+    user_id = payload.get("user_id")
 
     if not jobs:
         raise HTTPException(status_code=400, detail="No jobs to export.")
 
+    # Determine entitlement: Free tier has links 4+ locked with upgrade CTA
+    user_paid = is_user_paid(user_id) if user_id else bool(payload.get("is_paid"))
     cand_slug = (profile.get("name") or "Candidate").replace(" ", "_")
     
     if doc_format == "docx":
         out_name = f"{cand_slug}_Almond_Job_Dossier.docx"
         out_path = os.path.join(UPLOAD_DIR, out_name)
-        export_to_docx(profile, jobs, out_path)
+        export_to_docx(profile, jobs, out_path, is_paid=user_paid)
         return FileResponse(out_path, filename=out_name, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 
     elif doc_format == "csv":
         out_name = f"{cand_slug}_Almond_Job_Tracker.csv"
         out_path = os.path.join(UPLOAD_DIR, out_name)
-        export_to_csv(jobs, out_path)
+        export_to_csv(jobs, out_path, is_paid=user_paid)
         return FileResponse(out_path, filename=out_name, media_type="text/csv")
 
     else: # default pdf
         out_name = f"{cand_slug}_Almond_Job_Dossier.pdf"
         out_path = os.path.join(UPLOAD_DIR, out_name)
-        await export_to_pdf_async(profile, jobs, out_path)
+        try:
+            await export_to_pdf_async(profile, jobs, out_path, is_paid=user_paid)
+        except Exception as pdf_err:
+            print(f"[DOWNLOAD_DOSSIER] Playwright async failed ({pdf_err}), falling back to pure-Python PDF.")
+            _export_pdf_pure_python(profile, jobs, out_path, is_paid=user_paid)
+
         return FileResponse(out_path, filename=out_name, media_type="application/pdf")
 
 @app.get("/api/curated-feeds")
@@ -432,8 +465,8 @@ async def export_tech_dossier(payload: dict = Body(...)):
     try:
         await export_tech_dossier_pdf_async(profile, out_path)
     except Exception as e:
-        print(f"[EXPORT_TECH_DOSSIER] Playwright async failed ({e}), using sync fallback.")
-        export_tech_dossier_pdf(profile, out_path)
+        print(f"[EXPORT_TECH_DOSSIER] Playwright async failed ({e}), using pure-Python fallback.")
+        _export_tech_dossier_pure_python(profile, out_path)
 
     return FileResponse(out_path, filename=out_name, media_type="application/pdf")
 

@@ -1,3 +1,4 @@
+import re
 import os
 import sqlite3
 import hashlib
@@ -88,6 +89,14 @@ def init_db():
                 FOREIGN KEY (user_id) REFERENCES users (id)
             );
         """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS email_otps (
+                email TEXT PRIMARY KEY,
+                otp_code TEXT NOT NULL,
+                expires_at REAL NOT NULL,
+                attempts INTEGER DEFAULT 0
+            );
+        """)
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments (user_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_cand_apps_user ON candidate_applications (user_id);")
@@ -174,6 +183,111 @@ def verify_session_token(token: str) -> dict:
     except Exception as e:
         print(f"[AUTH_DB] Token verification note: {e}")
         return None
+
+
+EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
+
+def send_signup_otp(email: str) -> dict:
+    """Validate email format and dispatch a secure 6-digit OTP code for candidate verification."""
+    clean_email = email.strip().lower()
+    if not clean_email or not EMAIL_REGEX.match(clean_email):
+        return {
+            "status": "error",
+            "message": "Please enter a valid personal email address (e.g. name@gmail.com)."
+        }
+
+    # Check if user already exists
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE email = ?", (clean_email,))
+        if cursor.fetchone():
+            return {
+                "status": "error",
+                "message": "An account with this email already exists. Please log in directly."
+            }
+
+        otp_code = f"{secrets.randbelow(900000) + 100000}"
+        expires_at = time.time() + 600 # 10 minutes
+
+        cursor.execute("""
+            INSERT INTO email_otps (email, otp_code, expires_at, attempts)
+            VALUES (?, ?, ?, 0)
+            ON CONFLICT(email) DO UPDATE SET
+                otp_code = excluded.otp_code,
+                expires_at = excluded.expires_at,
+                attempts = 0
+        """, (clean_email, otp_code, expires_at))
+        conn.commit()
+
+    print(f"\n=======================================================")
+    print(f"[AUTH_OTP] VERIFICATION CODE FOR {clean_email}: {otp_code}")
+    print(f"=======================================================\n")
+
+    return {
+        "status": "success",
+        "message": f"6-digit verification code sent to {clean_email}.",
+        "email": clean_email,
+        "dev_otp": otp_code
+    }
+
+def verify_otp_and_signup(email: str, otp_code: str, password: str, full_name: str = "") -> dict:
+    """Verify submitted 6-digit OTP code and create candidate account."""
+    clean_email = email.strip().lower()
+    clean_otp = str(otp_code).strip()
+
+    if not clean_email or not EMAIL_REGEX.match(clean_email):
+        return {"status": "error", "message": "Invalid email address format."}
+    if not clean_otp or len(clean_otp) != 6:
+        return {"status": "error", "message": "Please enter the full 6-digit verification code."}
+    if not password or len(password) < 6:
+        return {"status": "error", "message": "Password must be at least 6 characters long."}
+
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT otp_code, expires_at, attempts FROM email_otps WHERE email = ?", (clean_email,))
+        row = cursor.fetchone()
+
+        if not row:
+            return {
+                "status": "error",
+                "message": "No active verification code found for this email. Please request a new code."
+            }
+
+        stored_otp = row["otp_code"]
+        expires_at = row["expires_at"]
+        attempts = row["attempts"]
+
+        now = time.time()
+        if now > expires_at:
+            cursor.execute("DELETE FROM email_otps WHERE email = ?", (clean_email,))
+            conn.commit()
+            return {
+                "status": "error",
+                "message": "Verification code has expired. Please request a new code."
+            }
+
+        if attempts >= 5:
+            cursor.execute("DELETE FROM email_otps WHERE email = ?", (clean_email,))
+            conn.commit()
+            return {
+                "status": "error",
+                "message": "Too many incorrect attempts. Please request a new code."
+            }
+
+        if clean_otp != stored_otp:
+            cursor.execute("UPDATE email_otps SET attempts = attempts + 1 WHERE email = ?", (clean_email,))
+            conn.commit()
+            return {
+                "status": "error",
+                "message": "Incorrect verification code. Please check your email and try again."
+            }
+
+        # Code matches! Delete the OTP
+        cursor.execute("DELETE FROM email_otps WHERE email = ?", (clean_email,))
+        conn.commit()
+
+    # Now create account
+    return signup_user(clean_email, password, full_name)
 
 def signup_user(email: str, password: str, full_name: str = "") -> dict:
     """Sign up a new candidate user into persistent SQLite and sync with Supabase."""
