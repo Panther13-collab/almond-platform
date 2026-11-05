@@ -85,30 +85,25 @@ const TOTAL_SLIDES = 4;
 
 
 window.goToSlide = function(slideIdx) {
-
-
-
     if (slideIdx < 0 || slideIdx >= TOTAL_SLIDES) return;
-
-
-
     currentSlide = slideIdx;
     window.currentSlide = currentSlide;
 
+    const slideIds = ["hero", "discovery", "workspace", "results-stream"];
+    const targetId = slideIds[slideIdx];
 
+    // Responsive Mobile Mode: smooth native scroll without locking or hijacking
+    if (window.innerWidth < 1024) {
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+            targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        return;
+    }
 
     isSlideTransitioning = true;
-
-
-
     const track = document.getElementById("story-track");
-
-
-
     if (track) {
-
-
-
         track.style.transform = `translateY(-${currentSlide * 100}vh)`;
 
     // Update persistent background zoom and parallax alignment
@@ -232,11 +227,9 @@ function initStoryPaging() {
 
 
 
-    // Wheel event handler (Reel / Slide Step)
-
-
-
+    // Wheel event handler (Reel / Slide Step - Desktop Only)
     window.addEventListener("wheel", (e) => {
+        if (window.innerWidth < 1024) return; // Allow 100% native smooth scrolling on mobile!
 
 
 
@@ -477,27 +470,16 @@ function initStoryPaging() {
 
 
 
-    // Touch / Swipe gestures for mobile & trackpads
-
-
-
+    // Touch / Swipe gestures (Disabled on mobile < 1024px to enable native fluid scrolling like Amazon & Flipkart)
     let touchStartY = 0;
 
-
-
     window.addEventListener("touchstart", (e) => {
-
-
-
+        if (window.innerWidth < 1024) return; // Native fluid scrolling on mobile!
         touchStartY = e.touches[0].clientY;
-
-
-
     }, { passive: true });
 
-
-
-        window.addEventListener("touchend", (e) => {
+    window.addEventListener("touchend", (e) => {
+        if (window.innerWidth < 1024) return; // Native fluid scrolling on mobile!
         if (isSlideTransitioning) return;
         const target = e.target;
         if (target && target.closest("#profileModal, #vipPricingModal, #pitchModal, #humanVerifyModal, #curatedFeedsModal, #heroInfoModal, #authModal, #welcomeCelebrationModal, #techDossierModal")) {
@@ -507,7 +489,7 @@ function initStoryPaging() {
         const touchEndY = e.changedTouches[0].clientY;
         const diff = touchStartY - touchEndY;
 
-        // If on Page 3 (Slide 2), prevent accidental slide switching while scrolling job results
+        // If on Page 4 (Slide 3), prevent accidental slide switching while scrolling job results
         if (currentSlide === 3) {
             const resultsScroll = document.getElementById("resultsScrollContainer");
             if (resultsScroll && resultsScroll.contains(target)) {
@@ -528,6 +510,28 @@ function initStoryPaging() {
             }
         }
     }, { passive: true });
+
+    // IntersectionObserver to sync currentSlide during native mobile scrolling
+    if (typeof IntersectionObserver !== "undefined") {
+        const slideIds = ["hero", "discovery", "workspace", "results-stream"];
+        const observer = new IntersectionObserver((entries) => {
+            if (window.innerWidth >= 1024) return;
+            entries.forEach(entry => {
+                if (entry.isIntersecting && entry.intersectionRatio >= 0.4) {
+                    const idx = slideIds.indexOf(entry.target.id);
+                    if (idx !== -1) {
+                        currentSlide = idx;
+                        window.currentSlide = idx;
+                    }
+                }
+            });
+        }, { threshold: [0.4] });
+
+        slideIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) observer.observe(el);
+        });
+    }
 
 
 

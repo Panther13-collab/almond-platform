@@ -53,19 +53,39 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
-        html, body {
-            height: 100vh;
-            max-height: 100vh;
-            width: 100vw;
-            max-width: 100vw;
-            overflow: hidden;
-            margin: 0;
-            padding: 0;
-        }
-
         *, *::before, *::after {
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            box-sizing: border-box;
+        }
+
+        /* Desktop-Only Kinetic Slide Presentation (>= 1024px) */
+        @media (min-width: 1024px) {
+            html, body {
+                height: 100vh;
+                max-height: 100vh;
+                width: 100vw;
+                max-width: 100vw;
+                overflow: hidden;
+                margin: 0;
+                padding: 0;
+            }
+        }
+
+        /* Mobile & Tablet Native Document Scroll (< 1024px - Like Amazon & Flipkart) */
+        @media (max-width: 1023px) {
+            html, body {
+                height: auto !important;
+                min-height: 100% !important;
+                max-height: none !important;
+                width: 100% !important;
+                max-width: 100vw !important;
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                -webkit-overflow-scrolling: touch;
+            }
         }
 
         body { 
@@ -77,32 +97,123 @@
             color: #0f172a;
         }
 
-        /* Full-Screen Reel / Slide Viewport & Kinetic Track */
-        #story-viewport {
-            height: 100vh;
-            width: 100vw;
-            position: relative;
-            overflow: hidden;
-            background-color: #070b14;
+        /* DESKTOP-ONLY SLIDE PRESENTATION (Screens >= 1024px) */
+        @media (min-width: 1024px) {
+            #story-viewport {
+                height: 100vh;
+                width: 100vw;
+                position: relative;
+                overflow: hidden;
+                background-color: #070b14;
+            }
+
+            #story-track {
+                height: 100%;
+                width: 100%;
+                transform: translateY(0%);
+                transition: transform 0.75s cubic-bezier(0.25, 1, 0.3, 1);
+                will-change: transform;
+            }
+
+            .story-page {
+                height: 100vh;
+                max-height: 100vh;
+                width: 100vw;
+                position: relative;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+            }
         }
 
-        #story-track {
-            height: 100%;
-            width: 100%;
-            transform: translateY(0%);
-            transition: transform 0.75s cubic-bezier(0.25, 1, 0.3, 1);
-            will-change: transform;
-        }
+        /* MOBILE & TABLET NATIVE FLUID SCROLL (Screens < 1024px - Like Amazon & Flipkart) */
+        @media (max-width: 1023px) {
+            html, body {
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
+                height: auto !important;
+                min-height: 100% !important;
+                -webkit-overflow-scrolling: touch;
+            }
 
-        .story-page {
-            height: 100vh;
-            max-height: 100vh;
-            width: 100vw;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
+            #story-viewport {
+                height: auto !important;
+                min-height: 100dvh !important;
+                width: 100% !important;
+                position: relative !important;
+                overflow: visible !important;
+                background-color: #fafaf9;
+            }
+
+            #story-track {
+                height: auto !important;
+                width: 100% !important;
+                transform: none !important;
+                transition: none !important;
+                will-change: auto !important;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .story-page {
+                height: auto !important;
+                min-height: 100dvh !important;
+                max-height: none !important;
+                width: 100% !important;
+                position: relative !important;
+                overflow: visible !important;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                padding-top: 5rem !important;
+                padding-bottom: 3rem !important;
+            }
+
+            /* Pinned Mobile Background: Lightweight & 0 Lag */
+            #persistentHeroBg {
+                position: fixed !important;
+                inset: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                z-index: 0 !important;
+                transform: none !important;
+            }
+
+            #persistentHeroBg .mobile-bg-poster {
+                display: block !important;
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                object-position: center top;
+                opacity: 0.65 !important;
+            }
+
+            #persistentHeroBg video {
+                display: none !important; /* Disable video decoding on mobile to eliminate GPU crashes & lag */
+            }
+
+            /* Responsive split background on mobile for Page 3 & Page 4 */
+            #workspace .split-crack-bg,
+            #results-stream .split-crack-bg {
+                display: none !important;
+            }
+
+            #workspace {
+                background: linear-gradient(180deg, rgba(250,250,249,0.95) 0%, rgba(14,22,15,0.96) 28%, #0e160f 100%) !important;
+            }
+
+            #results-stream {
+                background: #0e160f !important;
+            }
+
+            #resultsScrollContainer {
+                max-height: none !important;
+                overflow: visible !important;
+            }
         }
 
         /* Frosted White Capsule Navigation */
@@ -184,36 +295,36 @@
 
 
     <!-- 2. FLOATING FROSTED PEARL CAPSULE NAVBAR WITH VIBRANT VIOLET TOUCHES -->
-    <header class="fixed top-4 inset-x-0 z-50 flex justify-center px-4">
-        <nav class="kage-glass-nav rounded-full px-5 sm:px-7 py-2.5 max-w-5xl w-full flex items-center justify-between transition-all duration-300">
+    <header class="fixed top-2.5 sm:top-4 inset-x-0 z-50 flex justify-center px-2.5 sm:px-4">
+        <nav class="kage-glass-nav rounded-full px-3.5 sm:px-6 py-2 sm:py-2.5 max-w-5xl w-full flex items-center justify-between transition-all duration-300">
             <!-- Brand & Golden Emblem + Violet Badge (Left) -->
-            <button type="button" onclick="goToSlide(0)" class="flex items-center gap-3 group cursor-pointer text-left">
-                <div class="relative w-8 h-8 flex items-center justify-center">
-                    <img src="/static/logo.png" alt="Almond Logo" class="w-7 h-7 object-contain drop-shadow-[0_0_8px_rgba(223,183,108,0.7)] group-hover:scale-105 transition-transform">
+            <button type="button" onclick="goToSlide(0)" class="flex items-center gap-2 sm:gap-3 group cursor-pointer text-left shrink-0">
+                <div class="relative w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center">
+                    <img src="/static/logo.png" alt="Almond Logo" class="w-6 h-6 sm:w-7 sm:h-7 object-contain drop-shadow-[0_0_8px_rgba(223,183,108,0.7)] group-hover:scale-105 transition-transform">
                 </div>
                 <div class="flex items-baseline">
-                    <span class="font-black tracking-tight text-slate-950 text-base sm:text-lg">Almond Job<span class="text-violet-600">s</span></span>
+                    <span class="font-black tracking-tight text-slate-950 text-sm sm:text-lg">Almond Job<span class="text-violet-600">s</span></span>
                 </div>
             </button>
 
-            <!-- Telemetry Feed (Middle): Incrementing & Decrementing Live Feed Counter -->
-            <div class="flex items-center gap-2 text-xs font-mono text-emerald-800 bg-emerald-50/90 border border-emerald-300/80 px-3.5 py-1.5 rounded-full shadow-xs">
+            <!-- Telemetry Feed (Middle): Visible on screens >= 640px -->
+            <div class="hidden sm:flex items-center gap-2 text-xs font-mono text-emerald-800 bg-emerald-50/90 border border-emerald-300/80 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full shadow-xs shrink-0">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
                 <span id="livePostingsCount" class="font-black text-slate-950">3,315,258</span>
-                <span class="text-emerald-800 font-bold">Live Feed</span>
+                <span class="text-emerald-800 font-bold hidden md:inline">Live Feed</span>
                 <span id="livePostingDelta" class="text-[10px] text-emerald-600 font-bold opacity-0 transition-opacity duration-300">+12</span>
             </div>
 
             <!-- Action Area (Right): Who We Are + VIP Access + Profile Icon Button -->
-            <div class="flex items-center gap-2 sm:gap-2.5">
-                <button type="button" onclick="openHeroInfoModal('ats')" class="px-3 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-bold text-slate-800 hover:text-emerald-900 bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5" title="Learn more about Almond Jobs & our mission">
+            <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                <button type="button" onclick="openHeroInfoModal('ats')" class="hidden lg:flex px-3 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-bold text-slate-800 hover:text-emerald-900 bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer items-center gap-1.5" title="Learn more about Almond Jobs & our mission">
                     <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
                     <span>Who We Are?</span>
                 </button>
-                <button type="button" onclick="openVipPricingModal()" class="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs px-3.5 sm:px-5 py-2 rounded-full shadow-md shadow-violet-500/25 hover:scale-105 active:scale-95 transition-all cursor-pointer">
+                <button type="button" onclick="openVipPricingModal()" class="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-[11px] sm:text-xs px-3 sm:px-5 py-1.5 sm:py-2 rounded-full shadow-md shadow-violet-500/25 hover:scale-105 active:scale-95 transition-all cursor-pointer whitespace-nowrap">
                     VIP Access
                 </button>
-                <button type="button" id="topProfileBtn" onclick="openProfileModal()" class="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 hover:bg-violet-50 border border-slate-300 hover:border-violet-300 text-slate-700 hover:text-violet-700 flex items-center justify-center transition shadow-2xs cursor-pointer group" title="Candidate Profile & Settings">
+                <button type="button" id="topProfileBtn" onclick="openProfileModal()" class="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 hover:bg-violet-50 border border-slate-300 hover:border-violet-300 text-slate-700 hover:text-violet-700 flex items-center justify-center transition shadow-2xs cursor-pointer group shrink-0" title="Candidate Profile & Settings">
                     <i id="topProfileIcon" data-lucide="user" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
                     <span id="topProfileInitials" class="hidden text-[10px] font-black text-violet-800 uppercase">CA</span>
                     <span id="profileActiveIndicator" class="hidden absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white shadow-xs"></span>
@@ -223,20 +334,23 @@
     </header>
 
     <!-- KINETIC REEL / STORY PRESENTATION VIEWPORT -->
-    <div id="story-viewport" class="relative w-full h-screen overflow-hidden">
+    <div id="story-viewport" class="relative w-full lg:h-screen lg:overflow-hidden min-h-screen">
 
         <!-- PERSISTENT HERO & DISCOVERY CINEMATIC BACKGROUND (Stationary behind Page 1 & 2 with Parallax Zoom) -->
         <div id="persistentHeroBg" class="absolute inset-0 pointer-events-none z-0 overflow-hidden bg-[#fafaf9] transition-all duration-700 ease-out origin-center">
+            <!-- Mobile-Optimized High-Contrast Poster (Crisp visibility & 0ms lag on mobile) -->
+            <img src="/static/warrior_clean.png?v=20261103_700" alt="Almond Warrior Silhouette" class="mobile-bg-poster hidden w-full h-full object-cover object-center pointer-events-none">
+            <!-- Desktop Video Loop -->
             <video autoplay loop muted playsinline preload="auto" poster="/static/warrior_clean.png?v=20261103_700" class="w-full h-full object-cover object-center opacity-30 transition-opacity duration-300">
                 <source src="/static/kage_clean.webm?v=20261103_700" type="video/webm">
                 <source src="/static/kage_clean.mp4?v=20261103_700" type="video/mp4">
             </video>
             <!-- Pure white atmospheric washes providing crisp background and clear silhouette visibility -->
-            <div class="absolute inset-0 bg-white/45"></div>
-            <div class="absolute inset-0 bg-gradient-to-t from-white via-transparent to-white/70"></div>
+            <div class="absolute inset-0 bg-white/35 sm:bg-white/45 pointer-events-none"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-white/90 via-transparent to-white/70 pointer-events-none"></div>
         </div>
 
-        <div id="story-track" class="w-full h-full relative z-10">
+        <div id="story-track" class="w-full lg:h-full relative z-10">
 
             <!-- 3. PAGE 1: HERO (STANDARD PROFESSIONAL SAAS HERO - TRUE VERTICAL & HORIZONTAL CENTER) -->
             <section id="hero" class="story-page w-full h-full relative overflow-hidden bg-transparent">
@@ -263,10 +377,10 @@
                         </button>
                     </div>
 
-                    <!-- Perfectly Centered Horizontal Dual Headline (Balanced Scale) -->
-                    <h1 class="tracking-tight max-w-4xl mx-auto mb-5 text-center select-none flex flex-col items-center justify-center">
-                        <span class="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-slate-950 tracking-tight leading-[1.06] whitespace-nowrap">Move first.</span>
-                        <span class="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-violet-600 tracking-tight leading-[1.06] mt-1 sm:mt-2 whitespace-nowrap">Apply unseen!</span>
+                    <!-- Perfectly Centered Horizontal Dual Headline (Responsive Scale) -->
+                    <h1 class="tracking-tight max-w-4xl mx-auto mb-4 sm:mb-5 text-center select-none flex flex-col items-center justify-center">
+                        <span class="block text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-slate-950 tracking-tight leading-[1.08] sm:leading-[1.06] whitespace-nowrap">Move first.</span>
+                        <span class="block text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-violet-600 tracking-tight leading-[1.08] sm:leading-[1.06] mt-1 sm:mt-2 whitespace-nowrap">Apply unseen!</span>
                     </h1>
 
                     <!-- Narrative Subheadline: Anti-Oversaturation Ingestion Hook -->
@@ -282,24 +396,28 @@
                         </button>
                     </div>
 
-                    <!-- Direct Curated Feeds Explorer Badges: Single Neat Row Without Wrapping -->
-                    <div class="flex items-center justify-center flex-wrap md:flex-nowrap gap-2 sm:gap-2.5 lg:gap-3.5 max-w-full">
-                        <span class="text-xs sm:text-sm font-black uppercase text-slate-600 tracking-wider flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap">
+                    <!-- Direct Curated Feeds Explorer Badges: Single Row Across All Desktops & Laptops, Zero Card Splitting -->
+                    <div class="flex flex-col lg:flex-row items-center justify-center gap-2 sm:gap-2.5 lg:gap-3 max-w-full px-2">
+                        <span class="text-xs sm:text-sm font-black uppercase text-slate-600 tracking-wider flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap justify-center">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
                             Live Free Directories:
                         </span>
-                        <button type="button" id="heroBadge_internships" onclick="openCuratedFeedsModal('internships')" class="px-3.5 py-2 sm:px-4.5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold bg-white/95 hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 border border-slate-200 hover:border-emerald-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-2 shrink-0 whitespace-nowrap" title="Explore 5,100+ direct corporate internships">
-                            <span>💼 Direct Internships</span>
-                            <span class="bg-emerald-100 text-emerald-800 text-xs sm:text-sm font-black px-2 py-0.5 rounded-full">5,100+</span>
-                        </button>
-                        <button type="button" id="heroBadge_aiml" onclick="openCuratedFeedsModal('aiml')" class="px-3.5 py-2 sm:px-4.5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold bg-white/95 hover:bg-violet-50 text-slate-800 hover:text-violet-950 border border-slate-200 hover:border-violet-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-2 shrink-0 whitespace-nowrap" title="Explore 530+ verified AI, Machine Learning & LLM engineering portals">
-                            <span>🤖 AI/ML Specialist</span>
-                            <span class="bg-violet-100 text-violet-800 text-xs sm:text-sm font-black px-2 py-0.5 rounded-full">530+</span>
-                        </button>
-                        <button type="button" id="heroBadge_entrylevel" onclick="openCuratedFeedsModal('entrylevel')" class="px-3.5 py-2 sm:px-4.5 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold bg-white/95 hover:bg-indigo-50 text-slate-800 hover:text-indigo-950 border border-slate-200 hover:border-indigo-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-2 shrink-0 whitespace-nowrap" title="Explore 3,100+ verified entry-level & new grad engineering portals">
-                            <span>🎓 Entry-Level &amp; New Grad</span>
-                            <span class="bg-indigo-100 text-indigo-800 text-xs sm:text-sm font-black px-2 py-0.5 rounded-full">3,100+</span>
-                        </button>
+                        <div class="w-full max-w-full overflow-x-auto no-scrollbar py-1">
+                            <div class="flex items-center justify-start lg:justify-center gap-1.5 sm:gap-2 lg:gap-2.5 flex-nowrap shrink-0 px-4 sm:px-2 lg:px-0 w-max min-w-full">
+                                <button type="button" id="heroBadge_internships" onclick="openCuratedFeedsModal('internships')" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold bg-white/95 hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 border border-slate-200 hover:border-emerald-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap" title="Explore 5,100+ direct corporate internships">
+                                    <span>💼 Direct Internships</span>
+                                    <span class="bg-emerald-100 text-emerald-800 text-xs sm:text-sm font-black px-1.5 sm:px-2 py-0.5 rounded-full">5,100+</span>
+                                </button>
+                                <button type="button" id="heroBadge_aiml" onclick="openCuratedFeedsModal('aiml')" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold bg-white/95 hover:bg-violet-50 text-slate-800 hover:text-violet-950 border border-slate-200 hover:border-violet-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap" title="Explore 530+ verified AI, Machine Learning & LLM engineering portals">
+                                    <span>🤖 AI/ML Specialist</span>
+                                    <span class="bg-violet-100 text-violet-800 text-xs sm:text-sm font-black px-1.5 sm:px-2 py-0.5 rounded-full">530+</span>
+                                </button>
+                                <button type="button" id="heroBadge_entrylevel" onclick="openCuratedFeedsModal('entrylevel')" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold bg-white/95 hover:bg-indigo-50 text-slate-800 hover:text-indigo-950 border border-slate-200 hover:border-indigo-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap" title="Explore 3,100+ verified entry-level & new grad engineering portals">
+                                    <span>🎓 Entry-Level &amp; New Grad</span>
+                                    <span class="bg-indigo-100 text-indigo-800 text-xs sm:text-sm font-black px-1.5 sm:px-2 py-0.5 rounded-full">3,100+</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -309,7 +427,7 @@
             <section id="discovery" class="story-page w-full h-full relative overflow-hidden bg-transparent flex flex-col justify-center items-center">
 
                 <!-- Bento Grid Content Container -->
-                <div class="max-w-6xl mx-auto w-full relative z-10 px-5 sm:px-8 pt-20 sm:pt-24 pb-6 flex flex-col justify-center h-full">
+                <div class="max-w-6xl mx-auto w-full relative z-10 px-4 sm:px-8 pt-20 sm:pt-24 pb-8 flex flex-col justify-start lg:justify-center h-auto lg:h-full">
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 lg:gap-x-5 gap-y-6 lg:gap-y-7 w-full">
                         
@@ -532,7 +650,7 @@
             </svg>
         </div>
 
-        <div class="max-w-[1360px] mx-auto w-full relative z-10 px-6 sm:px-8 pt-20 pb-4 flex flex-col justify-start">
+        <div class="max-w-[1360px] mx-auto w-full relative z-10 px-4 sm:px-8 pt-20 sm:pt-24 pb-12 flex flex-col justify-start min-h-screen">
             
             <!-- Section Header (Centered in the middle over the background split crack) -->
             <div class="flex flex-col items-center justify-center text-center w-full mb-6">
@@ -543,7 +661,7 @@
             </div>
 
         <!-- Landscape 2-Column Responsive Grid (Left on Hero Canvas, Right on Forest Green with Wide Spacing) -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-stretch">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-24 items-stretch">
             
             <!-- Left Column: Resume Upload (Top) + Derived Intelligence & Core Skills (Bottom) -> DEEP GREEN CONTAINERS (Shifted Left) -->
             <div class="flex flex-col gap-4 lg:pr-2">
@@ -892,7 +1010,7 @@
             </svg>
         </div>
 
-        <div class="max-w-7xl mx-auto w-full relative z-10 px-8 pt-20 pb-4 flex flex-col justify-start h-screen">
+        <div class="max-w-7xl mx-auto w-full relative z-10 px-4 sm:px-8 pt-20 sm:pt-24 pb-8 flex flex-col justify-start min-h-screen lg:h-screen">
         
         <!-- Results Command Toolbar & Navigation Tabs -->
         <div class="glass-panel rounded-3xl p-5 border border-slate-200/90 shadow-sm mb-4 flex flex-col gap-4">
