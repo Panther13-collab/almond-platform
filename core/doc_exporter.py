@@ -57,6 +57,9 @@ def add_hyperlink(paragraph, url, text, color="B47B38", underline=True):
     return hyperlink
 
 VIP_PORTAL_URL = "http://127.0.0.1:8000/?action=vip"
+# TEST MODE: Display all links unblurred without payment gateway restriction for tester access
+# When VIP link restriction is re-enabled, set TEST_MODE_UNLOCKED_LINKS = False
+TEST_MODE_UNLOCKED_LINKS = True
 
 def export_to_docx(candidate_profile, jobs, output_path, is_paid: bool = False):
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
@@ -103,7 +106,7 @@ def export_to_docx(candidate_profile, jobs, output_path, is_paid: bool = False):
 
     doc.add_heading("2. Verified Direct Corporate Postings", level=1)
     for i, j in enumerate(jobs, 1):
-        is_locked = (not is_paid) and (i > 3)
+        is_locked = False if TEST_MODE_UNLOCKED_LINKS else ((not is_paid) and (i > 3))
 
         p_job = doc.add_paragraph()
         r_num = p_job.add_run(f"#{i}: {j.get('title')}\n")
@@ -184,7 +187,7 @@ async def export_to_pdf_async(candidate_profile, jobs, output_path, is_paid: boo
 <h3 style="color: #23170f; margin-bottom: 8px;">Direct Corporate Postings</h3>
 """
     for i, j in enumerate(jobs, 1):
-        is_locked = (not is_paid) and (i > 3)
+        is_locked = False if TEST_MODE_UNLOCKED_LINKS else ((not is_paid) and (i > 3))
         j_title_esc = htmllib.escape(str(j.get('title', '')))
         j_comp_esc = htmllib.escape(str(j.get('company', '')))
         j_src_esc = htmllib.escape(str(j.get('source', 'Corporate Feed')))
@@ -280,7 +283,7 @@ def _export_pdf_pure_python(candidate_profile, jobs, output_path, is_paid: bool 
         if pdf.get_y() > 245:
             pdf.add_page()
 
-        is_locked = (not is_paid) and (idx > 3)
+        is_locked = False if TEST_MODE_UNLOCKED_LINKS else ((not is_paid) and (idx > 3))
 
         pdf.set_font('Helvetica', 'B', 10)
         pdf.set_text_color(30, 58, 138)
@@ -325,7 +328,7 @@ def export_to_csv(jobs, output_path, is_paid: bool = False):
         writer = csv.writer(f)
         writer.writerow(["Company", "Role", "Direct Portal", "Location", "Work Mode", "Package", "Match Score", "Direct Apply URL", "Status", "Notes"])
         for idx, j in enumerate(jobs):
-            is_locked = (not is_paid) and (idx >= 3)
+            is_locked = False if TEST_MODE_UNLOCKED_LINKS else ((not is_paid) and (idx >= 3))
             if is_locked:
                 apply_url = f"LOCKED (VIP Required: {VIP_PORTAL_URL})"
                 status_str = "VIP Locked Portal"

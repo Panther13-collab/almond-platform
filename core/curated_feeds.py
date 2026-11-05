@@ -366,7 +366,11 @@ def query_curated_feed(
             item_copy["date_posted_str"] = f"{diff_days}d ago" if diff_days > 0 else "Today"
 
         absolute_idx = offset + idx
-        if not user_is_paid and absolute_idx >= 10:
+        # TEST MODE: Display all curated feed links unblurred without payment restriction for testers
+        # When VIP link restriction is re-enabled, set TEST_MODE_UNLOCKED_LINKS = False
+        TEST_MODE_UNLOCKED_LINKS = True
+
+        if not TEST_MODE_UNLOCKED_LINKS and not user_is_paid and absolute_idx >= 10:
             item_copy["is_locked"] = True
             item_copy["real_url"] = item_copy.get("url")
             item_copy["url"] = "#unlock-pro"

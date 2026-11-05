@@ -331,8 +331,19 @@ async def find_jobs(payload: dict = Body(...)):
                     }
                 }
 
-        # If user has not purchased Pro access, lock jobs past index 3
-        if not user_is_paid:
+        # TEST MODE: Display all links without restriction for multi-domain verification & tester access.
+        # Payment gateway remains fully operational for VIP access, but all direct links are unblurred.
+        # When VIP link restriction is re-enabled, set TEST_MODE_UNLOCKED_LINKS = False.
+        TEST_MODE_UNLOCKED_LINKS = True
+
+        if TEST_MODE_UNLOCKED_LINKS or user_is_paid:
+            for j in ats_jobs:
+                j["is_locked"] = False
+            for j in linkedin_jobs:
+                j["is_locked"] = False
+            for j in founder_jobs:
+                j["is_locked"] = False
+        else:
             for idx, j in enumerate(ats_jobs):
                 if idx >= 3:
                     j["is_locked"] = True
@@ -348,11 +359,6 @@ async def find_jobs(payload: dict = Body(...)):
                     j["url"] = "#unlock-pro"
                 else:
                     j["is_locked"] = False
-        else:
-            for j in ats_jobs:
-                j["is_locked"] = False
-            for j in linkedin_jobs:
-                j["is_locked"] = False
 
         return JSONResponse(content={
             "status": "success", 

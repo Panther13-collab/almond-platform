@@ -4449,7 +4449,9 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
 
 
 
-        const isLocked = Boolean(job.is_locked);
+        // TEST MODE: Display all links unblurred without payment restriction for tester access
+        // When VIP restriction is re-enabled, restore: const isLocked = Boolean(job.is_locked);
+        const isLocked = false;
 
 
 
@@ -5412,6 +5414,8 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
 
 
 }
+
+window.renderJobCards = renderJobCards;
 
 
 
@@ -8004,12 +8008,9 @@ window.openVipPricingModal = function() {
     const subtextEl = document.getElementById("vipBannerSubtext");
 
     if (headingEl && subtextEl) {
-        if (totalMatches > 3) {
-            headingEl.innerHTML = `<span class="text-violet-700 font-black">${totalMatches} Verified Positions Matched</span> • <span class="text-emerald-700 font-bold">${totalMatches - 3} Direct Application Portals Locked</span>`;
-            subtextEl.innerHTML = `You have viewed your 3 free previews. Select any access pass below to instantly unlock all <strong>${totalMatches - 3} locked verified applications</strong> and tailored STAR pitch generators.`;
-        } else if (totalMatches > 0) {
-            headingEl.innerHTML = `<span class="text-violet-700 font-black">${totalMatches} Verified Positions Matched</span>`;
-            subtextEl.innerHTML = `Select any access pass below to unlock full direct application links, 0% recruiter markups, and unlimited tailored STAR Pitches.`;
+        if (totalMatches > 0) {
+            headingEl.innerHTML = `<span class="text-violet-700 font-black">${totalMatches} Verified Positions Matched</span> • <span class="text-emerald-700 font-bold">VIP Access Gateway</span>`;
+            subtextEl.innerHTML = `Select any VIP access pass below to experience exclusive founder direct lines, instant ATS fast-tracking, and executive dossier exports.`;
         } else {
             headingEl.innerHTML = `<span class="text-violet-700 font-black">3,315,000+ Direct Enterprise Openings</span>`;
             subtextEl.innerHTML = `Direct application portals at Ashby, Greenhouse, Lever, and Workday with 0% recruiter siphon and tailored STAR Pitches.`;
@@ -10450,7 +10451,9 @@ function renderCuratedCards(items, total) {
     `;
 
     items.forEach((item, idx) => {
-        const isLocked = Boolean(item.is_locked);
+        // TEST MODE: Display all curated feed links unblurred without payment restriction for testers
+        // When VIP restriction is re-enabled, restore: const isLocked = Boolean(item.is_locked);
+        const isLocked = false;
         const provider = item.provider || 'Direct Portal';
         const sponsorshipBadge = item.sponsorship === 'Visa Sponsored'
             ? `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-300 text-[10px] font-black">🛂 Visa Sponsored</span>`
