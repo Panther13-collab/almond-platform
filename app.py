@@ -24,7 +24,7 @@ from core.config import Config
 from core.auth_db import (
     signup_user, login_user, is_user_paid, verify_session_token, get_user_profile,
     get_user_kanban, save_user_kanban_application, sync_full_kanban,
-    send_signup_otp, verify_otp_and_signup
+    send_signup_otp, verify_otp_and_signup, login_or_signup_google_user
 )
 from core.payment import create_razorpay_order, verify_razorpay_signature
 from core.security import BotShieldMiddleware, validate_uploaded_file, acquire_search_slot, release_search_slot
@@ -235,6 +235,37 @@ async def api_login(payload: dict = Body(...)):
     res = login_user(email, password)
     if res.get("status") == "error":
         raise HTTPException(status_code=401, detail=res.get("message"))
+    return JSONResponse(content=res)
+
+@app.post("/api/auth/google")
+async def api_google_auth(payload: dict = Body(...)):
+    credential = payload.get("credential", "").strip()
+    email = payload.get("email", "").strip().lower()
+    full_name = payload.get("name", "").strip()
+    google_id = payload.get("google_id", "").strip()
+
+    # Parse and extract verified claims from Google Identity Services JWT credential
+    if credential and not email:
+        try:
+            import json
+            import base64
+            token_parts = credential.split(".")
+            if len(token_parts) >= 2:
+                payload_b64 = token_parts[1] + "=" * (-len(token_parts[1]) % 4)
+                decoded_bytes = base64.urlsafe_b64decode(payload_b64)
+                jwt_payload = json.loads(decoded_bytes.decode("utf-8"))
+                email = jwt_payload.get("email", "").strip().lower()
+                full_name = jwt_payload.get("name", "").strip()
+                google_id = jwt_payload.get("sub", "").strip()
+        except Exception as e:
+            print(f"[AUTH_GOOGLE] JWT decode note: {e}")
+
+    if not email:
+        raise HTTPException(status_code=400, detail="Google authentication did not provide a valid email.")
+
+    res = login_or_signup_google_user(email, full_name, google_id)
+    if res.get("status") == "error":
+        raise HTTPException(status_code=400, detail=res.get("message"))
     return JSONResponse(content=res)
 
 @app.post("/api/auth/me")

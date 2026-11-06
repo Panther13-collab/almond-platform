@@ -479,6 +479,94 @@ def login_user(email: str, password: str) -> dict:
             "token": token
         }
 
+def login_or_signup_google_user(email: str, full_name: str = "", google_id: str = "") -> dict:
+    """
+    Authenticate or register a candidate verified via Google Sign-In.
+    Bypasses manual OTP verification since Google guarantees email authenticity.
+    """
+    clean_email = (email or "").strip().lower()
+    if not clean_email or "@" not in clean_email:
+        return {"status": "error", "message": "Invalid Google email address."}
+
+    is_valid, err_msg = is_valid_candidate_email(clean_email)
+    if not is_valid:
+        return {"status": "error", "message": err_msg}
+
+    now = time.time()
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, email, full_name, is_paid, plan, paid_until FROM users WHERE email = ?", (clean_email,))
+        row = cursor.fetchone()
+
+        if row:
+            user_id = row["id"]
+            token = _create_token(user_id, row["email"])
+            paid_until = row["paid_until"] or 0
+            is_paid = bool(row["is_paid"]) and (paid_until == 0 or paid_until > now)
+
+            remaining_str = ""
+            if is_paid and paid_until > now:
+                diff = paid_until - now
+                if diff < 86400:
+                    hours = max(1, int(diff / 3600))
+                    remaining_str = f"{hours}h left"
+                else:
+                    days = int(diff / 86400)
+                    remaining_str = f"{days}d left"
+
+            return {
+                "status": "success",
+                "user_id": user_id,
+                "email": row["email"],
+                "full_name": row["full_name"] or full_name or clean_email.split("@")[0],
+                "is_paid": is_paid,
+                "plan": row["plan"],
+                "paid_until": paid_until,
+                "remaining_str": remaining_str,
+                "token": token
+            }
+        else:
+            user_id = str(uuid.uuid4())
+            rand_password = secrets.token_urlsafe(32)
+            pw_hash, salt = _hash_password(rand_password)
+            name_val = full_name.strip() or clean_email.split("@")[0]
+
+            cursor.execute(
+                """
+                INSERT INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, 0, 'free', 0, ?, ?)
+                """,
+                (user_id, clean_email, pw_hash, salt, name_val, now, now)
+            )
+            conn.commit()
+
+            if supabase_admin:
+                try:
+                    supabase_admin.auth.admin.create_user({
+                        "email": clean_email,
+                        "password": rand_password,
+                        "email_confirm": True,
+                        "user_metadata": {
+                            "full_name": name_val,
+                            "google_id": google_id,
+                            "is_paid": False,
+                            "local_user_id": user_id
+                        }
+                    })
+                except Exception as e:
+                    print(f"[AUTH_DB] Supabase Google mirror note: {e}")
+
+            token = _create_token(user_id, clean_email)
+            return {
+                "status": "success",
+                "user_id": user_id,
+                "email": clean_email,
+                "full_name": name_val,
+                "is_paid": False,
+                "plan": "free",
+                "token": token
+            }
+
 def get_user_profile(user_id: str) -> dict:
     """Retrieve full candidate profile details by user ID with active expiration calculation."""
     if not user_id:

@@ -61,5 +61,14 @@ class TestAuthHardening(unittest.TestCase):
         finally:
             Config.SMTP_PASS = old_pass
 
+    def test_google_auth_instant_login(self):
+        from core.auth_db import login_or_signup_google_user
+        test_email = "test.google.user@gmail.com"
+        res = login_or_signup_google_user(test_email, full_name="Google Tester", google_id="g_123456789")
+        self.assertEqual(res["status"], "success")
+        self.assertEqual(res["email"], test_email)
+        self.assertTrue(bool(res.get("token")))
+        self.assertTrue(bool(res.get("user_id")))
+
 if __name__ == "__main__":
     unittest.main()

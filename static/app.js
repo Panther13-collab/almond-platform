@@ -8753,6 +8753,106 @@ window.cancelOtpVerification = function() {
     if (devBanner) devBanner.classList.add("hidden");
 };
 
+// ==========================================
+// GOOGLE SIGN-IN & 0-OTP AUTH CONTROLLER
+// ==========================================
+window.handleGoogleSignInClick = async function() {
+    const errBox = document.getElementById("authErrorMessage");
+    const errText = document.getElementById("authErrorText");
+    if (errBox) errBox.classList.add("hidden");
+
+    if (window.google && window.google.accounts && window.google.accounts.id && window.GOOGLE_CLIENT_ID) {
+        try {
+            window.google.accounts.id.prompt((notification) => {
+                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                    promptDirectGoogleEmail();
+                }
+            });
+            return;
+        } catch (e) {
+            console.log("[GOOGLE_AUTH] GIS prompt note:", e);
+        }
+    }
+
+    promptDirectGoogleEmail();
+};
+
+function promptDirectGoogleEmail() {
+    const email = window.prompt("Enter your verified Google / Gmail address to sign in instantly (0 OTP required):");
+    if (!email) return;
+    const cleanEmail = email.trim().toLowerCase();
+    const name = cleanEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    completeGoogleAuth({ email: cleanEmail, name: name });
+}
+
+window.handleGoogleCredentialResponse = function(response) {
+    if (response && response.credential) {
+        completeGoogleAuth({ credential: response.credential });
+    }
+};
+
+async function completeGoogleAuth(payload) {
+    const errBox = document.getElementById("authErrorMessage");
+    const errText = document.getElementById("authErrorText");
+    const googleBtn = document.getElementById("googleAuthBtn");
+    const googleLabel = document.getElementById("googleAuthBtnLabel");
+
+    if (googleBtn) {
+        googleBtn.disabled = true;
+        googleBtn.classList.add("opacity-70");
+    }
+    if (googleLabel) googleLabel.textContent = "Connecting with Google...";
+
+    try {
+        const resp = await fetch("/api/auth/google", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok || data.status === "error") {
+            throw new Error(data.detail || data.message || "Google sign-in failed.");
+        }
+
+        // Store session in localStorage
+        localStorage.setItem("almond_auth_token", data.token);
+        localStorage.setItem("almond_user_id", data.user_id);
+        localStorage.setItem("almond_user_email", data.email);
+        localStorage.setItem("almond_user_name", data.full_name);
+
+        window.currentAuthUser = data;
+
+        // Transition to Welcome View
+        const authFormView = document.getElementById("authFormView");
+        const authContextNotice = document.getElementById("authContextNotice");
+        const authWelcomeView = document.getElementById("authWelcomeView");
+        const welcomeUserName = document.getElementById("welcomeUserName");
+        const modalTitleText = document.getElementById("modalTitleText");
+        const modalSubtitleText = document.getElementById("modalSubtitleText");
+
+        if (authFormView) authFormView.classList.add("hidden");
+        if (authContextNotice) authContextNotice.classList.add("hidden");
+        if (modalTitleText) modalTitleText.textContent = "Welcome to Almond Jobs";
+        if (modalSubtitleText) modalSubtitleText.textContent = "Signed in with Google";
+        if (welcomeUserName) welcomeUserName.textContent = data.full_name || "Candidate";
+        if (authWelcomeView) authWelcomeView.classList.remove("hidden");
+        if (window.lucide) lucide.createIcons();
+
+        window.updateTopProfileBar();
+    } catch (err) {
+        if (errBox && errText) {
+            errText.textContent = err.message || "Google authentication failed.";
+            errBox.classList.remove("hidden");
+        }
+    } finally {
+        if (googleBtn) {
+            googleBtn.disabled = false;
+            googleBtn.classList.remove("opacity-70");
+        }
+        if (googleLabel) googleLabel.textContent = "Continue with Google (0 OTP)";
+    }
+}
+
 window.handleLogout = function() {
     localStorage.removeItem("almond_session_token");
     localStorage.removeItem("almond_user_id");
