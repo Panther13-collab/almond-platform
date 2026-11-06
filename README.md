@@ -55,3 +55,8 @@ Almond AI is a production-grade enterprise intelligence platform designed to eli
    - `RAZORPAY_KEY_ID`
    - `RAZORPAY_KEY_SECRET`
    - `ENVIRONMENT=production`
+   - `SMTP_HOST=smtp.gmail.com`
+   - `SMTP_PORT=587`
+   - `SMTP_USER=almondjobs.official@gmail.com`
+   - `SMTP_PASS=your_16_character_app_password`
+   - `SMTP_FROM=Almond Jobs <almondjobs.official@gmail.com>`

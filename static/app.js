@@ -8542,17 +8542,6 @@ window.handleAuthSubmit = async function(e) {
             if (typeof window.startResendOtpTimer === "function") {
                 window.startResendOtpTimer(120);
             }
-
-            // If dev_otp provided (local development or SMTP unconfigured), show hint banner
-            const devBanner = document.getElementById("authDevOtpBanner");
-            const devCodeDisplay = document.getElementById("devOtpCodeDisplay");
-            if (data.dev_otp && devBanner && devCodeDisplay) {
-                devCodeDisplay.textContent = data.dev_otp;
-                devBanner.classList.remove("hidden");
-                console.log(`[ALMOND AUTH] Development OTP Code: ${data.dev_otp}`);
-            } else if (devBanner) {
-                devBanner.classList.add("hidden");
-            }
         } catch (err) {
             if (errBox && errText) {
                 errText.textContent = err.message || "Failed to dispatch verification code.";

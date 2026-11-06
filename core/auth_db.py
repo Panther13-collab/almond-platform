@@ -187,13 +187,79 @@ def verify_session_token(token: str) -> dict:
 
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
 
+# Known disposable and temporary email domains
+DISPOSABLE_EMAIL_DOMAINS = {
+    "mailinator.com", "tempmail.com", "10minutemail.com", "guerrillamail.com",
+    "throwawaymail.com", "yopmail.com", "trashmail.com", "getnada.com",
+    "dispostable.com", "sharklasers.com", "guerrillamailblock.com",
+    "fakemailgenerator.com", "temp-mail.org", "maildrop.cc", "inboxkitten.com",
+    "mohmal.com", "burnermail.io", "trashmail.net", "crazymailing.com",
+    "emailondeck.com", "generator.email", "temporary-mail.net", "nada.ltd"
+}
+
+# Generic dummy usernames
+DUMMY_EMAIL_USERNAMES = {
+    "test", "demo", "sample", "fake", "dummy", "temp", "asdf", "qwer", "zxcv",
+    "noreply", "abc", "xyz", "admin", "null", "undefined", "aaaa", "bbbb", "cccc", "dddd"
+}
+
+def is_valid_candidate_email(email: str) -> tuple:
+    """
+    Strict email validation:
+    - Blocks disposable / temporary mail services
+    - Blocks repeating character dummy addresses (e.g. aaaa@gmail.com, bbbb@gmail.com)
+    - Blocks placeholder usernames (e.g. test@, dummy@, asdf@)
+    - Validates standard domain structure
+    """
+    clean = (email or "").strip().lower()
+    if not clean or "@" not in clean:
+        return False, "Please enter a valid personal email address."
+    
+    parts = clean.split("@")
+    if len(parts) != 2:
+        return False, "Please enter a valid email address."
+    
+    username, domain = parts[0], parts[1]
+    
+    if len(username) < 3:
+        return False, "Email username must be at least 3 characters long."
+    
+    # Check domain format
+    if "." not in domain or domain.startswith(".") or domain.endswith("."):
+        return False, "Please enter a valid email domain (e.g. gmail.com, outlook.com)."
+    
+    tld = domain.split(".")[-1]
+    if len(tld) < 2 or not tld.isalpha():
+        return False, "Invalid email domain extension."
+        
+    # Block disposable email services
+    if domain in DISPOSABLE_EMAIL_DOMAINS:
+        return False, "Temporary and disposable email addresses are not permitted. Please use a permanent email address."
+        
+    # Block single repeated character dummy emails (e.g. aaaa@, bbbb@, 1111@)
+    if len(set(username)) == 1 and len(username) >= 3:
+        return False, "Test or repeating character email addresses (e.g. aaaa@, bbbb@) are not accepted."
+        
+    # Block common dummy usernames
+    if username in DUMMY_EMAIL_USERNAMES:
+        return False, "Generic placeholder usernames are not accepted. Please use your personal or work email."
+        
+    # Standard format check
+    if not EMAIL_REGEX.match(clean):
+        return False, "Please enter a valid email address format."
+        
+    return True, ""
+
 def send_signup_otp(email: str) -> dict:
     """Validate email format and dispatch a secure 6-digit OTP code for candidate verification."""
-    clean_email = email.strip().lower()
-    if not clean_email or not EMAIL_REGEX.match(clean_email):
+    clean_email = (email or "").strip().lower()
+    
+    # Strict email validation
+    is_valid, err_msg = is_valid_candidate_email(clean_email)
+    if not is_valid:
         return {
             "status": "error",
-            "message": "Please enter a valid personal email address (e.g. name@gmail.com)."
+            "message": err_msg
         }
 
     # Check if user already exists
@@ -220,33 +286,42 @@ def send_signup_otp(email: str) -> dict:
         conn.commit()
 
     print(f"\n=======================================================")
-    print(f"[AUTH_OTP] VERIFICATION CODE FOR {clean_email}: {otp_code}")
+    print(f"[AUTH_OTP] DISPATCHING VERIFICATION CODE TO {clean_email}")
     print(f"=======================================================\n")
 
-    # Attempt live email delivery via SMTP (Gmail, Resend, Brevo, SendGrid)
+    # Live email delivery via SMTP (Gmail, Resend, Brevo, SendGrid)
     from core.email_sender import send_otp_email
     email_delivery = send_otp_email(clean_email, otp_code)
 
-    resp = {
-        "status": "success",
-        "message": f"6-digit verification code sent to {clean_email}.",
-        "email": clean_email,
-        "email_delivery": email_delivery
-    }
-
-    # Only attach dev_otp fallback if email could not be delivered via SMTP
+    # Strictly require real email delivery — Never expose OTP to the frontend
     if not email_delivery.get("delivered"):
-        resp["dev_otp"] = otp_code
+        # Delete un-delivered OTP from database so no orphaned codes exist
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM email_otps WHERE email = ?", (clean_email,))
+            conn.commit()
+            
+        delivery_err = email_delivery.get("error", "")
+        print(f"[AUTH_OTP] FAILED TO DISPATCH EMAIL TO {clean_email}: {delivery_err}")
+        return {
+            "status": "error",
+            "message": "We could not deliver a verification email to this address. Please ensure your email is active and typed correctly, or configure SMTP credentials on your host."
+        }
 
-    return resp
+    return {
+        "status": "success",
+        "message": f"A 6-digit verification code has been dispatched to {clean_email}. Please check your inbox and spam folder.",
+        "email": clean_email
+    }
 
 def verify_otp_and_signup(email: str, otp_code: str, password: str, full_name: str = "") -> dict:
     """Verify submitted 6-digit OTP code and create candidate account."""
     clean_email = email.strip().lower()
     clean_otp = str(otp_code).strip()
 
-    if not clean_email or not EMAIL_REGEX.match(clean_email):
-        return {"status": "error", "message": "Invalid email address format."}
+    is_valid, err_msg = is_valid_candidate_email(clean_email)
+    if not is_valid:
+        return {"status": "error", "message": err_msg}
     if not clean_otp or len(clean_otp) != 6:
         return {"status": "error", "message": "Please enter the full 6-digit verification code."}
     if not password or len(password) < 6:

@@ -139,12 +139,11 @@ def send_otp_email(to_email: str, otp_code: str) -> dict:
     clean_email = to_email.strip().lower()
 
     if not Config.is_smtp_configured():
-        print(f"[EMAIL_SENDER] Notice: SMTP not configured in .env. Verification OTP for {clean_email}: {otp_code}")
+        print(f"[EMAIL_SENDER] Warning: Outbound SMTP credentials not configured in host environment.")
         return {
             "delivered": False,
-            "simulated": True,
-            "reason": "SMTP credentials (SMTP_HOST, SMTP_USER, SMTP_PASS) not configured in environment.",
-            "otp_code": otp_code
+            "simulated": False,
+            "error": "SMTP credentials (SMTP_HOST, SMTP_USER, SMTP_PASS) not configured in host environment."
         }
 
     try:
@@ -212,6 +211,5 @@ def send_otp_email(to_email: str, otp_code: str) -> dict:
         return {
             "delivered": False,
             "simulated": False,
-            "error": str(e),
-            "otp_code": otp_code
+            "error": str(e)
         }
