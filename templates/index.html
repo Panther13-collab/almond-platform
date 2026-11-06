@@ -474,8 +474,9 @@
                     <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
                     <span>Who We Are?</span>
                 </button>
-                <button type="button" onclick="openVipPricingModal()" class="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-[11px] sm:text-xs px-3 sm:px-5 py-1.5 sm:py-2 rounded-full shadow-md shadow-violet-500/25 hover:scale-105 active:scale-95 transition-all cursor-pointer whitespace-nowrap">
-                    VIP Access
+                <button type="button" onclick="openContributeModal()" class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-400 text-white font-extrabold text-[11px] sm:text-xs px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-md shadow-amber-500/25 hover:scale-105 active:scale-95 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5">
+                    <span>☕</span>
+                    <span>Contribute</span>
                 </button>
                 <button type="button" id="topProfileBtn" onclick="openProfileModal()" class="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 hover:bg-violet-50 border border-slate-300 hover:border-violet-300 text-slate-700 hover:text-violet-700 flex items-center justify-center transition shadow-2xs cursor-pointer group shrink-0" title="Candidate Profile & Settings">
                     <i id="topProfileIcon" data-lucide="user" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
@@ -818,7 +819,7 @@
                 <div class="rounded-3xl p-6 border shadow-2xl flex flex-col text-white" style="background: linear-gradient(160deg, #112215 0%, #0a160d 100%); border-color: rgba(74, 222, 128, 0.45); box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.6);">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center space-x-3">
-                            <span class="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white flex items-center justify-center font-black text-sm ring-4 ring-violet-500/25 border border-violet-400 shadow-md">1</span>
+                            <span class="px-3 py-1 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white flex items-center justify-center font-black text-xs ring-4 ring-violet-500/25 border border-violet-400 shadow-md uppercase tracking-wider">Step 1</span>
                             <div>
                                 <h3 class="font-black text-white text-base sm:text-lg tracking-tight">Candidate Profile</h3>
                                 <p class="text-xs sm:text-sm text-emerald-300 font-bold">Sandboxed text vectorization</p>
@@ -834,8 +835,7 @@
                             <div class="w-12 h-12 bg-emerald-900/80 text-emerald-300 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition-transform border border-emerald-500/40 shadow-md">
                                 <i data-lucide="upload-cloud" class="w-6 h-6"></i>
                             </div>
-                            <p class="text-sm sm:text-base font-extrabold text-white">Drop resume here, or <span class="text-emerald-400 underline font-black">browse files</span></p>
-                            <p class="text-xs sm:text-sm text-emerald-300 font-semibold mt-1">E.g. Sridhar_S_Resume.pdf</p>
+                            <p class="text-sm sm:text-base font-extrabold text-white">Drop your resume here or <span class="text-emerald-400 underline font-black">browse files</span></p>
                         </div>
                         <div id="uploadLoading" class="hidden py-4">
                             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400 mx-auto mb-2"></div>
@@ -895,7 +895,7 @@
                                 <!-- Interactive Add Missing Skill Bar -->
                                 <div class="flex items-center space-x-2 pt-2.5 border-t border-emerald-800/80">
                                     <div class="relative flex-1">
-                                        <input type="text" id="addSkillInput" placeholder="Add missing skill (e.g. Flutter, React, AWS)..." class="w-full px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl bg-[#0a160d] text-white border-2 border-emerald-600/60 focus:outline-none focus:border-emerald-400 placeholder:text-emerald-400/60 shadow-xs">
+                                        <input type="text" id="addSkillInput" placeholder="Add missing skill (Flutter, React, AWS)..." class="w-full px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl bg-[#0a160d] text-white border-2 border-emerald-600/60 focus:outline-none focus:border-emerald-400 placeholder:text-emerald-400/60 shadow-xs">
                                     </div>
                                     <button type="button" id="addSkillBtn" class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-md flex items-center space-x-1.5 cursor-pointer transition flex-shrink-0">
                                         <i data-lucide="plus" class="w-4 h-4"></i>
@@ -917,38 +917,38 @@
 
             </div>
 
-            <!-- Right Column: Target Compensation, Locations & Search Button (Right Side) -> WHITE / FROSTED WHITE CONTAINER (Shifted Right) -->
+            <!-- Right Column: Target Compensation, Locations & Search Button (Right Side) -> DEEP FOREST GREEN CONTAINER -->
             <div class="flex flex-col lg:pl-2">
-                <div id="criteria-deck" class="rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-2xl space-y-5 h-full flex flex-col justify-between bg-white text-slate-950">
+                <div id="criteria-deck" class="rounded-3xl p-6 sm:p-7 border shadow-2xl space-y-5 h-full flex flex-col justify-between text-white" style="background: linear-gradient(160deg, #112215 0%, #0a160d 100%); border-color: rgba(74, 222, 128, 0.45); box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.6);">
                     
                     <div class="space-y-4">
                         <div class="flex items-center space-x-3 mb-1">
-                            <span class="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white flex items-center justify-center font-black text-sm ring-4 ring-violet-500/20 border border-violet-400 shadow-md">2</span>
+                            <span class="px-3 py-1 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white flex items-center justify-center font-black text-xs ring-4 ring-violet-500/20 border border-violet-400 shadow-md uppercase tracking-wider">Step 2</span>
                             <div>
-                                <h3 class="font-black text-slate-950 text-base sm:text-lg tracking-tight">Target Compensation &amp; Geography</h3>
-                                <p class="text-xs sm:text-sm text-slate-500 font-bold">Multi-currency salary threshold &amp; global bounds</p>
+                                <h3 class="font-black text-white text-base sm:text-lg tracking-tight">Target Compensation &amp; Geography</h3>
+                                <p class="text-xs sm:text-sm text-emerald-300 font-bold">Multi-currency salary threshold &amp; global bounds</p>
                             </div>
                         </div>
 
                         <!-- 1. Compensation Filter -->
                         <div class="space-y-3">
                             <div class="flex justify-between items-center">
-                                <label class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 block">Minimum Expected Package</label>
-                                <div class="flex items-center space-x-1.5 bg-emerald-50 border-2 border-emerald-300 rounded-xl px-3.5 py-1.5 shadow-xs">
-                                    <span id="currencySymbol" class="text-base sm:text-lg font-black text-emerald-800">₹</span>
-                                    <input type="number" id="packageNumberInput" min="0" max="500" step="1" value="15" class="w-20 text-right font-black text-base sm:text-lg text-emerald-950 bg-transparent focus:outline-none">
-                                    <span id="currencyUnit" class="text-xs sm:text-sm font-black text-emerald-800">LPA</span>
+                                <label class="text-xs sm:text-sm font-black uppercase tracking-wider text-emerald-300 block">Minimum Expected Package</label>
+                                <div class="flex items-center space-x-1.5 bg-[#0a160d] border-2 border-emerald-600/60 rounded-xl px-3.5 py-1.5 shadow-xs">
+                                    <span id="currencySymbol" class="text-base sm:text-lg font-black text-emerald-400">₹</span>
+                                    <input type="number" id="packageNumberInput" min="0" max="500" step="1" value="15" class="w-20 text-right font-black text-base sm:text-lg text-white bg-transparent focus:outline-none">
+                                    <span id="currencyUnit" class="text-xs sm:text-sm font-black text-emerald-400">LPA</span>
                                 </div>
                             </div>
 
                             <!-- Currency Selector Tabs -->
-                            <div class="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 border border-slate-200">
-                                <button type="button" class="currency-tab active flex-1 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/25 transition font-black text-xs sm:text-sm cursor-pointer" data-curr="INR">₹ INR</button>
-                                <button type="button" class="currency-tab flex-1 py-2 rounded-xl hover:text-violet-700 transition text-slate-800 font-bold text-xs sm:text-sm cursor-pointer" data-curr="USD_YR">$ USD</button>
-                                <button type="button" class="currency-tab flex-1 py-2 rounded-xl hover:text-violet-700 transition text-slate-800 font-bold text-xs sm:text-sm cursor-pointer" data-curr="EUR">€ EUR</button>
-                                <button type="button" class="currency-tab flex-1 py-2 rounded-xl hover:text-violet-700 transition text-slate-800 font-bold text-xs sm:text-sm cursor-pointer" data-curr="GBP">£ GBP</button>
+                            <div class="flex items-center gap-1.5 bg-[#0a160d] p-1.5 rounded-xl text-xs sm:text-sm font-bold text-emerald-200 border border-emerald-800/80">
+                                <button type="button" class="currency-tab active flex-1 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25 transition font-black text-xs sm:text-sm cursor-pointer" data-curr="INR">₹ INR</button>
+                                <button type="button" class="currency-tab flex-1 py-2 rounded-xl hover:text-white transition text-emerald-200 font-bold text-xs sm:text-sm cursor-pointer" data-curr="USD_YR">$ USD</button>
+                                <button type="button" class="currency-tab flex-1 py-2 rounded-xl hover:text-white transition text-emerald-200 font-bold text-xs sm:text-sm cursor-pointer" data-curr="EUR">€ EUR</button>
+                                <button type="button" class="currency-tab flex-1 py-2 rounded-xl hover:text-white transition text-emerald-200 font-bold text-xs sm:text-sm cursor-pointer" data-curr="GBP">£ GBP</button>
                                 
-                                <select id="moreCurrenciesSelect" class="bg-white border-2 border-slate-200 rounded-xl px-2.5 py-2 text-xs sm:text-sm font-black text-slate-800 focus:outline-none focus:border-violet-500 transition cursor-pointer shadow-2xs">
+                                <select id="moreCurrenciesSelect" class="bg-[#0a160d] border-2 border-emerald-600/60 rounded-xl px-2.5 py-2 text-xs sm:text-sm font-black text-white focus:outline-none focus:border-emerald-400 transition cursor-pointer shadow-2xs">
                                     <option value="" disabled selected>More ▾</option>
                                     <option value="CAD">C$ CAD</option>
                                     <option value="AUD">A$ AUD</option>
@@ -960,7 +960,7 @@
 
                             <!-- Range Slider -->
                             <div class="py-1">
-                                <input type="range" id="packageRangeSlider" min="0" max="150" step="1" value="15" class="w-full accent-violet-600 cursor-pointer">
+                                <input type="range" id="packageRangeSlider" min="0" max="150" step="1" value="15" class="w-full accent-emerald-400 cursor-pointer">
                             </div>
 
                             <!-- Quick Presets -->
@@ -968,21 +968,21 @@
                         </div>
 
                         <!-- 2. Worldwide Locations A to Z with Typeahead -->
-                        <div class="space-y-2 pt-3 border-t border-slate-200 relative">
-                            <label class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 block">Worldwide Locations (A-Z)</label>
+                        <div class="space-y-2 pt-3 border-t border-emerald-800/80 relative">
+                            <label class="text-xs sm:text-sm font-black uppercase tracking-wider text-emerald-300 block">Worldwide Locations (A-Z)</label>
                             
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                                     <i data-lucide="search" class="w-4 h-4"></i>
                                 </div>
-                                <input type="text" id="locationSearchInput" autocomplete="off" placeholder="Type city or country (e.g. Chennai, Berlin, USA)..." class="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm font-bold border-2 border-slate-200 rounded-xl focus:outline-none focus:border-violet-500 shadow-xs bg-white text-slate-950 placeholder:text-slate-400">
-                                <div id="locationDropdown" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 loc-dropdown divide-y divide-slate-100 text-slate-900"></div>
+                                <input type="text" id="locationSearchInput" autocomplete="off" placeholder="Type city or country (Chennai, Berlin, USA)..." class="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm font-bold border-2 border-emerald-600/60 rounded-xl focus:outline-none focus:border-emerald-400 shadow-xs bg-[#0a160d] text-white placeholder:text-emerald-400/60">
+                                <div id="locationDropdown" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-[#0d1c11] border border-emerald-500/40 rounded-2xl shadow-2xl z-50 loc-dropdown divide-y divide-emerald-900/60 text-white"></div>
                             </div>
 
                             <!-- Active Tags -->
                             <div>
-                                <span class="text-xs sm:text-sm font-black text-slate-700 block mb-1.5">Active Target Locations:</span>
-                                <div id="selectedLocationsTags" class="flex flex-wrap gap-1.5 min-h-[36px] p-2 bg-slate-50 border border-slate-200 rounded-xl"></div>
+                                <span class="text-xs sm:text-sm font-black text-emerald-200 block mb-1.5">Active Target Locations:</span>
+                                <div id="selectedLocationsTags" class="flex flex-wrap gap-1.5 min-h-[36px] p-2 bg-[#0a160d] border border-emerald-800/80 rounded-xl"></div>
                             </div>
 
                             <!-- Quick Preset Pills -->
@@ -999,23 +999,23 @@
                         </div>
 
                         <!-- 3. Work Arrangement & Modes -->
-                        <div class="space-y-2.5 pt-3 border-t border-slate-200">
+                        <div class="space-y-2.5 pt-3 border-t border-emerald-800/80">
                             <div>
-                                <label class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 block mb-1.5">Work Arrangement</label>
+                                <label class="text-xs sm:text-sm font-black uppercase tracking-wider text-emerald-300 block mb-1.5">Work Arrangement</label>
                                 <div class="grid grid-cols-4 gap-2 text-xs sm:text-sm font-black">
-                                    <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-900 shadow-2xs">
+                                    <label class="border-2 border-emerald-700/60 bg-[#0a160d] text-emerald-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-emerald-900/60 flex items-center justify-center has-[:checked]:border-emerald-400 has-[:checked]:bg-gradient-to-r has-[:checked]:from-emerald-600 has-[:checked]:to-teal-600 has-[:checked]:text-white transition shadow-2xs">
                                         <input type="radio" name="work_mode" value="all" checked class="hidden">
                                         <span>All</span>
                                     </label>
-                                    <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-900 shadow-2xs">
+                                    <label class="border-2 border-emerald-700/60 bg-[#0a160d] text-emerald-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-emerald-900/60 flex items-center justify-center has-[:checked]:border-emerald-400 has-[:checked]:bg-gradient-to-r has-[:checked]:from-emerald-600 has-[:checked]:to-teal-600 has-[:checked]:text-white transition shadow-2xs">
                                         <input type="radio" name="work_mode" value="remote" class="hidden">
                                         <span>Remote</span>
                                     </label>
-                                    <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-900 shadow-2xs">
+                                    <label class="border-2 border-emerald-700/60 bg-[#0a160d] text-emerald-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-emerald-900/60 flex items-center justify-center has-[:checked]:border-emerald-400 has-[:checked]:bg-gradient-to-r has-[:checked]:from-emerald-600 has-[:checked]:to-teal-600 has-[:checked]:text-white transition shadow-2xs">
                                         <input type="radio" name="work_mode" value="hybrid" class="hidden">
                                         <span>Hybrid</span>
                                     </label>
-                                    <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-900 shadow-2xs">
+                                    <label class="border-2 border-emerald-700/60 bg-[#0a160d] text-emerald-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-emerald-900/60 flex items-center justify-center has-[:checked]:border-emerald-400 has-[:checked]:bg-gradient-to-r has-[:checked]:from-emerald-600 has-[:checked]:to-teal-600 has-[:checked]:text-white transition shadow-2xs">
                                         <input type="radio" name="work_mode" value="onsite" class="hidden">
                                         <span>Onsite</span>
                                     </label>
@@ -1023,17 +1023,17 @@
                             </div>
 
                             <div>
-                                <label class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 block mb-1.5">Contract Type</label>
+                                <label class="text-xs sm:text-sm font-black uppercase tracking-wider text-emerald-300 block mb-1.5">Contract Type</label>
                                 <div class="grid grid-cols-3 gap-2 text-xs sm:text-sm font-black">
-                                    <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-900 shadow-2xs">
+                                    <label class="border-2 border-emerald-700/60 bg-[#0a160d] text-emerald-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-emerald-900/60 flex items-center justify-center has-[:checked]:border-emerald-400 has-[:checked]:bg-gradient-to-r has-[:checked]:from-emerald-600 has-[:checked]:to-teal-600 has-[:checked]:text-white transition shadow-2xs">
                                         <input type="radio" name="employment_type" value="all" checked class="hidden">
                                         <span>All Types</span>
                                     </label>
-                                    <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-900 shadow-2xs">
+                                    <label class="border-2 border-emerald-700/60 bg-[#0a160d] text-emerald-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-emerald-900/60 flex items-center justify-center has-[:checked]:border-emerald-400 has-[:checked]:bg-gradient-to-r has-[:checked]:from-emerald-600 has-[:checked]:to-teal-600 has-[:checked]:text-white transition shadow-2xs">
                                         <input type="radio" name="employment_type" value="contract" class="hidden">
                                         <span>Contract</span>
                                     </label>
-                                    <label class="border-2 border-slate-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-violet-50 flex items-center justify-center has-[:checked]:border-violet-600 has-[:checked]:bg-gradient-to-r has-[:checked]:from-violet-600 has-[:checked]:to-indigo-600 has-[:checked]:text-white transition text-slate-900 shadow-2xs">
+                                    <label class="border-2 border-emerald-700/60 bg-[#0a160d] text-emerald-200 rounded-xl py-2 px-1 text-center cursor-pointer hover:bg-emerald-900/60 flex items-center justify-center has-[:checked]:border-emerald-400 has-[:checked]:bg-gradient-to-r has-[:checked]:from-emerald-600 has-[:checked]:to-teal-600 has-[:checked]:text-white transition shadow-2xs">
                                         <input type="radio" name="employment_type" value="full-time" class="hidden">
                                         <span>Full-Time</span>
                                     </label>
@@ -1043,13 +1043,13 @@
                     </div>
 
                     <!-- Primary Action Button: Find Verified Direct Jobs -->
-                    <button type="button" id="searchJobsBtn" class="w-full py-4 px-6 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-sm sm:text-base uppercase tracking-wider rounded-2xl shadow-xl shadow-violet-600/35 flex items-center justify-center space-x-2.5 transition transform active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed mt-3 cursor-pointer">
-                        <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+                    <button type="button" id="searchJobsBtn" class="w-full py-4 px-6 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm sm:text-base uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-500/35 flex items-center justify-center space-x-2.5 transition transform active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed mt-3 cursor-pointer">
+                        <i data-lucide="sparkles" class="w-5 h-5 text-slate-950"></i>
                         <span>Find Verified Direct Jobs ↓</span>
                     </button>
 
                     <!-- Navigation helper between Page 1 and Page 3 -->
-                    <div class="flex items-center justify-between pt-2.5 text-xs sm:text-sm font-bold text-slate-500">
+                    <div class="flex items-center justify-between pt-2.5 text-xs sm:text-sm font-bold text-emerald-300">
                         <button type="button" onclick="goToSlide(0)" class="hover:text-violet-700 flex items-center gap-1 cursor-pointer transition">
                             <span>↑ Return to Home</span>
                         </button>
@@ -1514,7 +1514,7 @@
                     <span class="text-slate-300">•</span>
                     <button type="button" onclick="openHeroInfoModal('ats')" class="hover:text-violet-600 transition cursor-pointer">Who We Are</button>
                     <span class="text-slate-300">•</span>
-                    <button type="button" onclick="openVipPricingModal()" class="hover:text-violet-600 transition cursor-pointer">VIP Access</button>
+                    <button type="button" onclick="openContributeModal()" class="hover:text-amber-600 transition cursor-pointer">☕ Contribute (Buy a Coffee)</button>
                 </div>
             </div>
         </footer>
@@ -1698,177 +1698,198 @@
         </div>
     </div>
 
-    <!-- 8. MODAL: VIP ACCESS, MEMBERSHIP PLANS & PRICING -->
-    <div id="vipPricingModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-        <div class="rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col p-6 sm:p-8 border border-slate-200/90 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 bg-white/95 backdrop-blur-2xl my-auto overflow-hidden">
+    <!-- 8. MODAL: CONTRIBUTE & BUY ALMOND JOBS A COFFEE (PUBLER / BUYMEACOFFEE STYLE) -->
+    <div id="vipPricingModal" class="hidden fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4">
+        <div class="rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col border border-emerald-500/30 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 bg-white/98 backdrop-blur-2xl my-auto overflow-hidden">
             
             <!-- Modal Header -->
-            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4 shrink-0">
+            <div class="flex items-center justify-between p-5 sm:p-6 pb-4 border-b border-slate-100 shrink-0">
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-violet-500/30">
-                        <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+                    <div class="w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-900 flex items-center justify-center text-2xl shadow-sm">
+                        ☕
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <h3 class="text-lg font-black text-slate-950">Almond VIP Access</h3>
-                            <span class="text-[10px] font-black uppercase tracking-widest text-violet-700 bg-violet-100 px-2 py-0.5 rounded-full border border-violet-200">Candidate-First Pass</span>
+                            <h3 class="text-lg sm:text-xl font-black text-slate-950">Buy Almond Jobs a coffee</h3>
+                            <span class="text-[10px] font-black uppercase tracking-wider text-teal-800 bg-teal-100 px-2 py-0.5 rounded-full border border-teal-200">1,188+ Supporters</span>
                         </div>
-                        <p class="text-xs text-slate-500 font-semibold">Direct corporate portal delivery • 0% recruiter markup • Unlimited STAR Pitches</p>
+                        <p class="text-xs text-slate-500 font-semibold">Fuel broker-free direct enterprise career matching &amp; zero ghost jobs</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeVipPricingModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer font-bold text-sm">✕</button>
             </div>
 
-                        <!-- Scrollable Content Section -->
-            <div class="overflow-y-auto pr-1 custom-scrollbar space-y-4">
+            <!-- Scrollable Body Container -->
+            <div class="overflow-y-auto p-5 sm:p-6 pt-4 space-y-5 custom-scrollbar flex-1">
                 
-                <!-- Dynamic Opportunity & Unlocking Status Banner -->
-                <div id="vipLockedPostsAlert" class="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-violet-50 via-purple-50 to-indigo-50 border border-violet-200/90 flex items-center gap-3.5 shadow-xs">
-                    <div class="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                        <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+                <!-- Main Coffee Selection Card -->
+                <div class="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/90 space-y-4 shadow-sm">
+                    
+                    <!-- Coffee Multiplier Pill Row: ☕ x [ 1 ] [ 3 ] [ 5 ] [ 10 ] [ 20 ] -->
+                    <div class="flex items-center justify-between bg-teal-50/60 p-3 rounded-2xl border border-teal-200/60">
+                        <div class="flex items-center space-x-2 text-2xl pl-1">
+                            <span>☕</span>
+                            <span class="text-sm font-black text-slate-500">×</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 sm:gap-2" id="coffeeCountPills">
+                            <button type="button" onclick="selectCoffeeCount(1, 485)" class="coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-teal-500 text-white shadow-teal-500/25 ring-2 ring-teal-400" data-count="1">1</button>
+                            <button type="button" onclick="selectCoffeeCount(3, 1455)" class="coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700" data-count="3">3</button>
+                            <button type="button" onclick="selectCoffeeCount(5, 2425)" class="coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700" data-count="5">5</button>
+                            <button type="button" onclick="selectCoffeeCount(10, 4850)" class="coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700" data-count="10">10</button>
+                            <button type="button" onclick="selectCoffeeCount(20, 9700)" class="coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700" data-count="20">20</button>
+                        </div>
                     </div>
-                    <div class="flex-1">
-                        <div class="text-xs sm:text-sm font-black text-slate-950" id="vipBannerHeading">
-                            3,315,000+ Direct Enterprise Openings
-                        </div>
-                        <p class="text-[11px] sm:text-xs text-slate-600 font-medium" id="vipBannerSubtext">
-                            First 10 postings previewed free. Choose any plan below to unlock all remaining direct application links, 0% recruiter markup, and tailored STAR Pitches.
-                        </p>
-                    </div>
-                </div>
-                
-                <!-- Why Almond VIP vs Brokers/Middlemen Comparison Banner -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200/90 text-xs">
-                    <div class="space-y-1.5 border-b md:border-b-0 md:border-r border-slate-200 pb-3 md:pb-0 md:pr-3">
-                        <div class="flex items-center gap-1.5 font-black text-red-700 uppercase tracking-wider text-[11px]">
-                            <i data-lucide="x-circle" class="w-4 h-4 text-red-500"></i>
-                            <span>Legacy Boards & Headhunters</span>
-                        </div>
-                        <p class="text-slate-600 leading-relaxed font-normal">
-                            Pocket <strong>20% to 35%</strong> of your negotiated salary as agency markup. Siphon negotiation leverage, harvest resumes for third-party lists, and ghost you on expired dead listings.
-                        </p>
-                    </div>
-                    <div class="space-y-1.5 md:pl-2">
-                        <div class="flex items-center gap-1.5 font-black text-emerald-800 uppercase tracking-wider text-[11px]">
-                            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
-                            <span>Almond VIP Direct Access</span>
-                        </div>
-                        <p class="text-slate-600 leading-relaxed font-normal">
-                            <strong>0% Recruiter Spread.</strong> You negotiate directly and keep 100% of your compensation. Real-time active application links (Ashby, Greenhouse, Lever, Workday) with instant tailored pitches.
-                        </p>
-                    </div>
-                </div>
 
-                <!-- Plan Selection Cards (3 Durations) -->
-                <div>
-                    <label class="block text-xs font-black text-slate-800 uppercase tracking-wider mb-2.5">
-                        Select Your Access Duration:
-                    </label>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="vipPlanCards">
-                        
-                        <!-- Plan 1: Day Pass -->
-                        <div onclick="selectVipPlan('day', 199, '24-Hour Day Sprint')" id="planCard-day" class="vip-plan-card p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-violet-300 transition-all cursor-pointer relative flex flex-col justify-between">
-                            <div>
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-[10px] font-black uppercase tracking-wider text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">Day Sprint</span>
-                                    <span id="planRadio-day" class="w-4 h-4 rounded-full border-2 border-slate-300 flex items-center justify-center"></span>
-                                </div>
-                                <div class="text-2xl font-black text-slate-950 mb-0.5">₹199</div>
-                                <div class="text-[11px] font-bold text-slate-500 mb-2">24 Hours Unlimited</div>
-                                <ul class="space-y-1 text-[11px] text-slate-600 leading-snug">
-                                    <li class="flex items-center gap-1.5">✓ 24h Full Direct Application Portals</li>
-                                    <li class="flex items-center gap-1.5">✓ 10 Tailored STAR Pitches</li>
-                                    <li class="flex items-center gap-1.5">✓ Instant Activation</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <!-- Plan 2: 1 Month Pro Hunt (Default Selected) -->
-                        <div onclick="selectVipPlan('month', 699, '1-Month Pro Hunt')" id="planCard-month" class="vip-plan-card p-4 rounded-2xl border-2 border-violet-600 bg-violet-50/40 shadow-sm transition-all cursor-pointer relative flex flex-col justify-between ring-2 ring-violet-500/20">
-                            <div class="absolute -top-2.5 right-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow-xs tracking-wider">
-                                Most Popular
-                            </div>
-                            <div>
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-[10px] font-black uppercase tracking-wider text-violet-800 bg-violet-100 px-2 py-0.5 rounded-full">30-Day Pro</span>
-                                    <span id="planRadio-month" class="w-4 h-4 rounded-full bg-violet-600 border-2 border-violet-600 flex items-center justify-center">
-                                        <span class="w-1.5 h-1.5 bg-white rounded-full"></span>
-                                    </span>
-                                </div>
-                                <div class="text-2xl font-black text-slate-950 mb-0.5">₹699</div>
-                                <div class="text-[11px] font-bold text-violet-700 mb-2">Full Job Search Cycle</div>
-                                <ul class="space-y-1 text-[11px] text-slate-700 leading-snug font-medium">
-                                    <li class="flex items-center gap-1.5">✓ 30 Days Unlimited Unlocks</li>
-                                    <li class="flex items-center gap-1.5">✓ Unlimited Tailored STAR Pitches</li>
-                                    <li class="flex items-center gap-1.5">✓ Tailored Cover Letters</li>
-                                    <li class="flex items-center gap-1.5">✓ Kanban Board Exports</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <!-- Plan 3: 3 Months Career Mastery -->
-                        <div onclick="selectVipPlan('quarter', 1499, '3-Month Career Mastery')" id="planCard-quarter" class="vip-plan-card p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-violet-300 transition-all cursor-pointer relative flex flex-col justify-between">
-                            <div class="absolute -top-2.5 right-3 bg-emerald-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow-xs tracking-wider">
-                                Save 30%
-                            </div>
-                            <div>
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">90-Day Transition</span>
-                                    <span id="planRadio-quarter" class="w-4 h-4 rounded-full border-2 border-slate-300 flex items-center justify-center"></span>
-                                </div>
-                                <div class="text-2xl font-black text-slate-950 mb-0.5">₹1,499</div>
-                                <div class="text-[11px] font-bold text-slate-500 mb-2">3 Months Full Buffer</div>
-                                <ul class="space-y-1 text-[11px] text-slate-600 leading-snug">
-                                    <li class="flex items-center gap-1.5">✓ 90 Days Unlimited Access</li>
-                                    <li class="flex items-center gap-1.5">✓ Priority Portal Feed Sync</li>
-                                    <li class="flex items-center gap-1.5">✓ Founder Direct Outreach</li>
-                                    <li class="flex items-center gap-1.5">✓ Continuous New Alerts</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- Promo / Coupon Code Box -->
-                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-                    <div class="flex items-center justify-between gap-2">
-                        <div class="relative flex-1">
-                            <input type="text" id="vipCouponInput" placeholder="Enter coupon code (e.g. FIRST50, ALMOND50)" class="w-full text-xs font-bold px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white focus:outline-hidden focus:border-violet-500 uppercase tracking-wider text-slate-900 placeholder:normal-case placeholder:font-normal placeholder:text-slate-400">
-                        </div>
-                        <button type="button" onclick="applyVipCoupon()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition cursor-pointer shrink-0 shadow-xs">
-                            Apply Code
-                        </button>
-                    </div>
-                    <div id="vipCouponMessage" class="hidden text-[11px] font-bold mt-2 flex items-center gap-1"></div>
-                </div>
-
-                <!-- Order Summary Breakdown -->
-                <div class="p-3.5 rounded-2xl bg-violet-50/60 border border-violet-200 flex items-center justify-between text-xs">
+                    <!-- Supporter Name Input -->
                     <div>
-                        <span class="font-bold text-slate-700 block" id="vipSummaryPlanName">1-Month Pro Hunt (30 Days)</span>
-                        <span class="text-[11px] text-slate-500" id="vipSummarySubtext">Single one-time payment • No auto-renewal traps</span>
+                        <input type="text" id="coffeeSupporterName" placeholder="Name or @yoursocial" class="w-full px-4 py-3 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-400/20 text-slate-900 placeholder:text-slate-400 shadow-2xs transition">
                     </div>
-                    <div class="text-right">
-                        <div class="text-[11px] text-slate-400 line-through hidden" id="vipOriginalPriceLine">₹699</div>
-                        <div class="text-xl font-black text-violet-950" id="vipFinalAmountDisplay">₹699</div>
+
+                    <!-- Supporter Feedback / Message Textarea -->
+                    <div>
+                        <textarea id="coffeeSupporterMessage" rows="3" placeholder="Say something nice..." class="w-full px-4 py-3 text-xs sm:text-sm font-medium rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-400/20 text-slate-900 placeholder:text-slate-400 shadow-2xs transition resize-none"></textarea>
+                    </div>
+
+                    <!-- Big Support Button (Matches Publer Teal CTA) -->
+                    <button type="button" id="coffeeSupportBtn" onclick="executeCoffeeContribution()" class="w-full py-3.5 px-6 rounded-2xl bg-teal-500 hover:bg-teal-400 active:scale-98 text-white font-black text-sm sm:text-base tracking-wide shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2 transition cursor-pointer">
+                        <span>Support ₹<span id="coffeeAmountDisplay">485</span></span>
+                    </button>
+                    
+                    <div class="flex items-center justify-between text-[11px] text-slate-500 px-1">
+                        <span class="flex items-center gap-1 font-medium">
+                            <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1a9 9 0 100 18 9 9 0 000-18zm3.707 7.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                            Secure Razorpay UPI, GPay, Cards &amp; NetBanking
+                        </span>
+                        <span class="font-bold text-slate-600">Zero Recruiter Commission</span>
+                    </div>
+                </div>
+
+                <!-- Recent Supporters Section (Testimonials & Benefited Candidates) -->
+                <div class="space-y-3 pt-2">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-black text-sm text-slate-950 flex items-center gap-1.5">
+                            <span>Recent supporters</span>
+                        </h4>
+                        <span class="text-[11px] font-bold text-slate-500">Community love</span>
+                    </div>
+
+                    <!-- Supporters Feed Container -->
+                    <div class="space-y-3" id="recentSupportersList">
+                        
+                        <!-- Pinned Supporter (as in Publer screenshot) -->
+                        <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-2.5">
+                            <div class="flex items-center justify-between text-xs">
+                                <div class="flex items-center space-x-2.5">
+                                    <div class="w-8 h-8 rounded-full bg-amber-200/80 border border-amber-300 text-amber-900 flex items-center justify-center font-black text-xs">
+                                        ☕
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-[10px] font-bold text-amber-800 bg-amber-200/60 px-1.5 py-0.5 rounded flex items-center gap-1">📌 Pinned</span>
+                                            <strong class="text-slate-900 font-extrabold text-xs">Stella</strong>
+                                            <span class="text-slate-500 text-[11px]">bought 250 coffees</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-white/90 rounded-xl border border-amber-200/60 text-xs text-slate-800 font-medium">
+                                Thank you ☕☕☕ 💜
+                            </div>
+                            <!-- Almond reply bubble -->
+                            <div class="p-2.5 bg-teal-50/80 rounded-xl border border-teal-200/60 text-[11px] text-teal-950 flex items-start gap-2">
+                                <span class="text-xs">🌰</span>
+                                <div><strong>Almond Jobs:</strong> Oh, wow! This is beyond coffee overflow! Thank you, Stella, 250 times! 💚</div>
+                            </div>
+                        </div>
+
+                        <!-- Supporter 1 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">AK</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Arun Karthik</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought 10 coffees</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "Thanks Almond Jobs, I got my job! SDE-2 at top tech firm directly through Ashby without any recruiter cuts."
+                            </div>
+                        </div>
+
+                        <!-- Supporter 2 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">PS</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Priya S.</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought a coffee</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "Thanks Almond Job, I escaped from broker spam and landed an interview directly on Greenhouse!"
+                            </div>
+                        </div>
+
+                        <!-- Supporter 3 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">AT</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Alex Tischenko</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought 3 coffees</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "I love Almond Jobs! The direct ATS ingestion saved me weeks of ghost applications."
+                            </div>
+                        </div>
+
+                        <!-- Supporter 4 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">VR</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Venkatesh R.</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought 5 coffees</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "My career is grown! Best platform for serious engineers seeking transparent packages."
+                            </div>
+                        </div>
+
+                        <!-- Supporter 5 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">SR</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Sneha Reddy</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought 3 coffees</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "I have referred to my friend, this was a good platform. Both of us received direct interview invites within 3 days!"
+                            </div>
+                        </div>
+
+                        <!-- Supporter 6 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">RS</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Rahul Sharma</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought a coffee</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "Direct company application portals work 10x better than standard job boards. 0% recruiter spread!"
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
             </div>
-
-            <!-- Modal Footer & Checkout Action -->
-            <div class="mt-4 pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-                <div class="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
-                    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
-                    <span>256-Bit SSL Encrypted • Instant Activation</span>
-                </div>
-                <button type="button" onclick="proceedToCheckoutFromModal()" class="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg shadow-violet-500/25 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                    <i data-lucide="lock" class="w-4 h-4 text-violet-200"></i>
-                    <span id="vipCheckoutBtnLabel">Proceed to Secure Checkout — ₹699</span>
-                </button>
-            </div>
-
         </div>
     </div>
 
@@ -1942,7 +1963,7 @@
                         <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Full Name</label>
                         <div class="relative">
                             <i data-lucide="user-check" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
-                            <input type="text" id="authFullNameInput" placeholder="e.g. Sridhar S" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-xs text-slate-900 transition">
+                            <input type="text" id="authFullNameInput" placeholder="Enter your full name" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-xs text-slate-900 transition">
                         </div>
                     </div>
 
@@ -2071,7 +2092,7 @@
                     </div>
                     <p class="text-[11px] text-violet-800 leading-snug">Unlock unlimited direct corporate application portals, bypass all headhunter markups, and activate instant application feeds.</p>
                     <button type="button" onclick="closeProfileModal(); openVipPricingModal();" class="w-full mt-1 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs rounded-xl shadow-md transition cursor-pointer">
-                        View VIP Membership Plans
+                        ☕ Buy Almond Jobs a Coffee
                     </button>
                 </div>
 
@@ -2231,7 +2252,7 @@
                     <!-- Search Input -->
                     <div class="relative flex-1 min-w-[200px]">
                         <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                        <input type="text" id="curatedSearchInput" oninput="handleCuratedSearchDebounced(this.value)" placeholder="Search role, company, or keyword (e.g. Python, AI, 3D, Quantitative)..." class="w-full pl-9 pr-4 py-2 text-xs font-semibold rounded-xl border border-slate-300 bg-white focus:outline-none focus:border-violet-500 shadow-2xs text-slate-900 placeholder:text-slate-400">
+                        <input type="text" id="curatedSearchInput" oninput="handleCuratedSearchDebounced(this.value)" placeholder="Search role, company, or keyword (Python, AI, 3D, Quantitative)..." class="w-full pl-9 pr-4 py-2 text-xs font-semibold rounded-xl border border-slate-300 bg-white focus:outline-none focus:border-violet-500 shadow-2xs text-slate-900 placeholder:text-slate-400">
                     </div>
 
                     <!-- Category Filter -->

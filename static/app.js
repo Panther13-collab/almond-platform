@@ -1635,7 +1635,7 @@ function initCompensationControls() {
 
             btn.type = "button";
 
-            btn.className = "text-xs px-3 py-1 rounded-xl border-2 border-slate-200 bg-white text-slate-800 hover:border-emerald-500 hover:text-emerald-900 hover:bg-emerald-50 font-black transition shadow-sm";
+            btn.className = "text-xs px-3 py-1 rounded-xl border border-emerald-600/50 bg-[#0a160d] text-emerald-200 hover:border-emerald-400 hover:text-white hover:bg-emerald-950 font-bold transition shadow-xs cursor-pointer";
 
             btn.textContent = p.label;
 
@@ -1762,9 +1762,9 @@ function initLocationAutocomplete() {
         quickPills.forEach(pill => {
             const loc = pill.getAttribute("data-loc");
             if (loc && selectedLocations.some(l => l.toLowerCase() === loc.toLowerCase())) {
-                pill.className = "quick-pill text-xs px-3 py-1 rounded-full border-2 border-violet-600 bg-violet-100 text-violet-950 font-black shadow-2xs transition cursor-pointer";
+                pill.className = "quick-pill text-xs px-3.5 py-1.5 rounded-full border-2 border-emerald-400 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black shadow-xs transition cursor-pointer";
             } else {
-                pill.className = "quick-pill text-xs px-3 py-1 rounded-full border border-slate-300 bg-white text-slate-800 font-bold hover:border-violet-300 hover:bg-violet-50 hover:text-violet-950 transition cursor-pointer";
+                pill.className = "quick-pill text-xs px-3.5 py-1.5 rounded-full border border-emerald-500/40 bg-emerald-950/80 text-emerald-200 font-bold hover:border-emerald-400 hover:text-white hover:bg-emerald-900 transition cursor-pointer";
             }
         });
     }
@@ -4335,6 +4335,60 @@ let currentVipDiscount = 0;
 
 let appliedVipCouponCode = "";
 
+
+// =========================================================================
+// CONTRIBUTE & BUY ALMOND JOBS A COFFEE CONTROLLER
+// =========================================================================
+
+window.selectedCoffeeCount = 1;
+window.selectedCoffeeAmount = 485;
+
+window.selectCoffeeCount = function(count, amount) {
+    window.selectedCoffeeCount = count;
+    window.selectedCoffeeAmount = amount;
+
+    const pills = document.querySelectorAll(".coffee-pill");
+    pills.forEach(p => {
+        const c = parseInt(p.getAttribute("data-count"), 10);
+        if (c === count) {
+            p.className = "coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-teal-500 text-white shadow-teal-500/25 ring-2 ring-teal-400";
+        } else {
+            p.className = "coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700";
+        }
+    });
+
+    const displayEl = document.getElementById("coffeeAmountDisplay");
+    if (displayEl) displayEl.textContent = amount;
+};
+
+window.openContributeModal = function() {
+    const modal = document.getElementById("vipPricingModal");
+    if (!modal) return;
+    modal.classList.remove("hidden");
+    const nameInput = document.getElementById("coffeeSupporterName");
+    if (nameInput && window.currentCandidateUser && window.currentCandidateUser.full_name) {
+        if (!nameInput.value) nameInput.value = window.currentCandidateUser.full_name;
+    }
+    if (window.lucide) lucide.createIcons();
+};
+
+window.openVipPricingModal = function() {
+    window.openContributeModal();
+};
+
+window.executeCoffeeContribution = function() {
+    const amount = window.selectedCoffeeAmount || 485;
+    const count = window.selectedCoffeeCount || 1;
+    const name = (document.getElementById("coffeeSupporterName")?.value || "").trim() || "Generous Candidate";
+    const message = (document.getElementById("coffeeSupporterMessage")?.value || "").trim();
+
+    const planTitle = `Buy Almond Jobs ${count} Coffee${count > 1 ? 's' : ''}`;
+
+    if (typeof triggerRazorpayCheckout === "function") {
+        triggerRazorpayCheckout(amount, planTitle);
+    }
+};
+
 window.openVipPricingModal = function() {
     const modal = document.getElementById("vipPricingModal");
     if (!modal) return;
@@ -4801,7 +4855,7 @@ window.handleAuthSubmit = async function(e) {
     const emailRegex = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
     if (!email || !emailRegex.test(email)) {
         if (errBox && errText) {
-            errText.textContent = "Please enter a valid personal email address (e.g. name@gmail.com).";
+            errText.textContent = "Please enter a valid personal email address.";
             errBox.classList.remove("hidden");
         }
         return;
