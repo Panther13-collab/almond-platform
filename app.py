@@ -5,6 +5,7 @@ from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Body, Query
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from typing import Optional
 import json
 
@@ -44,6 +45,9 @@ app = FastAPI(title="Almond Jobs - Direct Corporate Career Engine", version="2.0
 # Security Hardening: Bot Shield & Rate Limiting Middleware
 app.add_middleware(BotShieldMiddleware)
 
+# High-Performance Compression: GZip responses > 1KB (shrinks HTML/JS/JSON payloads by 75-85%)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 # Secure CORS Policy (Restricts open wildcards with credentials)
 app.add_middleware(
     CORSMiddleware,
@@ -55,12 +59,15 @@ app.add_middleware(
 )
 
 @app.middleware("http")
-async def add_dev_cache_headers(request, call_next):
+async def add_performance_cache_headers(request, call_next):
     response = await call_next(request)
-    if request.url.path.startswith("/static") or request.url.path == "/":
-        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Expires"] = "0"
+    path = request.url.path
+    # Static assets (images, fonts, scripts): cache for 7 days with revalidation
+    if path.startswith("/static/"):
+        response.headers["Cache-Control"] = "public, max-age=604800, stale-while-revalidate=86400"
+    elif path == "/" or path.startswith("/jobs/"):
+        # HTML pages: must revalidate so updates propagate immediately
+        response.headers["Cache-Control"] = "public, max-age=0, must-revalidate"
     return response
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
