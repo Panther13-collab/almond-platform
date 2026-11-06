@@ -1,17 +1,21 @@
 import os
 import shutil
 import uuid
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Body, Query
+import csv
+import io
+import json
+import threading
+import time
+from typing import Optional
+
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Body, Query, Request
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from typing import Optional
-import json
+from jinja2 import Environment, FileSystemLoader
 
 from core.parser import extract_text_from_file, parse_candidate_profile
-import threading
-import time
 from core.job_engine import search_matching_jobs, fetch_linkedin_postings, _get_skills_fingerprint
 from core.pitch_generator import generate_star_pitch, generate_tailored_cover_letter
 from core.founder_engine import fetch_hn_founder_jobs
@@ -25,7 +29,8 @@ from core.config import Config
 from core.auth_db import (
     signup_user, login_user, is_user_paid, verify_session_token, get_user_profile,
     get_user_kanban, save_user_kanban_application, sync_full_kanban,
-    send_signup_otp, verify_otp_and_signup, login_or_signup_google_user
+    send_signup_otp, verify_otp_and_signup, login_or_signup_google_user,
+    record_page_visit, get_analytics_summary, get_all_users_admin
 )
 from core.payment import create_razorpay_order, verify_razorpay_signature
 from core.security import BotShieldMiddleware, validate_uploaded_file, acquire_search_slot, release_search_slot
@@ -59,9 +64,23 @@ app.add_middleware(
 )
 
 @app.middleware("http")
-async def add_performance_cache_headers(request, call_next):
-    response = await call_next(request)
+async def add_performance_cache_headers(request: Request, call_next):
     path = request.url.path
+
+    # Track real-time visitor telemetry for candidate pageviews
+    if not path.startswith("/static/") and path not in ["/favicon.ico", "/health", "/robots.txt", "/sitemap.xml", "/llms.txt"]:
+        try:
+            client_ip = request.client.host if request.client else "127.0.0.1"
+            forwarded = request.headers.get("x-forwarded-for")
+            if forwarded:
+                client_ip = forwarded.split(",")[0].strip()
+            user_agent = request.headers.get("user-agent", "")
+            referrer = request.headers.get("referer", "")
+            record_page_visit(path, client_ip, user_agent, referrer)
+        except Exception:
+            pass
+
+    response = await call_next(request)
     # Static assets (images, fonts, scripts): cache for 7 days with revalidation
     if path.startswith("/static/"):
         response.headers["Cache-Control"] = "public, max-age=604800, stale-while-revalidate=86400"
@@ -148,7 +167,10 @@ async def serve_index():
     index_file = os.path.join(TEMPLATES_DIR, "index.html")
     if os.path.exists(index_file):
         with open(index_file, "r", encoding="utf-8") as f:
-            return f.read()
+            content = f.read()
+            if Config.GA_MEASUREMENT_ID:
+                content = content.replace('window.__ALMOND_GA_ID__ || ""', f'"{Config.GA_MEASUREMENT_ID}"')
+            return content
     return "<h1>Almond Jobs Platform is starting up...</h1>"
 
 @app.get("/template/{template_id}", response_class=HTMLResponse)
@@ -176,6 +198,106 @@ async def serve_kage_preview():
         with open(filepath, "r", encoding="utf-8") as f:
             return f.read()
     raise HTTPException(status_code=404, detail="kage_preview.html not found.")
+
+# ============================================================================
+# Executive Telemetry, Traffic Analytics & Candidate Directory Endpoints
+# ============================================================================
+
+@app.get("/admin", response_class=HTMLResponse)
+async def serve_admin_dashboard(
+    request: Request,
+    key: Optional[str] = Query(None),
+    logout: Optional[int] = Query(None)
+):
+    """
+    Zero-Cost Internal Executive Telemetry & Candidate Directory Portal.
+    Protected by configurable ALMOND_ADMIN_KEY (default: almond2026).
+    """
+    if logout == 1:
+        res = HTMLResponse("<script>document.cookie = 'almond_admin_key=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'; window.location.href = '/admin';</script>")
+        res.delete_cookie("almond_admin_key")
+        return res
+
+    cookie_key = request.cookies.get("almond_admin_key")
+    provided_key = (key or cookie_key or "").strip()
+    is_authenticated = bool(provided_key and provided_key == Config.ADMIN_SECRET_KEY)
+
+    env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
+    template = env.get_template("admin.html")
+
+    if is_authenticated:
+        analytics = get_analytics_summary()
+        candidates = get_all_users_admin()
+        rendered = template.render(
+            is_authenticated=True,
+            admin_key=provided_key,
+            auth_error=False,
+            analytics=analytics,
+            candidates=candidates
+        )
+        response = HTMLResponse(content=rendered)
+        # Store secure session cookie for convenience so user stays logged in
+        response.set_cookie(
+            key="almond_admin_key",
+            value=provided_key,
+            max_age=86400 * 30,
+            httponly=True,
+            samesite="lax"
+        )
+        return response
+    else:
+        rendered = template.render(
+            is_authenticated=False,
+            admin_key="",
+            auth_error=bool(provided_key),
+            analytics={},
+            candidates=[]
+        )
+        return HTMLResponse(content=rendered)
+
+@app.get("/api/admin/metrics")
+async def get_admin_metrics(request: Request, key: Optional[str] = Query(None)):
+    """API endpoint for live polling of analytics telemetry and candidate directory."""
+    cookie_key = request.cookies.get("almond_admin_key")
+    header_key = request.headers.get("x-admin-key")
+    provided_key = (key or cookie_key or header_key or "").strip()
+    if provided_key != Config.ADMIN_SECRET_KEY:
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin secret key.")
+    return {
+        "status": "success",
+        "analytics": get_analytics_summary(),
+        "candidates": get_all_users_admin()
+    }
+
+@app.get("/api/admin/export-users")
+async def export_candidates_csv(request: Request, key: Optional[str] = Query(None)):
+    """Export all registered candidates as a clean, downloadable CSV spreadsheet."""
+    cookie_key = request.cookies.get("almond_admin_key")
+    provided_key = (key or cookie_key or "").strip()
+    if provided_key != Config.ADMIN_SECRET_KEY:
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin secret key.")
+
+    candidates = get_all_users_admin()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Candidate ID", "Full Name", "Email", "Sign-in Provider", "Plan", "VIP Status", "Registration Date"])
+    for c in candidates:
+        writer.writerow([
+            c.get("id", ""),
+            c.get("full_name", ""),
+            c.get("email", ""),
+            c.get("auth_provider", "email"),
+            c.get("plan", "free"),
+            "VIP ACTIVE" if c.get("is_paid") else "Standard Free",
+            c.get("created_at_str", "")
+        ])
+
+    csv_content = output.getvalue()
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="almond_candidates_export.csv"'}
+    )
 
 @app.post("/api/upload-resume")
 async def upload_resume(file: UploadFile = File(...)):

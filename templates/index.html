@@ -34,6 +34,22 @@
     <link rel="help" type="text/plain" href="https://almondjobs.com/llms.txt" title="LLM Agent Manifest">
     <link rel="sitemap" type="application/xml" href="https://almondjobs.com/sitemap.xml">
 
+    <!-- Free Google Analytics 4 (GA4) Global Site Tag (gtag.js) -->
+    <!-- Activate at zero cost by setting GA_MEASUREMENT_ID=G-XXXXXXXXXX in your environment -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      const GA_ID = window.__ALMOND_GA_ID__ || "";
+      if (GA_ID) {
+        const gaScript = document.createElement("script");
+        gaScript.async = true;
+        gaScript.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_ID;
+        document.head.appendChild(gaScript);
+        gtag('js', new Date());
+        gtag('config', GA_ID, { 'send_page_view': true });
+      }
+    </script>
+
     <!-- Sharp Golden Almond Tab Favicons with Warm Royal Gold Box -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=4">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png?v=4">

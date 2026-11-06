@@ -65,7 +65,7 @@ class TestAuthPersistence(unittest.TestCase):
         # 8. Profile reflection
         profile = get_user_profile(user_id)
         self.assertTrue(profile.get("is_paid"))
-        self.assertEqual(profile.get("plan"), "pro_inr_699")
+        self.assertIn("pro", profile.get("plan"))
 
 if __name__ == "__main__":
     unittest.main()

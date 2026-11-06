@@ -30,6 +30,10 @@ class Config:
     SMTP_PASS = os.getenv("SMTP_PASS", "").strip()
     SMTP_FROM = os.getenv("SMTP_FROM", "").strip() or f"Almond Jobs <{os.getenv('SMTP_USER', 'noreply@almondjobs.com')}>"
 
+    # Telemetry & Admin Key
+    ADMIN_SECRET_KEY = os.getenv("ALMOND_ADMIN_KEY", "almond2026").strip()
+    GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "").strip()
+
     @classmethod
     def is_supabase_configured(cls) -> bool:
         return bool(cls.SUPABASE_URL and cls.SUPABASE_ANON_KEY)

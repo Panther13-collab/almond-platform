@@ -58,7 +58,8 @@ def init_db():
                 plan TEXT DEFAULT 'free',
                 paid_until REAL DEFAULT 0,
                 created_at REAL,
-                updated_at REAL
+                updated_at REAL,
+                auth_provider TEXT DEFAULT 'email'
             );
         """)
         cursor.execute("""
@@ -97,13 +98,31 @@ def init_db():
                 attempts INTEGER DEFAULT 0
             );
         """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS site_traffic (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT NOT NULL,
+                path TEXT NOT NULL,
+                visitor_hash TEXT NOT NULL,
+                device TEXT DEFAULT 'desktop',
+                referrer TEXT DEFAULT '',
+                timestamp REAL NOT NULL
+            );
+        """)
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments (user_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_cand_apps_user ON candidate_applications (user_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_traffic_date ON site_traffic (date);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_traffic_path ON site_traffic (path);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_traffic_visitor ON site_traffic (visitor_hash);")
         
         # Auto-migrate existing database tables if columns are missing
         try:
             cursor.execute("ALTER TABLE users ADD COLUMN paid_until REAL DEFAULT 0;")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE users ADD COLUMN auth_provider TEXT DEFAULT 'email';")
         except Exception:
             pass
         try:
@@ -392,8 +411,8 @@ def signup_user(email: str, password: str, full_name: str = "") -> dict:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, 0, 'free', 0, ?, ?)
+                INSERT INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at, auth_provider)
+                VALUES (?, ?, ?, ?, ?, 0, 'free', 0, ?, ?, 'email')
                 """,
                 (user_id, clean_email, pw_hash, salt, full_name.strip(), now, now)
             )
@@ -500,6 +519,11 @@ def login_or_signup_google_user(email: str, full_name: str = "", google_id: str 
 
         if row:
             user_id = row["id"]
+            try:
+                cursor.execute("UPDATE users SET auth_provider = 'google', updated_at = ? WHERE id = ?", (now, user_id))
+                conn.commit()
+            except Exception:
+                pass
             token = _create_token(user_id, row["email"])
             paid_until = row["paid_until"] or 0
             is_paid = bool(row["is_paid"]) and (paid_until == 0 or paid_until > now)
@@ -533,8 +557,8 @@ def login_or_signup_google_user(email: str, full_name: str = "", google_id: str 
 
             cursor.execute(
                 """
-                INSERT INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, 0, 'free', 0, ?, ?)
+                INSERT INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at, auth_provider)
+                VALUES (?, ?, ?, ?, ?, 0, 'free', 0, ?, ?, 'google')
                 """,
                 (user_id, clean_email, pw_hash, salt, name_val, now, now)
             )
@@ -776,3 +800,173 @@ def sync_full_kanban(user_id: str, kanban_dict: dict) -> dict:
                 """, (app_id, user_id, job_id, company, role, status_key, url, now, now, notes))
         conn.commit()
     return get_user_kanban(user_id)
+
+
+# ============================================================================
+# Telemetry, Traffic Analytics & Candidate Directory Engine (100% Free)
+# ============================================================================
+
+def record_page_visit(path: str, client_ip: str, user_agent: str = "", referrer: str = "") -> bool:
+    """
+    Record an anonymous, privacy-compliant page visit in SQLite.
+    Uses a one-way salt + date + IP hash to uniquely count visitors without saving raw PII/IPs.
+    """
+    try:
+        clean_path = (path or "/").split("?")[0].strip()
+        # Filter out static files, assets, source maps, favicons
+        if any(clean_path.endswith(ext) for ext in [".css", ".js", ".png", ".jpg", ".jpeg", ".ico", ".webp", ".svg", ".map", ".woff", ".woff2", ".txt", ".xml"]):
+            return False
+        # Filter out internal health checks and robots
+        if clean_path in ["/health", "/favicon.ico", "/robots.txt", "/sitemap.xml", "/llms.txt"]:
+            return False
+        if clean_path.startswith("/api/") and not clean_path.startswith("/api/jobs"):
+            return False
+
+        # Detect device type
+        ua_lower = (user_agent or "").lower()
+        if any(m in ua_lower for m in ["mobile", "android", "iphone", "ipod", "windows phone"]):
+            device = "mobile"
+        elif any(t in ua_lower for t in ["tablet", "ipad"]):
+            device = "tablet"
+        else:
+            device = "desktop"
+
+        now = time.time()
+        date_str = time.strftime("%Y-%m-%d", time.gmtime(now))
+        # Anonymized salted visitor hash
+        hash_input = f"{client_ip}:{ua_lower}:{date_str}:{AUTH_SECRET_KEY}"
+        visitor_hash = hashlib.sha256(hash_input.encode("utf-8")).hexdigest()[:16]
+
+        clean_ref = (referrer or "")[:255]
+
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO site_traffic (date, path, visitor_hash, device, referrer, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (date_str, clean_path, visitor_hash, device, clean_ref, now)
+            )
+            conn.commit()
+        return True
+    except Exception as e:
+        print(f"[TRAFFIC_TRACKER] Visit record note: {e}")
+        return False
+
+def get_analytics_summary() -> dict:
+    """
+    Calculate comprehensive real-time site analytics and engagement metrics.
+    Returns visitor totals, unique visitors, device breakdown, top pages, and 7-day trend.
+    """
+    now = time.time()
+    today_str = time.strftime("%Y-%m-%d", time.gmtime(now))
+    
+    with get_db() as conn:
+        cursor = conn.cursor()
+        # Total pageviews
+        cursor.execute("SELECT COUNT(*) FROM site_traffic;")
+        total_pageviews = cursor.fetchone()[0] or 0
+
+        # Today's pageviews
+        cursor.execute("SELECT COUNT(*) FROM site_traffic WHERE date = ?;", (today_str,))
+        today_pageviews = cursor.fetchone()[0] or 0
+
+        # Total unique visitors across all time
+        cursor.execute("SELECT COUNT(DISTINCT visitor_hash) FROM site_traffic;")
+        unique_visitors_total = cursor.fetchone()[0] or 0
+
+        # Today's unique visitors
+        cursor.execute("SELECT COUNT(DISTINCT visitor_hash) FROM site_traffic WHERE date = ?;", (today_str,))
+        today_unique_visitors = cursor.fetchone()[0] or 0
+
+        # Device breakdown
+        cursor.execute("SELECT device, COUNT(*) FROM site_traffic GROUP BY device;")
+        device_counts = dict(cursor.fetchall())
+        desktop_views = device_counts.get("desktop", 0)
+        mobile_views = device_counts.get("mobile", 0) + device_counts.get("tablet", 0)
+
+        # Top 10 visited pages
+        cursor.execute("""
+            SELECT path, COUNT(*) as hits, COUNT(DISTINCT visitor_hash) as uniques
+            FROM site_traffic
+            GROUP BY path
+            ORDER BY hits DESC
+            LIMIT 10;
+        """)
+        top_pages = [
+            {"path": r["path"], "hits": r["hits"], "uniques": r["uniques"]}
+            for r in cursor.fetchall()
+        ]
+
+        # Last 7 days trend
+        cursor.execute("""
+            SELECT date, COUNT(*) as pageviews, COUNT(DISTINCT visitor_hash) as uniques
+            FROM site_traffic
+            GROUP BY date
+            ORDER BY date DESC
+            LIMIT 7;
+        """)
+        history_rows = cursor.fetchall()
+        trend = [
+            {"date": r["date"], "pageviews": r["pageviews"], "uniques": r["uniques"]}
+            for r in reversed(history_rows)
+        ]
+
+        # User counts
+        cursor.execute("SELECT COUNT(*) FROM users;")
+        total_users = cursor.fetchone()[0] or 0
+
+        cursor.execute("SELECT COUNT(*) FROM users WHERE is_paid = 1;")
+        paid_users = cursor.fetchone()[0] or 0
+
+        cursor.execute("SELECT COUNT(*) FROM users WHERE auth_provider = 'google';")
+        google_users = cursor.fetchone()[0] or 0
+
+        return {
+            "total_pageviews": total_pageviews,
+            "today_pageviews": today_pageviews,
+            "unique_visitors_total": unique_visitors_total,
+            "today_unique_visitors": today_unique_visitors,
+            "desktop_views": desktop_views,
+            "mobile_views": mobile_views,
+            "top_pages": top_pages,
+            "daily_trend": trend,
+            "total_users": total_users,
+            "paid_users": paid_users,
+            "google_users": google_users,
+            "today_date": today_str
+        }
+
+def get_all_users_admin() -> list:
+    """
+    Retrieve all registered candidates formatted for the executive admin directory.
+    Returns sanitized records with formatted dates and provider info.
+    """
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, email, full_name, plan, is_paid, paid_until, created_at, auth_provider
+            FROM users
+            ORDER BY created_at DESC;
+        """)
+        rows = cursor.fetchall()
+        candidates = []
+        now = time.time()
+        for r in rows:
+            created_ts = r["created_at"] or now
+            created_date_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(created_ts))
+            paid_until = r["paid_until"] or 0
+            is_active_vip = bool(r["is_paid"]) and (paid_until == 0 or paid_until > now)
+            
+            candidates.append({
+                "id": r["id"],
+                "email": r["email"],
+                "full_name": r["full_name"] or "Candidate",
+                "plan": r["plan"] or "free",
+                "is_paid": is_active_vip,
+                "auth_provider": r["auth_provider"] or ("google" if "google" in (r["email"] or "").lower() else "email"),
+                "created_at_str": created_date_str,
+                "created_at": created_ts
+            })
+        return candidates
