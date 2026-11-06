@@ -1,0 +1,68 @@
+# Almond Jobs — Robots & AI Crawler Discovery Directive
+# 3.3M+ Direct Enterprise Job Openings (0% Recruiter Spread)
+# Official Crawl & Ingestion Authorization for Web & Generative AI Engines
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-JobPosting
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Yandex
+Allow: /
+
+# Authorized Generative AI & Answer Engine Crawlers (GEO / AEO)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: *
+Allow: /
+Disallow: /api/payment/
+Disallow: /api/auth/
+Disallow: /temp/
+
+# Global XML Sitemaps
+Sitemap: https://almondjobs.com/sitemap.xml
+Sitemap: https://almondjobs.com/sitemap-main.xml
+Sitemap: https://almondjobs.com/sitemap-categories.xml
+Sitemap: https://almondjobs.com/sitemap-jobs.xml
+
+# LLM Agent Discovery Standard
+# See: https://llmstxt.org/
+Disallow: 
+# AI Context Files:
+# https://almondjobs.com/llms.txt
+# https://almondjobs.com/llms-full.txt

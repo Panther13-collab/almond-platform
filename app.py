@@ -2,7 +2,7 @@ import os
 import shutil
 import uuid
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Body, Query
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
@@ -28,6 +28,11 @@ from core.auth_db import (
 )
 from core.payment import create_razorpay_order, verify_razorpay_signature
 from core.security import BotShieldMiddleware, validate_uploaded_file, acquire_search_slot, release_search_slot
+from core.sitemap_generator import (
+    generate_sitemap_index, generate_main_sitemap,
+    generate_categories_sitemap, generate_jobs_sitemap
+)
+from core.seo_renderer import render_category_page
 
 # In-Memory Cache for Composite Candidate Search Results
 _API_SEARCH_CACHE = {}
@@ -79,6 +84,57 @@ async def favicon():
     if os.path.exists(fav_path):
         return FileResponse(fav_path, media_type="image/x-icon")
     return FileResponse(os.path.join(STATIC_DIR, "logo.png"), media_type="image/png")
+
+@app.get("/robots.txt", include_in_schema=False)
+async def serve_robots():
+    robots_path = os.path.join(STATIC_DIR, "robots.txt")
+    if os.path.exists(robots_path):
+        return FileResponse(robots_path, media_type="text/plain; charset=utf-8")
+    return Response(content="User-agent: *\nAllow: /\n", media_type="text/plain")
+
+@app.get("/llms.txt", include_in_schema=False)
+async def serve_llms():
+    llms_path = os.path.join(STATIC_DIR, "llms.txt")
+    if os.path.exists(llms_path):
+        return FileResponse(llms_path, media_type="text/plain; charset=utf-8")
+    return Response(content="# Almond Jobs\nhttps://almondjobs.com\n", media_type="text/plain")
+
+@app.get("/llms-full.txt", include_in_schema=False)
+async def serve_llms_full():
+    llms_path = os.path.join(STATIC_DIR, "llms-full.txt")
+    if os.path.exists(llms_path):
+        return FileResponse(llms_path, media_type="text/plain; charset=utf-8")
+    return Response(content="# Almond Jobs Full Spec\nhttps://almondjobs.com\n", media_type="text/plain")
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap_index():
+    return Response(content=generate_sitemap_index(), media_type="application/xml")
+
+@app.get("/sitemap-main.xml", include_in_schema=False)
+async def sitemap_main():
+    return Response(content=generate_main_sitemap(), media_type="application/xml")
+
+@app.get("/sitemap-categories.xml", include_in_schema=False)
+async def sitemap_categories():
+    return Response(content=generate_categories_sitemap(), media_type="application/xml")
+
+@app.get("/sitemap-jobs.xml", include_in_schema=False)
+async def sitemap_jobs():
+    return Response(content=generate_jobs_sitemap(), media_type="application/xml")
+
+@app.get("/jobs/{slug}", response_class=HTMLResponse)
+async def serve_category_jobs(slug: str):
+    return HTMLResponse(content=render_category_page(slug))
+
+@app.get("/feed/{feed_type}", response_class=HTMLResponse)
+async def serve_feed_page(feed_type: str):
+    slug_map = {
+        "internships": "direct-internships-2026",
+        "aiml": "ai-ml-specialist",
+        "entrylevel": "entry-level-swe"
+    }
+    target_slug = slug_map.get(feed_type, "software-engineer")
+    return HTMLResponse(content=render_category_page(target_slug))
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
