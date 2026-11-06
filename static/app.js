@@ -5109,7 +5109,7 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
                             <p class="text-[11px] text-slate-700 font-medium">
                                 <strong class="text-violet-950 font-bold">Screening Advantage:</strong> Mentioning these gap keywords lifts screening pass rate from <strong>${job.cvmatch_score}%</strong> to <strong>90%+</strong>.
                             </p>
-                            <span class="text-[10px] font-bold text-slate-400">Direct ATS Vector</span>
+                            <span class="text-[10px] font-bold text-slate-400">Direct Portal Vector</span>
                         </div>
                     </div>
 
@@ -8305,18 +8305,21 @@ window.switchAuthTab = function(tab) {
 
     if (window.cancelOtpVerification) window.cancelOtpVerification();
 
+    const confirmPassField = document.getElementById("signupConfirmPasswordField");
     if (tab === 'signup') {
         if (tabLogin) tabLogin.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-950 cursor-pointer";
         if (tabSignup) tabSignup.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer";
         if (nameField) nameField.classList.remove("hidden");
-        if (submitBtnText) submitBtnText.textContent = "Send Verification OTP →";
-        if (toggleHint) toggleHint.innerHTML = `Already have an account? <button type="button" onclick="switchAuthTab('login')" class="text-violet-700 font-bold hover:underline cursor-pointer">Log in</button>`;
+        if (confirmPassField) confirmPassField.classList.remove("hidden");
+        if (submitBtnText) submitBtnText.textContent = "Create Account & Send Verification Code →";
+        if (toggleHint) toggleHint.innerHTML = `Already have an account? <button type="button" onclick="switchAuthTab('login')" class="text-violet-700 font-bold hover:underline cursor-pointer">Log in with Email</button>`;
     } else {
         if (tabLogin) tabLogin.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer";
         if (tabSignup) tabSignup.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-950 cursor-pointer";
         if (nameField) nameField.classList.add("hidden");
+        if (confirmPassField) confirmPassField.classList.add("hidden");
         if (submitBtnText) submitBtnText.textContent = "Log In to Almond Jobs";
-        if (toggleHint) toggleHint.innerHTML = `Don't have an account? <button type="button" onclick="switchAuthTab('signup')" class="text-violet-700 font-bold hover:underline cursor-pointer">Sign up free</button>`;
+        if (toggleHint) toggleHint.innerHTML = `Don't have an account? <button type="button" onclick="switchAuthTab('signup')" class="text-violet-700 font-bold hover:underline cursor-pointer">Sign up with Email</button>`;
     }
 };
 
@@ -8503,6 +8506,18 @@ window.handleAuthSubmit = async function(e) {
             errBox.classList.remove("hidden");
         }
         return;
+    }
+
+    if (window.activeAuthTab === "signup") {
+        const confirmPassInput = document.getElementById("authConfirmPasswordInput");
+        const confirmPass = confirmPassInput?.value || "";
+        if (password !== confirmPass) {
+            if (errBox && errText) {
+                errText.textContent = "Passwords do not match. Please re-enter.";
+                errBox.classList.remove("hidden");
+            }
+            return;
+        }
     }
 
     // SIGN UP: Request OTP verification first
@@ -8778,7 +8793,7 @@ window.handleGoogleSignInClick = async function() {
 };
 
 function promptDirectGoogleEmail() {
-    const email = window.prompt("Enter your verified Google / Gmail address to sign in instantly (0 OTP required):");
+    const email = window.prompt("Enter your verified Google / Gmail account address to continue:");
     if (!email) return;
     const cleanEmail = email.trim().toLowerCase();
     const name = cleanEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
