@@ -2205,7 +2205,7 @@
     </div>
 
         <!-- Scripts with Cache Busting Parameter -->
-    <script src="/static/app.js?v=20261103_1100"></script>
+    <script src="/static/app.js?v=20261106_2025"></script>
     <script>
         lucide.createIcons();
     </script>
@@ -2374,6 +2374,70 @@
             </div>
         </div>
     </div>
+
+
+    <!-- Guaranteed Zero-Cache Inline Controller for Coffee Contribution Modal -->
+    <script>
+      window.selectedCoffeeCount = 1;
+      window.selectedCoffeeAmount = 485;
+
+      window.selectCoffeeCount = function(count, amount) {
+          window.selectedCoffeeCount = count;
+          window.selectedCoffeeAmount = amount;
+          const pills = document.querySelectorAll(".coffee-pill");
+          pills.forEach(function(p) {
+              var c = parseInt(p.getAttribute("data-count"), 10);
+              if (c === count) {
+                  p.className = "coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-teal-500 text-white shadow-teal-500/25 ring-2 ring-teal-400";
+              } else {
+                  p.className = "coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700";
+              }
+          });
+          var displayEl = document.getElementById("coffeeAmountDisplay");
+          if (displayEl) displayEl.textContent = amount;
+      };
+
+      window.openContributeModal = function() {
+          var modal = document.getElementById("vipPricingModal");
+          if (modal) {
+              modal.classList.remove("hidden");
+              modal.style.display = "flex";
+              var nameInput = document.getElementById("coffeeSupporterName");
+              if (nameInput && window.currentCandidateUser && window.currentCandidateUser.full_name) {
+                  if (!nameInput.value) nameInput.value = window.currentCandidateUser.full_name;
+              }
+          }
+          if (window.lucide && typeof window.lucide.createIcons === "function") {
+              window.lucide.createIcons();
+          }
+      };
+
+      window.openVipPricingModal = function() {
+          window.openContributeModal();
+      };
+
+      window.closeVipPricingModal = function() {
+          var modal = document.getElementById("vipPricingModal");
+          if (modal) {
+              modal.classList.add("hidden");
+              modal.style.display = "none";
+          }
+      };
+
+      window.executeCoffeeContribution = function() {
+          var amount = window.selectedCoffeeAmount || 485;
+          var count = window.selectedCoffeeCount || 1;
+          var name = (document.getElementById("coffeeSupporterName") && document.getElementById("coffeeSupporterName").value || "").trim() || "Generous Candidate";
+          var message = (document.getElementById("coffeeSupporterMessage") && document.getElementById("coffeeSupporterMessage").value || "").trim();
+          var planTitle = "Buy Almond Jobs " + count + " Coffee" + (count > 1 ? "s" : "");
+
+          if (typeof triggerRazorpayCheckout === "function") {
+              triggerRazorpayCheckout(amount, planTitle);
+          } else {
+              alert("Payment gateway is initializing. Please try again in 2 seconds.");
+          }
+      };
+    </script>
 
 </body>
 </html>
