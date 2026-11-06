@@ -1053,7 +1053,7 @@
 </section>
 
 <!-- 5. PAGE 3: LIVE MATCHED OPPORTUNITIES STREAM (SLIDE 3) -->
-    <section id="results-stream" class="story-page w-full h-full relative overflow-hidden bg-transparent">
+    <section id="results-stream" class="story-page w-full h-full relative overflow-hidden bg-transparent flex flex-col justify-between">
         
         <!-- DUAL-TONE SPLIT BACKGROUND (Left: Continuous Page 2/3 Hero Background | Right: Restored Forest Green Atmosphere) -->
         <div class="split-crack-bg absolute inset-0 pointer-events-none z-0 overflow-hidden">
@@ -1065,10 +1065,8 @@
                         <path d="
                             M 500 0 
                             L 1000 0 
-                            L 1000 1000 
-                            L 500 1000 
-                            L 506 955 
-                            L 492 895 
+                            L 1000 845 
+                            L 498 845 
                             L 508 820 
                             L 492 735 
                             L 509 655 
@@ -1138,14 +1136,12 @@
                     L 509 655 
                     L 492 735 
                     L 508 820 
-                    L 492 895 
-                    L 506 955 
-                    L 500 1000
+                    L 498 845
                 " fill="none" stroke="url(#goldCrackGrad_rs)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" filter="url(#crackShadow_rs)" />
             </svg>
         </div>
 
-        <div class="max-w-7xl mx-auto w-full relative z-10 px-4 sm:px-8 pt-20 sm:pt-24 pb-8 flex flex-col justify-start min-h-screen lg:h-screen">
+        <div class="max-w-7xl mx-auto w-full relative z-10 px-4 sm:px-8 pt-16 sm:pt-20 flex-1 flex flex-col min-h-0 overflow-hidden">
         
         <!-- Results Command Toolbar & Navigation Tabs -->
         <div class="glass-panel rounded-3xl p-5 border border-slate-200/90 shadow-sm mb-4 flex flex-col gap-4">
@@ -1378,110 +1374,138 @@
 
         </div> <!-- /#resultsScrollContainer -->
 
-        <!-- DIRECT ENTERPRISE CAREER DIRECTORY & ANCHORED FOOTER (SOLID WHITE ACROSS, TERMINATING GOLDEN SPLIT CRACK, WITH COPYRIGHT) -->
-        <footer id="bottomDirectoryFooter" class="shrink-0 w-full relative z-20 mt-3 rounded-3xl bg-white/98 backdrop-blur-xl border-2 border-amber-400/80 shadow-2xl p-5 sm:p-6 text-slate-900">
-            <!-- Header Row -->
-            <div class="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
-                <div class="flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-950">Direct Enterprise Career Directory</h3>
-                    <span class="text-[10px] font-black uppercase bg-violet-100 text-violet-800 px-2 py-0.5 rounded-full">3.3M+ Live Feeds</span>
+        </div> <!-- /max-w-7xl -->
+
+        <!-- DOCKED FULL-WIDTH DIRECTORY & PROFESSIONAL ENTERPRISE FOOTER (SOLID WHITE, COMPACT, SPANNING LEFT TO RIGHT) -->
+        <footer id="bottomDirectoryFooter" class="w-full shrink-0 relative z-30 border-t-2 border-amber-400 shadow-2xl px-4 sm:px-8 lg:px-12 py-2 sm:py-2.5 text-slate-900" style="background-color: #ffffff !important; background: #ffffff !important;">
+            <!-- Header Row: Directory Title + Almond Jobs Guarantees -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-1.5 border-b border-slate-200">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <h3 class="text-[11px] sm:text-xs font-black uppercase tracking-wider text-slate-950">Direct Enterprise Career Directory</h3>
+                    <span class="text-[9px] font-black uppercase bg-violet-100 text-violet-800 px-2 py-0.5 rounded-full">3.3M+ Live Feeds</span>
+                    <span class="hidden md:inline text-[10px] text-slate-500 font-medium ml-1">• Bypass recruiter spreads &amp; agency markups. Direct company internal application pipelines.</span>
                 </div>
-                <p class="text-[11px] sm:text-xs text-slate-500 font-medium">Bypass recruiter spreads, agency markups, and swarmed job boards. Direct company internal application pipelines.</p>
+                <div class="flex items-center gap-2 text-[10px] text-slate-700 font-bold flex-wrap">
+                    <span class="text-slate-950 font-black">Almond Jobs Guarantees:</span>
+                    <span class="flex items-center gap-0.5"><span class="text-emerald-600 font-black">&#10003;</span> 3.3M+ Live Feeds</span>
+                    <span class="flex items-center gap-0.5"><span class="text-emerald-600 font-black">&#10003;</span> 0% Recruiter Spread</span>
+                    <span class="flex items-center gap-0.5"><span class="text-emerald-600 font-black">&#10003;</span> 100% Unrestricted Links</span>
+                    <span class="flex items-center gap-0.5"><span class="text-emerald-600 font-black">&#10003;</span> Direct Corporate Application Portals</span>
+                </div>
             </div>
 
-            <!-- 4-Column Directory Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs mb-4">
+            <!-- 4-Column High-Intent Category Directory Grid (Sleek Compact Micro-Columns) -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-8 my-1.5 text-[10px]">
                 <!-- Column 1: Tech & Engineering -->
-                <div class="space-y-1.5">
-                    <h4 class="font-black text-slate-950 uppercase tracking-wider text-[11px] pb-1 border-b border-slate-200">
+                <div>
+                    <h4 class="font-black text-slate-950 uppercase tracking-wider text-[10px] pb-0.5 border-b border-slate-200 mb-1">
                         Direct Tech Portals
                     </h4>
-                    <ul class="space-y-1 text-slate-600">
-                        <li><a href="/jobs/software-engineer" class="hover:text-violet-600 transition block py-0.5 font-medium">Software Engineer Jobs</a></li>
-                        <li><a href="/jobs/full-stack-developer" class="hover:text-violet-600 transition block py-0.5 font-medium">Full Stack Developer</a></li>
-                        <li><a href="/jobs/backend-engineer" class="hover:text-violet-600 transition block py-0.5 font-medium">Backend Engineer (Go, Java, Python)</a></li>
-                        <li><a href="/jobs/frontend-engineer" class="hover:text-violet-600 transition block py-0.5 font-medium">Frontend Engineer (React, Vue)</a></li>
-                        <li><a href="/jobs/ai-ml-specialist" class="hover:text-violet-600 font-bold text-violet-700 transition block py-0.5">AI / Machine Learning Specialist</a></li>
-                        <li><a href="/jobs/machine-learning-engineer" class="hover:text-violet-600 transition block py-0.5 font-medium">Machine Learning Engineer</a></li>
-                        <li><a href="/jobs/data-scientist" class="hover:text-violet-600 transition block py-0.5 font-medium">Data Scientist &amp; Analytics</a></li>
-                        <li><a href="/jobs/devops-engineer" class="hover:text-violet-600 transition block py-0.5 font-medium">DevOps &amp; Cloud Architect</a></li>
-                        <li><a href="/jobs/python-developer" class="hover:text-violet-600 transition block py-0.5 font-medium">Python Developer</a></li>
-                        <li><a href="/jobs/react-developer" class="hover:text-violet-600 transition block py-0.5 font-medium">React &amp; Next.js Developer</a></li>
-                        <li><a href="/jobs/cybersecurity-engineer" class="hover:text-violet-600 transition block py-0.5 font-medium">Cybersecurity &amp; SecOps</a></li>
-                    </ul>
+                    <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] sm:text-[9.5px] text-slate-600">
+                        <div class="space-y-0.5">
+                            <a href="/jobs/software-engineer" class="hover:text-violet-600 transition block truncate">Software Engineer</a>
+                            <a href="/jobs/full-stack-developer" class="hover:text-violet-600 transition block truncate">Full Stack Developer</a>
+                            <a href="/jobs/backend-engineer" class="hover:text-violet-600 transition block truncate">Backend Engineer</a>
+                            <a href="/jobs/frontend-engineer" class="hover:text-violet-600 transition block truncate">Frontend Engineer</a>
+                            <a href="/jobs/ai-ml-specialist" class="hover:text-violet-600 font-bold text-violet-700 transition block truncate">AI / ML Specialist</a>
+                            <a href="/jobs/machine-learning-engineer" class="hover:text-violet-600 transition block truncate">ML Engineer</a>
+                        </div>
+                        <div class="space-y-0.5">
+                            <a href="/jobs/data-scientist" class="hover:text-violet-600 transition block truncate">Data Scientist</a>
+                            <a href="/jobs/devops-engineer" class="hover:text-violet-600 transition block truncate">DevOps &amp; Cloud</a>
+                            <a href="/jobs/python-developer" class="hover:text-violet-600 transition block truncate">Python Developer</a>
+                            <a href="/jobs/react-developer" class="hover:text-violet-600 transition block truncate">React &amp; Next.js</a>
+                            <a href="/jobs/cybersecurity-engineer" class="hover:text-violet-600 transition block truncate">Cybersecurity</a>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Column 2: Non-IT & Business Leadership -->
-                <div class="space-y-1.5">
-                    <h4 class="font-black text-slate-950 uppercase tracking-wider text-[11px] pb-1 border-b border-slate-200">
+                <!-- Column 2: Non-IT & Leadership -->
+                <div>
+                    <h4 class="font-black text-slate-950 uppercase tracking-wider text-[10px] pb-0.5 border-b border-slate-200 mb-1">
                         Non-IT &amp; Leadership
                     </h4>
-                    <ul class="space-y-1 text-slate-600">
-                        <li><a href="/jobs/product-manager" class="hover:text-violet-600 transition block py-0.5 font-medium">Product Manager (B2B / B2C)</a></li>
-                        <li><a href="/jobs/associate-product-manager" class="hover:text-violet-600 transition block py-0.5 font-medium">Associate Product Manager (APM)</a></li>
-                        <li><a href="/jobs/ui-ux-designer" class="hover:text-violet-600 transition block py-0.5 font-medium">UI/UX &amp; Product Design</a></li>
-                        <li><a href="/jobs/human-resources" class="hover:text-violet-600 font-bold text-slate-800 transition block py-0.5">Human Resources &amp; Talent Acquisition</a></li>
-                        <li><a href="/jobs/financial-analyst" class="hover:text-violet-600 transition block py-0.5 font-medium">Financial Analyst &amp; FP&amp;A</a></li>
-                        <li><a href="/jobs/marketing-manager" class="hover:text-violet-600 transition block py-0.5 font-medium">Growth &amp; Marketing Manager</a></li>
-                        <li><a href="/jobs/sales-executive" class="hover:text-violet-600 transition block py-0.5 font-medium">Enterprise Sales &amp; Account Exec</a></li>
-                        <li><a href="/jobs/operations-manager" class="hover:text-violet-600 transition block py-0.5 font-medium">Operations &amp; Strategy Manager</a></li>
-                    </ul>
+                    <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] sm:text-[9.5px] text-slate-600">
+                        <div class="space-y-0.5">
+                            <a href="/jobs/product-manager" class="hover:text-violet-600 transition block truncate">Product Manager</a>
+                            <a href="/jobs/associate-product-manager" class="hover:text-violet-600 transition block truncate">Associate PM (APM)</a>
+                            <a href="/jobs/ui-ux-designer" class="hover:text-violet-600 transition block truncate">UI/UX &amp; Design</a>
+                            <a href="/jobs/human-resources" class="hover:text-violet-600 font-bold text-slate-800 transition block truncate">HR &amp; Recruitment</a>
+                        </div>
+                        <div class="space-y-0.5">
+                            <a href="/jobs/financial-analyst" class="hover:text-violet-600 transition block truncate">Financial Analyst</a>
+                            <a href="/jobs/marketing-manager" class="hover:text-violet-600 transition block truncate">Growth Marketing</a>
+                            <a href="/jobs/sales-executive" class="hover:text-violet-600 transition block truncate">Enterprise Sales</a>
+                            <a href="/jobs/operations-manager" class="hover:text-violet-600 transition block truncate">Operations Strategy</a>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Column 3: Core Engineering & Urgency -->
-                <div class="space-y-1.5">
-                    <h4 class="font-black text-slate-950 uppercase tracking-wider text-[11px] pb-1 border-b border-slate-200">
+                <div>
+                    <h4 class="font-black text-slate-950 uppercase tracking-wider text-[10px] pb-0.5 border-b border-slate-200 mb-1">
                         Core Engineering &amp; Urgency
                     </h4>
-                    <ul class="space-y-1 text-slate-600">
-                        <li><a href="/jobs/mechanical-engineer" class="hover:text-violet-600 transition block py-0.5 font-medium">Mechanical Engineering Core</a></li>
-                        <li><a href="/jobs/electrical-engineer" class="hover:text-violet-600 transition block py-0.5 font-medium">Electrical &amp; Embedded Systems</a></li>
-                        <li><a href="/jobs/civil-engineer" class="hover:text-violet-600 transition block py-0.5 font-medium">Civil &amp; Structural Engineering</a></li>
-                        <li><a href="/jobs/direct-internships-2026" class="hover:text-violet-600 font-black text-emerald-700 transition block py-0.5">Direct Internships 2026 (5,100+)</a></li>
-                        <li><a href="/jobs/entry-level-swe" class="hover:text-violet-600 font-black text-indigo-700 transition block py-0.5">Entry-Level &amp; New Grad (3,100+)</a></li>
-                        <li><a href="/jobs/freshers-hiring-2026" class="hover:text-violet-600 transition block py-0.5 font-medium">Freshers Campus Drives 2026</a></li>
-                        <li><a href="/jobs/immediate-joiners" class="hover:text-violet-600 font-black text-amber-700 transition block py-0.5">Immediate Joiners Pipeline</a></li>
-                        <li><a href="/jobs/15-days-notice-jobs" class="hover:text-violet-600 transition block py-0.5 font-medium">15 Days Notice Period Direct Jobs</a></li>
-                    </ul>
+                    <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] sm:text-[9.5px] text-slate-600">
+                        <div class="space-y-0.5">
+                            <a href="/jobs/mechanical-engineer" class="hover:text-violet-600 transition block truncate">Mechanical Core</a>
+                            <a href="/jobs/electrical-engineer" class="hover:text-violet-600 transition block truncate">Electrical Systems</a>
+                            <a href="/jobs/civil-engineer" class="hover:text-violet-600 transition block truncate">Civil &amp; Structural</a>
+                            <a href="/jobs/direct-internships-2026" class="hover:text-violet-600 font-black text-emerald-700 transition block truncate">Internships 2026</a>
+                        </div>
+                        <div class="space-y-0.5">
+                            <a href="/jobs/entry-level-swe" class="hover:text-violet-600 font-black text-indigo-700 transition block truncate">Entry-Level SWE</a>
+                            <a href="/jobs/freshers-hiring-2026" class="hover:text-violet-600 transition block truncate">Freshers Drives</a>
+                            <a href="/jobs/immediate-joiners" class="hover:text-violet-600 font-black text-amber-700 transition block truncate">Immediate Joiners</a>
+                            <a href="/jobs/15-days-notice-jobs" class="hover:text-violet-600 transition block truncate">15 Days Notice</a>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Column 4: Enterprise Career Pipelines -->
-                <div class="space-y-1.5">
-                    <h4 class="font-black text-slate-950 uppercase tracking-wider text-[11px] pb-1 border-b border-slate-200">
+                <div>
+                    <h4 class="font-black text-slate-950 uppercase tracking-wider text-[10px] pb-0.5 border-b border-slate-200 mb-1">
                         Enterprise Career Pipelines
                     </h4>
-                    <ul class="space-y-1 text-slate-600">
-                        <li><a href="/jobs/greenhouse-direct-jobs" class="hover:text-violet-600 transition block py-0.5 font-medium">Greenhouse Direct Postings</a></li>
-                        <li><a href="/jobs/lever-direct-jobs" class="hover:text-violet-600 transition block py-0.5 font-medium">Lever Direct Corporate Feeds</a></li>
-                        <li><a href="/jobs/ashby-direct-jobs" class="hover:text-violet-600 transition block py-0.5 font-medium">Ashby Direct Pipelines</a></li>
-                        <li><a href="/jobs/workday-direct-jobs" class="hover:text-violet-600 transition block py-0.5 font-medium">Workday Enterprise Career Portals</a></li>
-                        <li><a href="/jobs/founder-direct-jobs" class="hover:text-violet-600 transition block py-0.5 font-medium">YC &amp; Founder Direct Feeds</a></li>
-                        <li><a href="/jobs/remote-tech-jobs" class="hover:text-violet-600 font-bold transition block py-0.5">Remote Worldwide Roles</a></li>
-                    </ul>
+                    <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] sm:text-[9.5px] text-slate-600">
+                        <div class="space-y-0.5">
+                            <a href="/jobs/greenhouse-direct-jobs" class="hover:text-violet-600 transition block truncate">Greenhouse Direct</a>
+                            <a href="/jobs/lever-direct-jobs" class="hover:text-violet-600 transition block truncate">Lever Corporate</a>
+                            <a href="/jobs/ashby-direct-jobs" class="hover:text-violet-600 transition block truncate">Ashby Pipelines</a>
+                        </div>
+                        <div class="space-y-0.5">
+                            <a href="/jobs/workday-direct-jobs" class="hover:text-violet-600 transition block truncate">Workday Portals</a>
+                            <a href="/jobs/founder-direct-jobs" class="hover:text-violet-600 transition block truncate">YC &amp; Founder Direct</a>
+                            <a href="/jobs/remote-tech-jobs" class="hover:text-violet-600 font-bold transition block truncate">Remote Worldwide</a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Guarantee Badges -->
-            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/90 shadow-2xs flex flex-wrap items-center justify-between gap-2.5 text-[11px] text-slate-700 mb-3">
-                <span class="font-bold text-slate-950">Almond Jobs Guarantees:</span>
-                <span class="flex items-center gap-1"><span class="text-emerald-600 font-black">&#10003;</span> 3.3M+ Direct Live Feeds</span>
-                <span class="flex items-center gap-1"><span class="text-emerald-600 font-black">&#10003;</span> 0% Recruiter Spread</span>
-                <span class="flex items-center gap-1"><span class="text-emerald-600 font-black">&#10003;</span> 100% Unrestricted Application Links</span>
-                <span class="flex items-center gap-1"><span class="text-emerald-600 font-black">&#10003;</span> Direct Corporate Application Portals</span>
-            </div>
-
-            <!-- Integrated Copyright Line -->
-            <div class="pt-2.5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-500 font-medium">
+            <!-- Bottom Row: Copyright (Left) + Professional Portal Links (Right) -->
+            <div class="pt-1.5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] sm:text-[10.5px] text-slate-500 font-medium">
                 <div class="flex items-center gap-2">
-                    <img src="/static/logo.png" alt="Almond Logo" class="w-4 h-4 object-contain">
+                    <img src="/static/logo.png" alt="Almond Logo" class="w-3.5 h-3.5 object-contain">
                     <span class="font-bold text-slate-800">© 2026 Almond Job<span class="text-violet-600">s</span> — Direct Corporate Career Feeds. All rights reserved.</span>
                 </div>
-                <span>Zero Recruiter Spread • 100% Unrestricted Application Links</span>
+                <!-- Professional Company Navigation Links Attached at Bottom Right -->
+                <div class="flex items-center gap-3 text-[10px] text-slate-600 font-semibold flex-wrap">
+                    <button type="button" onclick="goToSlide(0)" class="hover:text-violet-600 transition cursor-pointer">Home</button>
+                    <span class="text-slate-300">•</span>
+                    <button type="button" onclick="goToSlide(1)" class="hover:text-violet-600 transition cursor-pointer">Mission</button>
+                    <span class="text-slate-300">•</span>
+                    <button type="button" onclick="goToSlide(2)" class="hover:text-violet-600 transition cursor-pointer">Criteria &amp; Search</button>
+                    <span class="text-slate-300">•</span>
+                    <button type="button" onclick="goToSlide(3)" class="hover:text-violet-600 transition cursor-pointer font-bold text-violet-700">Live Feeds</button>
+                    <span class="text-slate-300">•</span>
+                    <button type="button" onclick="openHeroInfoModal('ats')" class="hover:text-violet-600 transition cursor-pointer">Who We Are</button>
+                    <span class="text-slate-300">•</span>
+                    <button type="button" onclick="openVipPricingModal()" class="hover:text-violet-600 transition cursor-pointer">VIP Access</button>
+                </div>
             </div>
         </footer>
 
-        </div> <!-- /max-w-7xl -->
 
     </section>
 
