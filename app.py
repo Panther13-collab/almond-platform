@@ -161,6 +161,16 @@ async def sitemap_categories():
 async def sitemap_jobs():
     return Response(content=generate_jobs_sitemap(), media_type="application/xml")
 
+@app.get("/almond-jobs", response_class=HTMLResponse)
+@app.get("/jobs/almond-jobs", response_class=HTMLResponse)
+async def serve_almond_jobs_direct():
+    return HTMLResponse(content=render_category_page("almond-jobs"))
+
+@app.get("/almond-job", response_class=HTMLResponse)
+@app.get("/jobs/almond-job", response_class=HTMLResponse)
+async def serve_almond_job_direct():
+    return HTMLResponse(content=render_category_page("almond-job"))
+
 @app.get("/jobs/{slug}", response_class=HTMLResponse)
 async def serve_category_jobs(slug: str):
     return HTMLResponse(content=render_category_page(slug))

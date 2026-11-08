@@ -20,10 +20,10 @@ class TestEntityDisambiguationSEO(unittest.TestCase):
         
         # Meta description contains explicit entity definition
         self.assertIn('Almond Jobs (almondjobs.com)', html)
-        self.assertIn('premier active enterprise job search engine', html)
+        self.assertIn('official enterprise direct career portal', html)
         
         # Hero authority identity pill
-        self.assertIn('Almond Jobs &mdash; 3,315,000+ Direct Enterprise ATS Feeds', html)
+        self.assertIn('Almond Jobs &bull; Find Every Direct Almond Job', html)
         
         # Semantic About & Disambiguation Section
         self.assertIn('id="aboutAlmondJobsSection"', html)

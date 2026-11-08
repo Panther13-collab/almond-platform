@@ -11,6 +11,20 @@ from core.curated_feeds import get_feed_data
 BASE_URL = "https://almondjobs.com"
 
 CATEGORY_DETAILS = {
+    "almond-jobs": {
+        "title": "Almond Jobs — 3,315,000+ Verified Direct Enterprise Job Openings (0% Recruiter Spread)",
+        "h1": "Almond Jobs Official Enterprise Career Directory",
+        "description": "Explore all verified Almond Jobs across IT, software engineering, AI/ML, core engineering, and corporate leadership with 0% recruiter spread and direct corporate ATS links.",
+        "keywords": "almond jobs, Almond Jobs, almond job, Almond job, almondjobs, almondjob, find almond job, official almond jobs, direct ATS feeds, enterprise jobs",
+        "feed_fallback": "entrylevel"
+    },
+    "almond-job": {
+        "title": "Almond Job Search — Find Every Direct Corporate Opening (0% Recruiter Spread)",
+        "h1": "Find Your Next Almond Job Direct from Employer Infrastructure",
+        "description": "Search every direct Almond job opening ingested directly from company internal servers before public listing. Zero recruiters, zero ghost jobs.",
+        "keywords": "almond job, Almond job, almond jobs, Almond Jobs, find almond job, search almond job, direct application portals",
+        "feed_fallback": "entrylevel"
+    },
     "software-engineer": {
         "title": "Software Engineer Jobs 2026 — 3.3M+ Direct Enterprise Portals (0% Recruiter Spread)",
         "h1": "Direct Software Engineering Openings",

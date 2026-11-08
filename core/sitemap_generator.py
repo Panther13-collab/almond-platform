@@ -13,6 +13,9 @@ BASE_URL = "https://almondjobs.com"
 
 # High-Intent Categories spanning IT, Non-IT, Core Engineering, Freshers, and Immediate Joiners
 CATEGORIES = [
+    # Brand & Exact-Match Queries (Almond Jobs & Almond Job)
+    ("almond-jobs", "Almond Jobs Official Directory", "1.0"),
+    ("almond-job", "Almond Job Search Engine", "1.0"),
     # Core IT & Tech
     ("software-engineer", "Software Engineer Jobs", "0.9"),
     ("full-stack-developer", "Full Stack Developer Jobs", "0.9"),
