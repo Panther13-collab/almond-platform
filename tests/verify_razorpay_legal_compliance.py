@@ -30,13 +30,13 @@ class TestRazorpayLegalCompliance(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertIn("Cancellation & Refund Policy", res.text)
         self.assertIn("7-Day Refund Policy", res.text)
-        self.assertIn("support@almondjobs.com", res.text)
+        self.assertIn("almondjobs.official@gmail.com", res.text)
 
     def test_04_contact_page(self):
         res = self.client.get("/contact")
         self.assertEqual(res.status_code, 200)
         self.assertIn("Contact Us", res.text)
-        self.assertIn("support@almondjobs.com", res.text)
+        self.assertIn("almondjobs.official@gmail.com", res.text)
         self.assertIn("Operating Entity", res.text)
 
     def test_05_footer_contains_all_links(self):

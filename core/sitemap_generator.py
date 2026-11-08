@@ -13,6 +13,21 @@ BASE_URL = "https://almondjobs.com"
 
 # High-Intent Categories spanning IT, Non-IT, Core Engineering, Freshers, and Immediate Joiners
 CATEGORIES = [
+    # High-Intent Working Professional & Competitor Clusters
+    ("it-jobs", "IT Jobs 2026 Direct Enterprise Feeds", "1.0"),
+    ("non-it-jobs", "Non-IT Corporate Career Openings", "1.0"),
+    ("core-jobs", "Core Engineering Jobs 2026", "1.0"),
+    ("free-jobs", "Free Direct Application Job Portals", "1.0"),
+    ("high-paying-jobs", "High-Paying IT & Tech Careers", "1.0"),
+    ("career-jobs", "Career Growth Corporate Openings", "1.0"),
+    ("no-mediator-jobs", "No-Mediator Direct Corporate Jobs", "1.0"),
+    ("no-consultancy-jobs", "Jobs Without Consultancy Direct Apply", "1.0"),
+    ("service-jobs", "Corporate Service Operations Careers", "0.9"),
+    ("hot-jobs", "Hot Jobs & Urgent Hiring Vacancies", "1.0"),
+    ("temporary-jobs", "Temporary & Contract Tech Jobs", "0.9"),
+    ("naukri-alternative", "Naukri Alternative Direct Feeds", "1.0"),
+    ("linkedin-jobs-alternative", "LinkedIn Jobs Alternative", "1.0"),
+    ("smartrecruiters-direct-jobs", "SmartRecruiters Direct Openings", "1.0"),
     # Brand & Exact-Match Queries (Almond Jobs & Almond Job)
     ("almond-jobs", "Almond Jobs Official Directory", "1.0"),
     ("almond-job", "Almond Job Search Engine", "1.0"),

@@ -161,6 +161,39 @@ async def sitemap_categories():
 async def sitemap_jobs():
     return Response(content=generate_jobs_sitemap(), media_type="application/xml")
 
+@app.get("/it-jobs", response_class=HTMLResponse)
+async def serve_it_jobs():
+    return HTMLResponse(content=render_category_page("it-jobs"))
+
+@app.get("/non-it-jobs", response_class=HTMLResponse)
+async def serve_non_it_jobs():
+    return HTMLResponse(content=render_category_page("non-it-jobs"))
+
+@app.get("/core-jobs", response_class=HTMLResponse)
+async def serve_core_jobs():
+    return HTMLResponse(content=render_category_page("core-jobs"))
+
+@app.get("/free-jobs", response_class=HTMLResponse)
+async def serve_free_jobs():
+    return HTMLResponse(content=render_category_page("free-jobs"))
+
+@app.get("/high-paying-jobs", response_class=HTMLResponse)
+async def serve_high_paying_jobs():
+    return HTMLResponse(content=render_category_page("high-paying-jobs"))
+
+@app.get("/no-mediator-jobs", response_class=HTMLResponse)
+@app.get("/no-consultancy-jobs", response_class=HTMLResponse)
+async def serve_no_mediator_jobs():
+    return HTMLResponse(content=render_category_page("no-mediator-jobs"))
+
+@app.get("/naukri-alternative", response_class=HTMLResponse)
+async def serve_naukri_alt():
+    return HTMLResponse(content=render_category_page("naukri-alternative"))
+
+@app.get("/smartrecruiters-direct", response_class=HTMLResponse)
+async def serve_smartrecruiters_direct():
+    return HTMLResponse(content=render_category_page("smartrecruiters-direct-jobs"))
+
 @app.get("/almond-jobs", response_class=HTMLResponse)
 @app.get("/jobs/almond-jobs", response_class=HTMLResponse)
 async def serve_almond_jobs_direct():

@@ -120,6 +120,11 @@ def render_terms_page() -> str:
         <h2 class="text-base sm:text-lg font-black text-slate-900">7. Governing Law & Jurisdiction</h2>
         <p>These Terms shall be governed by and construed in accordance with the laws of India. Any disputes arising from these Terms or Platform usage shall be subject to the exclusive jurisdiction of the competent courts in India.</p>
     </section>
+
+    <section class="space-y-3">
+        <h2 class="text-base sm:text-lg font-black text-slate-900">8. Contact & Official Notices</h2>
+        <p>For any legal inquiries, terms clarification, or official notices, please contact our legal desk at <a href="mailto:almondjobs.official@gmail.com" class="text-violet-600 underline font-semibold">almondjobs.official@gmail.com</a>.</p>
+    </section>
     """
     return _base_legal_layout(
         title="Terms of Service",
@@ -154,7 +159,7 @@ def render_privacy_page() -> str:
 
     <section class="space-y-3">
         <h2 class="text-base sm:text-lg font-black text-slate-900">3. Data Retention and Security</h2>
-        <p>Uploaded documents and temporary processing artifacts are stored in encrypted environments with strict access controls. Users may request full account and data deletion at any time by contacting our privacy desk at <a href="mailto:privacy@almondjobs.com" class="text-violet-600 underline font-semibold">privacy@almondjobs.com</a>.</p>
+        <p>Uploaded documents and temporary processing artifacts are stored in encrypted environments with strict access controls. Users may request full account and data deletion at any time by contacting our privacy desk at <a href="mailto:almondjobs.official@gmail.com" class="text-violet-600 underline font-semibold">almondjobs.official@gmail.com</a>.</p>
     </section>
 
     <section class="space-y-3">
@@ -188,7 +193,7 @@ def render_refund_page() -> str:
 
     <section class="space-y-3">
         <h2 class="text-base sm:text-lg font-black text-slate-900">3. How to Request a Refund</h2>
-        <p>To request a refund, please send an email to <a href="mailto:support@almondjobs.com" class="text-violet-600 underline font-semibold">support@almondjobs.com</a> within <strong>7 days</strong> of the transaction date with the following details:</p>
+        <p>To request a refund, please send an email to <a href="mailto:almondjobs.official@gmail.com" class="text-violet-600 underline font-semibold">almondjobs.official@gmail.com</a> within <strong>7 days</strong> of the transaction date with the following details:</p>
         <ul class="list-disc pl-5 space-y-1">
             <li>Registered Email Address used during payment</li>
             <li>Razorpay Payment ID (e.g. <code>pay_XXXXXXXXXXXXXX</code>)</li>
@@ -220,8 +225,8 @@ def render_contact_page() -> str:
             <h3 class="font-black text-slate-950 text-sm uppercase tracking-wider">Customer Support & Inquiries</h3>
             <p class="text-slate-600 text-xs leading-relaxed">For billing assistance, platform questions, technical troubleshooting, or contribution queries:</p>
             <div class="pt-2">
-                <a href="mailto:support@almondjobs.com" class="inline-flex items-center gap-2 font-bold text-violet-700 hover:text-violet-900 text-sm">
-                    <span>✉ support@almondjobs.com</span>
+                <a href="mailto:almondjobs.official@gmail.com" class="inline-flex items-center gap-2 font-bold text-violet-700 hover:text-violet-900 text-sm">
+                    <span>✉ almondjobs.official@gmail.com</span>
                 </a>
                 <p class="text-[11px] text-slate-500 mt-1">Average response time: 24–48 business hours</p>
             </div>
@@ -231,8 +236,8 @@ def render_contact_page() -> str:
             <h3 class="font-black text-slate-950 text-sm uppercase tracking-wider">Business & Partnerships</h3>
             <p class="text-slate-600 text-xs leading-relaxed">For corporate direct ATS ingestion, API access, or verified employer career feed integration:</p>
             <div class="pt-2">
-                <a href="mailto:contact@almondjobs.com" class="inline-flex items-center gap-2 font-bold text-emerald-700 hover:text-emerald-900 text-sm">
-                    <span>✉ contact@almondjobs.com</span>
+                <a href="mailto:almondjobs.official@gmail.com" class="inline-flex items-center gap-2 font-bold text-emerald-700 hover:text-emerald-900 text-sm">
+                    <span>✉ almondjobs.official@gmail.com</span>
                 </a>
                 <p class="text-[11px] text-slate-500 mt-1">Direct corporate integrations desk</p>
             </div>
@@ -256,7 +261,7 @@ def render_contact_page() -> str:
             </div>
             <div>
                 <p class="font-bold text-slate-900">Grievance & Compliance Desk:</p>
-                <p class="text-slate-600"><a href="mailto:grievance@almondjobs.com" class="underline hover:text-violet-600">grievance@almondjobs.com</a></p>
+                <p class="text-slate-600"><a href="mailto:almondjobs.official@gmail.com" class="underline hover:text-violet-600">almondjobs.official@gmail.com</a></p>
             </div>
         </div>
     </section>

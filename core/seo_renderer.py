@@ -11,6 +11,132 @@ from core.curated_feeds import get_feed_data
 BASE_URL = "https://almondjobs.com"
 
 CATEGORY_DETAILS = {
+    "it-jobs": {
+        "title": "IT Jobs 2026 — 3.3M+ Direct Enterprise Portals (0% Recruiter Spread)",
+        "h1": "Direct IT & Information Technology Openings",
+        "description": "Bypass recruiter gatekeepers. Ingesting live IT, software development, cloud, and systems engineering roles directly from enterprise ATS servers with zero agency spread.",
+        "keywords": "IT jobs, information technology jobs, software jobs 2026, tech jobs direct company, IT career openings",
+        "feed_fallback": "entrylevel"
+    },
+    "non-it-jobs": {
+        "title": "Non-IT Jobs 2026 — Direct Corporate Career Openings (0% Recruiter Spread)",
+        "h1": "Direct Non-IT & Corporate Management Openings",
+        "description": "Explore verified non-IT career openings across Human Resources, Product Management, Finance, FP&A, Operations, and B2B Sales direct from enterprise career gateways.",
+        "keywords": "non-IT jobs, non tech jobs in corporate, corporate office jobs, HR jobs, finance jobs, operations manager, sales jobs",
+        "feed_fallback": "entrylevel"
+    },
+    "core-jobs": {
+        "title": "Core Jobs 2026 — Mechanical, Electrical & Civil Engineering Direct Feeds",
+        "h1": "Direct Core Engineering Openings",
+        "description": "Verified core engineering positions across mechanical CAD design, robotics, electrical embedded systems, VLSI, and civil structural engineering with direct employer links.",
+        "keywords": "core jobs, core engineering jobs 2026, mechanical core jobs, electrical engineering jobs, civil engineering vacancies, direct corporate engineering",
+        "feed_fallback": "entrylevel"
+    },
+    "free-jobs": {
+        "title": "Free Jobs & 100% Direct Application Career Portals (Zero Fees Guaranteed)",
+        "h1": "100% Free Direct Application Job Portals",
+        "description": "No hidden charges, zero registration fees, zero recruiter markups. Apply directly to verified Fortune 500 & high-growth startup career hubs for free.",
+        "keywords": "free jobs, free job search site, free job application portal, 100% free job vacancies, apply to jobs for free, genuine free job vacancies without registration fee",
+        "feed_fallback": "entrylevel"
+    },
+    "high-paying-jobs": {
+        "title": "High-Paying Jobs 2026 — Premium IT, AI & Corporate Career Feeds",
+        "h1": "Verified High-Paying & High CTC Career Openings",
+        "description": "Target unadvertised high-paying software engineering, AI/ML leadership, product management, and corporate executive openings with verified compensation.",
+        "keywords": "high-paying jobs, high salary IT jobs, highest paying tech careers, high CTC software jobs, premium engineering vacancies, career jobs",
+        "feed_fallback": "aiml"
+    },
+    "career-jobs": {
+        "title": "Career Jobs 2026 — Long-Term Corporate Growth Openings (0% Broker Cuts)",
+        "h1": "High-Growth Enterprise Career Openings",
+        "description": "Accelerate your career trajectory with direct enterprise positions at industry-leading technology, finance, and engineering organizations.",
+        "keywords": "career jobs, best career opportunities 2026, long term corporate careers, high growth tech jobs, enterprise career hubs",
+        "feed_fallback": "entrylevel"
+    },
+    "no-mediator-jobs": {
+        "title": "No-Mediator Jobs — Direct Company Ingestion (0% Recruiter Spread)",
+        "h1": "Direct Corporate Jobs Without Mediators or Agents",
+        "description": "Say goodbye to placement agencies and middlemen. Apply directly to employer internal ATS pipelines (Ashby, Greenhouse, Lever, Workday) with zero commission deductions.",
+        "keywords": "no-mediator jobs, no consultancy jobs, jobs without consultancy, zero broker jobs, direct company hiring without consultants, genuine job vacancies without middleman",
+        "feed_fallback": "entrylevel"
+    },
+    "no-consultancy-jobs": {
+        "title": "Jobs Without Consultancy 2026 — 100% Direct Company Hiring",
+        "h1": "Direct Company Hiring (Zero Consultancy Spread)",
+        "description": "Stop dealing with consultancy registration fees and commission cuts. Ingest verified corporate openings directly from hiring managers and internal ATS servers.",
+        "keywords": "jobs without consultancy, no consultancy jobs, zero consultancy job portal, direct company application portals, direct HR email jobs, direct corporate hiring",
+        "feed_fallback": "entrylevel"
+    },
+    "service-jobs": {
+        "title": "Service Jobs & Corporate Operations Careers 2026 | Almond Direct",
+        "h1": "Corporate Service & Technical Operations Openings",
+        "description": "Explore verified service operations, customer engineering, technical services, and enterprise solutions roles with direct application links.",
+        "keywords": "service job, corporate service jobs, customer engineering vacancies, enterprise support roles, service sector careers",
+        "feed_fallback": "entrylevel"
+    },
+    "hot-jobs": {
+        "title": "Hot Jobs & Urgent Hiring Vacancies — Apply Direct Today",
+        "h1": "Urgent Hiring & Hot Corporate Job Openings",
+        "description": "Fast-track corporate vacancies with active hiring budgets. Apply today before listings are flooded on public job boards.",
+        "keywords": "hot jobs, urgent hiring today, urgent requirement software developer, active hiring corporate jobs, fast track applications",
+        "feed_fallback": "entrylevel"
+    },
+    "temporary-jobs": {
+        "title": "Temporary & Fast-Track Contract Jobs 2026 — Direct Company Portals",
+        "h1": "Temporary, Contract & Fast-Track Corporate Openings",
+        "description": "Verified high-compensation contract, temporary, and contract-to-hire tech and business roles with direct corporate links.",
+        "keywords": "temporary jobs, contract to hire jobs, tech contract roles, fast track temporary employment, temporary corporate vacancies",
+        "feed_fallback": "entrylevel"
+    },
+    "naukri-alternative": {
+        "title": "Naukri Alternative — Direct Corporate ATS Feeds (Zero Recruiter Spam)",
+        "h1": "The Modern Alternative to Naukri for Direct Enterprise Careers",
+        "description": "Frustrated with recruiter spam, expired reposts, and consultancy calls on Naukri? Almond Jobs queries company ATS servers the exact second roles open.",
+        "keywords": "Naukri alternative, Naukri jobs without consultancy, best site like Naukri without fake calls, bypass Naukri consultancies, direct company hiring alternative",
+        "feed_fallback": "entrylevel"
+    },
+    "linkedin-jobs-alternative": {
+        "title": "LinkedIn Jobs Alternative — Apply Before the 800-Applicant Swarm",
+        "h1": "The Direct Corporate Alternative to LinkedIn Jobs",
+        "description": "By the time a job appears on LinkedIn, 800+ people have already applied. Almond Jobs gives you unadvertised direct ATS access so you move first.",
+        "keywords": "LinkedIn jobs alternative, apply to jobs before 800 applicants on LinkedIn, unadvertised jobs hidden from LinkedIn, best alternative to LinkedIn jobs",
+        "feed_fallback": "entrylevel"
+    },
+    "smartrecruiters-direct-jobs": {
+        "title": "SmartRecruiters Direct Jobs — Search Verified Enterprise Openings",
+        "h1": "Direct SmartRecruiters Corporate Career Feeds",
+        "description": "Instant real-time search across 45,000+ unlisted openings hosted on SmartRecruiters enterprise pipelines. Apply with 0% recruiter spread.",
+        "keywords": "SmartRecruiters direct jobs, SmartRecruiters job search, companies hiring on SmartRecruiters, smartrecruiters portal",
+        "feed_fallback": "entrylevel"
+    },
+    "greenhouse-direct-jobs": {
+        "title": "Greenhouse Direct Jobs — Search boards.greenhouse.io Career Portals",
+        "h1": "Direct Greenhouse Enterprise Career Openings",
+        "description": "Search and apply directly to thousands of high-growth technology and enterprise companies hosting their career boards on Greenhouse.",
+        "keywords": "Greenhouse direct corporate jobs, boards.greenhouse.io job listings, greenhouse software jobs, greenhouse tech openings",
+        "feed_fallback": "entrylevel"
+    },
+    "lever-direct-jobs": {
+        "title": "Lever Direct Jobs — Search jobs.lever.co Corporate Career Portals",
+        "h1": "Direct Lever Corporate Career Openings",
+        "description": "Verified direct corporate pipelines across top Silicon Valley and global tech companies using Lever ATS.",
+        "keywords": "Lever direct company jobs, jobs.lever.co enterprise directory, lever tech jobs, lever direct application",
+        "feed_fallback": "entrylevel"
+    },
+    "workday-direct-jobs": {
+        "title": "Workday Direct Jobs — Enterprise Fortune 500 Career Portals",
+        "h1": "Direct Workday Enterprise Career Openings",
+        "description": "Direct application pathways to Fortune 500 internal career gateways powered by Workday with tailored STAR application pitches.",
+        "keywords": "Workday enterprise career portals, myworkdayjobs direct openings, workday enterprise jobs, workday direct application",
+        "feed_fallback": "entrylevel"
+    },
+    "ashby-direct-jobs": {
+        "title": "Ashby Direct Jobs — Search jobs.ashbyhq.com High-Growth Tech Roles",
+        "h1": "Direct Ashby HQ Startup & Enterprise Career Openings",
+        "description": "Direct links to top Y Combinator and tier-1 venture-backed startups hiring on Ashby HQ ATS.",
+        "keywords": "Ashby direct jobs, jobs.ashbyhq.com live openings, ashby tech jobs, YC startup hiring ashby",
+        "feed_fallback": "aiml"
+    },
     "almond-jobs": {
         "title": "Almond Jobs — 3,315,000+ Verified Direct Enterprise Job Openings (0% Recruiter Spread)",
         "h1": "Almond Jobs Official Enterprise Career Directory",

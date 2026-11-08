@@ -28,7 +28,7 @@ class Config:
     SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
     SMTP_USER = os.getenv("SMTP_USER", "").strip()
     SMTP_PASS = os.getenv("SMTP_PASS", "").strip()
-    SMTP_FROM = os.getenv("SMTP_FROM", "").strip() or f"Almond Jobs <{os.getenv('SMTP_USER', 'noreply@almondjobs.com')}>"
+    SMTP_FROM = os.getenv("SMTP_FROM", "").strip() or f"Almond Jobs <{os.getenv('SMTP_USER', 'almondjobs.official@gmail.com')}>"
 
     # Telemetry & Admin Key
     ADMIN_SECRET_KEY = os.getenv("ALMOND_ADMIN_KEY", "almond2026").strip()
