@@ -39,6 +39,9 @@ from core.sitemap_generator import (
     generate_categories_sitemap, generate_jobs_sitemap
 )
 from core.seo_renderer import render_category_page
+from core.legal_renderer import (
+    render_terms_page, render_privacy_page, render_refund_page, render_contact_page
+)
 
 # In-Memory Cache for Composite Candidate Search Results
 _API_SEARCH_CACHE = {}
@@ -171,6 +174,26 @@ async def serve_feed_page(feed_type: str):
     }
     target_slug = slug_map.get(feed_type, "software-engineer")
     return HTMLResponse(content=render_category_page(target_slug))
+
+@app.get("/terms", response_class=HTMLResponse)
+@app.get("/terms-and-conditions", response_class=HTMLResponse)
+async def serve_terms():
+    return HTMLResponse(content=render_terms_page())
+
+@app.get("/privacy", response_class=HTMLResponse)
+@app.get("/privacy-policy", response_class=HTMLResponse)
+async def serve_privacy():
+    return HTMLResponse(content=render_privacy_page())
+
+@app.get("/refund-policy", response_class=HTMLResponse)
+@app.get("/refunds", response_class=HTMLResponse)
+async def serve_refund_policy():
+    return HTMLResponse(content=render_refund_page())
+
+@app.get("/contact", response_class=HTMLResponse)
+@app.get("/contact-us", response_class=HTMLResponse)
+async def serve_contact():
+    return HTMLResponse(content=render_contact_page())
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
