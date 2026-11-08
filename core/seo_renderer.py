@@ -151,6 +151,25 @@ def render_category_page(slug: str) -> str:
         "@context": "https://schema.org",
         "@graph": [
             {
+                "@type": "WebSite",
+                "@id": f"{BASE_URL}/#website",
+                "url": BASE_URL,
+                "name": "Almond Jobs",
+                "disambiguatingDescription": "Almond Jobs (almondjobs.com) is an active enterprise direct ATS job search platform indexing 3,315,000+ live openings with zero recruiter spread, completely separate from agricultural almond farming.",
+            },
+            {
+                "@type": "Organization",
+                "@id": f"{BASE_URL}/#organization",
+                "name": "Almond Jobs Technologies",
+                "url": BASE_URL,
+                "logo": f"{BASE_URL}/static/logo.png",
+                "sameAs": [
+                    "https://twitter.com/almondjobs",
+                    "https://www.linkedin.com/company/almond-jobs"
+                ],
+                "description": "Almond Jobs is an active AI career discovery engine connecting job seekers directly to corporate applicant tracking systems with 0% recruiter spread."
+            },
+            {
                 "@type": "BreadcrumbList",
                 "itemListElement": [
                     {"@type": "ListItem", "position": 1, "name": "Almond Jobs", "item": BASE_URL},
@@ -331,8 +350,11 @@ def render_category_page(slug: str) -> str:
     <!-- Footer -->
     <footer class="w-full bg-white border-t border-slate-200 py-8 px-4 text-center text-xs text-slate-500">
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-            <span>&copy; 2026 Almond Jobs. Direct Enterprise Job Ingestion Network.</span>
-            <div class="flex items-center gap-4">
+            <div class="text-left">
+                <p class="font-bold text-slate-700">&copy; 2026 Almond Jobs. Direct Enterprise Job Ingestion Network.</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Almond Jobs (almondjobs.com) connects candidates directly to enterprise ATS portals with 0% recruiter markup. Not affiliated with agricultural farming.</p>
+            </div>
+            <div class="flex items-center gap-4 shrink-0">
                 <a href="/" class="hover:text-violet-600 transition font-bold">Home</a>
                 <a href="/feed/internships" class="hover:text-violet-600 transition font-bold">Internships</a>
                 <a href="/feed/aiml" class="hover:text-violet-600 transition font-bold">AI/ML Directory</a>

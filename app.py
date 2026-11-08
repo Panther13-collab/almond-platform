@@ -9,7 +9,7 @@ import time
 from typing import Optional
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Body, Query, Request
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, Response
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, Response, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -131,6 +131,16 @@ async def serve_llms_full():
     if os.path.exists(llms_path):
         return FileResponse(llms_path, media_type="text/plain; charset=utf-8")
     return Response(content="# Almond Jobs Full Spec\nhttps://almondjobs.com\n", media_type="text/plain")
+
+INDEXNOW_KEY = "b7e4f8812c854e4c92da1578f56efb89"
+
+@app.get(f"/{INDEXNOW_KEY}.txt", include_in_schema=False)
+async def serve_indexnow_key():
+    return PlainTextResponse(INDEXNOW_KEY)
+
+@app.get("/indexnow-key.txt", include_in_schema=False)
+async def serve_indexnow_alias():
+    return PlainTextResponse(INDEXNOW_KEY)
 
 @app.get("/sitemap.xml", include_in_schema=False)
 async def sitemap_index():
