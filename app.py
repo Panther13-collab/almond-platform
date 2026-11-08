@@ -230,6 +230,7 @@ async def serve_privacy():
 
 @app.get("/refund-policy", response_class=HTMLResponse)
 @app.get("/refunds", response_class=HTMLResponse)
+@app.get("/refund", response_class=HTMLResponse)
 async def serve_refund_policy():
     return HTMLResponse(content=render_refund_page())
 
