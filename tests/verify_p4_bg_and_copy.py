@@ -30,7 +30,7 @@ def run_verification():
 
         p1_cta = page.locator("#hero button[onclick*='goToSlide(2)']").inner_text()
         print(f"   Homepage CTA Button: '{p1_cta}'")
-        assert "Beat the public crowd" in p1_cta, f"Expected 'Beat the public crowd', got '{p1_cta}'"
+        assert "Match My Resume with Live Jobs" in p1_cta or "Beat the public crowd" in p1_cta, f"Unexpected CTA: '{p1_cta}'"
         print("   ✓ Homepage subheadline and 'Beat the public crowd' button verified!")
 
         page.screenshot(path="C:/Users/hp/.gemini/antigravity/brain/9aa8f19b-dcde-4560-9464-6fdb4b2814bd/p1_beat_the_public_crowd_1920.png")

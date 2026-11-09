@@ -62,277 +62,88 @@ window.goToSlide = function(slideIdx) {
     currentSlide = slideIdx;
     window.currentSlide = currentSlide;
 
-    const slideIds = ["hero", "discovery", "workspace", "results-stream"];
-    const targetId = slideIds[slideIdx];
+    const anchorMap = {
+        0: ["hero", "hero"],
+        1: ["discovery", "hero"],
+        2: ["workspace", "search-deck"],
+        3: ["results-stream", "feed-stream"]
+    };
+    const pair = anchorMap[slideIdx] || ["hero", "hero"];
+    const targetEl = document.getElementById(pair[0]) || document.getElementById(pair[1]);
 
-    // Responsive Mobile Mode: smooth native scroll without locking or hijacking
-    if (window.innerWidth < 1024) {
-        const targetEl = document.getElementById(targetId);
-        if (targetEl) {
-            targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Responsive Fluid Smooth Navigation with header offset: keeps title and card tops fully visible
+    if (targetEl) {
+        if (slideIdx === 0) {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+            const navOffset = 90;
+            const elementPosition = targetEl.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - navOffset;
+            window.scrollTo({
+                top: Math.max(0, offsetPosition),
+                behavior: "smooth"
+            });
         }
-        return;
     }
 
-    isSlideTransitioning = true;
-    const track = document.getElementById("story-track");
-    if (track) {
-        track.style.transform = `translateY(-${currentSlide * 100}vh)`;
-
-    // Update persistent background zoom and parallax alignment
+    // Keep persistent background fixed at Page 2/3 positioning across all slides (0 zoom on scroll)
     const persistentBg = document.getElementById("persistentHeroBg");
     if (persistentBg) {
-        if (currentSlide === 0) {
-            // Page 1: Standard scale and position
-            persistentBg.style.transform = "scale(1.0) translate(0, 0)";
-            persistentBg.style.opacity = "1";
-        } else if (currentSlide === 1 || currentSlide === 2 || currentSlide === 3) {
-            // Page 2, Page 3 & Page 4: Identical hero background zoom & position maintained seamlessly (no zoom out)
-            persistentBg.style.transform = "scale(1.28) translate(-8.5%, 0)";
-            persistentBg.style.opacity = "1";
-        }
-    }
-
+        persistentBg.style.transform = "scale(1.28) translate(-8.5%, 0)";
+        persistentBg.style.opacity = "1";
     }
 
     // Update story dots
-
     for (let i = 0; i < TOTAL_SLIDES; i++) {
-
         const dot = document.getElementById(`dot-${i}`);
-
         if (dot) {
-
-            if (i === currentSlide) {
-
-                dot.className = "story-dot w-3.5 h-3.5 rounded-full bg-violet-600 ring-4 ring-violet-500/30 transition-all cursor-pointer shadow-md";
-
-            } else {
-
-                dot.className = "story-dot w-2.5 h-2.5 rounded-full bg-slate-300 hover:bg-violet-400 transition-all cursor-pointer";
-
-            }
-
+            dot.className = (i === currentSlide)
+                ? "story-dot w-3.5 h-3.5 rounded-full bg-violet-600 ring-4 ring-violet-500/30 transition-all cursor-pointer shadow-md"
+                : "story-dot w-2.5 h-2.5 rounded-full bg-slate-300 hover:bg-violet-400 transition-all cursor-pointer";
         }
-
     }
 
     // Update navbar slide buttons
-
     document.querySelectorAll(".nav-slide-btn").forEach((btn, idx) => {
-
-        if (idx === currentSlide) {
-
-            btn.className = "nav-slide-btn px-3.5 py-1.5 rounded-full bg-slate-950 text-white transition cursor-pointer";
-
-        } else {
-
-            btn.className = "nav-slide-btn px-3.5 py-1.5 rounded-full hover:text-slate-950 hover:bg-slate-100 transition cursor-pointer";
-
-        }
-
+        btn.className = (idx === currentSlide)
+            ? "nav-slide-btn px-3.5 py-1.5 rounded-full bg-slate-950 text-white transition cursor-pointer"
+            : "nav-slide-btn px-3.5 py-1.5 rounded-full hover:text-slate-950 hover:bg-slate-100 transition cursor-pointer";
     });
-
-    setTimeout(() => {
-
-        isSlideTransitioning = false;
-
-    }, 780);
-
 };
 
 function initStoryPaging() {
-
-    let lastWheelTime = 0;
-
-    // Wheel event handler (Reel / Slide Step - Desktop Only)
-    window.addEventListener("wheel", (e) => {
-        if (window.innerWidth < 1024) return; // Allow 100% native smooth scrolling on mobile!
-
-        // If any modal is open, let user scroll the modal
-        const openModal = document.querySelector("#curatedFeedsModal:not(.hidden), #heroInfoModal:not(.hidden), #humanVerifyModal:not(.hidden), #pitchModal:not(.hidden), #coverLetterModal:not(.hidden), #vipPricingModal:not(.hidden), #profileModal:not(.hidden), #authModal:not(.hidden), #welcomeCelebrationModal:not(.hidden), #techDossierModal:not(.hidden)");
-        if (openModal) {
-            return;
-        }
-
-        const now = Date.now();
-
-        if (now - lastWheelTime < 750 || isSlideTransitioning) {
-
-            return;
-
-        }
-
-        // On Page 4 (Slide 3: Live Vault): check if scroll is inside results container
-        if (currentSlide === 3) {
-
-            const resultsScroll = document.getElementById("resultsScrollContainer");
-
-            if (resultsScroll && resultsScroll.contains(e.target)) {
-
-                // If scrolling down and not yet at bottom of results, let results scroll
-
-                if (e.deltaY > 0) {
-
-                    const atBottom = resultsScroll.scrollHeight - resultsScroll.scrollTop <= resultsScroll.clientHeight + 15;
-
-                    if (!atBottom) return;
-
-                }
-
-                // If scrolling up and not yet at top of results, let results scroll
-
-                if (e.deltaY < 0) {
-
-                    const atTop = resultsScroll.scrollTop <= 10;
-
-                    if (!atTop) return;
-
-                }
-
-            }
-
-        }
-
-        // On Page 2 (Workspace): check if inside location dropdown
-
-        const locDropdown = document.getElementById("locationDropdown");
-
-        if (locDropdown && !locDropdown.classList.contains("hidden") && locDropdown.contains(e.target)) {
-
-            return;
-
-        }
-
-        if (e.deltaY > 30) {
-
-            e.preventDefault();
-
-            // Scroll Down -> Next Reel/Slide
-
-            if (currentSlide < TOTAL_SLIDES - 1) {
-
-                lastWheelTime = now;
-
-                window.goToSlide(currentSlide + 1);
-
-            }
-
-        } else if (e.deltaY < -30) {
-
-            e.preventDefault();
-
-            // Scroll Up -> Previous Reel/Slide
-
-            if (currentSlide > 0) {
-
-                lastWheelTime = now;
-
-                window.goToSlide(currentSlide - 1);
-
-            }
-
-        }
-
-    }, { passive: false });
-
-    // Keyboard navigation (Arrow keys & Page up/down)
-
-    window.addEventListener("keydown", (e) => {
-
-        if (["input", "textarea", "select"].includes(document.activeElement?.tagName?.toLowerCase())) {
-
-            return;
-
-        }
-
-        if (e.code === "ArrowDown" || e.code === "PageDown") {
-
-            if (currentSlide < TOTAL_SLIDES - 1) {
-
-                e.preventDefault();
-
-                window.goToSlide(currentSlide + 1);
-
-            }
-
-        } else if (e.code === "ArrowUp" || e.code === "PageUp") {
-
-            if (currentSlide > 0) {
-
-                e.preventDefault();
-
-                window.goToSlide(currentSlide - 1);
-
-            }
-
-        }
-
-    });
-
-    // Touch / Swipe gestures (Disabled on mobile < 1024px to enable native fluid scrolling like Amazon & Flipkart)
-    let touchStartY = 0;
-
-    window.addEventListener("touchstart", (e) => {
-        if (window.innerWidth < 1024) return; // Native fluid scrolling on mobile!
-        touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-
-    window.addEventListener("touchend", (e) => {
-        if (window.innerWidth < 1024) return; // Native fluid scrolling on mobile!
-        if (isSlideTransitioning) return;
-        const target = e.target;
-        if (target && target.closest("#profileModal, #vipPricingModal, #pitchModal, #humanVerifyModal, #curatedFeedsModal, #heroInfoModal, #authModal, #welcomeCelebrationModal, #techDossierModal")) {
-            return;
-        }
-
-        const touchEndY = e.changedTouches[0].clientY;
-        const diff = touchStartY - touchEndY;
-
-        // If on Page 4 (Slide 3), prevent accidental slide switching while scrolling job results
-        if (currentSlide === 3) {
-            const resultsScroll = document.getElementById("resultsScrollContainer");
-            if (resultsScroll && resultsScroll.contains(target)) {
-                if (diff > 0) return; // scrolling down through jobs
-                if (diff < 0) {
-                    if (resultsScroll.scrollTop > 5 || Math.abs(diff) < 90) {
-                        return; // user is browsing, do not flip slide
-                    }
-                }
-            }
-        }
-
-        if (Math.abs(diff) > 55) {
-            if (diff > 0 && currentSlide < TOTAL_SLIDES - 1) {
-                window.goToSlide(currentSlide + 1);
-            } else if (diff < 0 && currentSlide > 0) {
-                window.goToSlide(currentSlide - 1);
-            }
-        }
-    }, { passive: true });
-
-    // IntersectionObserver to sync currentSlide during native mobile scrolling
+    // 1. Maintain stationary background positioning across all pages (0 zoom on scroll)
+    const persistentBg = document.getElementById("persistentHeroBg");
+    if (persistentBg) {
+        persistentBg.style.transform = "scale(1.28) translate(-8.5%, 0)";
+        persistentBg.style.opacity = "1";
+    }
+
+    // 3. IntersectionObserver to sync currentSlide during natural scrolling across all viewports
     if (typeof IntersectionObserver !== "undefined") {
         const slideIds = ["hero", "discovery", "workspace", "results-stream"];
         const observer = new IntersectionObserver((entries) => {
-            if (window.innerWidth >= 1024) return;
             entries.forEach(entry => {
-                if (entry.isIntersecting && entry.intersectionRatio >= 0.4) {
+                if (entry.isIntersecting && entry.intersectionRatio >= 0.35) {
                     const idx = slideIds.indexOf(entry.target.id);
                     if (idx !== -1) {
                         currentSlide = idx;
                         window.currentSlide = idx;
+                        const persistentBg = document.getElementById("persistentHeroBg");
+                        if (persistentBg) {
+                            persistentBg.style.transform = "scale(1.28) translate(-8.5%, 0)";
+                            persistentBg.style.opacity = "1";
+                        }
                     }
                 }
             });
-        }, { threshold: [0.4] });
+        }, { threshold: [0.35] });
 
         slideIds.forEach(id => {
             const el = document.getElementById(id);
             if (el) observer.observe(el);
         });
     }
-
 }
 
 // Comprehensive Worldwide Locations Database (A to Z)
@@ -699,6 +510,12 @@ document.addEventListener("DOMContentLoaded", () => {
     initCompensationControls();
 
     initLocationAutocomplete();
+
+    initWorkArrangementControls();
+
+    if (typeof window.updateQuickLocationPillsUI === 'function') {
+        window.updateQuickLocationPillsUI();
+    }
 
     initJobSearch();
 
@@ -1621,33 +1438,27 @@ function initCompensationControls() {
     }
 
     function renderPresets(presets) {
-
         presetsContainer.innerHTML = "";
-
         presets.forEach(p => {
-
             const btn = document.createElement("button");
-
             btn.type = "button";
-
-            btn.className = "salary-preset-btn text-xs px-3 py-1 rounded-xl border border-emerald-600/50 bg-[#0a160d] text-emerald-200 hover:border-emerald-400 hover:text-white hover:bg-emerald-950 font-bold transition shadow-xs cursor-pointer";
-
+            btn.setAttribute("data-val", p.val);
+            if (p.val === currentMinPackage) {
+                btn.className = "salary-preset-btn text-xs font-black px-3 py-1 rounded-xl bg-slate-950 text-white border-2 border-emerald-500 shadow-sm ring-1 ring-emerald-400 transition cursor-pointer";
+            } else {
+                btn.className = "salary-preset-btn text-xs font-bold px-3 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-slate-700 hover:text-emerald-950 border border-slate-200 transition cursor-pointer";
+            }
             btn.textContent = p.label;
-
             btn.addEventListener("click", () => {
-
                 numberInput.value = p.val;
-
-                slider.value = Math.min(p.val, parseInt(slider.max));
-
+                if (slider && slider.max) {
+                    slider.value = Math.min(p.val, parseInt(slider.max));
+                }
                 currentMinPackage = p.val;
-
+                window.setSalaryPreset(p.val);
             });
-
             presetsContainer.appendChild(btn);
-
         });
-
     }
 
     // Sync slider to input if present
@@ -1734,51 +1545,72 @@ function initCompensationControls() {
 
 // 3. A to Z Global Location Autocomplete & Dynamic Tags
 
+window.updateQuickLocationPillsUI = function() {
+    const pills = document.querySelectorAll("#quickLocationPills button, .loc-preset-pill");
+    pills.forEach(pill => {
+        const loc = pill.getAttribute("data-loc") || pill.textContent.replace(/^[^\w\s]+/, '').trim();
+        const isSel = selectedLocations.some(l => l.toLowerCase() === loc.toLowerCase());
+        if (isSel) {
+            pill.className = "loc-preset-pill text-xs font-black px-2.5 py-1 rounded-xl bg-slate-950 text-white border-2 border-emerald-500 shadow-sm ring-1 ring-emerald-400 transition cursor-pointer";
+        } else {
+            pill.className = "loc-preset-pill text-xs font-bold px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-slate-700 hover:text-emerald-950 border border-slate-200 transition cursor-pointer";
+        }
+    });
+};
+
+window.addLocationPreset = function(locName) {
+    if (!locName) return;
+    const clean = locName.trim();
+    if (!clean) return;
+    const lower = clean.toLowerCase();
+    const idx = selectedLocations.findIndex(l => l.toLowerCase() === lower);
+    if (idx >= 0) {
+        selectedLocations.splice(idx, 1);
+    } else {
+        selectedLocations.push(clean);
+    }
+    if (typeof window.renderActiveLocationTags === 'function') {
+        window.renderActiveLocationTags();
+    }
+    if (typeof window.updateQuickLocationPillsUI === 'function') {
+        window.updateQuickLocationPillsUI();
+    }
+};
+
 function initLocationAutocomplete() {
     const searchInput = document.getElementById("locationSearchInput");
     const dropdown = document.getElementById("locationDropdown");
     const tagsContainer = document.getElementById("selectedLocationsTags");
-    const quickPills = document.querySelectorAll(".quick-pill");
 
     if (!searchInput || !dropdown || !tagsContainer) return;
-
-    function updateQuickPills() {
-        if (!quickPills) return;
-        quickPills.forEach(pill => {
-            const loc = pill.getAttribute("data-loc");
-            if (loc && selectedLocations.some(l => l.toLowerCase() === loc.toLowerCase())) {
-                pill.className = "quick-pill text-xs px-3.5 py-1.5 rounded-full border-2 border-emerald-400 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black shadow-xs transition cursor-pointer";
-            } else {
-                pill.className = "quick-pill text-xs px-3.5 py-1.5 rounded-full border border-emerald-500/40 bg-emerald-950/80 text-emerald-200 font-bold hover:border-emerald-400 hover:text-white hover:bg-emerald-900 transition cursor-pointer";
-            }
-        });
-    }
 
     function renderActiveTags() {
         tagsContainer.innerHTML = "";
         if (selectedLocations.length === 0) {
-            tagsContainer.innerHTML = `<span class="text-xs font-semibold text-slate-400 italic p-1">No target locations added yet — type a city above or click suggestions below</span>`;
-            updateQuickPills();
+            tagsContainer.innerHTML = `<span class="text-xs text-slate-500 self-center px-1 font-medium">Any Location (Global Feeds)</span>`;
+            if (typeof window.updateQuickLocationPillsUI === 'function') window.updateQuickLocationPillsUI();
             return;
         }
 
         selectedLocations.forEach(loc => {
             const tag = document.createElement("span");
-            tag.className = "inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-violet-100 text-violet-950 border border-violet-300/80 shadow-xs animate-in fade-in";
+            tag.className = "inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-950 border border-emerald-300 shadow-2xs animate-in fade-in";
             tag.innerHTML = `
                 <span>${loc}</span>
-                <button type="button" class="ml-1 text-violet-700 hover:text-violet-950 focus:outline-none font-black text-sm" data-loc="${loc}">
+                <button type="button" class="ml-1 text-emerald-700 hover:text-red-600 focus:outline-none font-black text-sm" data-loc="${loc}">
                     ✕
                 </button>
             `;
             tag.querySelector("button").addEventListener("click", (e) => {
                 e.stopPropagation();
-                removeLocation(loc);
+                window.addLocationPreset(loc);
             });
             tagsContainer.appendChild(tag);
         });
-        updateQuickPills();
+        if (typeof window.updateQuickLocationPillsUI === 'function') window.updateQuickLocationPillsUI();
     }
+
+    window.renderActiveLocationTags = renderActiveTags;
 
     function addLocation(locName) {
         const clean = locName.trim();
@@ -1898,6 +1730,83 @@ function initJobSearch() {
 
     if (!searchBtn) return;
 
+    let _searchLoaderInterval = null;
+
+    function startSearchLoader() {
+        const loadingEl = document.getElementById("jobsLoading");
+        const quoteEl = document.getElementById("loaderRotatingQuote");
+        const progressEl = document.getElementById("loaderProgressBar");
+        const stepTextEl = document.getElementById("loaderStepText");
+        const percentTextEl = document.getElementById("loaderPercentText");
+
+        if (!loadingEl) return;
+        loadingEl.classList.remove("hidden");
+
+        const messages = [
+            {
+                pct: 22,
+                step: "Vectorizing candidate profile & key skills...",
+                quote: "We are finding you the best matching jobs directly in corporate company portals. It might take a few seconds — wait for the best result!"
+            },
+            {
+                pct: 48,
+                step: "Scanning 3,315,000+ verified direct corporate openings...",
+                quote: "Bypassing 100% of brokers and middlemen — landing you directly with internal hiring teams & HR."
+            },
+            {
+                pct: 72,
+                step: "Evaluating target locations & compensation thresholds...",
+                quote: "You are going to be impressed with the jobs matching your application without any recruiters taking fee markups."
+            },
+            {
+                pct: 90,
+                step: "Scoring STAR pitch match & preparing direct HR portal links...",
+                quote: "Connecting directly to verified hiring teams with zero middleman spread. Finalizing your results..."
+            }
+        ];
+
+        let msgIdx = 0;
+        if (progressEl) progressEl.style.width = "18%";
+        if (percentTextEl) percentTextEl.textContent = "18%";
+        if (stepTextEl) stepTextEl.textContent = messages[0].step;
+        if (quoteEl) quoteEl.textContent = `"${messages[0].quote}"`;
+
+        if (_searchLoaderInterval) clearInterval(_searchLoaderInterval);
+
+        _searchLoaderInterval = setInterval(() => {
+            msgIdx = (msgIdx + 1) % messages.length;
+            const cur = messages[msgIdx];
+            if (progressEl) progressEl.style.width = `${cur.pct}%`;
+            if (percentTextEl) percentTextEl.textContent = `${cur.pct}%`;
+            if (stepTextEl) stepTextEl.textContent = cur.step;
+            if (quoteEl) {
+                quoteEl.style.opacity = "0.2";
+                setTimeout(() => {
+                    quoteEl.textContent = `"${cur.quote}"`;
+                    quoteEl.style.opacity = "1";
+                }, 180);
+            }
+        }, 2200);
+    }
+
+    function stopSearchLoader() {
+        if (_searchLoaderInterval) {
+            clearInterval(_searchLoaderInterval);
+            _searchLoaderInterval = null;
+        }
+        const progressEl = document.getElementById("loaderProgressBar");
+        const percentTextEl = document.getElementById("loaderPercentText");
+        const stepTextEl = document.getElementById("loaderStepText");
+        if (progressEl) progressEl.style.width = "100%";
+        if (percentTextEl) percentTextEl.textContent = "100%";
+        if (stepTextEl) stepTextEl.textContent = "Match complete! Rendering direct postings...";
+
+        setTimeout(() => {
+            const loadingEl = document.getElementById("jobsLoading");
+            if (loadingEl) loadingEl.classList.add("hidden");
+        }, 350);
+    }
+
     async function executeSearch() {
 
         const workMode = document.querySelector('input[name="work_mode"]:checked')?.value || "all";
@@ -1932,13 +1841,12 @@ function initJobSearch() {
 
         if (jobListContainer) jobListContainer.innerHTML = "";
 
-        if (jobsLoading) jobsLoading.classList.remove("hidden");
+        startSearchLoader();
 
         searchBtn.disabled = true;
 
-        // Super slide transition to Page 3 (Live Results Vault)
-
-        window.goToSlide(2);
+        // Slide transition to Page 3 (Live Results Vault)
+        window.goToSlide(3);
 
         // Reset LinkedIn state
 
@@ -1983,7 +1891,7 @@ function initJobSearch() {
             window.currentFounderJobs = currentFounderJobs;
             window.currentJobs = currentJobs;
 
-            if (jobsLoading) jobsLoading.classList.add("hidden");
+            stopSearchLoader();
 
             searchBtn.disabled = false;
 
@@ -2043,7 +1951,7 @@ function initJobSearch() {
 
         } catch (err) {
 
-            if (jobsLoading) jobsLoading.classList.add("hidden");
+            stopSearchLoader();
 
             searchBtn.disabled = false;
 
@@ -2387,208 +2295,67 @@ function initLinkedinToggle() {
 }
 
 function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = false, append = false, startIdx = 0) {
-
     const container = document.getElementById(containerId);
-
     if (!container) return;
 
     if (!append) container.innerHTML = "";
 
     jobs.forEach((job, idx) => {
-
         const globalIdx = startIdx + idx;
-
         const card = document.createElement("div");
 
-        card.className = "kage-card rounded-3xl relative overflow-hidden group border border-slate-200/90 shadow-xl hover:shadow-2xl mb-6 transition-all bg-white";
-
-        card.setAttribute("style", "box-shadow: 0 12px 35px -8px rgba(0, 0, 0, 0.08);");
+        // Direction B: Swiss Minimalist Luxury Atomic Card
+        card.className = "kage-card rounded-2xl relative overflow-hidden group border bg-white hover:border-amber-400 mb-3.5 transition-all p-4 sm:p-5";
+        card.setAttribute("style", "border-color: #e8dfd1; box-shadow: 0 4px 18px -3px rgba(0, 0, 0, 0.03), 0 0 1px 1px rgba(223, 183, 108, 0.1);");
 
         const isLinkedin = isThirdParty || Boolean(job.is_linkedin);
 
-        // Match Score styling (Light Luxury Palette)
-
+        // Match Score styling (Swiss Luxury Emerald & Warm Amber)
         const isHighScore = job.cvmatch_score >= 80;
-
         const scoreColor = isHighScore
-
-            ? "bg-emerald-100 text-emerald-950 border-2 border-emerald-500/90 shadow-sm"
-
-            : "bg-amber-100 text-amber-950 border-2 border-amber-400/90 shadow-sm";
-
+            ? "bg-emerald-50 text-emerald-950 border border-emerald-300"
+            : "bg-amber-50 text-amber-950 border border-amber-300";
         const scoreDot = isHighScore
-
-            ? `<span class="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse"></span>`
-
-            : `<span class="w-2.5 h-2.5 rounded-full bg-amber-600"></span>`;
+            ? `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>`
+            : `<span class="w-2 h-2 rounded-full bg-amber-500"></span>`;
 
         // Live Blinking Green Badge
-
         const liveBadgeHtml = `
-
-            <span class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-950 border-2 border-emerald-400/90 font-black text-xs shadow-xs" title="Active real-time vacancy verified on corporate portal">
-
-                <span class="relative flex h-2.5 w-2.5">
-
+            <span class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-950 border border-emerald-300 font-black text-[11px]" title="Active real-time vacancy verified on direct corporate portal">
+                <span class="relative flex h-2 w-2">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-
-                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
-
-                <span class="uppercase tracking-wider font-extrabold text-[11px] text-emerald-900">LIVE</span>
-
+                <span class="uppercase tracking-wider">LIVE</span>
             </span>
-
         `;
 
         // Date Badge
-
         const dateInfo = formatJobDate(job.posted_at || job.created_at);
-
         const dateBadgeHtml = dateInfo.isToday
-
-            ? `<span class="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-300 text-xs font-extrabold shadow-xs" title="${dateInfo.tooltip}">
-
-                <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-600"></i>
-
+            ? `<span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-900 border border-emerald-200 text-[11px] font-black" title="${dateInfo.tooltip}">
+                <i data-lucide="zap" class="w-3 h-3 text-emerald-600"></i>
                 <span>${dateInfo.label}</span>
-
                </span>`
-
-            : `<span class="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold shadow-xs" title="${dateInfo.tooltip}">
-
-                <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-500"></i>
-
+            : `<span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-slate-50 text-slate-700 border border-slate-200 text-[11px] font-bold" title="${dateInfo.tooltip}">
+                <i data-lucide="calendar" class="w-3 h-3 text-slate-500"></i>
                 <span>${dateInfo.label}</span>
-
                </span>`;
 
         const empTag = job.employment_type_tag || "Full-Time";
-
         const rawSource = (job.source || "Direct Feed").toUpperCase();
 
-        const sourceBadgeHtml = isLinkedin 
-
-            ? `<span class="text-xs font-black px-3 py-1.5 rounded-xl bg-[#0A66C2] text-white flex items-center space-x-1.5 shadow-sm">
-
-                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.6 1.6 0 0 0-1.6 1.6 1.6 1.6 0 0 0 1.6-1.6Z"/></svg>
-
-                <span>LINKEDIN FEED</span>
-
+        const atsPill = isLinkedin
+            ? `<span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-900 border border-blue-200 text-[11px] font-black uppercase">
+                <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.6 1.6 0 0 0-1.6 1.6 1.6 1.6 0 0 0 1.6-1.6Z"/></svg>
+                <span>LINKEDIN</span>
                </span>`
-
-            : `<span class="text-xs font-black px-3 py-1.5 rounded-xl bg-violet-950 text-violet-200 uppercase tracking-wider flex items-center space-x-1.5 border border-violet-500/40 shadow-sm" title="Direct Enterprise Applicant Tracking System">
-
-                <i data-lucide="shield-check" class="w-4 h-4 text-violet-400"></i>
-
-                <span>DIRECT FEED • ${rawSource}</span>
-
+            : `<span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-950 border border-emerald-300 text-[11px] font-black uppercase" title="Direct Enterprise Applicant Tracking System">
+                <i data-lucide="shield-check" class="w-3 h-3 text-emerald-600"></i>
+                <span>DIRECT COMPANY &bull; ${rawSource}</span>
                </span>`;
 
-        const thirdPartyWarning = isLinkedin
-
-            ? `<div class="mt-3 p-3 rounded-xl flex items-center space-x-2.5 shadow-md border" style="background: linear-gradient(135deg, #0d1b2a 0%, #081018 100%); border-color: rgba(245, 158, 11, 0.7);">
-
-                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400 flex-shrink-0"></i>
-
-                <span class="text-xs font-bold text-slate-200">Auxiliary Feed Posting — Verify listing status directly. Direct company application is recommended.</span>
-
-               </div>`
-
-            : '';
-
-        // TEST MODE: Display all links unblurred without payment restriction for tester access
-        // When VIP restriction is re-enabled, restore: const isLocked = Boolean(job.is_locked);
-        const isLocked = false;
-
-        // Action Buttons: If locked, show unblurred job card with locked CTA buttons and blurred direct link
-
-        let applyBtnHtml = '';
-
-        let pitchBtnHtml = '';
-
-        if (isLocked) {
-
-            pitchBtnHtml = `
-
-                <button type="button" onclick="openVipPricingModal()" class="px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-100 text-slate-800 text-xs sm:text-sm font-black flex items-center space-x-2 transition shadow-sm cursor-pointer">
-
-                    <i data-lucide="lock" class="w-4 h-4 text-slate-500"></i>
-
-                    <span>Generate AI STAR Pitch (VIP)</span>
-
-                </button>
-
-            `;
-
-            applyBtnHtml = `
-
-                <button type="button" onclick="openVipPricingModal()" class="w-full py-3.5 px-5 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white border border-violet-400/40 text-xs sm:text-sm font-black rounded-xl flex items-center justify-center space-x-2 shadow-xl shadow-violet-600/30 transition transform active:scale-95 cursor-pointer">
-
-                    <i data-lucide="lock" class="w-4 h-4 text-violet-200"></i>
-
-                    <span>Unlock Direct Application Portal (VIP Access)</span>
-
-                </button>
-
-            `;
-
-        } else {
-
-            pitchBtnHtml = `
-
-                <div class="flex items-center space-x-2 flex-wrap gap-y-2">
-
-                    <button type="button" class="generate-pitch-btn px-3.5 py-2 rounded-xl border border-violet-300 bg-violet-100/80 hover:bg-violet-200 text-violet-950 text-xs sm:text-sm font-black flex items-center space-x-1.5 transition shadow-sm cursor-pointer" data-container="${containerId}" data-idx="${globalIdx}">
-
-                        <i data-lucide="sparkles" class="w-4 h-4 text-violet-700"></i>
-
-                        <span>AI Pitch</span>
-
-                    </button>
-
-                    <button type="button" class="generate-cover-letter-btn px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-violet-50 text-slate-900 hover:text-violet-900 text-xs sm:text-sm font-black flex items-center space-x-1.5 transition shadow-sm cursor-pointer" data-container="${containerId}" data-idx="${globalIdx}">
-
-                        <i data-lucide="file-text" class="w-4 h-4 text-violet-700"></i>
-
-                        <span>Cover Letter</span>
-
-                    </button>
-
-                    <button type="button" class="save-kanban-btn px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 text-xs sm:text-sm font-bold flex items-center space-x-1 transition cursor-pointer" data-container="${containerId}" data-idx="${globalIdx}" title="Save to Target list">
-
-                        <i data-lucide="bookmark" class="w-3.5 h-3.5 text-slate-500"></i>
-
-                        <span>Save</span>
-
-                    </button>
-
-                </div>
-
-            `;
-
-            applyBtnHtml = isLinkedin
-
-                ? `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="direct-apply-link w-full py-3.5 px-5 bg-[#0A66C2] hover:bg-[#004182] text-white text-xs sm:text-sm font-black rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-blue-600/30 transition transform active:scale-98" data-container="${containerId}" data-idx="${globalIdx}">
-
-                    <span>Apply on LinkedIn</span>
-
-                    <i data-lucide="external-link" class="w-4 h-4"></i>
-
-                   </a>`
-
-                : `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="direct-apply-link w-full py-3.5 px-5 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-emerald-600/25 transition transform active:scale-98" data-container="${containerId}" data-idx="${globalIdx}">
-
-                    <span>Direct Application Portal →</span>
-
-                    <i data-lucide="external-link" class="w-4 h-4"></i>
-
-                   </a>`;
-
-        }
-
-                // Check if candidate already applied or saved this job
+        // Check if candidate already applied or saved this job
         const currentKanban = getKanbanData();
         const allAppliedList = [
             ...(currentKanban.applied || []),
@@ -2609,411 +2376,201 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
         });
 
         const alreadyAppliedBadgeHtml = isAlreadyApplied ? `
-            <button type="button" onclick="goToKanbanTabAndScroll()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-100 hover:bg-violet-200 border-2 border-violet-500 text-violet-950 font-black text-xs shadow-xs transition cursor-pointer" title="Already in your applied tracker. Click to view on Kanban.">
+            <button type="button" onclick="goToKanbanTabAndScroll()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-50 hover:bg-violet-100 border border-violet-300 text-violet-950 font-black text-xs shadow-2xs transition cursor-pointer" title="Already in your applied tracker. Click to view on Kanban.">
                 <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-violet-700"></i>
-                <span>Already Applied • Check Status</span>
+                <span>Applied</span>
             </button>
         ` : '';
 
-        const matchedSkillsHtml = (job.matched_skills || []).slice(0, 8).map(s => 
+        // Action Buttons: AI Pitch, Cover Letter, Save, Direct Apply
+        const pitchBtnHtml = `
+            <button type="button" class="generate-pitch-btn px-3 py-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-950 text-xs font-black flex items-center space-x-1.5 transition shadow-2xs cursor-pointer" data-container="${containerId}" data-idx="${globalIdx}">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-700"></i>
+                <span>AI STAR Pitch</span>
+            </button>
+            <button type="button" class="generate-cover-letter-btn px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center space-x-1.5 transition shadow-2xs cursor-pointer" data-container="${containerId}" data-idx="${globalIdx}">
+                <i data-lucide="file-text" class="w-3.5 h-3.5 text-slate-600"></i>
+                <span>Cover Letter</span>
+            </button>
+            <button type="button" class="save-kanban-btn px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center space-x-1 transition cursor-pointer" data-container="${containerId}" data-idx="${globalIdx}" title="Save to Target list">
+                <i data-lucide="bookmark" class="w-3.5 h-3.5 text-slate-500"></i>
+                <span>Save</span>
+            </button>
+        `;
 
-            `<span class="px-2.5 py-1 bg-white text-slate-900 text-xs font-bold rounded-lg border border-slate-300 shadow-xs hover:border-violet-400 hover:text-violet-900 transition">${s}</span>`
+        const applyBtnHtml = isLinkedin
+            ? `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="direct-apply-link inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#0A66C2] hover:bg-[#004182] text-white text-xs sm:text-sm font-black rounded-xl shadow-xs transition" data-container="${containerId}" data-idx="${globalIdx}">
+                <span>Apply on LinkedIn</span>
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+               </a>`
+            : `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="direct-apply-link inline-flex items-center justify-center gap-1.5 px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-xs shadow-emerald-600/20 transition transform active:scale-98" data-container="${containerId}" data-idx="${globalIdx}">
+                <span>Apply Direct ↗</span>
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+               </a>`;
 
+        const matchedSkillsHtml = (job.matched_skills || []).slice(0, 5).map(s => 
+            `<span class="px-2 py-0.5 bg-slate-50 text-slate-800 text-[11px] font-bold rounded-lg border border-slate-200">${s}</span>`
         ).join("");
 
-        // Clean compensation text to fully expand YOE
-
         let cleanCompDisplay = (job.comp_display || 'Market Standard for Candidate Years of Experience')
-
             .replace(/\bYOE\b/g, 'Candidate Years of Experience');
 
-        const lockedEndpointBar = isLocked ? `
-
-            <div class="mt-3 p-3 rounded-xl border border-dashed border-slate-300 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs">
-
-                <div class="flex items-center space-x-2 text-xs font-bold text-slate-700">
-
-                    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
-
-                    <span>Direct Verified Application Link:</span>
-
-                </div>
-
-                <div class="flex items-center space-x-2 overflow-hidden">
-
-                    <span class="font-mono text-xs text-slate-500 select-none bg-slate-100 px-3 py-1 rounded-lg border border-slate-200 filter blur-[4px] truncate max-w-[190px]">
-
-                        https://jobs.${(job.source || 'lever').toLowerCase()}.co/${(job.company || 'hiring').toLowerCase().replace(/[^a-z0-9]/g, '')}/apply
-
-                    </span>
-
-                    <span class="text-[10px] font-black uppercase tracking-wider text-white bg-gradient-to-r from-violet-600 to-indigo-600 border border-violet-400 px-2 py-0.5 rounded-md flex-shrink-0">VIP Locked</span>
-
-                </div>
-
-            </div>
-
-        ` : '';
-
-        // Right side header & guarantees (LinkedIn removes false 0% recruiter spread guarantee)
-
-        const rightHeaderHtml = isLinkedin ? `
-
-            <div class="flex items-center justify-between">
-
-                <span class="text-[11px] font-black uppercase tracking-wider text-amber-950 bg-amber-100 px-3 py-1 rounded-lg border border-amber-300 flex items-center gap-1.5 shadow-xs">
-
-                    <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-600"></i>
-
-                    <span>Auxiliary LinkedIn Listing</span>
-
-                </span>
-
-                <span class="text-xs text-amber-900 font-black">Unverified Agency Spread</span>
-
-            </div>
-
-        ` : `
-
-            <div class="flex items-center justify-between">
-
-                <span class="text-[11px] font-black uppercase tracking-wider text-emerald-950 bg-emerald-100/90 px-3 py-1 rounded-lg border border-emerald-300 flex items-center gap-1.5 shadow-xs">
-
-                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-700"></i>
-
-                    <span>Direct Corporate Portal</span>
-
-                </span>
-
-                <span class="text-xs text-emerald-800 font-black">0% Recruiter Spread</span>
-
-            </div>
-
-        `;
-
-        const guaranteesHtml = isLinkedin ? `
-
-            <div class="text-xs text-slate-700 space-y-1.5 font-medium">
-
-                <p class="flex items-center gap-2">
-
-                    <i data-lucide="external-link" class="w-4 h-4 text-amber-500 flex-shrink-0"></i>
-
-                    <span>Aggregated listing from external third-party LinkedIn feed</span>
-
-                </p>
-
-                <p class="flex items-center gap-2">
-
-                    <i data-lucide="info" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
-
-                    <span>Direct corporate application recommended to bypass recruiter cut</span>
-
-                </p>
-
-            </div>
-
-        ` : `
-
-            <div class="text-xs text-slate-700 space-y-1.5 font-medium">
-
-                <p class="flex items-center gap-2">
-
-                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
-
-                    <span>Application lands directly in corporate ${job.source || 'company'} portal</span>
-
-                </p>
-
-                <p class="flex items-center gap-2">
-
-                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
-
-                    <span>Zero third-party headhunters or agency commission cut</span>
-
-                </p>
-
-            </div>
-
-        `;
+        const companyInitial = ((job.company || 'AJ').replace(/[^a-zA-Z0-9]/g, '').substring(0, 2) || 'AJ').toUpperCase();
 
         card.innerHTML = `
-
-            <!-- Modern Dual-Tone Card (Left White/Cream, Right Sleek Luxury Platinum) -->
-
-            <div class="flex flex-col lg:flex-row items-stretch">
-
-                <!-- LEFT SIDE: Title, Role, Company, Skills, AI Pitch -->
-
-                <div class="w-full lg:w-7/12 p-6 sm:p-7 flex flex-col justify-between bg-white">
-
-                    <div>
-
-                        <!-- Badges Row -->
-
-                        <div class="flex items-center flex-wrap gap-2 mb-3">
-
-                            <span class="text-xs sm:text-sm font-black px-3.5 py-1.5 rounded-xl flex items-center space-x-1.5 ${scoreColor}">
-
-                                ${scoreDot}
-
-                                <span>${job.cvmatch_score}% CV Match</span>
-
-                            </span>
-                            <button type="button" onclick="window.toggleSkillGapDrawer('${containerId}_${globalIdx}')" class="text-xs font-bold px-2.5 py-1.5 rounded-xl border border-violet-300 bg-violet-50 hover:bg-violet-100 text-violet-900 shadow-2xs flex items-center gap-1 transition cursor-pointer" title="Inspect matched skills vs missing keywords">
-                                <i data-lucide="scan-search" class="w-3.5 h-3.5 text-violet-600"></i>
-                                <span>Skill Gap</span>
-                            </button>
-
-                            ${liveBadgeHtml}
-
-                            ${dateBadgeHtml}
-
-                            ${sourceBadgeHtml}
-                            ${alreadyAppliedBadgeHtml}
-                            <span class="text-xs font-black px-3 py-1.5 rounded-xl bg-slate-100 text-slate-800 border border-slate-200 shadow-xs">
-                                ${empTag}
-                            </span>
-
-                            <span class="text-xs font-black text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">#${globalIdx + 1}</span>
-
-                        </div>
-
-                        <!-- Job Title -->
-
-                        <h3 class="text-xl sm:text-2xl font-black text-slate-950 group-hover:text-violet-700 transition-colors tracking-tight leading-tight">
-
-                            ${job.title}
-
-                        </h3>
-
-                        <!-- Company, Location, Work Mode -->
-
-                        <div class="flex items-center flex-wrap gap-2 text-sm font-bold text-slate-700 pt-2">
-
-                            <span class="flex items-center space-x-1.5 text-slate-950 font-black">
-
-                                <i data-lucide="building-2" class="w-4 h-4 text-violet-700"></i>
-
-                                <span>${job.company}</span>
-
-                            </span>
-
-                            <span class="text-slate-400">•</span>
-
-                            <span class="flex items-center space-x-1.5 text-slate-800 font-extrabold">
-
-                                <i data-lucide="map-pin" class="w-4 h-4 text-slate-600"></i>
-
-                                <span>${job.location_tag || job.location || 'Remote'}</span>
-
-                            </span>
-
-                            <span class="px-2.5 py-0.5 rounded-lg bg-amber-100 text-amber-950 text-xs font-black uppercase tracking-wider border border-amber-300">${job.work_mode || 'Remote'}</span>
-
-                        </div>
-
-                        ${thirdPartyWarning}
-
-                        <!-- Overlap Skills -->
-
-                        ${matchedSkillsHtml ? `
-
-                            <div class="mt-4 pt-3.5 border-t border-slate-200 flex flex-wrap items-center gap-1.5">
-
-                                <span class="text-xs font-black text-slate-700 uppercase tracking-wider mr-1">Overlap Skills:</span>
-
-                                ${matchedSkillsHtml}
-
-                            </div>
-
-                        ` : ''}
-
+            <!-- Line 1: Identity, Title, Direct ATS Verification & Live Badges -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/90 text-amber-950 font-black text-xs sm:text-sm flex items-center justify-center flex-shrink-0 shadow-2xs">
+                        ${companyInitial}
                     </div>
-
-                    <!-- Skill Gap Inspector Drawer -->
-                    <div id="skillGapDrawer_${containerId}_${globalIdx}" class="hidden mt-3 p-3.5 rounded-2xl bg-slate-50 border border-violet-200 text-xs transition-all">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="font-black text-slate-950 flex items-center gap-1.5">
-                                <span class="w-2 h-2 rounded-full bg-violet-600 animate-pulse"></span>
-                                Resume Matcher &bull; Skill Gap Breakdown
-                            </span>
-                            <span class="text-[10px] font-bold text-slate-500">Vector Keyword Optimizer</span>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 class="text-base sm:text-lg font-black text-slate-950 group-hover:text-amber-900 transition-colors tracking-tight truncate">
+                                ${job.title}
+                            </h3>
+                            <span class="text-xs font-black text-slate-700">@ ${job.company}</span>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2.5">
-                            <div class="p-2.5 rounded-xl bg-white border border-emerald-200">
-                                <span class="text-[10px] font-black uppercase text-emerald-800 tracking-wider block mb-1">✓ Matched in Your Profile</span>
-                                <div class="flex flex-wrap gap-1">
-                                    ${(job.matched_skills || []).slice(0, 6).map(s => `<span class="px-2 py-0.5 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded font-bold text-[10px]">${s}</span>`).join('') || '<span class="text-slate-400 text-[10px]">Core stack matched</span>'}
-                                </div>
-                            </div>
-                            <div class="p-2.5 rounded-xl bg-white border border-amber-300">
-                                <span class="text-[10px] font-black uppercase text-amber-900 tracking-wider block mb-1">+ Missing Gap Keywords to Highlight</span>
-                                <div class="flex flex-wrap gap-1">
-                                    ${(job.gap_skills || ['Docker', 'Kubernetes', 'Cloud']).slice(0, 4).map(s => `<span class="px-2 py-0.5 bg-amber-50 text-amber-950 border border-amber-300 rounded font-bold text-[10px]">+ ${s}</span>`).join('')}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="pt-1.5 border-t border-slate-200 flex items-center justify-between">
-                            <p class="text-[11px] text-slate-700 font-medium">
-                                <strong class="text-violet-950 font-bold">Screening Advantage:</strong> Mentioning these gap keywords lifts screening pass rate from <strong>${job.cvmatch_score}%</strong> to <strong>90%+</strong>.
-                            </p>
-                            <span class="text-[10px] font-bold text-slate-400">Direct Portal Vector</span>
+                        <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 flex-wrap">
+                            <span class="flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3 text-slate-400"></i>${job.location_tag || job.location || 'Remote'}</span>
+                            <span>&bull;</span>
+                            <span class="text-slate-700 font-bold">${job.work_mode || 'Remote'}</span>
+                            <span>&bull;</span>
+                            <span>${empTag}</span>
                         </div>
                     </div>
-
-                    <!-- Left Bottom Buttons: AI Pitch, Cover Letter, Save -->
-
-                    <div class="mt-5 pt-4 border-t border-slate-200">
-
-                        ${pitchBtnHtml}
-
-                    </div>
-
                 </div>
 
-                <!-- RIGHT SIDE: Suitable, Modern & Elegant Platinum Finish (Compensation, Guarantee, Direct Apply) -->
-
-                <div class="w-full lg:w-5/12 p-6 sm:p-7 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-slate-200/90" style="background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);">
-
-                    <div class="space-y-4">
-
-                        <!-- Direct ATS / LinkedIn Guarantee Header -->
-
-                        ${rightHeaderHtml}
-
-                        <!-- Compensation Box in Clean Modern Emerald Style -->
-
-                        <div class="p-4 rounded-2xl border border-emerald-200/90 bg-emerald-50/60 shadow-xs">
-
-                            <span class="text-xs font-black uppercase tracking-wider text-emerald-900 block mb-1">Target Package / Compensation</span>
-
-                            <div class="flex items-center space-x-2 text-emerald-950 text-base sm:text-lg font-black">
-
-                                <i data-lucide="badge-dollar-sign" class="w-4 h-4 text-emerald-600 flex-shrink-0"></i>
-
-                                <span>${cleanCompDisplay}</span>
-
-                            </div>
-                            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100/80 text-emerald-950 text-[10px] font-black border border-emerald-300 mt-2">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-                                <span>P75 Market Comp &bull; 0% Recruiter Spread</span>
-                            </div>
-
-                        </div>
-
-                        <!-- ATS Portal Breakdown Note / LinkedIn Transparency Note -->
-
-                        ${guaranteesHtml}
-
-                        <!-- Locked Preview Endpoint Bar (if locked) -->
-
-                        ${lockedEndpointBar}
-
-                    </div>
-
-                    <!-- Direct Apply Action CTA Button -->
-
-                    <div class="mt-6 pt-4 border-t border-slate-200">
-
-                        ${applyBtnHtml}
-
-                    </div>
-
+                <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap flex-shrink-0">
+                    ${atsPill}
+                    ${liveBadgeHtml}
+                    ${dateBadgeHtml}
+                    <span class="text-xs sm:text-sm font-black px-2.5 py-1 rounded-xl flex items-center gap-1.5 ${scoreColor}">
+                        ${scoreDot}
+                        <span>${job.cvmatch_score}% Match</span>
+                    </span>
+                    <span class="text-[11px] font-bold text-slate-400">#${globalIdx + 1}</span>
                 </div>
-
             </div>
 
+            <!-- Line 2: Compensation, 0% Spread Guarantee & Overlap Skills -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2.5 text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="font-black text-xs sm:text-sm text-slate-950 bg-amber-50/70 border border-amber-200/80 px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-2xs">
+                        <i data-lucide="badge-dollar-sign" class="w-3.5 h-3.5 text-emerald-700"></i>
+                        <span>${cleanCompDisplay}</span>
+                    </span>
+                    <span class="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 hidden md:inline-flex">
+                        0% Recruiter Spread
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    ${matchedSkillsHtml ? `
+                        <span class="text-[11px] font-bold text-slate-500">Skills:</span>
+                        ${matchedSkillsHtml}
+                    ` : ''}
+                    <button type="button" onclick="window.toggleSkillGapDrawer('${containerId}_${globalIdx}')" class="text-[11px] font-bold px-2 py-0.5 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-950 transition cursor-pointer flex items-center gap-1" title="Inspect matched skills vs missing keywords">
+                        <i data-lucide="scan-search" class="w-3 h-3 text-amber-700"></i>
+                        <span>Skill Gap</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Line 3: Direct Action Toolbar -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2.5 border-t border-slate-100">
+                <div class="flex items-center gap-2 flex-wrap">
+                    ${pitchBtnHtml}
+                    ${alreadyAppliedBadgeHtml}
+                </div>
+                <div class="sm:w-auto w-full">
+                    ${applyBtnHtml}
+                </div>
+            </div>
+
+            <!-- Collapsible Skill Gap Drawer -->
+            <div id="skillGapDrawer_${containerId}_${globalIdx}" class="hidden mt-3 p-3.5 rounded-2xl bg-slate-50 border border-amber-200 text-xs transition-all">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-black text-slate-950 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+                        Resume Matcher &bull; Skill Gap Breakdown
+                    </span>
+                    <span class="text-[10px] font-bold text-slate-500">Vector Keyword Optimizer</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                    <div class="p-2.5 rounded-xl bg-white border border-emerald-200">
+                        <span class="text-[10px] font-black uppercase text-emerald-800 tracking-wider block mb-1">✓ Matched in Your Profile</span>
+                        <div class="flex flex-wrap gap-1">
+                            ${(job.matched_skills || []).slice(0, 6).map(s => `<span class="px-2 py-0.5 bg-emerald-50 text-emerald-900 border border-emerald-200 rounded font-bold text-[10px]">${s}</span>`).join('') || '<span class="text-slate-400 text-[10px]">Core stack matched</span>'}
+                        </div>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-white border border-amber-300">
+                        <span class="text-[10px] font-black uppercase text-amber-900 tracking-wider block mb-1">+ Recommended Gap Keywords</span>
+                        <div class="flex flex-wrap gap-1">
+                            ${(job.gap_skills || ['Docker', 'Kubernetes', 'Cloud']).slice(0, 4).map(s => `<span class="px-2 py-0.5 bg-amber-50 text-amber-950 border border-amber-300 rounded font-bold text-[10px]">+ ${s}</span>`).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-1.5 border-t border-slate-200 flex items-center justify-between">
+                    <p class="text-[11px] text-slate-700 font-medium">
+                        <strong class="text-slate-950 font-bold">Screening Edge:</strong> Adding these gap keywords lifts match score from <strong>${job.cvmatch_score}%</strong> to <strong>90%+</strong>.
+                    </p>
+                    <button type="button" onclick="window.generatePitchWithGaps('${containerId}', ${globalIdx})" class="text-[11px] font-black text-emerald-800 hover:text-emerald-950 underline cursor-pointer">Generate Gap-Tailored Pitch &rarr;</button>
+                </div>
+            </div>
         `;
 
         container.appendChild(card);
-
     });
 
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide && typeof lucide.createIcons === 'function') {
+        lucide.createIcons();
+    }
 
-    // Reattach event listeners
-
+    // Reattach event listeners for pitch, cover letter, save, and apply
     container.querySelectorAll(".generate-pitch-btn").forEach(btn => {
-
         btn.onclick = () => {
-
             const cId = btn.getAttribute("data-container");
-
-            const idx = parseInt(btn.getAttribute("data-idx"));
-
+            const idx = parseInt(btn.getAttribute("data-idx"), 10);
             const targetList = (cId === "linkedinCardsContainer") ? currentLinkedinJobs : (cId === "founderCardsWrapper" ? currentFounderJobs : currentAtsJobs);
-
             if (targetList && targetList[idx]) {
-
                 openPitchModal(targetList[idx]);
-
             }
-
         };
-
     });
 
     container.querySelectorAll(".generate-cover-letter-btn").forEach(btn => {
-
         btn.onclick = () => {
-
             const cId = btn.getAttribute("data-container");
-
-            const idx = parseInt(btn.getAttribute("data-idx"));
-
+            const idx = parseInt(btn.getAttribute("data-idx"), 10);
             const targetList = (cId === "linkedinCardsContainer") ? currentLinkedinJobs : (cId === "founderCardsWrapper" ? currentFounderJobs : currentAtsJobs);
-
             if (targetList && targetList[idx]) {
-
                 openCoverLetterModal(targetList[idx]);
-
             }
-
         };
-
     });
 
     container.querySelectorAll(".save-kanban-btn").forEach(btn => {
-
         btn.onclick = () => {
-
             const cId = btn.getAttribute("data-container");
-
-            const idx = parseInt(btn.getAttribute("data-idx"));
-
+            const idx = parseInt(btn.getAttribute("data-idx"), 10);
             const targetList = (cId === "linkedinCardsContainer") ? currentLinkedinJobs : (cId === "founderCardsWrapper" ? currentFounderJobs : currentAtsJobs);
-
             if (targetList && targetList[idx]) {
-
                 saveJobToTarget(targetList[idx]);
-
             }
-
         };
-
     });
 
     container.querySelectorAll(".direct-apply-link").forEach(link => {
-
         link.onclick = () => {
-
             const cId = link.getAttribute("data-container");
-
-            const idx = parseInt(link.getAttribute("data-idx"));
-
+            const idx = parseInt(link.getAttribute("data-idx"), 10);
             const targetList = (cId === "linkedinCardsContainer") ? currentLinkedinJobs : (cId === "founderCardsWrapper" ? currentFounderJobs : currentAtsJobs);
-
             if (targetList && targetList[idx]) {
-
                 trackJobApplication(targetList[idx]);
-
             }
-
         };
-
     });
-
 }
 
 window.renderJobCards = renderJobCards;
@@ -4859,34 +4416,14 @@ window.cancelOtpVerification = function() {
 // ==========================================
 // GOOGLE SIGN-IN & 0-OTP AUTH CONTROLLER
 // ==========================================
-window.handleGoogleSignInClick = async function() {
-    const errBox = document.getElementById("authErrorMessage");
-    const errText = document.getElementById("authErrorText");
-    if (errBox) errBox.classList.add("hidden");
-
-    if (window.google && window.google.accounts && window.google.accounts.id && window.GOOGLE_CLIENT_ID) {
-        try {
-            window.google.accounts.id.prompt((notification) => {
-                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                    promptDirectGoogleEmail();
-                }
-            });
-            return;
-        } catch (e) {
-            console.log("[GOOGLE_AUTH] GIS prompt note:", e);
-        }
-    }
-
-    promptDirectGoogleEmail();
+window.handleGoogleSignInClick = function(e) {
+    const googleBtn = document.getElementById("googleAuthBtn");
+    const googleLabel = document.getElementById("googleAuthBtnLabel");
+    if (googleLabel) googleLabel.textContent = "Connecting to Google...";
+    
+    // Direct official Google OAuth 2.0 Account Chooser (Standard pattern across GitHub, Linear, FundedNext)
+    window.location.href = "/api/auth/google/login";
 };
-
-function promptDirectGoogleEmail() {
-    const email = window.prompt("Enter your verified Google / Gmail account address to continue:");
-    if (!email) return;
-    const cleanEmail = email.trim().toLowerCase();
-    const name = cleanEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-    completeGoogleAuth({ email: cleanEmail, name: name });
-}
 
 window.handleGoogleCredentialResponse = function(response) {
     if (response && response.credential) {
@@ -5003,6 +4540,27 @@ window.initAuthSession = async function() {
     window.updateTopProfileBar();
     const token = localStorage.getItem("almond_session_token");
     const userId = localStorage.getItem("almond_user_id");
+
+    // Seamless Google OAuth callback handler
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const isLoginSuccess = urlParams.get("login") === "success" || sessionStorage.getItem("almond_login_event") === "google_success";
+        if (isLoginSuccess && isUserLoggedIn()) {
+            sessionStorage.removeItem("almond_login_event");
+            if (urlParams.get("login") === "success") {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            window.updateTopProfileBar();
+            setTimeout(() => {
+                if (typeof window.openProfileModal === "function") {
+                    window.openProfileModal();
+                }
+            }, 300);
+        }
+    } catch(e) {
+        console.warn("[Auth] OAuth landing handling note:", e);
+    }
+
     if (!token && !userId) return;
 
     try {
@@ -5940,6 +5498,7 @@ async function loadCuratedFeeds(withBespokeCuration = false) {
     const query = document.getElementById('curatedSearchInput')?.value || '';
     const category = document.getElementById('curatedCategorySelect')?.value || 'All';
     const timeFilter = document.getElementById('curatedTimeSelect')?.value || 'all';
+    const sortBy = document.getElementById('curatedSortSelect')?.value || 'latest';
     const userId = getCandidateUserId();
 
     if (withBespokeCuration) {
@@ -5959,6 +5518,7 @@ async function loadCuratedFeeds(withBespokeCuration = false) {
             query: query,
             category: category,
             time_filter: timeFilter,
+            sort_by: sortBy,
             limit: 30,
             offset: 0
         });
@@ -6022,6 +5582,9 @@ function renderCuratedCards(items, total) {
         const sponsorshipBadge = item.sponsorship === 'Visa Sponsored'
             ? `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-300 text-[10px] font-black">🛂 Visa Sponsored</span>`
             : '';
+        const pkgBadge = item.package_display
+            ? `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-300 text-[10px] font-black shadow-2xs">💰 ${item.package_display}</span>`
+            : '';
 
         let actionBtn = '';
         if (isLocked) {
@@ -6045,6 +5608,7 @@ function renderCuratedCards(items, total) {
                     <div class="flex items-center gap-2 flex-wrap">
                         <span class="text-xs font-black text-slate-900">${item.company}</span>
                         <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-bold uppercase tracking-wide">DIRECT FEED • ${provider.toUpperCase()}</span>
+                        ${pkgBadge}
                         ${sponsorshipBadge}
                         <span class="text-[10px] text-slate-400 font-semibold">${item.date_posted_str}</span>
                     </div>
@@ -6164,9 +5728,72 @@ window.setSalaryPreset = function(val) {
     const numberInput = document.getElementById("packageNumberInput");
     if (numberInput) {
         numberInput.value = val;
-        currentMinPackage = val;
     }
+    const slider = document.getElementById("packageSlider");
+    if (slider && slider.max) {
+        slider.value = Math.min(val, parseInt(slider.max));
+    }
+    currentMinPackage = val;
+    document.querySelectorAll(".salary-preset-btn").forEach(btn => {
+        const btnVal = parseFloat(btn.getAttribute("data-val") || btn.textContent.replace(/[^\d.]/g, '') || 0);
+        if (btnVal === val || (val === 0 && btn.textContent.toLowerCase().includes("no min"))) {
+            btn.className = "salary-preset-btn text-xs font-black px-3 py-1 rounded-xl bg-slate-950 text-white border-2 border-emerald-500 shadow-sm ring-1 ring-emerald-400 transition cursor-pointer";
+        } else {
+            btn.className = "salary-preset-btn text-xs font-bold px-3 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-slate-700 hover:text-emerald-950 border border-slate-200 transition cursor-pointer";
+        }
+    });
 };
+
+function initWorkArrangementControls() {
+    const workModeRadios = document.querySelectorAll('input[name="work_mode"]');
+    const empTypeRadios = document.querySelectorAll('input[name="employment_type"]');
+
+    function updateWorkModeUI() {
+        workModeRadios.forEach(radio => {
+            const label = radio.closest("label");
+            if (!label) return;
+            if (radio.checked) {
+                label.className = "work-mode-tab border border-slate-900 bg-slate-950 text-white rounded-xl py-1.5 px-0.5 text-center cursor-pointer flex items-center justify-center transition shadow-2xs font-black";
+            } else {
+                label.className = "work-mode-tab border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 px-0.5 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition shadow-2xs font-bold";
+            }
+        });
+    }
+
+    function updateEmpTypeUI() {
+        empTypeRadios.forEach(radio => {
+            const label = radio.closest("label");
+            if (!label) return;
+            if (radio.checked) {
+                label.className = "emp-type-tab border border-slate-900 bg-slate-950 text-white rounded-xl py-1.5 px-1 text-center cursor-pointer flex items-center justify-center transition shadow-2xs font-black";
+            } else {
+                label.className = "emp-type-tab border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 px-1 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition shadow-2xs font-bold";
+            }
+        });
+    }
+
+    workModeRadios.forEach(r => r.addEventListener("change", updateWorkModeUI));
+    empTypeRadios.forEach(r => r.addEventListener("change", updateEmpTypeUI));
+
+    document.querySelectorAll(".work-mode-tab").forEach(l => {
+        l.addEventListener("click", () => {
+            const input = l.querySelector('input[type="radio"]');
+            if (input) {
+                input.checked = true;
+                updateWorkModeUI();
+            }
+        });
+    });
+    document.querySelectorAll(".emp-type-tab").forEach(l => {
+        l.addEventListener("click", () => {
+            const input = l.querySelector('input[type="radio"]');
+            if (input) {
+                input.checked = true;
+                updateEmpTypeUI();
+            }
+        });
+    });
+}
 
 // Live Corporate ATS Hiring Ticker
 function initTelemetryTicker() {
@@ -6190,3 +5817,79 @@ function initTelemetryTicker() {
         }, 300);
     }, 3800);
 }
+
+
+// ====================================================================
+// Side Panel (Navigation Drawer) Controller
+// ====================================================================
+window.openSidePanel = function() {
+    const drawer = document.getElementById("sidePanel");
+    const backdrop = document.getElementById("sidePanelBackdrop");
+    if (!drawer || !backdrop) return;
+    
+    backdrop.classList.remove("opacity-0", "pointer-events-none");
+    backdrop.classList.add("opacity-100", "pointer-events-auto");
+    
+    drawer.classList.remove("-translate-x-full");
+    drawer.classList.add("translate-x-0");
+    
+    document.body.style.overflow = "hidden";
+    if (window.lucide) lucide.createIcons();
+};
+
+window.closeSidePanel = function() {
+    const drawer = document.getElementById("sidePanel");
+    const backdrop = document.getElementById("sidePanelBackdrop");
+    if (!drawer || !backdrop) return;
+    
+    backdrop.classList.remove("opacity-100", "pointer-events-auto");
+    backdrop.classList.add("opacity-0", "pointer-events-none");
+    
+    drawer.classList.remove("translate-x-0");
+    drawer.classList.add("-translate-x-full");
+    
+    document.body.style.overflow = "";
+};
+
+window.navigateFromSidePanel = function(actionType, param, query = "") {
+    window.closeSidePanel();
+    setTimeout(() => {
+        if (actionType === 'slide') {
+            window.goToSlide(param);
+        } else if (actionType === 'curated') {
+            if (typeof openCuratedFeedsModal === 'function') {
+                openCuratedFeedsModal(param, query);
+            }
+        } else if (actionType === 'kanban') {
+            if (typeof goToKanbanTabAndScroll === 'function') {
+                goToKanbanTabAndScroll();
+            } else {
+                window.goToSlide(3);
+                document.getElementById("tabKanbanTracker")?.click();
+            }
+        } else if (actionType === 'filter_search') {
+            if (typeof openCuratedFeedsModal === 'function') {
+                openCuratedFeedsModal('entrylevel', param);
+            }
+        } else if (actionType === 'who') {
+            if (typeof openHeroInfoModal === 'function') {
+                openHeroInfoModal('ats');
+            }
+        } else if (actionType === 'contribute') {
+            if (typeof openContributeModal === 'function') {
+                openContributeModal();
+            }
+        } else if (actionType === 'profile') {
+            if (typeof openProfileModal === 'function') {
+                openProfileModal();
+            }
+        }
+    }, 220);
+};
+
+// Keyboard listener for Escape key to close side panel
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        window.closeSidePanel();
+    }
+});

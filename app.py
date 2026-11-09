@@ -9,7 +9,7 @@ import time
 from typing import Optional
 
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, Body, Query, Request
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, Response, PlainTextResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, Response, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -50,6 +50,18 @@ _API_SEARCH_CACHE_TTL = 7200  # 2 Hours
 
 app = FastAPI(title="Almond Jobs - Direct Corporate Career Engine", version="2.0.0")
 
+@app.middleware("http")
+async def add_anti_cache_headers(request: Request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path == "/" or path.endswith((".html", ".js", ".css")):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
+
+
 # Security Hardening: Bot Shield & Rate Limiting Middleware
 app.add_middleware(BotShieldMiddleware)
 
@@ -86,10 +98,17 @@ async def add_performance_cache_headers(request: Request, call_next):
     response = await call_next(request)
     # Static assets (images, fonts, scripts): cache for 7 days with revalidation
     if path.startswith("/static/"):
-        response.headers["Cache-Control"] = "public, max-age=604800, stale-while-revalidate=86400"
+        if path.endswith(".js") or path.endswith(".css"):
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        else:
+            response.headers["Cache-Control"] = "public, max-age=86400"
     elif path == "/" or path.startswith("/jobs/"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
         # HTML pages: must revalidate so updates propagate immediately
-        response.headers["Cache-Control"] = "public, max-age=0, must-revalidate"
     return response
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -457,6 +476,174 @@ async def api_login(payload: dict = Body(...)):
         raise HTTPException(status_code=401, detail=res.get("message"))
     return JSONResponse(content=res)
 
+
+@app.get("/api/auth/google/config")
+async def api_google_config():
+    return JSONResponse(content={
+        "configured": Config.is_google_auth_configured(),
+        "client_id": Config.GOOGLE_CLIENT_ID
+    })
+
+@app.get("/api/auth/google/login")
+async def api_google_login(request: Request):
+    if not Config.GOOGLE_CLIENT_ID:
+        html_setup = """<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Google Sign-In Configuration Required</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 flex items-center justify-center min-h-screen p-4 font-sans">
+    <div class="max-w-md w-full bg-white rounded-3xl p-8 shadow-xl border border-slate-200 text-center space-y-4">
+        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto text-xl font-bold">!</div>
+        <h2 class="text-xl font-black text-slate-950">Google OAuth Credentials Needed</h2>
+        <p class="text-xs text-slate-600 leading-relaxed">
+            To enable real Google Account Chooser sign-in, please add your <strong>GOOGLE_CLIENT_ID</strong> and <strong>GOOGLE_CLIENT_SECRET</strong> from Google Cloud Console into <code>platform/.env</code>.
+        </p>
+        <div class="pt-4 border-t border-slate-100 flex flex-col gap-2">
+            <a href="/?login=manual" class="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-xs transition">
+                Return to Login with Email & Password
+            </a>
+            <a href="/" class="text-xs font-semibold text-slate-500 hover:text-slate-800">
+                Back to Almond Jobs Home
+            </a>
+        </div>
+    </div>
+</body>
+</html>"""
+        return HTMLResponse(content=html_setup, status_code=200)
+
+    import urllib.parse
+    # Construct base redirect uri
+    redirect_uri = str(request.url_for("api_google_callback"))
+    if request.headers.get("x-forwarded-proto") == "https" or "almondjobs.com" in request.headers.get("host", ""):
+        redirect_uri = redirect_uri.replace("http://", "https://")
+
+    params = {
+        "client_id": Config.GOOGLE_CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "prompt": "select_account",
+        "access_type": "offline"
+    }
+    google_auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(params)
+    return RedirectResponse(url=google_auth_url)
+
+@app.get("/api/auth/google/callback")
+async def api_google_callback(request: Request, code: str = None, error: str = None):
+    if error or not code:
+        return RedirectResponse(url="/?auth_error=" + (error or "cancelled"))
+
+    import urllib.parse
+    import urllib.request
+    import json
+    import base64
+
+    redirect_uri = str(request.url_for("api_google_callback"))
+    if request.headers.get("x-forwarded-proto") == "https" or "almondjobs.com" in request.headers.get("host", ""):
+        redirect_uri = redirect_uri.replace("http://", "https://")
+
+    token_url = "https://oauth2.googleapis.com/token"
+    token_data = urllib.parse.urlencode({
+        "code": code,
+        "client_id": Config.GOOGLE_CLIENT_ID,
+        "client_secret": Config.GOOGLE_CLIENT_SECRET,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code"
+    }).encode("utf-8")
+
+    try:
+        req = urllib.request.Request(token_url, data=token_data, headers={"Content-Type": "application/x-www-form-urlencoded"})
+        with urllib.request.urlopen(req) as resp:
+            token_payload = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        print(f"[AUTH_GOOGLE] Token exchange error: {e}")
+        return RedirectResponse(url="/?auth_error=exchange_failed")
+
+    id_token_str = token_payload.get("id_token", "")
+    email = ""
+    full_name = ""
+    google_id = ""
+
+    if id_token_str:
+        try:
+            token_parts = id_token_str.split(".")
+            if len(token_parts) >= 2:
+                payload_b64 = token_parts[1] + "=" * (-len(token_parts[1]) % 4)
+                jwt_payload = json.loads(base64.urlsafe_b64decode(payload_b64).decode("utf-8"))
+                email = jwt_payload.get("email", "").strip().lower()
+                full_name = jwt_payload.get("name", "").strip()
+                google_id = jwt_payload.get("sub", "").strip()
+        except Exception as e:
+            print(f"[AUTH_GOOGLE] JWT decode error: {e}")
+
+    # Fallback to UserInfo endpoint if email wasn't in id_token
+    access_token = token_payload.get("access_token", "")
+    if not email and access_token:
+        try:
+            userinfo_req = urllib.request.Request(
+                "https://www.googleapis.com/oauth2/v3/userinfo",
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            with urllib.request.urlopen(userinfo_req) as resp:
+                uinfo = json.loads(resp.read().decode("utf-8"))
+                email = uinfo.get("email", "").strip().lower()
+                full_name = uinfo.get("name", "").strip()
+                google_id = uinfo.get("sub", "").strip()
+        except Exception as e:
+            print(f"[AUTH_GOOGLE] UserInfo fetch error: {e}")
+
+    if not email:
+        return RedirectResponse(url="/?auth_error=no_email_returned")
+
+    # Log in or register the candidate
+    res = login_or_signup_google_user(email, full_name, google_id)
+    token = res.get("token", "")
+    user_id = res.get("user_id", "")
+    full_name = res.get("full_name", full_name or email.split("@")[0])
+    is_paid = "true" if res.get("is_paid") else "false"
+
+    clean_name = str(full_name).replace('"', '\\"').replace('\n', ' ')
+    clean_email = str(email).replace('"', '\\"').replace('\n', ' ')
+    clean_token = str(token).replace('"', '\\"')
+    clean_uid = str(user_id).replace('"', '\\"')
+
+    html_success = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Connecting to Almond Jobs...</title>
+</head>
+<body style="background:#f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">
+    <div style="background:white; padding:36px 48px; border-radius:24px; box-shadow:0 20px 40px rgba(0,0,0,0.08); text-align:center; max-width:400px; border:1px solid #e2e8f0;">
+        <div style="width:48px; height:48px; border-radius:50%; background:#ecfdf5; color:#059669; display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 16px;">✓</div>
+        <h3 style="margin:0 0 6px 0; color:#0f172a; font-size:18px; font-weight:800;">Welcome, {clean_name}</h3>
+        <p style="margin:0 0 16px 0; color:#64748b; font-size:13px;">Signed in as <strong>{clean_email}</strong></p>
+        <p style="margin:0; color:#94a3b8; font-size:12px;">Opening your Almond Jobs dashboard...</p>
+    </div>
+    <script>
+        try {{
+            localStorage.setItem("almond_session_token", "{clean_token}");
+            localStorage.setItem("almond_auth_token", "{clean_token}");
+            localStorage.setItem("almond_user_id", "{clean_uid}");
+            localStorage.setItem("almond_user_email", "{clean_email}");
+            localStorage.setItem("almond_user_name", "{clean_name}");
+            localStorage.setItem("almond_is_paid", "{is_paid}");
+            sessionStorage.setItem("almond_login_event", "google_success");
+        }} catch(e) {{
+            console.error("Storage error:", e);
+        }}
+        setTimeout(function() {{
+            window.location.href = "/?login=success";
+        }}, 400);
+    </script>
+</body>
+</html>"""
+    return HTMLResponse(content=html_success, status_code=200)
+
 @app.post("/api/auth/google")
 async def api_google_auth(payload: dict = Body(...)):
     credential = payload.get("credential", "").strip()
@@ -592,7 +779,12 @@ async def find_jobs(payload: dict = Body(...)):
     preferences = payload.get("preferences", {})
     user_id = payload.get("user_id", "")
     if not profile:
-        raise HTTPException(status_code=400, detail="Candidate profile is required.")
+        profile = {
+            "name": "Direct Candidate",
+            "role": preferences.get("role") or "Software Engineer / Professional",
+            "skills": ["Software", "Engineering", "Python", "Problem Solving", "Cloud"],
+            "yoe": 2
+        }
 
     # Concurrency limiter to protect thread pool from simultaneous bot attacks
     if not acquire_search_slot():
@@ -783,6 +975,7 @@ async def get_curated_feeds(
     query: str = Query(""),
     category: str = Query("All"),
     time_filter: str = Query("all"),
+    sort_by: str = Query("latest"),
     limit: int = Query(25),
     offset: int = Query(0),
     user_id: Optional[str] = Query(None)
@@ -794,6 +987,7 @@ async def get_curated_feeds(
         query=query,
         category=category,
         time_filter=time_filter,
+        sort_by=sort_by,
         limit=min(limit, 100),
         offset=offset,
         user_is_paid=user_paid

@@ -25,14 +25,14 @@ class TestCoffeeAndStepUpdates(unittest.TestCase):
         self.assertIn("browse files", self.html)
 
     def test_02_step1_and_step2_labels_and_colors(self):
-        """Verify Step 1 and Step 2 labels and dark forest green container on both."""
+        """Verify Step 1 and Step 2 labels and card containers on both."""
         self.assertIn("Step 1", self.html)
         self.assertIn("Candidate Profile", self.html)
         self.assertIn("Step 2", self.html)
         self.assertIn("Target Compensation &amp; Geography", self.html)
         
-        # Verify Step 2 criteria deck adapted the deep green gradient of Step 1
-        self.assertIn('linear-gradient(160deg, #112215 0%, #0a160d 100%)', self.html)
+        # Verify Step 1 and Step 2 decks are present
+        self.assertIn('id="candidate-cv-deck"', self.html)
         self.assertIn('id="criteria-deck"', self.html)
 
     def test_03_contribute_button_and_coffee_modal(self):

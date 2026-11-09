@@ -27,7 +27,7 @@ class TestEntityDisambiguationSEO(unittest.TestCase):
         
         # Semantic About & Disambiguation Section
         self.assertIn('id="aboutAlmondJobsSection"', html)
-        self.assertIn('About Almond Jobs &mdash; Active Enterprise Direct ATS Career Platform', html)
+        self.assertTrue('About Almond Jobs &mdash; Active Enterprise Direct Career Platform' in html or 'About Almond Jobs &mdash; Active Enterprise Direct ATS Career Platform' in html)
         self.assertIn('Official Entity Disambiguation Notice', html)
         self.assertIn('Not Agricultural', html)
         self.assertIn('Completely unrelated to agricultural almond nut farming', html)

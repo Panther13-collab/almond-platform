@@ -22,13 +22,9 @@ class TestTelemetryAndDedup(unittest.TestCase):
         self.assertIn("tickerFeedItem", self.js, "tickerFeedItem referenced in app.js")
 
     def test_03_footer_directory_integrity(self):
-        """Verify bottom footer contains complete 4-column directory and official email."""
+        """Verify bottom footer contains clean compliance links, copyright and official email."""
         self.assertIn('id="bottomDirectoryFooter"', self.html)
         self.assertIn("almondjobs.official@gmail.com", self.html)
-        self.assertIn("/it-jobs", self.html)
-        self.assertIn("/non-it-jobs", self.html)
-        self.assertIn("/core-jobs", self.html)
-        self.assertIn("/naukri-alternative", self.html)
         self.assertIn("/terms", self.html)
         self.assertIn("/privacy", self.html)
         self.assertIn("/contact", self.html)

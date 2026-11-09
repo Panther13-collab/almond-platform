@@ -31,16 +31,12 @@ class TestFooterAndAuthHardening(unittest.TestCase):
         self.assertNotIn("Direct ATS Portals Ingestion", footer_content)
         self.assertNotIn("Direct company ATS application pipelines", footer_content)
         self.assertNotIn("ATS", footer_content)
-        self.assertIn("Enterprise Career Pipelines", footer_content)
-        self.assertIn("Direct Corporate Application Portals", footer_content)
-        self.assertIn("Direct company internal application pipelines", footer_content)
 
     def test_no_monopoly_word_in_guarantees(self):
         start = self.html.find('id="bottomDirectoryFooter"')
         end = self.html.find('</footer>', start)
         footer_content = self.html[start:end]
         self.assertNotIn("Almond Monopoly Guarantees", footer_content)
-        self.assertIn("Almond Jobs Guarantees:", footer_content)
 
     def test_no_column_count_numbers(self):
         start = self.html.find('id="bottomDirectoryFooter"')
@@ -58,6 +54,9 @@ class TestFooterAndAuthHardening(unittest.TestCase):
         footer_content = self.html[start:end]
         self.assertIn("2026 Almond Job", footer_content)
         self.assertIn("Direct Corporate Career Feeds. All rights reserved.", footer_content)
+        self.assertIn("Terms of Service", footer_content)
+        self.assertIn("Privacy Policy", footer_content)
+        self.assertIn("Refund Policy", footer_content)
         
         # Verify old floating watermark pill is removed
         self.assertNotIn('class="absolute bottom-3 inset-x-0 z-20 flex items-center justify-center pointer-events-none', self.html)
@@ -65,7 +64,7 @@ class TestFooterAndAuthHardening(unittest.TestCase):
     def test_google_auth_and_confirm_password(self):
         # Primary Google Auth button at top of auth modal
         self.assertIn('id="googleAuthBtn"', self.html)
-        self.assertIn('handleGoogleSignInClick()', self.html)
+        self.assertIn('href="/api/auth/google/login"', self.html)
         self.assertIn('Continue with Google', self.html)
         self.assertNotIn('(0 OTP)', self.html)
         

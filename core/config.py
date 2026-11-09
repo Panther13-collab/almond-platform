@@ -23,6 +23,10 @@ class Config:
     RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "rzp_test_placeholder").strip()
     RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "test_secret_placeholder").strip()
 
+    # Google OAuth 2.0 Credentials (Google Cloud Console Web Client)
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
+
     # Outbound Transactional Email (SMTP - Gmail, Resend, Brevo, SendGrid, Amazon SES)
     SMTP_HOST = os.getenv("SMTP_HOST", "").strip()
     SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
@@ -45,3 +49,7 @@ class Config:
     @classmethod
     def is_smtp_configured(cls) -> bool:
         return bool(cls.SMTP_HOST and cls.SMTP_USER and cls.SMTP_PASS)
+
+    @classmethod
+    def is_google_auth_configured(cls) -> bool:
+        return bool(cls.GOOGLE_CLIENT_ID)
