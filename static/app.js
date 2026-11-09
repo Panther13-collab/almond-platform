@@ -690,6 +690,7 @@ const WORLDWIDE_LOCATIONS_DB = [
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
+    initTelemetryTicker();
 
     initResumeUpload();
 
@@ -6166,3 +6167,26 @@ window.setSalaryPreset = function(val) {
         currentMinPackage = val;
     }
 };
+
+// Live Corporate ATS Hiring Ticker
+function initTelemetryTicker() {
+    const tickerEl = document.getElementById("tickerFeedItem");
+    if (!tickerEl) return;
+    const feeds = [
+        "Stripe (Dublin) • 4 direct roles",
+        "Google (Bengaluru) • 7 SWE openings",
+        "Databricks (SF) • 3 ML engineers",
+        "Uber (Amsterdam) • 5 backend leads",
+        "OpenAI (Remote) • 2 research roles",
+        "Microsoft (Hyderabad) • 6 cloud architects"
+    ];
+    let idx = 0;
+    setInterval(() => {
+        idx = (idx + 1) % feeds.length;
+        tickerEl.style.opacity = "0";
+        setTimeout(() => {
+            tickerEl.textContent = feeds[idx];
+            tickerEl.style.opacity = "1";
+        }, 300);
+    }, 3800);
+}

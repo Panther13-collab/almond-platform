@@ -640,11 +640,13 @@
                 </div>
             </button>
 
-            <!-- Telemetry Feed (Middle): Visible on screens >= 640px -->
-            <div class="hidden sm:flex items-center gap-2 text-xs font-mono text-emerald-800 bg-emerald-50/90 border border-emerald-300/80 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full shadow-xs shrink-0">
+            <!-- Telemetry Feed & Live Corporate ATS Ticker (Middle) -->
+            <div id="liveTelemetryTicker" class="hidden sm:flex items-center gap-2 text-xs font-mono text-emerald-800 bg-emerald-50/90 border border-emerald-300/80 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full shadow-xs shrink-0">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
                 <span id="livePostingsCount" class="font-black text-slate-950">3,315,258</span>
-                <span class="text-emerald-800 font-bold hidden md:inline">Live Feed</span>
+                <span class="text-emerald-800 font-bold hidden md:inline">Live Feeds</span>
+                <span class="text-slate-300 hidden md:inline">|</span>
+                <span id="tickerFeedItem" class="text-emerald-900 font-semibold truncate max-w-[240px] hidden md:inline transition-opacity duration-300">Stripe (Dublin) • 4 new roles</span>
                 <span id="livePostingDelta" class="text-[10px] text-emerald-600 font-bold opacity-0 transition-opacity duration-300">+12</span>
             </div>
 
@@ -1694,6 +1696,8 @@
                     </h4>
                     <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] sm:text-[9.5px] text-slate-600">
                         <div class="space-y-0.5">
+                            <a href="/jobs/it-jobs" class="hover:text-violet-600 font-extrabold text-violet-700 transition block truncate">★ IT Jobs Direct</a>
+                            <a href="/it-jobs" class="hover:text-violet-600 font-bold transition block truncate">Tech Portals</a>
                             <a href="/jobs/software-engineer" class="hover:text-violet-600 transition block truncate">Software Engineer</a>
                             <a href="/jobs/full-stack-developer" class="hover:text-violet-600 transition block truncate">Full Stack Developer</a>
                             <a href="/jobs/backend-engineer" class="hover:text-violet-600 transition block truncate">Backend Engineer</a>
