@@ -1,0 +1,23 @@
+name: Almond Jobs 24/7 Keep-Alive Uptime Heartbeat
+
+on:
+  schedule:
+    # Runs every 10 minutes (Render Free tier sleeps after 15 min of inactivity)
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    name: Ping Almond Jobs Production
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Heartbeat to Almond Jobs
+        run: |
+          echo "Sending keep-alive ping to https://almondjobs.com/health at $(date -u)"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -m 20 "https://almondjobs.com/health" || echo "000")
+          echo "Endpoint /health returned HTTP status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "Health endpoint returned non-200. Pinging root homepage..."
+            curl -s -o /dev/null -w "%{http_code}" -m 25 "https://almondjobs.com/"
+          fi
+          echo "Heartbeat successful. Render instance kept warm."
