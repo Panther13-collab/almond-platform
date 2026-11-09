@@ -16,10 +16,13 @@ class TestPage4Purification(unittest.TestCase):
         self.assertTrue(footer_start != -1, "footer not found")
         self.p4 = self.html[p4_start:footer_start]
 
-        # Extract results scroll container
+        # Extract results scroll container cleanly up to its closing tag
         scroll_start = self.p4.find('id="resultsScrollContainer"')
         self.assertTrue(scroll_start != -1, "resultsScrollContainer not found")
-        self.scroll_chunk = self.p4[scroll_start:]
+        scroll_end = self.p4.find('<!-- /#resultsScrollContainer -->', scroll_start)
+        if scroll_end == -1:
+            scroll_end = self.p4.find('</div>', scroll_start + 500)
+        self.scroll_chunk = self.p4[scroll_start:scroll_end]
 
     def test_01_no_about_section_inside_scroll_container(self):
         """Verify that the 500-word #aboutAlmondJobsSection is NOT inside the scrollable job results flow."""
