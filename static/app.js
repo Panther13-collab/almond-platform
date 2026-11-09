@@ -1321,7 +1321,7 @@ function initCompensationControls() {
 
     const presetsContainer = document.getElementById("salaryPresetsContainer");
 
-    if (!numberInput || !slider) return;
+    if (!numberInput) return;
 
     const currencyConfig = {
 
@@ -1591,9 +1591,7 @@ function initCompensationControls() {
 
             numberInput.disabled = true;
 
-            slider.disabled = true;
-
-            slider.value = 0;
+            if (slider) { slider.disabled = true; slider.value = 0; }
 
             currentMinPackage = 0;
 
@@ -1605,19 +1603,15 @@ function initCompensationControls() {
 
         numberInput.disabled = false;
 
-        slider.disabled = false;
-
-        slider.min = cfg.min;
-
-        slider.max = cfg.max;
-
-        slider.step = cfg.step;
-
+        if (slider) {
+            slider.disabled = false;
+            slider.min = cfg.min;
+            slider.max = cfg.max;
+            slider.step = cfg.step;
+            slider.value = cfg.default;
+        }
         const val = cfg.default;
-
         numberInput.value = val;
-
-        slider.value = val;
 
         currentMinPackage = val;
 
@@ -1635,7 +1629,7 @@ function initCompensationControls() {
 
             btn.type = "button";
 
-            btn.className = "text-xs px-3 py-1 rounded-xl border border-emerald-600/50 bg-[#0a160d] text-emerald-200 hover:border-emerald-400 hover:text-white hover:bg-emerald-950 font-bold transition shadow-xs cursor-pointer";
+            btn.className = "salary-preset-btn text-xs px-3 py-1 rounded-xl border border-emerald-600/50 bg-[#0a160d] text-emerald-200 hover:border-emerald-400 hover:text-white hover:bg-emerald-950 font-bold transition shadow-xs cursor-pointer";
 
             btn.textContent = p.label;
 
@@ -1655,32 +1649,22 @@ function initCompensationControls() {
 
     }
 
-    // Sync slider to input
+    // Sync slider to input if present
+    if (slider) {
+        slider.addEventListener("input", (e) => {
+            const val = parseFloat(e.target.value);
+            numberInput.value = val;
+            currentMinPackage = val;
+        });
+    }
 
-    slider.addEventListener("input", (e) => {
-
-        const val = parseFloat(e.target.value);
-
-        numberInput.value = val;
-
-        currentMinPackage = val;
-
-    });
-
-    // Sync input to slider
-
+    // Sync input to state
     numberInput.addEventListener("input", (e) => {
-
         const val = parseFloat(e.target.value) || 0;
-
         currentMinPackage = val;
-
-        if (val <= parseFloat(slider.max)) {
-
+        if (slider && val <= parseFloat(slider.max)) {
             slider.value = val;
-
         }
-
     });
 
     // Currency tab switching
@@ -6174,3 +6158,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     } catch (e) {}
 });
+
+window.setSalaryPreset = function(val) {
+    const numberInput = document.getElementById("packageNumberInput");
+    if (numberInput) {
+        numberInput.value = val;
+        currentMinPackage = val;
+    }
+};
