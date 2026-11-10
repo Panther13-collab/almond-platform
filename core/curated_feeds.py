@@ -331,10 +331,144 @@ def get_feed_data(feed_type: str) -> List[Dict[str, Any]]:
     with _CACHE_LOCK:
         return _MEMORY_CACHE.get(feed_type, {}).get("data", [])
 
+US_STATE_CODES = {
+    'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA',
+    'KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+    'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT',
+    'VA','WA','WV','WI','WY','DC'
+}
+CA_PROVINCE_CODES = {'ON','BC','QC','AB','MB','SK','NS','NB','NL','PE'}
+
+def matches_country_filter(item: Dict[str, Any], target_country: str) -> bool:
+    """Matches a job against a requested country filter using name, aliases, states, and hubs."""
+    if not target_country or target_country.lower() in ["all", "any", "all locations", "all countries", "worldwide"]:
+        return True
+
+    t = target_country.strip().lower()
+    loc = (item.get("location") or "").lower()
+    locs_list = [l.lower() for l in (item.get("locations_list") or [])]
+    full_loc_text = " ".join([loc] + locs_list)
+    raw_loc = item.get("location") or ""
+
+    # Remote / Worldwide target
+    if t in ["remote", "worldwide", "remote / worldwide", "remote only"]:
+        return any(k in full_loc_text for k in ["remote", "worldwide", "anywhere", "global"])
+
+    # India target
+    if t in ["india", "in", "ind", "bharat"]:
+        if re.search(r'\bindia\b', full_loc_text):
+            return True
+        if any(c in full_loc_text for c in [
+            "bengaluru", "bangalore", "chennai", "hyderabad", "pune", "mumbai",
+            "delhi", "new delhi", "noida", "gurgaon", "gurugram", "kolkata",
+            "ahmedabad", "coimbatore", "kochi", "ernakulam", "trivandrum",
+            "thiruvananthapuram", "mysore", "chandigarh", "jaipur"
+        ]):
+            return True
+        return False
+
+    # United States / America / USA target
+    if t in ["united states", "america", "usa", "us", "united states (america)"]:
+        if any(k in full_loc_text for k in ["united states", "usa", "u.s.", "america"]):
+            return True
+        for st in US_STATE_CODES:
+            if re.search(r'[\s,]' + st + r'(\b|\+|$)', raw_loc):
+                return True
+        if any(c in full_loc_text for c in [
+            "san francisco", "sf", "silicon valley", "new york", "nyc", "seattle",
+            "austin", "chicago", "boston", "los angeles", "atlanta", "denver",
+            "palo alto", "mountain view", "sunnyvale", "san jose"
+        ]):
+            return True
+        return False
+
+    # United Kingdom target
+    if t in ["united kingdom", "uk", "great britain", "england", "scotland", "wales", "united kingdom (uk)"]:
+        if any(k in full_loc_text for k in ["united kingdom", "england", "scotland", "wales", "great britain"]):
+            return True
+        if re.search(r'[\s,]uk\b', full_loc_text):
+            return True
+        if any(c in full_loc_text for c in ["london", "manchester", "birmingham", "edinburgh", "bristol", "cambridge", "oxford", "glasgow", "leeds"]):
+            return True
+        return False
+
+    # Canada target
+    if t in ["canada", "can"]:
+        if "canada" in full_loc_text:
+            return True
+        for pr in CA_PROVINCE_CODES:
+            if re.search(r'[\s,]' + pr + r'(\b|\+|$)', raw_loc):
+                return True
+        if any(c in full_loc_text for c in ["toronto", "vancouver", "montreal", "ottawa", "waterloo", "calgary", "edmonton"]):
+            return True
+        return False
+
+    # Germany target
+    if t in ["germany", "deutschland", "de"]:
+        if any(k in full_loc_text for k in ["germany", "deutschland", "berlin", "munich", "frankfurt", "hamburg", "stuttgart"]):
+            return True
+        return False
+
+    # Australia target
+    if t in ["australia", "au"]:
+        if any(k in full_loc_text for k in ["australia", "sydney", "melbourne", "brisbane", "perth", "canberra"]):
+            return True
+        return False
+
+    # Netherlands target
+    if t in ["netherlands", "holland", "nl"]:
+        if any(k in full_loc_text for k in ["netherlands", "holland", "amsterdam", "rotterdam", "utrecht", "eindhoven", "the hague"]):
+            return True
+        return False
+
+    # Singapore target
+    if t in ["singapore", "sg"]:
+        return "singapore" in full_loc_text
+
+    # Ireland target
+    if t in ["ireland", "ie"]:
+        return any(k in full_loc_text for k in ["ireland", "dublin", "cork", "galway"])
+
+    # France target
+    if t in ["france", "fr"]:
+        return any(k in full_loc_text for k in ["france", "paris", "lyon", "toulouse"])
+
+    # Switzerland target
+    if t in ["switzerland", "ch"]:
+        return any(k in full_loc_text for k in ["switzerland", "zurich", "geneva", "lausanne", "basel"])
+
+    # UAE target
+    if t in ["united arab emirates", "uae", "dubai", "abu dhabi", "united arab emirates (uae)"]:
+        return any(k in full_loc_text for k in ["uae", "united arab emirates", "dubai", "abu dhabi"])
+
+    # Japan target
+    if t in ["japan", "jp"]:
+        return any(k in full_loc_text for k in ["japan", "tokyo", "osaka", "kyoto"])
+
+    # Spain target
+    if t in ["spain", "es"]:
+        return any(k in full_loc_text for k in ["spain", "madrid", "barcelona", "valencia"])
+
+    # Sweden
+    if t in ["sweden", "se"]:
+        return any(k in full_loc_text for k in ["sweden", "stockholm", "gothenburg"])
+
+    # Poland
+    if t in ["poland", "pl"]:
+        return any(k in full_loc_text for k in ["poland", "warsaw", "krakow", "wroclaw"])
+
+    # Brazil
+    if t in ["brazil", "br"]:
+        return any(k in full_loc_text for k in ["brazil", "brasil", "sao paulo", "rio"])
+
+    clean_t = re.sub(r'\(.*?\)', '', t).strip()
+    return clean_t in full_loc_text
+
 def query_curated_feed(
     feed_type: str = "internships",
     query: str = "",
     category: str = "All",
+    location: str = "all",
     time_filter: str = "all",
     sort_by: str = "latest",
     limit: int = 30,
@@ -354,6 +488,11 @@ def query_curated_feed(
     now_ts = int(time.time())
 
     for item in all_items:
+        # Location / Country filter
+        if location and location.lower() not in ["all", "any", "all locations", "all countries", "worldwide"]:
+            if not matches_country_filter(item, location):
+                continue
+
         # Category filter
         item_cat = (item.get("category") or "").lower()
         if category and category.lower() not in ["all", "any"]:

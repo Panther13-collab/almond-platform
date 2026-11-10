@@ -2519,7 +2519,7 @@
     </div>
 
         <!-- Scripts with Cache Busting Parameter -->
-    <script src="/static/app.js?v=20261109_v6_sort_navbar"></script>
+    <script src="/static/app.js?v=20261110_v7_curated_location_filter"></script>
     <script>
         lucide.createIcons();
     </script>
@@ -2579,13 +2579,31 @@
                         <option value="Product">Product Management</option>
                     </select>
 
-                    <!-- Recency Filter -->
-                    <select id="curatedTimeSelect" onchange="handleCuratedFilterChange()" class="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-violet-500 shadow-2xs cursor-pointer">
-                        <option value="all">All Active</option>
-                        <option value="24h">Past 24 Hours</option>
-                        <option value="7d">Past 7 Days</option>
-                        <option value="30d">Past 30 Days</option>
-                    </select>
+                    <!-- Searchable Country / Location Filter -->
+                    <div class="relative" id="curatedLocationDropdownContainer">
+                        <button type="button" id="curatedLocationTriggerBtn" onclick="toggleCuratedLocationDropdown(event)" class="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 hover:border-violet-400 focus:outline-none shadow-2xs cursor-pointer flex items-center justify-between gap-1.5 min-w-[155px] max-w-[210px]" title="Filter by Country / Location">
+                            <span id="curatedLocationTriggerText" class="truncate flex items-center gap-1.5">
+                                <span>🌐</span>
+                                <span>All Countries</span>
+                            </span>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                        </button>
+                        <input type="hidden" id="curatedLocationSelect" value="all">
+
+                        <!-- Dropdown Popover with Search Box on Top -->
+                        <div id="curatedLocationMenu" class="hidden absolute left-0 sm:right-0 sm:left-auto top-full mt-1.5 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 p-2 text-slate-900 animate-in fade-in space-y-1.5">
+                            <!-- Country Search Input on Top -->
+                            <div class="relative">
+                                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2"></i>
+                                <input type="text" id="curatedLocationSearchInput" oninput="filterCuratedLocationList(this.value)" placeholder="Search country (India, America...)" autocomplete="off" class="w-full pl-8 pr-2.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-violet-500 focus:bg-white text-slate-900 placeholder:text-slate-400">
+                            </div>
+
+                            <!-- Scrollable Countries List -->
+                            <div id="curatedLocationList" class="max-h-56 overflow-y-auto space-y-0.5 text-xs font-bold pr-1">
+                                <!-- Populated dynamically by app.js -->
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Flipkart / Amazon Style Sort Option -->
                     <select id="curatedSortSelect" onchange="handleCuratedFilterChange()" class="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-violet-500 shadow-2xs cursor-pointer" title="Sort verified job openings">

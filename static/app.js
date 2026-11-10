@@ -1,3 +1,137 @@
+// Curated Feeds Searchable Country/Location Filter Controller
+const CURATED_WORLD_COUNTRIES = [
+    { code: "all", name: "All Locations / Worldwide", flag: "🌐", keywords: "all worldwide global any remote" },
+    { code: "India", name: "India", flag: "🇮🇳", keywords: "india in ind bharat bangalore bengaluru chennai hyderabad mumbai pune delhi" },
+    { code: "United States", name: "United States (America)", flag: "🇺🇸", keywords: "united states america usa us u.s. california new york texas washington" },
+    { code: "United Kingdom", name: "United Kingdom (UK)", flag: "🇬🇧", keywords: "united kingdom uk britain england scotland wales london manchester" },
+    { code: "Canada", name: "Canada", flag: "🇨🇦", keywords: "canada can toronto vancouver montreal ontario" },
+    { code: "Germany", name: "Germany", flag: "🇩🇪", keywords: "germany deutschland de berlin munich frankfurt" },
+    { code: "Australia", name: "Australia", flag: "🇦🇺", keywords: "australia au aus sydney melbourne brisbane" },
+    { code: "France", name: "France", flag: "🇫🇷", keywords: "france fr paris lyon" },
+    { code: "Netherlands", name: "Netherlands", flag: "🇳🇱", keywords: "netherlands holland nl amsterdam" },
+    { code: "Singapore", name: "Singapore", flag: "🇸🇬", keywords: "singapore sg" },
+    { code: "Ireland", name: "Ireland", flag: "🇮🇪", keywords: "ireland ie dublin" },
+    { code: "Switzerland", name: "Switzerland", flag: "🇨🇭", keywords: "switzerland ch swiss zurich geneva" },
+    { code: "United Arab Emirates", name: "United Arab Emirates (UAE)", flag: "🇦🇪", keywords: "uae united arab emirates dubai abu dhabi" },
+    { code: "Spain", name: "Spain", flag: "🇪🇸", keywords: "spain espana es madrid barcelona" },
+    { code: "Japan", name: "Japan", flag: "🇯🇵", keywords: "japan tokyo jp" },
+    { code: "Sweden", name: "Sweden", flag: "🇸🇪", keywords: "sweden se stockholm" },
+    { code: "Poland", name: "Poland", flag: "🇵🇱", keywords: "poland pl warsaw krakow" },
+    { code: "Brazil", name: "Brazil", flag: "🇧🇷", keywords: "brazil brasil br sao paulo" },
+    { code: "Italy", name: "Italy", flag: "🇮🇹", keywords: "italy italia it rome milan" },
+    { code: "Mexico", name: "Mexico", flag: "🇲🇽", keywords: "mexico mx" },
+    { code: "South Africa", name: "South Africa", flag: "🇿🇦", keywords: "south africa za" },
+    { code: "New Zealand", name: "New Zealand", flag: "🇳🇿", keywords: "new zealand nz auckland" },
+    { code: "Austria", name: "Austria", flag: "🇦🇹", keywords: "austria at vienna" },
+    { code: "Belgium", name: "Belgium", flag: "🇧🇪", keywords: "belgium be brussels" },
+    { code: "Denmark", name: "Denmark", flag: "🇩🇰", keywords: "denmark dk copenhagen" },
+    { code: "Finland", name: "Finland", flag: "🇫🇮", keywords: "finland fi helsinki" },
+    { code: "Norway", name: "Norway", flag: "🇳🇴", keywords: "norway no oslo" },
+    { code: "Portugal", name: "Portugal", flag: "🇵🇹", keywords: "portugal pt lisbon porto" },
+    { code: "Israel", name: "Israel", flag: "🇮🇱", keywords: "israel il tel aviv" },
+    { code: "South Korea", name: "South Korea", flag: "🇰🇷", keywords: "korea south korea kr seoul" },
+    { code: "China", name: "China", flag: "🇨🇳", keywords: "china cn beijing shanghai" },
+    { code: "Saudi Arabia", name: "Saudi Arabia", flag: "🇸🇦", keywords: "saudi arabia sa riyadh" },
+    { code: "Argentina", name: "Argentina", flag: "🇦🇷", keywords: "argentina ar buenos aires" },
+    { code: "Chile", name: "Chile", flag: "🇨🇱", keywords: "chile cl santiago" },
+    { code: "Colombia", name: "Colombia", flag: "🇨🇴", keywords: "colombia co bogota" },
+    { code: "Czech Republic", name: "Czech Republic", flag: "🇨🇿", keywords: "czech republic cz prague" },
+    { code: "Greece", name: "Greece", flag: "🇬🇷", keywords: "greece gr athens" },
+    { code: "Hungary", name: "Hungary", flag: "🇭🇺", keywords: "hungary hu budapest" },
+    { code: "Indonesia", name: "Indonesia", flag: "🇮🇩", keywords: "indonesia id jakarta" },
+    { code: "Malaysia", name: "Malaysia", flag: "🇲🇾", keywords: "malaysia my kuala lumpur" },
+    { code: "Philippines", name: "Philippines", flag: "🇵🇭", keywords: "philippines ph manila" },
+    { code: "Thailand", name: "Thailand", flag: "🇹🇭", keywords: "thailand th bangkok" },
+    { code: "Vietnam", name: "Vietnam", flag: "🇻🇳", keywords: "vietnam vn hanoi ho chi minh" },
+    { code: "Turkey", name: "Turkey", flag: "🇹🇷", keywords: "turkey tr turkiye istanbul ankara" },
+    { code: "Egypt", name: "Egypt", flag: "🇪🇬", keywords: "egypt eg cairo" },
+    { code: "Nigeria", name: "Nigeria", flag: "🇳🇬", keywords: "nigeria ng lagos" },
+    { code: "Kenya", name: "Kenya", flag: "🇰🇪", keywords: "kenya ke nairobi" },
+    { code: "Remote", name: "Worldwide / Remote Only", flag: "🌐", keywords: "remote worldwide anywhere global" }
+];
+
+window.toggleCuratedLocationDropdown = function(event) {
+    if (event) event.stopPropagation();
+    const menu = document.getElementById('curatedLocationMenu');
+    if (!menu) return;
+    const isHidden = menu.classList.contains('hidden');
+    if (isHidden) {
+        menu.classList.remove('hidden');
+        renderCuratedLocationList();
+        setTimeout(() => {
+            const searchInput = document.getElementById('curatedLocationSearchInput');
+            if (searchInput) {
+                searchInput.value = "";
+                searchInput.focus();
+            }
+        }, 50);
+    } else {
+        menu.classList.add('hidden');
+    }
+};
+
+window.renderCuratedLocationList = function(filterQuery = "") {
+    const listEl = document.getElementById('curatedLocationList');
+    if (!listEl) return;
+    const currentVal = document.getElementById('curatedLocationSelect')?.value || 'all';
+    const q = filterQuery.trim().toLowerCase();
+
+    const filtered = CURATED_WORLD_COUNTRIES.filter(c => {
+        if (!q) return true;
+        return c.name.toLowerCase().includes(q) || c.keywords.toLowerCase().includes(q);
+    });
+
+    if (filtered.length === 0) {
+        listEl.innerHTML = `<div class="p-3 text-center text-xs text-slate-400 font-semibold">No countries matching "${filterQuery}"</div>`;
+        return;
+    }
+
+    listEl.innerHTML = filtered.map(c => {
+        const isSelected = c.code === currentVal;
+        const activeClass = isSelected ? "bg-violet-600 text-white font-black" : "text-slate-800 hover:bg-violet-50 hover:text-violet-950 font-bold";
+        return `
+            <button type="button" class="w-full text-left px-2.5 py-1.5 rounded-xl ${activeClass} flex items-center justify-between transition cursor-pointer text-xs" onclick="selectCuratedLocation('${c.code}', '${c.name.replace(/'/g, "\\'")}', '${c.flag}')">
+                <span class="flex items-center gap-2 truncate">
+                    <span>${c.flag}</span>
+                    <span class="truncate">${c.name}</span>
+                </span>
+                ${isSelected ? '<span class="text-xs">✓</span>' : ''}
+            </button>
+        `;
+    }).join("");
+};
+
+window.filterCuratedLocationList = function(query) {
+    renderCuratedLocationList(query);
+};
+
+window.selectCuratedLocation = function(code, name, flag) {
+    const hiddenInput = document.getElementById('curatedLocationSelect');
+    if (hiddenInput) hiddenInput.value = code;
+
+    const triggerText = document.getElementById('curatedLocationTriggerText');
+    if (triggerText) {
+        if (code === 'all') {
+            triggerText.innerHTML = `<span>🌐</span><span>All Countries</span>`;
+        } else {
+            triggerText.innerHTML = `<span>${flag}</span><span class="truncate">${name}</span>`;
+        }
+    }
+
+    const menu = document.getElementById('curatedLocationMenu');
+    if (menu) menu.classList.add('hidden');
+
+    handleCuratedFilterChange();
+};
+
+document.addEventListener('click', (e) => {
+    const container = document.getElementById('curatedLocationDropdownContainer');
+    const menu = document.getElementById('curatedLocationMenu');
+    if (container && menu && !container.contains(e.target)) {
+        menu.classList.add('hidden');
+    }
+});
+
 
 window.executeP2InternSearch = function() {
     const inp = document.getElementById("p2QuickKeywordInput");
@@ -5497,6 +5631,7 @@ async function loadCuratedFeeds(withBespokeCuration = false) {
 
     const query = document.getElementById('curatedSearchInput')?.value || '';
     const category = document.getElementById('curatedCategorySelect')?.value || 'All';
+    const location = document.getElementById('curatedLocationSelect')?.value || 'all';
     const timeFilter = document.getElementById('curatedTimeSelect')?.value || 'all';
     const sortBy = document.getElementById('curatedSortSelect')?.value || 'latest';
     const userId = getCandidateUserId();
@@ -5517,6 +5652,7 @@ async function loadCuratedFeeds(withBespokeCuration = false) {
             feed_type: currentCuratedFeedType,
             query: query,
             category: category,
+            location: location,
             time_filter: timeFilter,
             sort_by: sortBy,
             limit: 30,
