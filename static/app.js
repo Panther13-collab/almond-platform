@@ -4254,6 +4254,20 @@ window.handleWelcomeDone = function() {
     }
 };
 
+// Telemetry & Hardware Device Identification (Samsung, Poco, Pixel, iPhone, PC)
+if (typeof navigator !== "undefined" && navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+    try {
+        navigator.userAgentData.getHighEntropyValues(["model", "platform", "platformVersion"]).then(function(vals) {
+            if (vals.model) sessionStorage.setItem("almond_client_model", vals.model);
+            if (vals.platform) sessionStorage.setItem("almond_client_platform", vals.platform);
+        }).catch(function() {});
+    } catch(e) {}
+}
+
+window.getClientDeviceModel = function() {
+    return (typeof sessionStorage !== "undefined" && sessionStorage.getItem("almond_client_model")) || "";
+};
+
 window.handleAuthSubmit = async function(e) {
     if (e && e.preventDefault) e.preventDefault();
     const emailInput = document.getElementById("authEmailInput");
@@ -4362,7 +4376,7 @@ window.handleAuthSubmit = async function(e) {
         const resp = await fetch("/api/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password, device_model: window.getClientDeviceModel() })
         });
         const data = await resp.json();
 
@@ -4440,7 +4454,8 @@ window.handleVerifyOtpSubmit = async function() {
                 email: email,
                 otp: otp,
                 password: password,
-                full_name: fullName
+                full_name: fullName,
+                device_model: window.getClientDeviceModel()
             })
         });
         const data = await resp.json();
@@ -4578,10 +4593,11 @@ async function completeGoogleAuth(payload) {
     if (googleLabel) googleLabel.textContent = "Connecting with Google...";
 
     try {
+        const googlePayload = Object.assign({}, payload, { device_model: window.getClientDeviceModel() });
         const resp = await fetch("/api/auth/google", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(googlePayload)
         });
         const data = await resp.json();
         if (!resp.ok || data.status === "error") {

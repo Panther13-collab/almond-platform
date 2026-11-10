@@ -85,6 +85,9 @@
                         <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span> Live Telemetry
                         </span>
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 hidden sm:inline-flex">
+                            🛡️ Bot Filter Active
+                        </span>
                     </div>
                     <p class="text-xs text-slate-400">Executive Traffic, Engagements & Candidate Sign-ins</p>
                 </div>
@@ -115,22 +118,28 @@
 
         <!-- Section 1: KPI Metrics Grid -->
         <section>
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400">Core Telemetry & Engagements (100% Free)</h2>
-                <span class="text-xs text-slate-500">Anonymized salted device hashing</span>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                <div>
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                        Core Telemetry & Engagements
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-normal">Real Candidate Traffic</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Automated vulnerability scanners and crawler noise separated & filtered</p>
+                </div>
+                <span class="text-xs text-slate-500 font-mono">Salted Device Hashing &bull; Zero Cookies Required</span>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <!-- Card 1: Total Visits -->
-                <div class="card-surface p-5 rounded-2xl relative overflow-hidden group">
-                    <div class="text-xs font-medium text-slate-400">Total Visits</div>
+                <!-- Card 1: Verified Candidate Visits -->
+                <div class="card-surface p-5 rounded-2xl relative overflow-hidden group border-amber-500/20 bg-amber-500/[0.02]">
+                    <div class="text-xs font-medium text-amber-300">Verified Visits</div>
                     <div class="text-2xl lg:text-3xl font-extrabold text-white mt-2 font-mono">{{ analytics.total_pageviews }}</div>
-                    <div class="text-[11px] text-slate-500 mt-1">All-time page hits</div>
+                    <div class="text-[11px] text-slate-400 mt-1">Real candidate hits</div>
                     <div class="absolute -right-2 -bottom-2 text-amber-500/10 text-5xl font-mono select-none pointer-events-none font-bold">#</div>
                 </div>
 
-                <!-- Card 2: Today's Visits -->
-                <div class="card-surface p-5 rounded-2xl relative overflow-hidden group border-amber-500/30 bg-amber-500/[0.03]">
+                <!-- Card 2: Today's Real Visits -->
+                <div class="card-surface p-5 rounded-2xl relative overflow-hidden group border-amber-500/30 bg-amber-500/[0.04]">
                     <div class="text-xs font-medium text-amber-300 flex items-center justify-between">
                         <span>Today's Visits</span>
                         <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
@@ -139,28 +148,34 @@
                     <div class="text-[11px] text-amber-200/60 mt-1">Hits logged today</div>
                 </div>
 
-                <!-- Card 3: Unique Visitors -->
+                <!-- Card 3: Unique Candidates -->
                 <div class="card-surface p-5 rounded-2xl relative overflow-hidden group">
-                    <div class="text-xs font-medium text-slate-400">Unique Visitors</div>
+                    <div class="text-xs font-medium text-slate-400">Unique Candidates</div>
                     <div class="text-2xl lg:text-3xl font-extrabold text-sky-400 mt-2 font-mono">{{ analytics.unique_visitors_total }}</div>
                     <div class="text-[11px] text-slate-500 mt-1">Distinct candidates</div>
                 </div>
 
-                <!-- Card 4: Today's Uniques -->
-                <div class="card-surface p-5 rounded-2xl relative overflow-hidden group">
-                    <div class="text-xs font-medium text-slate-400">Today's Uniques</div>
-                    <div class="text-2xl lg:text-3xl font-extrabold text-indigo-400 mt-2 font-mono">{{ analytics.today_unique_visitors }}</div>
-                    <div class="text-[11px] text-slate-500 mt-1">New visitors today</div>
+                <!-- Card 4: Security Shield Filtered -->
+                <div class="card-surface p-5 rounded-2xl relative overflow-hidden group border-rose-500/20 bg-rose-500/[0.03]">
+                    <div class="text-xs font-medium text-rose-300 flex items-center justify-between">
+                        <span>Bot Probes Blocked</span>
+                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono">FILTERED</span>
+                    </div>
+                    <div class="text-2xl lg:text-3xl font-extrabold text-rose-400 mt-2 font-mono">{{ analytics.bot_probes_total }}</div>
+                    <div class="text-[11px] text-rose-200/60 mt-1">WP & scanner probes</div>
                 </div>
 
-                <!-- Card 5: Registered Candidates -->
+                <!-- Card 5: Registered Candidates Directory -->
                 <div class="card-surface p-5 rounded-2xl relative overflow-hidden group border-emerald-500/20 bg-emerald-500/[0.03]">
-                    <div class="text-xs font-medium text-emerald-400">Registered Users</div>
-                    <div class="text-2xl lg:text-3xl font-extrabold text-emerald-400 mt-2 font-mono">{{ analytics.total_users }}</div>
+                    <div class="text-xs font-medium text-emerald-400 flex items-center justify-between">
+                        <span>Registered Users</span>
+                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">SUPABASE</span>
+                    </div>
+                    <div class="text-2xl lg:text-3xl font-extrabold text-emerald-400 mt-2 font-mono">{{ candidates|length }}</div>
                     <div class="text-[11px] text-emerald-300/60 mt-1">Candidate accounts</div>
                 </div>
 
-                <!-- Card 6: VIP Subscribers -->
+                <!-- Card 6: VIP Pro Candidates -->
                 <div class="card-surface p-5 rounded-2xl relative overflow-hidden group border-purple-500/20 bg-purple-500/[0.03]">
                     <div class="text-xs font-medium text-purple-300">VIP Candidates</div>
                     <div class="text-2xl lg:text-3xl font-extrabold text-purple-300 mt-2 font-mono">{{ analytics.paid_users }}</div>
@@ -169,16 +184,16 @@
             </div>
         </section>
 
-        <!-- Section 2: Analytics & Insights Breakdown -->
+        <!-- Section 2: Hardware Device Breakdown & Top Visited Routes -->
         <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Left: Device Breakdown & Traffic Ratio -->
+            <!-- Left: Device & Hardware Model Breakdown -->
             <div class="card-surface p-6 rounded-2xl space-y-5">
                 <div class="flex items-center justify-between border-b border-white/5 pb-3">
                     <h3 class="font-bold text-sm text-white flex items-center gap-2">
                         <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                        Device Breakdown
+                        Device & Hardware Breakdown
                     </h3>
-                    <span class="text-xs text-slate-400">Candidate Platforms</span>
+                    <span class="text-xs text-slate-400">Mobile & Desktop</span>
                 </div>
 
                 <div class="space-y-4">
@@ -191,7 +206,7 @@
                         <div class="bg-sky-400 h-full rounded-full transition-all duration-500" style="width: {{ mobile_pct }}%"></div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3 pt-2">
+                    <div class="grid grid-cols-2 gap-3 pt-1">
                         <div class="p-3 rounded-xl bg-slate-900/60 border border-white/5">
                             <div class="flex items-center gap-2 text-xs font-semibold text-amber-400">
                                 <span class="w-2 h-2 rounded-full bg-amber-400"></span> Desktop / Laptop
@@ -207,29 +222,75 @@
                         </div>
                     </div>
 
+                    <!-- Detected Hardware Models List -->
+                    <div class="pt-2">
+                        <div class="text-xs font-semibold text-slate-300 mb-2 flex items-center justify-between">
+                            <span>Detected Hardware Models</span>
+                            <span class="text-[10px] text-amber-400 font-mono">Live Hardware Feed</span>
+                        </div>
+                        <div class="space-y-2">
+                            {% for dev in analytics.hardware_devices %}
+                            <div class="p-2.5 rounded-xl bg-slate-900/70 border border-white/5 flex items-center justify-between text-xs hover:border-amber-400/30 transition">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-amber-400 font-mono text-sm">
+                                        {% if 'poco' in dev.model.lower() or 'xiaomi' in dev.model.lower() or 'samsung' in dev.model.lower() or 'pixel' in dev.model.lower() or 'iphone' in dev.model.lower() or 'android' in dev.model.lower() %}📱{% else %}💻{% endif %}
+                                    </span>
+                                    <div>
+                                        <div class="font-medium text-white">{{ dev.model }}</div>
+                                        <div class="text-[10px] text-slate-400">{{ dev.brand }}</div>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                                    {{ dev.hits }} hits
+                                </span>
+                            </div>
+                            {% else %}
+                            <div class="p-3 rounded-xl bg-slate-900/50 border border-white/5 text-xs text-slate-400 text-center">
+                                Detailed hardware models populate as candidates browse & sign in.
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
                     <div class="p-3 rounded-xl bg-amber-500/[0.04] border border-amber-500/20 text-xs text-slate-300">
-                        💡 <strong class="text-amber-300">Tip:</strong> Mobile candidates benefit from the streamlined single-column search flow and touch-optimized application cards.
+                        💡 <strong class="text-amber-300">Hardware Detection:</strong> Detects Poco M2 Pro, Samsung Galaxy A/S series, iPhones, and Windows 11/Mac desktop environments automatically.
                     </div>
                 </div>
             </div>
 
-            <!-- Middle: Top Visited Pages & Candidate Search Intent -->
+            <!-- Middle: Top Visited Routes with Security Shield Probes Switcher -->
             <div class="card-surface p-6 rounded-2xl space-y-4 lg:col-span-2">
-                <div class="flex items-center justify-between border-b border-white/5 pb-3">
-                    <h3 class="font-bold text-sm text-white flex items-center gap-2">
-                        <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                        Top Visited Routes & Career Landing Pages
-                    </h3>
-                    <span class="text-xs text-slate-400">Real-time engagement</span>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
+                    <div>
+                        <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                            <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            Top Visited Routes & Career Landing Pages
+                        </h3>
+                        <span class="text-xs text-slate-400">Audit candidate intent vs security probe noise</span>
+                    </div>
+
+                    <!-- Interactive Route Tabs -->
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="tab-btn-verified" onclick="switchRouteTab('verified')" 
+                                class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 transition">
+                            Verified Candidate Routes
+                        </button>
+                        <button type="button" id="tab-btn-probes" onclick="switchRouteTab('probes')" 
+                                class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 border border-white/5 hover:text-white transition flex items-center gap-1.5">
+                            <span>Security Probes Blocked</span>
+                            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-500/20 text-rose-300 font-mono">{{ analytics.bot_probes_total }}</span>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="overflow-x-auto">
+                <!-- Table 1: Verified Candidate Routes -->
+                <div id="table-verified-routes" class="overflow-x-auto">
                     <table class="w-full text-left text-xs">
                         <thead>
                             <tr class="text-slate-400 border-b border-white/5 font-semibold">
-                                <th class="pb-2.5">Route / URL</th>
-                                <th class="pb-2.5 text-right">Total Hits</th>
-                                <th class="pb-2.5 text-right">Unique Visitors</th>
+                                <th class="pb-2.5">Candidate Route / URL</th>
+                                <th class="pb-2.5 text-right">Candidate Hits</th>
+                                <th class="pb-2.5 text-right">Unique Candidates</th>
                                 <th class="pb-2.5 text-right">Status</th>
                             </tr>
                         </thead>
@@ -245,12 +306,44 @@
                                 <td class="py-2.5 text-right font-mono font-bold text-white">{{ page.hits }}</td>
                                 <td class="py-2.5 text-right font-mono text-slate-300">{{ page.uniques }}</td>
                                 <td class="py-2.5 text-right">
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Indexed</span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Verified Real</span>
                                 </td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="4" class="py-4 text-center text-slate-500">No pages recorded yet. Visits will populate in real time!</td>
+                                <td colspan="4" class="py-4 text-center text-slate-500">No candidate pages recorded yet. Visits will populate in real time!</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Table 2: Filtered Scanner Probes (Initially Hidden) -->
+                <div id="table-probes-routes" class="overflow-x-auto hidden">
+                    <table class="w-full text-left text-xs">
+                        <thead>
+                            <tr class="text-slate-400 border-b border-white/5 font-semibold">
+                                <th class="pb-2.5">Vulnerability Probe Target</th>
+                                <th class="pb-2.5 text-right">Probe Hits</th>
+                                <th class="pb-2.5 text-right">Distinct Scanners</th>
+                                <th class="pb-2.5 text-right">Shield Protection</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5">
+                            {% for probe in analytics.top_blocked_probes %}
+                            <tr class="hover:bg-white/[0.02] transition">
+                                <td class="py-2.5 font-mono text-rose-300 font-medium">
+                                    {{ probe.path }}
+                                </td>
+                                <td class="py-2.5 text-right font-mono font-bold text-rose-400">{{ probe.hits }}</td>
+                                <td class="py-2.5 text-right font-mono text-slate-400">{{ probe.uniques }}</td>
+                                <td class="py-2.5 text-right">
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/20">Filtered Noise</span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="py-4 text-center text-slate-500">No scanner probes logged. Your firewall is clean!</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -269,13 +362,13 @@
                             {{ candidates|length }} Users
                         </span>
                     </div>
-                    <p class="text-xs text-slate-400 mt-1">Real-time candidate log: Accounts registered via Google OAuth or Verified OTP</p>
+                    <p class="text-xs text-slate-400 mt-1">Real-time candidate log: Accounts registered via Google OAuth or Verified OTP with exact hardware device</p>
                 </div>
 
                 <div class="flex items-center gap-3">
                     <div class="relative">
-                        <input type="text" id="candidate-search" placeholder="Search by email or name..." 
-                               class="px-3.5 py-2 pl-9 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-400 w-56 sm:w-64">
+                        <input type="text" id="candidate-search" placeholder="Search by email, name, or device..." 
+                               class="px-3.5 py-2 pl-9 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-400 w-64 sm:w-72 font-sans">
                         <svg class="w-4 h-4 text-slate-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
 
@@ -295,6 +388,7 @@
                             <th class="py-3 px-4">Candidate</th>
                             <th class="py-3 px-4">Email Address</th>
                             <th class="py-3 px-4">Sign-In Method</th>
+                            <th class="py-3 px-4">Device / Hardware Model</th>
                             <th class="py-3 px-4">Plan / Status</th>
                             <th class="py-3 px-4">VIP Access</th>
                             <th class="py-3 px-4 text-right">Joined Date & Time</th>
@@ -311,21 +405,28 @@
                                     <span class="candidate-name">{{ user.full_name }}</span>
                                 </div>
                             </td>
-                            <td class="py-3 px-4 font-mono text-slate-300 candidate-email">
-                                {{ user.email }}
+                            <td class="py-3 px-4 font-mono text-slate-200 candidate-email font-medium">
+                                <a href="mailto:{{ user.email }}" class="hover:text-amber-300 transition flex items-center gap-1.5">
+                                    {{ user.email }}
+                                </a>
                             </td>
-                            <td class="py-3 px-4">
+                            <td class="py-3 px-4 candidate-provider">
                                 {% if user.auth_provider == 'google' or 'google' in user.email %}
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/20">
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/20">
                                     <svg class="w-3 h-3" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
                                     Google OAuth
                                 </span>
                                 {% else %}
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-500/10 text-sky-300 border border-sky-500/20">
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-500/10 text-sky-300 border border-sky-500/20">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                                     Email OTP
                                 </span>
                                 {% endif %}
+                            </td>
+                            <td class="py-3 px-4 candidate-device">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-900 border border-white/10 text-slate-200 font-mono">
+                                    {{ user.device_display }}
+                                </span>
                             </td>
                             <td class="py-3 px-4">
                                 <span class="font-mono text-slate-300 uppercase text-[11px] font-semibold">
@@ -349,7 +450,7 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="6" class="py-8 text-center text-slate-500">No candidates registered yet.</td>
+                            <td colspan="7" class="py-8 text-center text-slate-500">No candidates registered yet.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -430,12 +531,39 @@
     <footer class="card-surface border-t border-white/10 py-6 px-6 text-center text-xs text-slate-500">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
             <span>&copy; 2026 Almond Jobs Technologies. Internal Executive Telemetry.</span>
-            <span class="font-mono text-[11px] text-slate-400">Security Mode: Salted Token Hashing &bull; GDPR Compliant</span>
+            <span class="font-mono text-[11px] text-slate-400">Security Mode: Bot Shield &bull; Salted Token Hashing &bull; GDPR Compliant</span>
         </div>
     </footer>
 
-    <!-- Instant Search Filter Script -->
+    <!-- Interactive Scripts for Route Tabs and Instant Search Filter -->
     <script>
+        function switchRouteTab(tab) {
+            const tableVerified = document.getElementById('table-verified-routes');
+            const tableProbes = document.getElementById('table-probes-routes');
+            const btnVerified = document.getElementById('tab-btn-verified');
+            const btnProbes = document.getElementById('tab-btn-probes');
+
+            if (tab === 'verified') {
+                if (tableVerified) tableVerified.classList.remove('hidden');
+                if (tableProbes) tableProbes.classList.add('hidden');
+                if (btnVerified) {
+                    btnVerified.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 transition';
+                }
+                if (btnProbes) {
+                    btnProbes.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 border border-white/5 hover:text-white transition flex items-center gap-1.5';
+                }
+            } else {
+                if (tableVerified) tableVerified.classList.add('hidden');
+                if (tableProbes) tableProbes.classList.remove('hidden');
+                if (btnProbes) {
+                    btnProbes.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40 transition flex items-center gap-1.5';
+                }
+                if (btnVerified) {
+                    btnVerified.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 border border-white/5 hover:text-white transition';
+                }
+            }
+        }
+
         const searchInput = document.getElementById('candidate-search');
         if (searchInput) {
             searchInput.addEventListener('input', function(e) {
@@ -444,7 +572,9 @@
                 rows.forEach(row => {
                     const name = (row.querySelector('.candidate-name')?.textContent || '').toLowerCase();
                     const email = (row.querySelector('.candidate-email')?.textContent || '').toLowerCase();
-                    if (name.includes(query) || email.includes(query)) {
+                    const device = (row.querySelector('.candidate-device')?.textContent || '').toLowerCase();
+                    const provider = (row.querySelector('.candidate-provider')?.textContent || '').toLowerCase();
+                    if (name.includes(query) || email.includes(query) || device.includes(query) || provider.includes(query)) {
                         row.style.display = '';
                     } else {
                         row.style.display = 'none';

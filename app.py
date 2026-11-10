@@ -30,7 +30,8 @@ from core.auth_db import (
     signup_user, login_user, is_user_paid, verify_session_token, get_user_profile,
     get_user_kanban, save_user_kanban_application, sync_full_kanban,
     send_signup_otp, verify_otp_and_signup, login_or_signup_google_user,
-    record_page_visit, get_analytics_summary, get_all_users_admin
+    record_page_visit, get_analytics_summary, get_all_users_admin,
+    parse_device_hardware, is_bot_or_scanner
 )
 from core.payment import create_razorpay_order, verify_razorpay_signature
 from core.security import BotShieldMiddleware, validate_uploaded_file, acquire_search_slot, release_search_slot
@@ -91,7 +92,15 @@ async def add_performance_cache_headers(request: Request, call_next):
                 client_ip = forwarded.split(",")[0].strip()
             user_agent = request.headers.get("user-agent", "")
             referrer = request.headers.get("referer", "")
-            record_page_visit(path, client_ip, user_agent, referrer)
+            model_hint = request.headers.get("sec-ch-ua-model", "").strip('"')
+            plat_hint = request.headers.get("sec-ch-ua-platform", "").strip('"')
+            plat_ver = request.headers.get("sec-ch-ua-platform-version", "").strip('"')
+            client_hints = {
+                "model": model_hint,
+                "platform": plat_hint,
+                "platform_version": plat_ver
+            }
+            record_page_visit(path, client_ip, user_agent, referrer, client_hints=client_hints)
         except Exception:
             pass
 
@@ -390,13 +399,14 @@ async def export_candidates_csv(request: Request, key: Optional[str] = Query(Non
     candidates = get_all_users_admin()
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["Candidate ID", "Full Name", "Email", "Sign-in Provider", "Plan", "VIP Status", "Registration Date"])
+    writer.writerow(["Candidate ID", "Full Name", "Email", "Sign-in Provider", "Device / Hardware Model", "Plan", "VIP Status", "Registration Date"])
     for c in candidates:
         writer.writerow([
             c.get("id", ""),
             c.get("full_name", ""),
             c.get("email", ""),
             c.get("auth_provider", "email"),
+            c.get("device_display", "Desktop / Web Browser"),
             c.get("plan", "free"),
             "VIP ACTIVE" if c.get("is_paid") else "Standard Free",
             c.get("created_at_str", "")
@@ -430,6 +440,16 @@ async def upload_resume(file: UploadFile = File(...)):
 
     return JSONResponse(content={"status": "success", "profile": profile})
 
+def _resolve_request_device(request: Request, payload_device: str = "") -> str:
+    if payload_device and payload_device.strip():
+        return payload_device.strip()
+    ua = request.headers.get("user-agent", "")
+    model_hint = request.headers.get("sec-ch-ua-model", "").strip('"')
+    plat_hint = request.headers.get("sec-ch-ua-platform", "").strip('"')
+    plat_ver = request.headers.get("sec-ch-ua-platform-version", "").strip('"')
+    dev_info = parse_device_hardware(ua, {"model": model_hint, "platform": plat_hint, "platform_version": plat_ver})
+    return dev_info.get("display") or dev_info.get("model") or "Desktop Browser"
+
 @app.post("/api/auth/send-otp")
 async def api_send_otp(payload: dict = Body(...)):
     email = payload.get("email", "")
@@ -441,37 +461,40 @@ async def api_send_otp(payload: dict = Body(...)):
     return JSONResponse(content=res)
 
 @app.post("/api/auth/verify-otp-and-signup")
-async def api_verify_otp_and_signup(payload: dict = Body(...)):
+async def api_verify_otp_and_signup(request: Request, payload: dict = Body(...)):
     email = payload.get("email", "")
     otp = payload.get("otp", "")
     password = payload.get("password", "")
     full_name = payload.get("full_name", "")
+    device_model = _resolve_request_device(request, payload.get("device_model", ""))
     if not email or not otp or not password:
         raise HTTPException(status_code=400, detail="Email, verification code, and password are required.")
-    res = verify_otp_and_signup(email, otp, password, full_name)
+    res = verify_otp_and_signup(email, otp, password, full_name, device_model=device_model)
     if res.get("status") == "error":
         raise HTTPException(status_code=400, detail=res.get("message"))
     return JSONResponse(content=res)
 
 @app.post("/api/auth/signup")
-async def api_signup(payload: dict = Body(...)):
+async def api_signup(request: Request, payload: dict = Body(...)):
     email = payload.get("email", "")
     password = payload.get("password", "")
     full_name = payload.get("full_name", "")
+    device_model = _resolve_request_device(request, payload.get("device_model", ""))
     if not email or not password:
         raise HTTPException(status_code=400, detail="Email and password are required.")
-    res = signup_user(email, password, full_name)
+    res = signup_user(email, password, full_name, device_model=device_model)
     if res.get("status") == "error":
         raise HTTPException(status_code=400, detail=res.get("message"))
     return JSONResponse(content=res)
 
 @app.post("/api/auth/login")
-async def api_login(payload: dict = Body(...)):
+async def api_login(request: Request, payload: dict = Body(...)):
     email = payload.get("email", "")
     password = payload.get("password", "")
+    device_model = _resolve_request_device(request, payload.get("device_model", ""))
     if not email or not password:
         raise HTTPException(status_code=400, detail="Email and password are required.")
-    res = login_user(email, password)
+    res = login_user(email, password, device_model=device_model)
     if res.get("status") == "error":
         raise HTTPException(status_code=401, detail=res.get("message"))
     return JSONResponse(content=res)
@@ -599,8 +622,11 @@ async def api_google_callback(request: Request, code: str = None, error: str = N
     if not email:
         return RedirectResponse(url="/?auth_error=no_email_returned")
 
-    # Log in or register the candidate
-    res = login_or_signup_google_user(email, full_name, google_id)
+    # Detect device hardware model
+    detected_device = _resolve_request_device(request)
+
+    # Log in or register the candidate with exact device logging
+    res = login_or_signup_google_user(email, full_name, google_id, device_model=detected_device)
     token = res.get("token", "")
     user_id = res.get("user_id", "")
     full_name = res.get("full_name", full_name or email.split("@")[0])
@@ -645,11 +671,12 @@ async def api_google_callback(request: Request, code: str = None, error: str = N
     return HTMLResponse(content=html_success, status_code=200)
 
 @app.post("/api/auth/google")
-async def api_google_auth(payload: dict = Body(...)):
+async def api_google_auth(request: Request, payload: dict = Body(...)):
     credential = payload.get("credential", "").strip()
     email = payload.get("email", "").strip().lower()
     full_name = payload.get("name", "").strip()
     google_id = payload.get("google_id", "").strip()
+    device_model = _resolve_request_device(request, payload.get("device_model", ""))
 
     # Parse and extract verified claims from Google Identity Services JWT credential
     if credential and not email:
@@ -670,7 +697,7 @@ async def api_google_auth(payload: dict = Body(...)):
     if not email:
         raise HTTPException(status_code=400, detail="Google authentication did not provide a valid email.")
 
-    res = login_or_signup_google_user(email, full_name, google_id)
+    res = login_or_signup_google_user(email, full_name, google_id, device_model=device_model)
     if res.get("status") == "error":
         raise HTTPException(status_code=400, detail=res.get("message"))
     return JSONResponse(content=res)

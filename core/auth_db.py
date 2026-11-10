@@ -105,6 +105,9 @@ def init_db():
                 path TEXT NOT NULL,
                 visitor_hash TEXT NOT NULL,
                 device TEXT DEFAULT 'desktop',
+                device_model TEXT DEFAULT '',
+                device_brand TEXT DEFAULT '',
+                is_bot INTEGER DEFAULT 0,
                 referrer TEXT DEFAULT '',
                 timestamp REAL NOT NULL
             );
@@ -126,7 +129,47 @@ def init_db():
         except Exception:
             pass
         try:
+            cursor.execute("ALTER TABLE users ADD COLUMN device_model TEXT DEFAULT '';")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE site_traffic ADD COLUMN is_bot INTEGER DEFAULT 0;")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE site_traffic ADD COLUMN device_model TEXT DEFAULT '';")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE site_traffic ADD COLUMN device_brand TEXT DEFAULT '';")
+        except Exception:
+            pass
+        try:
             cursor.execute("ALTER TABLE payments ADD COLUMN plan_name TEXT DEFAULT '';")
+        except Exception:
+            pass
+
+        try:
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_traffic_is_bot ON site_traffic (is_bot);")
+        except Exception:
+            pass
+
+        # Retroactively classify historical vulnerability scanner and bot probes
+        try:
+            cursor.execute("""
+                UPDATE site_traffic 
+                SET is_bot = 1 
+                WHERE is_bot = 0 AND (
+                    path LIKE '%.php%' OR 
+                    path LIKE '%wp-%' OR 
+                    path LIKE '%xmlrpc%' OR 
+                    path LIKE '%phpmyadmin%' OR 
+                    path LIKE '%.env%' OR 
+                    path LIKE '%.git%' OR
+                    path LIKE '%cgi-bin%' OR
+                    path LIKE '%boaform%'
+                );
+            """)
         except Exception:
             pass
 
@@ -333,8 +376,8 @@ def send_signup_otp(email: str) -> dict:
         "email": clean_email
     }
 
-def verify_otp_and_signup(email: str, otp_code: str, password: str, full_name: str = "") -> dict:
-    """Verify submitted 6-digit OTP code and create candidate account."""
+def verify_otp_and_signup(email: str, otp_code: str, password: str, full_name: str = "", device_model: str = "") -> dict:
+    """Verify submitted 6-digit OTP code and create candidate account with device model logging."""
     clean_email = email.strip().lower()
     clean_otp = str(otp_code).strip()
 
@@ -390,11 +433,11 @@ def verify_otp_and_signup(email: str, otp_code: str, password: str, full_name: s
         cursor.execute("DELETE FROM email_otps WHERE email = ?", (clean_email,))
         conn.commit()
 
-    # Now create account
-    return signup_user(clean_email, password, full_name)
+    # Now create account with hardware device info
+    return signup_user(clean_email, password, full_name, device_model=device_model)
 
-def signup_user(email: str, password: str, full_name: str = "") -> dict:
-    """Sign up a new candidate user into persistent SQLite and sync with Supabase."""
+def signup_user(email: str, password: str, full_name: str = "", device_model: str = "") -> dict:
+    """Sign up a new candidate user into persistent SQLite and sync with Supabase, capturing hardware device model."""
     clean_email = email.strip().lower()
     if not clean_email or "@" not in clean_email:
         return {"status": "error", "message": "Please provide a valid email address."}
@@ -404,6 +447,7 @@ def signup_user(email: str, password: str, full_name: str = "") -> dict:
     user_id = str(uuid.uuid4())
     pw_hash, salt = _hash_password(password)
     now = time.time()
+    clean_device = (device_model or "").strip()
 
     # 1. Insert into local persistent SQLite DB
     try:
@@ -411,10 +455,10 @@ def signup_user(email: str, password: str, full_name: str = "") -> dict:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at, auth_provider)
-                VALUES (?, ?, ?, ?, ?, 0, 'free', 0, ?, ?, 'email')
+                INSERT INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at, auth_provider, device_model)
+                VALUES (?, ?, ?, ?, ?, 0, 'free', 0, ?, ?, 'email', ?)
                 """,
-                (user_id, clean_email, pw_hash, salt, full_name.strip(), now, now)
+                (user_id, clean_email, pw_hash, salt, full_name.strip(), now, now, clean_device)
             )
             conn.commit()
     except sqlite3.IntegrityError:
@@ -432,7 +476,8 @@ def signup_user(email: str, password: str, full_name: str = "") -> dict:
                 "user_metadata": {
                     "full_name": full_name.strip(),
                     "is_paid": False,
-                    "local_user_id": user_id
+                    "local_user_id": user_id,
+                    "device_model": clean_device
                 }
             })
         except Exception as e:
@@ -448,18 +493,20 @@ def signup_user(email: str, password: str, full_name: str = "") -> dict:
         "full_name": full_name.strip() or clean_email.split("@")[0],
         "is_paid": False,
         "plan": "free",
+        "device_model": clean_device,
         "token": token
     }
 
-def login_user(email: str, password: str) -> dict:
-    """Authenticate an existing user via SQLite credentials and return persistent token."""
+def login_user(email: str, password: str, device_model: str = "") -> dict:
+    """Authenticate an existing user via SQLite credentials and record current device model."""
     clean_email = email.strip().lower()
     if not clean_email or not password:
         return {"status": "error", "message": "Email and password are required."}
 
+    clean_device = (device_model or "").strip()
     with get_db() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT id, email, password_hash, salt, full_name, is_paid, plan, paid_until FROM users WHERE email = ?", (clean_email,))
+        cursor.execute("SELECT id, email, password_hash, salt, full_name, is_paid, plan, paid_until, COALESCE(device_model, '') as device_model FROM users WHERE email = ?", (clean_email,))
         row = cursor.fetchone()
         
         if not row:
@@ -470,9 +517,24 @@ def login_user(email: str, password: str) -> dict:
             return {"status": "error", "message": "Incorrect password. Please verify and try again."}
 
         user_id = row["id"]
+        now = time.time()
+        
+        # Update device model if provided
+        active_device = clean_device or row["device_model"]
+        if clean_device:
+            try:
+                cursor.execute("UPDATE users SET device_model = ?, updated_at = ? WHERE id = ?", (clean_device, now, user_id))
+                conn.commit()
+            except Exception:
+                pass
+            if supabase_admin:
+                try:
+                    supabase_admin.auth.admin.update_user_by_id(user_id, {"user_metadata": {"device_model": clean_device}})
+                except Exception:
+                    pass
+
         token = _create_token(user_id, row["email"])
 
-        now = time.time()
         paid_until = row["paid_until"] or 0
         is_paid = bool(row["is_paid"]) and (paid_until == 0 or paid_until > now)
 
@@ -495,13 +557,15 @@ def login_user(email: str, password: str) -> dict:
             "plan": row["plan"],
             "paid_until": paid_until,
             "remaining_str": remaining_str,
+            "device_model": active_device,
             "token": token
         }
 
-def login_or_signup_google_user(email: str, full_name: str = "", google_id: str = "") -> dict:
+def login_or_signup_google_user(email: str, full_name: str = "", google_id: str = "", device_model: str = "") -> dict:
     """
     Authenticate or register a candidate verified via Google Sign-In.
     Bypasses manual OTP verification since Google guarantees email authenticity.
+    Captures exact hardware device used for candidate onboarding.
     """
     clean_email = (email or "").strip().lower()
     if not clean_email or "@" not in clean_email:
@@ -512,18 +576,30 @@ def login_or_signup_google_user(email: str, full_name: str = "", google_id: str 
         return {"status": "error", "message": err_msg}
 
     now = time.time()
+    clean_device = (device_model or "").strip()
     with get_db() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT id, email, full_name, is_paid, plan, paid_until FROM users WHERE email = ?", (clean_email,))
+        cursor.execute("SELECT id, email, full_name, is_paid, plan, paid_until, COALESCE(device_model, '') as device_model FROM users WHERE email = ?", (clean_email,))
         row = cursor.fetchone()
 
         if row:
             user_id = row["id"]
+            active_device = clean_device or row["device_model"]
             try:
-                cursor.execute("UPDATE users SET auth_provider = 'google', updated_at = ? WHERE id = ?", (now, user_id))
+                if clean_device:
+                    cursor.execute("UPDATE users SET auth_provider = 'google', device_model = ?, updated_at = ? WHERE id = ?", (clean_device, now, user_id))
+                else:
+                    cursor.execute("UPDATE users SET auth_provider = 'google', updated_at = ? WHERE id = ?", (now, user_id))
                 conn.commit()
             except Exception:
                 pass
+
+            if supabase_admin and clean_device:
+                try:
+                    supabase_admin.auth.admin.update_user_by_id(user_id, {"user_metadata": {"device_model": clean_device}})
+                except Exception:
+                    pass
+
             token = _create_token(user_id, row["email"])
             paid_until = row["paid_until"] or 0
             is_paid = bool(row["is_paid"]) and (paid_until == 0 or paid_until > now)
@@ -547,6 +623,7 @@ def login_or_signup_google_user(email: str, full_name: str = "", google_id: str 
                 "plan": row["plan"],
                 "paid_until": paid_until,
                 "remaining_str": remaining_str,
+                "device_model": active_device,
                 "token": token
             }
         else:
@@ -557,10 +634,10 @@ def login_or_signup_google_user(email: str, full_name: str = "", google_id: str 
 
             cursor.execute(
                 """
-                INSERT INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at, auth_provider)
-                VALUES (?, ?, ?, ?, ?, 0, 'free', 0, ?, ?, 'google')
+                INSERT INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at, auth_provider, device_model)
+                VALUES (?, ?, ?, ?, ?, 0, 'free', 0, ?, ?, 'google', ?)
                 """,
-                (user_id, clean_email, pw_hash, salt, name_val, now, now)
+                (user_id, clean_email, pw_hash, salt, name_val, now, now, clean_device)
             )
             conn.commit()
 
@@ -574,11 +651,24 @@ def login_or_signup_google_user(email: str, full_name: str = "", google_id: str 
                             "full_name": name_val,
                             "google_id": google_id,
                             "is_paid": False,
-                            "local_user_id": user_id
+                            "local_user_id": user_id,
+                            "device_model": clean_device
                         }
                     })
                 except Exception as e:
                     print(f"[AUTH_DB] Supabase Google mirror note: {e}")
+
+            token = _create_token(user_id, clean_email)
+            return {
+                "status": "success",
+                "user_id": user_id,
+                "email": clean_email,
+                "full_name": name_val,
+                "is_paid": False,
+                "plan": "free",
+                "device_model": clean_device,
+                "token": token
+            }
 
             token = _create_token(user_id, clean_email)
             return {
@@ -803,13 +893,293 @@ def sync_full_kanban(user_id: str, kanban_dict: dict) -> dict:
 
 
 # ============================================================================
-# Telemetry, Traffic Analytics & Candidate Directory Engine (100% Free)
+# Telemetry, Traffic Analytics, Device Hardware & Candidate Directory Engine
 # ============================================================================
 
-def record_page_visit(path: str, client_ip: str, user_agent: str = "", referrer: str = "") -> bool:
+def is_bot_or_scanner(path: str, user_agent: str = "") -> bool:
+    """
+    Detect automated vulnerability scanners, web scrapers, and malicious exploit crawlers.
+    Separates automated noise (e.g. /wp-admin/install.php, xmlrpc, phpmyadmin) from real human candidates.
+    """
+    clean_path = (path or "").lower().split("?")[0].strip()
+    ua_lower = (user_agent or "").lower().strip()
+
+    # Vulnerability scanner target paths
+    scanner_patterns = [
+        ".php", "wp-admin", "wp-login", "wp-content", "wp-includes", "xmlrpc",
+        "phpmyadmin", "pma", "cgi-bin", ".env", ".git", "actuator", "swagger",
+        "boaform", "setup.cgi", "eval(", "phpunit", "admin.php", "shell",
+        "config.json", ".aws", "jenkins", "solr", "struts", "telescope"
+    ]
+    if any(pat in clean_path for pat in scanner_patterns):
+        return True
+
+    # Missing UA or automated crawler / scanner user agents
+    if not ua_lower:
+        return True
+
+    bot_ua_patterns = [
+        "bot", "crawler", "spider", "curl/", "python-requests", "python-urllib",
+        "wget/", "httpclient", "zgrab", "censys", "shodan", "netcraft",
+        "semrush", "ahrefs", "bytespider", "go-http-client", "masscan",
+        "nikto", "sqlmap", "headless", "phantomjs", "selenium", "puppeteer",
+        "screaming frog", "dotbot", "petalbot", "mj12bot", "nmap"
+    ]
+    if any(b in ua_lower for b in bot_ua_patterns):
+        return True
+
+    return False
+
+def parse_device_hardware(user_agent: str = "", client_hints: dict = None) -> dict:
+    """
+    Parse client user agent & client hints into exact hardware device model, brand, and platform.
+    Detects models like:
+      - Poco M2 Pro (Xiaomi M2003J6CI)
+      - Samsung Galaxy A34 / A35 (SM-A...)
+      - Apple iPhone 15 / iOS
+      - Windows 11 PC (Chrome)
+      - Apple MacBook (macOS)
+    """
+    hints = client_hints or {}
+    model_hint = (hints.get("model") or "").strip().strip('"')
+    platform_hint = (hints.get("platform") or "").strip().strip('"')
+    platform_version = (hints.get("platform_version") or "").strip().strip('"')
+
+    ua = user_agent or ""
+    ua_lower = ua.lower()
+
+    # Check for automated bots/scanners
+    if is_bot_or_scanner("", ua):
+        return {
+            "category": "Bot / Probe",
+            "brand": "Automated Bot",
+            "model": "Vulnerability Scanner",
+            "display": "🤖 Automated Security Scanner / Bot"
+        }
+
+    # 1. Android Devices (Samsung, Poco, Xiaomi, Redmi, Pixel, OnePlus, Realme)
+    if "android" in ua_lower or platform_hint.lower() == "android":
+        category = "Mobile Phone"
+        brand = "Android"
+        model = "Android Device"
+
+        if "tablet" in ua_lower or ("android" in ua_lower and "mobile" not in ua_lower):
+            category = "Tablet"
+
+        # Extract Android OS version
+        android_ver_match = re.search(r"android\s+([0-9\.]+)", ua_lower)
+        android_ver = f"Android {android_ver_match.group(1)}" if android_ver_match else "Android"
+
+        candidate_model = model_hint
+        if not candidate_model:
+            paren_match = re.search(r"\(([^)]+)\)", ua)
+            if paren_match:
+                tokens = [t.strip() for t in paren_match.group(1).split(";")]
+                for t in tokens:
+                    tl = t.lower()
+                    if tl.startswith("linux") or tl.startswith("android") or "build" in tl or "wv" in tl:
+                        continue
+                    if len(t) > 2:
+                        candidate_model = t
+                        break
+
+        cm_lower = candidate_model.lower()
+
+        # POCO / XIAOMI (e.g. Poco M2 Pro: M2003J6CI / M2003J6B2G)
+        if "m2003j6" in cm_lower or "m2003j6" in ua_lower or "poco m2 pro" in ua_lower or "m2003j6ci" in cm_lower:
+            brand = "Poco / Xiaomi"
+            model = f"Poco M2 Pro ({candidate_model or 'M2003J6CI'})"
+        elif "poco" in ua_lower or "poco" in cm_lower:
+            brand = "Poco"
+            model = f"Poco {candidate_model}".strip() if candidate_model else "Poco Smartphone"
+        elif "redmi" in ua_lower or "redmi" in cm_lower:
+            brand = "Xiaomi Redmi"
+            model = f"Redmi {candidate_model}".strip() if candidate_model else "Xiaomi Redmi"
+        elif any(x in ua_lower for x in ["xiaomi", "mi "]):
+            brand = "Xiaomi"
+            model = f"Xiaomi {candidate_model}".strip() if candidate_model else "Xiaomi Smartphone"
+
+        # SAMSUNG GALAXY (SM-A346, SM-A336, SM-A325, SM-A546, SM-A..., SM-S..., SM-M...)
+        elif "sm-" in cm_lower or "sm-" in ua_lower or "samsung" in ua_lower:
+            brand = "Samsung"
+            sm_match = re.search(r"(SM-[A-Z0-9]+)", ua, re.IGNORECASE) or re.search(r"(SM-[A-Z0-9]+)", candidate_model, re.IGNORECASE)
+            sm_code = sm_match.group(1).upper() if sm_match else candidate_model
+
+            if sm_code.startswith("SM-A346"):
+                model = f"Samsung Galaxy A34 5G ({sm_code})"
+            elif sm_code.startswith("SM-A356"):
+                model = f"Samsung Galaxy A35 5G ({sm_code})"
+            elif sm_code.startswith("SM-A336"):
+                model = f"Samsung Galaxy A33 5G ({sm_code})"
+            elif sm_code.startswith("SM-A325") or sm_code.startswith("SM-A326"):
+                model = f"Samsung Galaxy A32 ({sm_code})"
+            elif sm_code.startswith("SM-A315"):
+                model = f"Samsung Galaxy A31 ({sm_code})"
+            elif sm_code.startswith("SM-A546"):
+                model = f"Samsung Galaxy A54 5G ({sm_code})"
+            elif sm_code.startswith("SM-A536"):
+                model = f"Samsung Galaxy A53 5G ({sm_code})"
+            elif sm_code.startswith("SM-A556"):
+                model = f"Samsung Galaxy A55 5G ({sm_code})"
+            elif sm_code.startswith("SM-A"):
+                series_num = sm_code[4:6] if len(sm_code) >= 6 else ""
+                model = f"Samsung Galaxy A{series_num} ({sm_code})" if series_num else f"Samsung Galaxy A-Series ({sm_code})"
+            elif sm_code.startswith("SM-S92"):
+                model = f"Samsung Galaxy S24 Ultra ({sm_code})"
+            elif sm_code.startswith("SM-S91"):
+                model = f"Samsung Galaxy S23 Ultra ({sm_code})"
+            elif sm_code.startswith("SM-S"):
+                model = f"Samsung Galaxy S-Series ({sm_code})"
+            elif sm_code.startswith("SM-M"):
+                model = f"Samsung Galaxy M-Series ({sm_code})"
+            elif sm_code.startswith("SM-F"):
+                model = f"Samsung Galaxy Z Fold/Flip ({sm_code})"
+            else:
+                model = f"Samsung Galaxy ({sm_code})"
+
+        # GOOGLE PIXEL
+        elif "pixel" in ua_lower or "pixel" in cm_lower:
+            brand = "Google"
+            pix_match = re.search(r"(Pixel\s+[0-9a-zA-Z\s]+)", ua)
+            model = pix_match.group(1).strip() if pix_match else (candidate_model or "Google Pixel")
+
+        # ONEPLUS
+        elif "oneplus" in ua_lower or cm_lower.startswith("cph") or cm_lower.startswith("in20") or cm_lower.startswith("ne22"):
+            brand = "OnePlus"
+            model = f"OnePlus ({candidate_model or 'Phone'})"
+
+        # REALME
+        elif "realme" in ua_lower or cm_lower.startswith("rmx"):
+            brand = "Realme"
+            model = f"Realme ({candidate_model or 'Phone'})"
+
+        # MOTOROLA
+        elif "moto" in ua_lower or "motorola" in ua_lower:
+            brand = "Motorola"
+            model = f"Motorola {candidate_model}".strip() if candidate_model else "Motorola Phone"
+
+        # VIVO / IQOO
+        elif "vivo" in ua_lower or "iqoo" in ua_lower:
+            brand = "Vivo / iQOO"
+            model = f"Vivo/iQOO {candidate_model}".strip() if candidate_model else "Vivo Phone"
+
+        else:
+            model = f"{candidate_model} ({android_ver})".strip() if candidate_model else f"Android Phone ({android_ver})"
+
+        return {
+            "category": category,
+            "brand": brand,
+            "model": model,
+            "display": f"📱 {model}"
+        }
+
+    # 2. Apple iOS (iPhone / iPad)
+    if "iphone" in ua_lower:
+        ios_match = re.search(r"os\s+([0-9_]+)\s+like\s+mac", ua_lower)
+        ios_ver = ios_match.group(1).replace("_", ".") if ios_match else ""
+        ver_str = f"iOS {ios_ver}" if ios_ver else "iOS"
+        return {
+            "category": "Mobile Phone",
+            "brand": "Apple",
+            "model": f"Apple iPhone ({ver_str})",
+            "display": f"📱 Apple iPhone ({ver_str})"
+        }
+
+    if "ipad" in ua_lower:
+        ios_match = re.search(r"os\s+([0-9_]+)\s+like\s+mac", ua_lower)
+        ios_ver = ios_match.group(1).replace("_", ".") if ios_match else ""
+        ver_str = f"iPadOS {ios_ver}" if ios_ver else "iPadOS"
+        return {
+            "category": "Tablet",
+            "brand": "Apple",
+            "model": f"Apple iPad ({ver_str})",
+            "display": f"📱 Apple iPad ({ver_str})"
+        }
+
+    # 3. Windows Desktop / Laptop
+    if "windows" in ua_lower or platform_hint.lower() == "windows":
+        browser = "Chrome"
+        if "edg/" in ua_lower:
+            browser = "Edge"
+        elif "firefox/" in ua_lower:
+            browser = "Firefox"
+        elif "opr/" in ua_lower or "opera" in ua_lower:
+            browser = "Opera"
+
+        is_win11 = False
+        if platform_version:
+            try:
+                major = int(platform_version.split(".")[0])
+                if major >= 13:
+                    is_win11 = True
+            except Exception:
+                pass
+
+        if is_win11:
+            win_name = "Windows 11 PC"
+        elif "windows nt 10.0" in ua_lower and "win64" in ua_lower:
+            win_name = "Windows 11 / 10 PC"
+        elif "windows nt 10.0" in ua_lower:
+            win_name = "Windows 10 / 11 PC"
+        elif "windows nt 6.3" in ua_lower:
+            win_name = "Windows 8.1 PC"
+        elif "windows nt 6.1" in ua_lower:
+            win_name = "Windows 7 PC"
+        else:
+            win_name = "Windows PC"
+
+        return {
+            "category": "Desktop",
+            "brand": "Microsoft",
+            "model": f"{win_name} ({browser})",
+            "display": f"💻 {win_name} ({browser})"
+        }
+
+    # 4. Apple macOS (MacBook, iMac)
+    if "macintosh" in ua_lower or "mac os x" in ua_lower or platform_hint.lower() == "macos":
+        browser = "Safari"
+        if "chrome/" in ua_lower:
+            browser = "Chrome"
+        elif "edg/" in ua_lower:
+            browser = "Edge"
+        elif "firefox/" in ua_lower:
+            browser = "Firefox"
+        return {
+            "category": "Desktop",
+            "brand": "Apple",
+            "model": f"Apple MacBook / Mac ({browser})",
+            "display": f"💻 Apple MacBook / Mac ({browser})"
+        }
+
+    # 5. Linux Desktop
+    if "linux" in ua_lower and "x11" in ua_lower:
+        return {
+            "category": "Desktop",
+            "brand": "Linux",
+            "model": "Linux Workstation",
+            "display": "💻 Linux PC / Workstation"
+        }
+
+    # Fallback Desktop
+    return {
+        "category": "Desktop",
+        "brand": "Generic",
+        "model": "Desktop Browser",
+        "display": "💻 Desktop Browser"
+    }
+
+def record_page_visit(
+    path: str,
+    client_ip: str,
+    user_agent: str = "",
+    referrer: str = "",
+    client_hints: dict = None,
+    device_model: str = ""
+) -> bool:
     """
     Record an anonymous, privacy-compliant page visit in SQLite.
-    Uses a one-way salt + date + IP hash to uniquely count visitors without saving raw PII/IPs.
+    Classifies bot / vulnerability scanners vs real candidate visits,
+    and identifies exact hardware device models (e.g. Poco M2 Pro, Samsung Galaxy, Windows 11).
     """
     try:
         clean_path = (path or "/").split("?")[0].strip()
@@ -822,19 +1192,29 @@ def record_page_visit(path: str, client_ip: str, user_agent: str = "", referrer:
         if clean_path.startswith("/api/") and not clean_path.startswith("/api/jobs"):
             return False
 
-        # Detect device type
-        ua_lower = (user_agent or "").lower()
-        if any(m in ua_lower for m in ["mobile", "android", "iphone", "ipod", "windows phone"]):
-            device = "mobile"
-        elif any(t in ua_lower for t in ["tablet", "ipad"]):
-            device = "tablet"
+        # Detect vulnerability scanners & bot probes
+        is_bot = 1 if is_bot_or_scanner(clean_path, user_agent) else 0
+
+        # Parse hardware device
+        dev_info = parse_device_hardware(user_agent, client_hints or {})
+        category = dev_info.get("category", "Desktop")
+        if "mobile" in category.lower():
+            device_type = "mobile"
+        elif "tablet" in category.lower():
+            device_type = "tablet"
+        elif "bot" in category.lower():
+            device_type = "bot"
         else:
-            device = "desktop"
+            device_type = "desktop"
+
+        final_model = device_model.strip() or dev_info.get("model", "")
+        brand_name = dev_info.get("brand", "")
 
         now = time.time()
         date_str = time.strftime("%Y-%m-%d", time.gmtime(now))
         # Anonymized salted visitor hash
-        hash_input = f"{client_ip}:{ua_lower}:{date_str}:{AUTH_SECRET_KEY}"
+        ua_clean = (user_agent or "").lower()[:60]
+        hash_input = f"{client_ip}:{ua_clean}:{date_str}:{AUTH_SECRET_KEY}"
         visitor_hash = hashlib.sha256(hash_input.encode("utf-8")).hexdigest()[:16]
 
         clean_ref = (referrer or "")[:255]
@@ -843,10 +1223,10 @@ def record_page_visit(path: str, client_ip: str, user_agent: str = "", referrer:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO site_traffic (date, path, visitor_hash, device, referrer, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO site_traffic (date, path, visitor_hash, device, device_model, device_brand, is_bot, referrer, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (date_str, clean_path, visitor_hash, device, clean_ref, now)
+                (date_str, clean_path, visitor_hash, device_type, final_model, brand_name, is_bot, clean_ref, now)
             )
             conn.commit()
         return True
@@ -857,52 +1237,90 @@ def record_page_visit(path: str, client_ip: str, user_agent: str = "", referrer:
 def get_analytics_summary() -> dict:
     """
     Calculate comprehensive real-time site analytics and engagement metrics.
-    Returns visitor totals, unique visitors, device breakdown, top pages, and 7-day trend.
+    Distinguishes verified real candidate traffic from automated vulnerability scanner probes,
+    provides hardware device breakdowns, and synchronizes real registered candidate tallies.
     """
     now = time.time()
     today_str = time.strftime("%Y-%m-%d", time.gmtime(now))
     
     with get_db() as conn:
         cursor = conn.cursor()
-        # Total pageviews
-        cursor.execute("SELECT COUNT(*) FROM site_traffic;")
-        total_pageviews = cursor.fetchone()[0] or 0
 
-        # Today's pageviews
-        cursor.execute("SELECT COUNT(*) FROM site_traffic WHERE date = ?;", (today_str,))
-        today_pageviews = cursor.fetchone()[0] or 0
+        # 1. Verified Real Candidate Metrics (WHERE is_bot = 0)
+        cursor.execute("SELECT COUNT(*) FROM site_traffic WHERE is_bot = 0;")
+        verified_total_pageviews = cursor.fetchone()[0] or 0
 
-        # Total unique visitors across all time
-        cursor.execute("SELECT COUNT(DISTINCT visitor_hash) FROM site_traffic;")
-        unique_visitors_total = cursor.fetchone()[0] or 0
+        cursor.execute("SELECT COUNT(*) FROM site_traffic WHERE is_bot = 0 AND date = ?;", (today_str,))
+        verified_today_pageviews = cursor.fetchone()[0] or 0
 
-        # Today's unique visitors
-        cursor.execute("SELECT COUNT(DISTINCT visitor_hash) FROM site_traffic WHERE date = ?;", (today_str,))
-        today_unique_visitors = cursor.fetchone()[0] or 0
+        cursor.execute("SELECT COUNT(DISTINCT visitor_hash) FROM site_traffic WHERE is_bot = 0;")
+        verified_unique_visitors = cursor.fetchone()[0] or 0
 
-        # Device breakdown
-        cursor.execute("SELECT device, COUNT(*) FROM site_traffic GROUP BY device;")
+        cursor.execute("SELECT COUNT(DISTINCT visitor_hash) FROM site_traffic WHERE is_bot = 0 AND date = ?;", (today_str,))
+        verified_today_uniques = cursor.fetchone()[0] or 0
+
+        # Verified Device Breakdown
+        cursor.execute("SELECT device, COUNT(*) FROM site_traffic WHERE is_bot = 0 GROUP BY device;")
         device_counts = dict(cursor.fetchall())
         desktop_views = device_counts.get("desktop", 0)
         mobile_views = device_counts.get("mobile", 0) + device_counts.get("tablet", 0)
 
-        # Top 10 visited pages
+        # Top 10 Verified Candidate Routes
         cursor.execute("""
             SELECT path, COUNT(*) as hits, COUNT(DISTINCT visitor_hash) as uniques
             FROM site_traffic
+            WHERE is_bot = 0
             GROUP BY path
             ORDER BY hits DESC
             LIMIT 10;
         """)
-        top_pages = [
+        top_candidate_pages = [
             {"path": r["path"], "hits": r["hits"], "uniques": r["uniques"]}
             for r in cursor.fetchall()
         ]
 
-        # Last 7 days trend
+        # 2. Automated Scanner & Bot Probes Filtered (WHERE is_bot = 1)
+        cursor.execute("SELECT COUNT(*) FROM site_traffic WHERE is_bot = 1;")
+        bot_probes_total = cursor.fetchone()[0] or 0
+
+        cursor.execute("SELECT COUNT(*) FROM site_traffic WHERE is_bot = 1 AND date = ?;", (today_str,))
+        bot_probes_today = cursor.fetchone()[0] or 0
+
+        cursor.execute("""
+            SELECT path, COUNT(*) as hits, COUNT(DISTINCT visitor_hash) as uniques
+            FROM site_traffic
+            WHERE is_bot = 1
+            GROUP BY path
+            ORDER BY hits DESC
+            LIMIT 10;
+        """)
+        top_blocked_probes = [
+            {"path": r["path"], "hits": r["hits"], "uniques": r["uniques"]}
+            for r in cursor.fetchall()
+        ]
+
+        # 3. Hardware Device Model Breakdown (Samsung, Poco, iPhone, Windows 11, Mac, etc.)
+        cursor.execute("""
+            SELECT 
+                COALESCE(NULLIF(device_model, ''), device) as model,
+                COALESCE(NULLIF(device_brand, ''), 'General') as brand,
+                COUNT(*) as hits
+            FROM site_traffic
+            WHERE is_bot = 0 AND device_model != ''
+            GROUP BY model
+            ORDER BY hits DESC
+            LIMIT 8;
+        """)
+        hardware_devices = [
+            {"model": r["model"], "brand": r["brand"], "hits": r["hits"]}
+            for r in cursor.fetchall()
+        ]
+
+        # 4. Last 7 days verified candidate trend
         cursor.execute("""
             SELECT date, COUNT(*) as pageviews, COUNT(DISTINCT visitor_hash) as uniques
             FROM site_traffic
+            WHERE is_bot = 0
             GROUP BY date
             ORDER BY date DESC
             LIMIT 7;
@@ -913,60 +1331,155 @@ def get_analytics_summary() -> dict:
             for r in reversed(history_rows)
         ]
 
-        # User counts
-        cursor.execute("SELECT COUNT(*) FROM users;")
-        total_users = cursor.fetchone()[0] or 0
+    # 5. Candidate Accounts synchronized from Supabase + SQLite
+    candidates = get_all_users_admin()
+    total_users = len(candidates)
+    paid_users = sum(1 for c in candidates if c.get("is_paid"))
+    google_users = sum(1 for c in candidates if c.get("auth_provider") == "google")
 
-        cursor.execute("SELECT COUNT(*) FROM users WHERE is_paid = 1;")
-        paid_users = cursor.fetchone()[0] or 0
+    # If all existing traffic was before migration, ensure default fallback numbers match
+    raw_total = verified_total_pageviews + bot_probes_total
 
-        cursor.execute("SELECT COUNT(*) FROM users WHERE auth_provider = 'google';")
-        google_users = cursor.fetchone()[0] or 0
+    return {
+        # Verified Candidate Audience (Headline Metrics)
+        "total_pageviews": verified_total_pageviews if (verified_total_pageviews > 0 or bot_probes_total > 0) else raw_total,
+        "today_pageviews": verified_today_pageviews if (verified_today_pageviews > 0 or bot_probes_today > 0) else raw_total,
+        "unique_visitors_total": verified_unique_visitors,
+        "today_unique_visitors": verified_today_uniques,
+        "desktop_views": desktop_views,
+        "mobile_views": mobile_views,
+        "top_pages": top_candidate_pages if top_candidate_pages else top_blocked_probes,
+        "daily_trend": trend,
+        
+        # Bot & Security Scanner Probes Filtered
+        "bot_probes_total": bot_probes_total,
+        "bot_probes_today": bot_probes_today,
+        "top_blocked_probes": top_blocked_probes,
+        "raw_total_hits": raw_total,
 
-        return {
-            "total_pageviews": total_pageviews,
-            "today_pageviews": today_pageviews,
-            "unique_visitors_total": unique_visitors_total,
-            "today_unique_visitors": today_unique_visitors,
-            "desktop_views": desktop_views,
-            "mobile_views": mobile_views,
-            "top_pages": top_pages,
-            "daily_trend": trend,
-            "total_users": total_users,
-            "paid_users": paid_users,
-            "google_users": google_users,
-            "today_date": today_str
-        }
+        # Hardware Model & Device Breakdown
+        "hardware_devices": hardware_devices,
+
+        # Candidate Directory Stats
+        "total_users": total_users,
+        "paid_users": paid_users,
+        "google_users": google_users,
+        "today_date": today_str
+    }
 
 def get_all_users_admin() -> list:
     """
     Retrieve all registered candidates formatted for the executive admin directory.
-    Returns sanitized records with formatted dates and provider info.
+    Synchronizes seamlessly with Supabase Auth (if configured) so candidate accounts
+    never vanish on ephemeral hosting (Render) restarts, and enriches candidates
+    with their email, authentication provider, and hardware device models.
     """
+    candidates_by_email = {}
+    now = time.time()
+
+    # 1. Fetch from local SQLite cache
     with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, email, full_name, plan, is_paid, paid_until, created_at, auth_provider
+            SELECT id, email, full_name, plan, is_paid, paid_until, created_at, auth_provider,
+                   COALESCE(device_model, '') as device_model
             FROM users
             ORDER BY created_at DESC;
         """)
-        rows = cursor.fetchall()
-        candidates = []
-        now = time.time()
-        for r in rows:
+        for r in cursor.fetchall():
+            email_key = (r["email"] or "").strip().lower()
+            if not email_key:
+                continue
             created_ts = r["created_at"] or now
-            created_date_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(created_ts))
             paid_until = r["paid_until"] or 0
             is_active_vip = bool(r["is_paid"]) and (paid_until == 0 or paid_until > now)
-            
-            candidates.append({
+            candidates_by_email[email_key] = {
                 "id": r["id"],
                 "email": r["email"],
                 "full_name": r["full_name"] or "Candidate",
                 "plan": r["plan"] or "free",
                 "is_paid": is_active_vip,
-                "auth_provider": r["auth_provider"] or ("google" if "google" in (r["email"] or "").lower() else "email"),
-                "created_at_str": created_date_str,
-                "created_at": created_ts
-            })
-        return candidates
+                "auth_provider": r["auth_provider"] or ("google" if "google" in email_key else "email"),
+                "device_model": r["device_model"] or "",
+                "created_at": created_ts,
+                "created_at_str": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(created_ts))
+            }
+
+    # 2. Synchronize with live Supabase Auth (guarantees candidate directory persistence on Render)
+    if supabase_admin:
+        try:
+            sp_users = supabase_admin.auth.admin.list_users() or []
+            for u in sp_users:
+                sp_email = (getattr(u, "email", "") or "").strip().lower()
+                if not sp_email:
+                    continue
+                
+                user_meta = getattr(u, "user_metadata", {}) or {}
+                app_meta = getattr(u, "app_metadata", {}) or {}
+
+                # Parse created_at
+                created_raw = getattr(u, "created_at", None)
+                if hasattr(created_raw, "timestamp"):
+                    created_ts = created_raw.timestamp()
+                elif isinstance(created_raw, str):
+                    try:
+                        import dateutil.parser
+                        created_ts = dateutil.parser.parse(created_raw).timestamp()
+                    except Exception:
+                        created_ts = now
+                else:
+                    created_ts = now
+
+                full_name = user_meta.get("full_name") or sp_email.split("@")[0].capitalize()
+                provider = app_meta.get("provider") or ("google" if "google" in sp_email or user_meta.get("google_id") else "email")
+                sp_device = user_meta.get("device_model") or ""
+                sp_is_paid = bool(user_meta.get("is_paid", False))
+
+                if sp_email not in candidates_by_email:
+                    local_id = user_meta.get("local_user_id") or getattr(u, "id", str(uuid.uuid4()))
+                    candidates_by_email[sp_email] = {
+                        "id": local_id,
+                        "email": sp_email,
+                        "full_name": full_name,
+                        "plan": "free" if not sp_is_paid else "vip",
+                        "is_paid": sp_is_paid,
+                        "auth_provider": provider,
+                        "device_model": sp_device,
+                        "created_at": created_ts,
+                        "created_at_str": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(created_ts))
+                    }
+
+                    # Backfill into local SQLite cache
+                    try:
+                        with get_db() as conn:
+                            cursor = conn.cursor()
+                            cursor.execute(
+                                """
+                                INSERT OR IGNORE INTO users 
+                                (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at, auth_provider, device_model)
+                                VALUES (?, ?, 'supabase_managed', 'salt', ?, ?, 'free', 0, ?, ?, ?, ?)
+                                """,
+                                (local_id, sp_email, full_name, 1 if sp_is_paid else 0, created_ts, created_ts, provider, sp_device)
+                            )
+                            conn.commit()
+                    except Exception as e:
+                        print(f"[AUTH_DB] SQLite backfill note: {e}")
+                else:
+                    if sp_device and not candidates_by_email[sp_email].get("device_model"):
+                        candidates_by_email[sp_email]["device_model"] = sp_device
+                    if full_name and candidates_by_email[sp_email].get("full_name") in ["Candidate", ""]:
+                        candidates_by_email[sp_email]["full_name"] = full_name
+        except Exception as e:
+            print(f"[AUTH_DB] Supabase user list sync note: {e}")
+
+    # Format device model display for candidates
+    candidates = list(candidates_by_email.values())
+    for c in candidates:
+        dev = c.get("device_model") or ""
+        if not dev:
+            # Fallback based on sign-in or default
+            dev = "Desktop / Web Browser"
+        c["device_display"] = dev
+
+    candidates.sort(key=lambda x: x.get("created_at", 0), reverse=True)
+    return candidates

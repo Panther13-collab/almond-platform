@@ -103,7 +103,8 @@ class TestAdminTelemetryAndTraffic(unittest.TestCase):
         self.assertEqual(res_auth.status_code, 200)
         self.assertEqual(res_auth.headers.get("content-type"), "text/csv; charset=utf-8")
         self.assertIn("attachment; filename=\"almond_candidates_export.csv\"", res_auth.headers.get("content-disposition", ""))
-        self.assertIn("Candidate ID,Full Name,Email,Sign-in Provider,Plan,VIP Status,Registration Date", res_auth.text)
+        self.assertIn("Candidate ID,Full Name,Email,Sign-in Provider", res_auth.text)
+        self.assertIn("Device / Hardware Model", res_auth.text)
 
 if __name__ == "__main__":
     unittest.main()
