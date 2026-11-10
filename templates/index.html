@@ -1907,27 +1907,27 @@
     </div>
 
     <!-- 6. MODAL: HOLD TO VERIFY HUMAN PROOF (BOT BARRIER) -->
-    <div id="humanVerifyModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div id="humanVerifyModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[99999] flex items-center justify-center p-4">
         <div class="bg-[#0c101d] rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-violet-500/40 relative text-slate-100 animate-in fade-in zoom-in-95 duration-150 select-none">
             
             <!-- Modal Header (Centered) -->
             <div class="relative text-center mb-6 pt-1">
-                <button type="button" id="closeVerifyModal" class="absolute -top-1.5 right-0 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
+                <button type="button" id="closeVerifyModal" class="hidden absolute -top-1.5 right-0 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition" aria-label="Close verification">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
                 <div class="w-14 h-14 rounded-2xl overflow-hidden mx-auto mb-3 ring-2 ring-violet-400/50 shadow-xl shadow-violet-500/20 bg-[#070b14] p-0.5">
                     <img src="/static/logo.png" alt="Almond Jobs" class="w-full h-full object-cover rounded-xl">
                 </div>
-                <h3 class="font-extrabold text-white text-xl tracking-tight">Verify to proceed</h3>
-                <p class="text-xs text-violet-200/80 mt-1 font-medium">A quick check that you're human.</p>
+                <h3 class="font-extrabold text-white text-xl tracking-tight">Security Check</h3>
+                <p class="text-xs text-violet-200/80 mt-1 font-medium">Hold for a few seconds and release before loading completes to verify you are human.</p>
             </div>
 
             <!-- Central Hold to Verify Button -->
             <div class="relative mb-2">
-                <button type="button" id="holdVerifyBtn" class="w-full py-4 px-6 bg-slate-900 hover:bg-slate-800/80 border-2 border-violet-400/70 rounded-2xl flex items-center justify-center space-x-3 transition-all relative overflow-hidden group shadow-lg cursor-pointer outline-none select-none">
+                <button type="button" id="holdVerifyBtn" class="w-full py-4 px-6 bg-slate-900 hover:bg-slate-800/80 border-2 border-violet-400/70 rounded-2xl flex items-center justify-center space-x-3 transition-all relative overflow-hidden group shadow-lg cursor-pointer outline-none select-none" style="touch-action: none; -webkit-user-select: none; user-select: none;">
                     
-                    <!-- Full-Box Background Fill (Vibrant Violet Gradient) -->
-                    <div id="holdBgFill" class="absolute inset-y-0 left-0 bg-gradient-to-r from-violet-600 via-purple-500 to-indigo-500 w-0 transition-none z-0 opacity-80 pointer-events-none"></div>
+                    <!-- Full-Box Background Fill (Vibrant Violet / Emerald Gradient) -->
+                    <div id="holdBgFill" class="absolute inset-y-0 left-0 bg-gradient-to-r from-violet-600 via-purple-500 to-indigo-500 w-0 transition-none z-0 opacity-85 pointer-events-none"></div>
 
                     <!-- Content Overlay -->
                     <div class="relative z-10 flex items-center justify-center space-x-3 pointer-events-none">
@@ -1940,14 +1940,14 @@
                         </div>
 
                         <!-- Button Label -->
-                        <span id="holdVerifyBtnText" class="text-sm font-black text-white tracking-wide transition-colors">Hold to verify</span>
+                        <span id="holdVerifyBtnText" class="text-sm font-black text-white tracking-wide transition-colors">Press &amp; Hold to Verify</span>
                     </div>
                 </button>
             </div>
 
             <!-- Helper Instructions / Caption -->
             <p id="holdVerifyHint" class="text-xs text-slate-400 text-center mt-3 font-medium leading-relaxed transition-colors">
-                Press and hold until full, then release as the bar reverses. The Space bar works too.
+                Press and hold for a few seconds, then release before the loading completes. Space bar works too.
             </p>
 
             <!-- Anti-Bot Signature Status -->
@@ -1961,6 +1961,17 @@
 
         </div>
     </div>
+    <script>
+        // Immediate session verification check: display modal on initial session open; omit on refresh
+        (function() {
+            try {
+                if (sessionStorage.getItem("almond_human_verified") !== "true") {
+                    var m = document.getElementById("humanVerifyModal");
+                    if (m) m.classList.remove("hidden");
+                }
+            } catch(e) {}
+        })();
+    </script>
 
     <!-- 7. MODAL: VALUE PROPOSITION EDUCATIONAL EXPLORER (No Brokers, No Middlemen, No Dead Posts, Who We Are) -->
     <div id="heroInfoModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-md z-50 flex items-center justify-center p-4">

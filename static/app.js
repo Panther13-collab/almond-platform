@@ -1715,6 +1715,7 @@ function initLocationAutocomplete() {
     const searchInput = document.getElementById("locationSearchInput");
     const dropdown = document.getElementById("locationDropdown");
     const tagsContainer = document.getElementById("selectedLocationsTags");
+    const quickPills = document.querySelectorAll(".loc-preset-pill");
 
     if (!searchInput || !dropdown || !tagsContainer) return;
 
@@ -4957,421 +4958,304 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = '1-M
 let pendingHumanAction = null;
 
 function isHumanVerified() {
-
-    return sessionStorage.getItem("almond_human_verified") === "true";
-
+    try {
+        return sessionStorage.getItem("almond_human_verified") === "true";
+    } catch (e) {
+        return false;
+    }
 }
 
 function openHumanVerification(targetResourceName, onSuccessCallback) {
-
     if (isHumanVerified()) {
-
         if (onSuccessCallback) onSuccessCallback();
-
         return;
-
     }
 
     pendingHumanAction = onSuccessCallback;
-
     const modal = document.getElementById("humanVerifyModal");
-
     const targetLabel = document.getElementById("verifyTargetName");
-
     if (targetLabel && targetResourceName) {
-
         targetLabel.textContent = targetResourceName;
-
     }
 
     resetVerifierUI();
-
-    if (modal) modal.classList.remove("hidden");
-
+    if (modal) {
+        modal.classList.remove("hidden");
+        const closeBtn = document.getElementById("closeVerifyModal");
+        if (closeBtn) closeBtn.classList.remove("hidden");
+    }
     if (window.lucide) lucide.createIcons();
-
 }
 
 function resetVerifierUI() {
-
     const ringCircle = document.getElementById("holdRingCircle");
-
     const bgFill = document.getElementById("holdBgFill");
-
     const btnText = document.getElementById("holdVerifyBtnText");
-
     const hintText = document.getElementById("holdVerifyHint");
-
     const successIcon = document.getElementById("holdVerifySuccessIcon");
-
     const holdBtn = document.getElementById("holdVerifyBtn");
 
     if (ringCircle) {
-
         ringCircle.style.strokeDashoffset = "56.548";
-
         ringCircle.className = "text-violet-300 fill-none transition-none";
-
         ringCircle.parentElement?.classList.remove("hidden");
-
     }
 
     if (bgFill) {
-
         bgFill.style.width = "0%";
-
-        bgFill.className = "absolute inset-y-0 left-0 bg-gradient-to-r from-violet-600 via-purple-500 to-indigo-500 w-0 transition-none z-0 opacity-80 pointer-events-none";
-
+        bgFill.className = "absolute inset-y-0 left-0 bg-gradient-to-r from-violet-600 via-purple-500 to-indigo-500 w-0 transition-none z-0 opacity-85 pointer-events-none";
     }
 
     if (btnText) {
-
-        btnText.textContent = "Hold to verify";
-
+        btnText.textContent = "Press & Hold to Verify";
         btnText.className = "text-sm font-black text-white tracking-wide transition-colors";
-
     }
 
     if (hintText) {
-
-        hintText.textContent = "Press and hold until full, then release as the bar reverses. Space works too.";
-
+        hintText.textContent = "Press and hold for a few seconds, then release before the loading completes. Space bar works too.";
         hintText.className = "text-xs text-slate-400 text-center mt-3 font-medium leading-relaxed transition-colors";
-
     }
 
     if (successIcon) successIcon.classList.add("hidden");
 
     if (holdBtn) {
-
         holdBtn.className = "w-full py-4 px-6 bg-slate-900 hover:bg-slate-800/80 border-2 border-violet-400/70 rounded-2xl flex items-center justify-center space-x-3 transition-all relative overflow-hidden group shadow-lg shadow-violet-500/15 cursor-pointer outline-none focus:ring-2 focus:ring-violet-400 select-none";
-
     }
-
 }
 
 function initHumanVerifier() {
-
     const modal = document.getElementById("humanVerifyModal");
-
     const closeBtn = document.getElementById("closeVerifyModal");
-
     const holdBtn = document.getElementById("holdVerifyBtn");
-
     const ringCircle = document.getElementById("holdRingCircle");
-
     const bgFill = document.getElementById("holdBgFill");
-
     const btnText = document.getElementById("holdVerifyBtnText");
-
     const hintText = document.getElementById("holdVerifyHint");
-
     const successIcon = document.getElementById("holdVerifySuccessIcon");
 
     if (!modal || !holdBtn) return;
 
-    closeBtn?.addEventListener("click", () => {
-
+    // Check session verification:
+    // If verified in current session, ensure modal stays hidden (never prompt on page refresh)
+    // If not verified, open the modal immediately on initial session visit
+    if (isHumanVerified()) {
         modal.classList.add("hidden");
+    } else {
+        resetVerifierUI();
+        modal.classList.remove("hidden");
+        if (closeBtn) closeBtn.classList.add("hidden"); // Enforce verification on initial session entry
+        if (window.lucide) lucide.createIcons();
+    }
 
-        pendingHumanAction = null;
-
-    });
+    if (closeBtn) {
+        closeBtn.addEventListener("click", () => {
+            if (!isHumanVerified()) {
+                holdBtn.classList.add("ring-2", "ring-violet-400");
+                setTimeout(() => holdBtn.classList.remove("ring-2", "ring-violet-400"), 400);
+                return;
+            }
+            modal.classList.add("hidden");
+            pendingHumanAction = null;
+        });
+    }
 
     modal.addEventListener("click", (e) => {
-
         if (e.target === modal) {
-
+            if (!isHumanVerified()) {
+                holdBtn.classList.add("ring-2", "ring-violet-400");
+                setTimeout(() => holdBtn.classList.remove("ring-2", "ring-violet-400"), 400);
+                return;
+            }
             modal.classList.add("hidden");
-
             pendingHumanAction = null;
-
         }
-
     });
 
-    const FORWARD_TIME = 1500; // 1.5 seconds to fill left-to-right
-
-    const REVERSE_TIME = 1500; // 1.5 seconds release window as bar reverses
-
+    const TOTAL_LOAD_TIME = 2600; // 2.6 seconds total loading duration
+    const MIN_HOLD_TIME = 1400;   // 1.4 seconds minimum hold threshold (few seconds)
+    const MAX_HOLD_TIME = 2500;   // Must release before loading completes (at 2.6s)
     const CIRCUMFERENCE = 56.548; // 2 * PI * 9
 
-    let verifierState = "IDLE"; // IDLE | FORWARD | REVERSING | SUCCESS | FAILED
-
+    let verifierState = "IDLE";   // IDLE | HOLDING | SUCCESS | FAILED
     let holdStartTime = 0;
-
-    let reverseStartTime = 0;
-
     let animFrameId = null;
 
     function startHold(e) {
-
         if (e.type === "keydown" && e.code !== "Space") return;
-
         if (e.type === "keydown") e.preventDefault();
+        if (e.type === "touchstart") e.preventDefault();
+        if (verifierState === "SUCCESS" || verifierState === "HOLDING") return;
 
-        if (verifierState === "SUCCESS" || verifierState === "FORWARD" || verifierState === "REVERSING") return;
-
-        verifierState = "FORWARD";
-
+        verifierState = "HOLDING";
         holdStartTime = performance.now();
 
         if (hintText) {
-
-            hintText.textContent = "Keep holding until the bar reaches the right side...";
-
+            hintText.textContent = "Keep holding for a few seconds...";
             hintText.className = "text-xs text-violet-300 font-bold text-center mt-3 transition-colors";
-
         }
-
-        if (btnText) btnText.textContent = "Holding...";
+        if (btnText) btnText.textContent = "Keep holding...";
 
         function tick(now) {
+            if (verifierState !== "HOLDING") return;
 
-            if (verifierState === "FORWARD") {
+            const elapsed = now - holdStartTime;
+            const progress = Math.min(elapsed / TOTAL_LOAD_TIME, 1.0);
 
-                const elapsed = now - holdStartTime;
+            if (bgFill) bgFill.style.width = `${progress * 100}%`;
+            if (ringCircle) ringCircle.style.strokeDashoffset = `${CIRCUMFERENCE * (1 - progress)}`;
 
-                const progress = Math.min(elapsed / FORWARD_TIME, 1.0);
+            if (elapsed >= MIN_HOLD_TIME && elapsed < MAX_HOLD_TIME) {
+                // In valid release window: hold threshold met, before loading finishes
+                if (btnText) {
+                    btnText.textContent = "RELEASE NOW TO VERIFY!";
+                    btnText.className = "text-sm font-black text-emerald-300 tracking-wider animate-pulse";
+                }
+                if (hintText) {
+                    hintText.textContent = "⚡ Release now before the loading bar completes!";
+                    hintText.className = "text-xs text-emerald-300 font-black text-center mt-3 animate-pulse";
+                }
+                if (holdBtn) {
+                    holdBtn.classList.add("border-emerald-400", "shadow-emerald-500/30");
+                }
+                if (bgFill) {
+                    bgFill.className = "absolute inset-y-0 left-0 bg-gradient-to-r from-violet-600 via-emerald-500 to-teal-400 w-full transition-none z-0 opacity-90 pointer-events-none";
+                }
+            } else if (progress >= 1.0) {
+                // User held too long: loading finished before release
+                verifierState = "FAILED";
+                if (animFrameId) cancelAnimationFrame(animFrameId);
 
-                if (bgFill) bgFill.style.width = `${progress * 100}%`;
-
-                if (ringCircle) ringCircle.style.strokeDashoffset = `${CIRCUMFERENCE * (1 - progress)}`;
-
-                if (progress >= 1.0) {
-
-                    // Reached right edge! Trigger REVERSE release window
-
-                    verifierState = "REVERSING";
-
-                    reverseStartTime = performance.now();
-
-                    if (btnText) {
-
-                        btnText.textContent = "RELEASE NOW!";
-
-                        btnText.className = "text-sm font-black text-white tracking-widest animate-pulse";
-
-                    }
-
-                    if (hintText) {
-
-                        hintText.textContent = "⚡ Release now before the bar empties back to the left!";
-
-                        hintText.className = "text-xs text-violet-200 font-black text-center mt-3 animate-pulse";
-
-                    }
-
-                    if (holdBtn) {
-
-                        holdBtn.classList.add("border-violet-300", "shadow-violet-400/40");
-
-                    }
-
-                    if (bgFill) {
-
-                        bgFill.className = "absolute inset-y-0 left-0 bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500 w-full transition-none z-0 opacity-90 pointer-events-none";
-
-                    }
-
+                if (btnText) {
+                    btnText.textContent = "Held too long!";
+                    btnText.className = "text-sm font-black text-rose-300 tracking-wide";
+                }
+                if (hintText) {
+                    hintText.textContent = "Loading finished before release! You must release before loading completes. Try again.";
+                    hintText.className = "text-xs text-rose-300 font-bold text-center mt-3";
+                }
+                if (holdBtn) {
+                    holdBtn.classList.add("border-rose-400");
                 }
 
-            } else if (verifierState === "REVERSING") {
-
-                const revElapsed = now - reverseStartTime;
-
-                const revProgress = Math.max(1.0 - (revElapsed / REVERSE_TIME), 0.0);
-
-                if (bgFill) bgFill.style.width = `${revProgress * 100}%`;
-
-                if (ringCircle) ringCircle.style.strokeDashoffset = `${CIRCUMFERENCE * (1 - revProgress)}`;
-
-                if (revProgress <= 0.0) {
-
-                    // User held too long without releasing!
-
-                    verifierState = "FAILED";
-
-                    if (animFrameId) cancelAnimationFrame(animFrameId);
-
-                    if (btnText) btnText.textContent = "Held too long!";
-
-                    if (hintText) {
-
-                        hintText.textContent = "You must release while the bar is reversing. Try again.";
-
-                        hintText.className = "text-xs text-violet-400 font-bold text-center mt-3";
-
-                    }
-
-                    if (holdBtn) holdBtn.classList.add("border-violet-400");
-
-                    setTimeout(() => {
-
-                        resetVerifierUI();
-
-                        verifierState = "IDLE";
-
-                    }, 1600);
-
-                    return;
-
-                }
-
+                setTimeout(() => {
+                    resetVerifierUI();
+                    verifierState = "IDLE";
+                }, 1400);
+                return;
             }
 
-            if (verifierState === "FORWARD" || verifierState === "REVERSING") {
-
+            if (verifierState === "HOLDING") {
                 animFrameId = requestAnimationFrame(tick);
-
             }
-
         }
 
         animFrameId = requestAnimationFrame(tick);
-
     }
 
     function releaseHold(e) {
-
         if (e.type === "keyup" && e.code !== "Space") return;
+        if (verifierState !== "HOLDING") return;
 
-        if (verifierState !== "FORWARD" && verifierState !== "REVERSING") return;
+        if (animFrameId) cancelAnimationFrame(animFrameId);
+        const elapsed = performance.now() - holdStartTime;
 
-        if (verifierState === "REVERSING") {
-
-            // SUCCESS! User released during the reverse window
-
+        if (elapsed < MIN_HOLD_TIME) {
+            // Released too early (< 1.4s)
+            verifierState = "FAILED";
+            resetVerifierUI();
+            if (btnText) {
+                btnText.textContent = "Hold longer!";
+                btnText.className = "text-sm font-black text-amber-300 tracking-wide";
+            }
+            if (hintText) {
+                hintText.textContent = "Released too early! Please hold for a few seconds before releasing.";
+                hintText.className = "text-xs text-amber-300 font-bold text-center mt-3";
+            }
+            if (holdBtn) {
+                holdBtn.classList.add("border-amber-400");
+                setTimeout(() => {
+                    resetVerifierUI();
+                    verifierState = "IDLE";
+                }, 1400);
+            }
+        } else if (elapsed >= MIN_HOLD_TIME && elapsed < MAX_HOLD_TIME) {
+            // SUCCESS! User held for a few seconds and released before loading completed
             verifierState = "SUCCESS";
 
-            if (animFrameId) cancelAnimationFrame(animFrameId);
+            // Save verification in session storage (persists on reload, clears on new session)
+            try {
+                sessionStorage.setItem("almond_human_verified", "true");
+                document.cookie = "almond_human_verified=1; path=/; samesite=lax";
+            } catch (err) {}
 
-            sessionStorage.setItem("almond_human_verified", "true");
+            // Send telemetry validation beacon to backend
+            try {
+                fetch("/api/security/verify-human", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ hold_duration_ms: Math.round(elapsed) })
+                }).catch(() => {});
+            } catch (err) {}
 
             if (bgFill) {
-
                 bgFill.className = "absolute inset-y-0 left-0 bg-emerald-600 w-full transition-all duration-200 z-0 opacity-95";
-
             }
-
             if (btnText) {
-
-                btnText.textContent = "Human Verified!";
-
+                btnText.textContent = "Human Verified ✓";
                 btnText.className = "text-sm font-black text-white tracking-wide";
-
             }
-
             if (hintText) {
-
-                hintText.textContent = "Verification confirmed! Launching...";
-
+                hintText.textContent = "Verification confirmed! Welcome to Almond Jobs.";
                 hintText.className = "text-xs text-emerald-400 font-bold text-center mt-3";
-
             }
-
             if (successIcon) successIcon.classList.remove("hidden");
-
             if (ringCircle && ringCircle.parentElement) ringCircle.parentElement.classList.add("hidden");
 
             if (holdBtn) {
-
-                holdBtn.className = "w-full py-4 px-6 bg-emerald-950/80 border-2 border-emerald-400 rounded-2xl flex items-center justify-center space-x-3 transition-all relative overflow-hidden group shadow-lg shadow-emerald-500/25";
-
+                holdBtn.className = "w-full py-4 px-6 bg-emerald-950/90 border-2 border-emerald-400 rounded-2xl flex items-center justify-center space-x-3 transition-all relative overflow-hidden group shadow-lg shadow-emerald-500/25";
             }
 
+            // Smoothly close modal
             setTimeout(() => {
-
-                modal.classList.add("hidden");
-
-                verifierState = "IDLE";
-
-                if (pendingHumanAction) {
-
-                    const cb = pendingHumanAction;
-
-                    pendingHumanAction = null;
-
-                    cb();
-
-                }
-
-            }, 450);
-
-        } else if (verifierState === "FORWARD") {
-
-            // Released too early
-
-            verifierState = "FAILED";
-
-            if (animFrameId) cancelAnimationFrame(animFrameId);
-
-            resetVerifierUI();
-
-            if (btnText) btnText.textContent = "Hold longer!";
-
-            if (hintText) {
-
-                hintText.textContent = "Released too early! Hold until full, then release as the bar reverses.";
-
-                hintText.className = "text-xs text-violet-400 font-bold text-center mt-3";
-
-            }
-
-            if (holdBtn) {
-
-                holdBtn.classList.add("border-violet-400");
-
+                modal.classList.add("transition-opacity", "duration-300", "opacity-0");
                 setTimeout(() => {
-
-                    resetVerifierUI();
-
+                    modal.classList.add("hidden");
+                    modal.classList.remove("opacity-0", "transition-opacity", "duration-300");
                     verifierState = "IDLE";
-
-                }, 1600);
-
-            }
-
+                    if (pendingHumanAction) {
+                        const cb = pendingHumanAction;
+                        pendingHumanAction = null;
+                        cb();
+                    }
+                }, 300);
+            }, 450);
         }
-
     }
 
-    // Pointer events (Mouse & Touch)
-
+    // Pointer events (Mouse, Touch & Window-level release safety)
     holdBtn.addEventListener("mousedown", startHold);
-
     holdBtn.addEventListener("mouseup", releaseHold);
-
     holdBtn.addEventListener("mouseleave", releaseHold);
+    window.addEventListener("mouseup", releaseHold);
 
     holdBtn.addEventListener("touchstart", startHold, { passive: false });
-
     holdBtn.addEventListener("touchend", releaseHold);
-
     holdBtn.addEventListener("touchcancel", releaseHold);
+    window.addEventListener("touchend", releaseHold);
+    window.addEventListener("touchcancel", releaseHold);
 
     // Keyboard Spacebar events
-
     window.addEventListener("keydown", (e) => {
-
         if (!modal.classList.contains("hidden") && e.code === "Space") {
-
             startHold(e);
-
         }
-
     });
 
     window.addEventListener("keyup", (e) => {
-
         if (!modal.classList.contains("hidden") && e.code === "Space") {
-
             releaseHold(e);
-
         }
-
     });
-
 }
 
 // Initialize Candidate Authentication Session

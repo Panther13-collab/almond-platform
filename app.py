@@ -739,6 +739,31 @@ async def api_me(payload: dict = Body(...)):
         "price_usd": Config.PRICE_USD
     })
 
+@app.post("/api/security/verify-human")
+async def api_verify_human_session(request: Request, payload: dict = Body(default={})):
+    """
+    Session-level Human Presence and Anti-Bot Verification Endpoint.
+    Validates telemetry hold timing bounds and sets session cookie.
+    """
+    hold_duration_ms = payload.get("hold_duration_ms")
+    if hold_duration_ms is not None:
+        try:
+            val = float(hold_duration_ms)
+            if val < 800 or val > 5000:
+                raise HTTPException(status_code=400, detail="Invalid verification telemetry duration.")
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=400, detail="Malformed telemetry parameters.")
+
+    response = JSONResponse(content={"status": "success", "verified": True})
+    response.set_cookie(
+        key="almond_human_verified",
+        value="1",
+        httponly=False,
+        samesite="lax",
+        secure=request.url.scheme == "https"
+    )
+    return response
+
 @app.post("/api/payment/create-order")
 async def api_create_order(payload: dict = Body(...)):
     user_id = payload.get("user_id", "")

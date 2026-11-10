@@ -39,6 +39,7 @@ class SlidingWindowRateLimiter:
             "/api/auth/signup": (5, 60),         # Max 5 signups / min (anti-bruteforce)
             "/api/auth/login": (10, 60),         # Max 10 login attempts / min
             "/api/payment/create-order": (10, 60),
+            "/api/security/verify-human": (30, 60),
             "DEFAULT": (60, 60)                  # Max 60 general requests / min
         }
         self.cleanup_interval = 300
