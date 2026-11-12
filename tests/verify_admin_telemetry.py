@@ -103,8 +103,96 @@ class TestAdminTelemetryAndTraffic(unittest.TestCase):
         self.assertEqual(res_auth.status_code, 200)
         self.assertEqual(res_auth.headers.get("content-type"), "text/csv; charset=utf-8")
         self.assertIn("attachment; filename=\"almond_candidates_export.csv\"", res_auth.headers.get("content-disposition", ""))
-        self.assertIn("Candidate ID,Full Name,Email,Sign-in Provider", res_auth.text)
+        self.assertIn("Candidate ID,Full Name,Email,Account Classification,Sign-in Provider", res_auth.text)
         self.assertIn("Device / Hardware Model", res_auth.text)
+
+    def test_07_admin_grant_and_revoke_vip_api(self):
+        """Verify admin can grant 1-month VIP to an email, pre-approving access on future login, and revoking it."""
+        # 1. Unauthorized check
+        r_unauth = self.client.post("/api/admin/grant-vip", json={"email": "vip_future@startup.io", "key": "bad_key"})
+        self.assertEqual(r_unauth.status_code, 401)
+
+        # 2. Grant VIP to email
+        test_email = "vip_future_director@startup.io"
+        r_grant = self.client.post("/api/admin/grant-vip", json={
+            "email": test_email,
+            "duration_days": 30,
+            "key": self.admin_key
+        })
+        self.assertEqual(r_grant.status_code, 200)
+        grant_data = r_grant.json()
+        self.assertEqual(grant_data["status"], "success")
+        self.assertTrue(grant_data["is_paid"])
+        self.assertEqual(grant_data["days_remaining"], 30)
+
+        # 3. Future candidate signs in for the first time via Google
+        login_res = login_or_signup_google_user(test_email, "Future VIP Director", "goog_future_123")
+        self.assertEqual(login_res["status"], "success")
+        self.assertTrue(login_res["is_paid"], "Candidate pre-approved for VIP must have VIP active on first sign-in!")
+        self.assertEqual(login_res["plan"], "vip_pass_30d")
+
+        # 4. Check is_user_paid
+        uid = login_res["user_id"]
+        from core.auth_db import is_user_paid
+        self.assertTrue(is_user_paid(uid))
+
+        # 5. Revoke VIP
+        r_revoke = self.client.post("/api/admin/grant-vip", json={
+            "email": test_email,
+            "action": "revoke",
+            "key": self.admin_key
+        })
+        self.assertEqual(r_revoke.status_code, 200)
+        self.assertFalse(r_revoke.json()["is_paid"])
+        self.assertFalse(is_user_paid(uid), "Candidate must be reverted to free tier after revoke!")
+
+    def test_08_vip_1month_expiration_auto_revert(self):
+        """Verify that after 1 month (expiration date passed), candidate is automatically removed from VIP."""
+        import time
+        from core.auth_db import get_db, is_user_paid
+        test_email = "expired_vip_user@company.com"
+        u = login_or_signup_google_user(test_email, "Expired Candidate", "goog_exp_123")
+        uid = u["user_id"]
+
+        now = time.time()
+        # Set paid_until in the past (e.g. 1 hour ago, expired 1-month VIP pass)
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET is_paid = 1, plan = 'vip_pass_30d', paid_until = ? WHERE id = ?", (now - 3600, uid))
+            conn.commit()
+
+        # is_user_paid must detect expiration, auto-revert to free, and return False
+        self.assertFalse(is_user_paid(uid), "Expired VIP pass must return False and remove account from VIP!")
+
+        # Verify users table in DB was updated to is_paid = 0 and plan = 'free'
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT is_paid, plan FROM users WHERE id = ?", (uid,))
+            row = cursor.fetchone()
+            self.assertEqual(row["is_paid"], 0)
+            self.assertEqual(row["plan"], "free")
+
+    def test_09_admin_page_filters_and_dummy_classification(self):
+        """Verify admin UI contains multi-filters, quick filter pills, and dummy email classification."""
+        from core.auth_db import is_dummy_email
+        self.assertTrue(is_dummy_email("dummy_candidate@example.com"))
+        self.assertTrue(is_dummy_email("test_user_4492@test.com"))
+        self.assertTrue(is_dummy_email("vip_split_17949382@fake.com"))
+        self.assertFalse(is_dummy_email("sarah.connor@cyberdyne.ai"))
+        self.assertFalse(is_dummy_email("sridhar.engineer@gmail.com"))
+
+        res_auth = self.client.get(f"/admin?key={self.admin_key}")
+        self.assertEqual(res_auth.status_code, 200)
+        self.assertIn("Grant 1-Month VIP Access to Email", res_auth.text)
+        self.assertIn("admin-grant-email", res_auth.text)
+        self.assertIn("Quick Filters:", res_auth.text)
+        self.assertIn("✨ Genuine Real", res_auth.text)
+        self.assertIn("⚡ Newly Added (24h)", res_auth.text)
+        self.assertIn("🧪 Test / Dummy", res_auth.text)
+        self.assertIn("filter-type", res_auth.text)
+        self.assertIn("filter-recency", res_auth.text)
+        self.assertIn("filter-vip", res_auth.text)
+        self.assertIn("filter-provider", res_auth.text)
 
 if __name__ == "__main__":
     unittest.main()

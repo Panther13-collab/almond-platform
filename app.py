@@ -28,7 +28,7 @@ from core.doc_exporter import (
 from core.config import Config
 from core.auth_db import (
     signup_user, login_user, is_user_paid, verify_session_token, get_user_profile,
-    recover_verified_session, get_recent_contributions,
+    recover_verified_session, get_recent_contributions, grant_vip_to_email, revoke_vip_from_email,
     get_user_kanban, save_user_kanban_application, sync_full_kanban,
     send_signup_otp, verify_otp_and_signup, login_or_signup_google_user,
     record_page_visit, get_analytics_summary, get_all_users_admin,
@@ -348,12 +348,20 @@ async def serve_admin_dashboard(
     if is_authenticated:
         analytics = get_analytics_summary()
         candidates = get_all_users_admin()
+        genuine_count = sum(1 for c in candidates if not c.get("is_dummy"))
+        dummy_count = sum(1 for c in candidates if c.get("is_dummy"))
+        new_count = sum(1 for c in candidates if c.get("is_new"))
+        vip_count = sum(1 for c in candidates if c.get("is_paid"))
         rendered = template.render(
             is_authenticated=True,
             admin_key=provided_key,
             auth_error=False,
             analytics=analytics,
-            candidates=candidates
+            candidates=candidates,
+            genuine_count=genuine_count,
+            dummy_count=dummy_count,
+            new_count=new_count,
+            vip_count=vip_count
         )
         response = HTMLResponse(content=rendered)
         # Store secure session cookie for convenience so user stays logged in
@@ -391,7 +399,7 @@ async def get_admin_metrics(request: Request, key: Optional[str] = Query(None)):
 
 @app.get("/api/admin/export-users")
 async def export_candidates_csv(request: Request, key: Optional[str] = Query(None)):
-    """Export all registered candidates as a clean, downloadable CSV spreadsheet."""
+    """Export all registered candidates as a clean, downloadable CSV spreadsheet with account classification."""
     cookie_key = request.cookies.get("almond_admin_key")
     provided_key = (key or cookie_key or "").strip()
     if provided_key != Config.ADMIN_SECRET_KEY:
@@ -400,16 +408,18 @@ async def export_candidates_csv(request: Request, key: Optional[str] = Query(Non
     candidates = get_all_users_admin()
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["Candidate ID", "Full Name", "Email", "Sign-in Provider", "Device / Hardware Model", "Plan", "VIP Status", "Registration Date"])
+    writer.writerow(["Candidate ID", "Full Name", "Email", "Account Classification", "Sign-in Provider", "Device / Hardware Model", "Plan", "VIP Status", "VIP Expiration", "Registration Date"])
     for c in candidates:
         writer.writerow([
             c.get("id", ""),
             c.get("full_name", ""),
             c.get("email", ""),
+            "Test / Dummy" if c.get("is_dummy") else "Genuine Candidate",
             c.get("auth_provider", "email"),
             c.get("device_display", "Desktop / Web Browser"),
             c.get("plan", "free"),
             "VIP ACTIVE" if c.get("is_paid") else "Standard Free",
+            c.get("paid_until_str", "N/A"),
             c.get("created_at_str", "")
         ])
 
@@ -419,6 +429,31 @@ async def export_candidates_csv(request: Request, key: Optional[str] = Query(Non
         media_type="text/csv",
         headers={"Content-Disposition": 'attachment; filename="almond_candidates_export.csv"'}
     )
+
+@app.post("/api/admin/grant-vip")
+async def api_admin_grant_vip(request: Request, payload: dict = Body(...)):
+    """Executive admin endpoint to grant or revoke 1-Month VIP access for an email address."""
+    cookie_key = request.cookies.get("almond_admin_key")
+    header_key = request.headers.get("x-admin-key")
+    query_key = payload.get("key")
+    provided_key = (query_key or cookie_key or header_key or "").strip()
+
+    if provided_key != Config.ADMIN_SECRET_KEY:
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin secret key.")
+
+    email = (payload.get("email") or "").strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="A valid candidate email address is required.")
+
+    action = (payload.get("action") or "grant").lower()
+    duration_days = int(payload.get("duration_days", 30))
+
+    if action == "revoke":
+        res = revoke_vip_from_email(email)
+    else:
+        res = grant_vip_to_email(email, duration_days=duration_days, granted_by="Admin Portal")
+
+    return JSONResponse(content=res)
 
 @app.post("/api/upload-resume")
 async def upload_resume(file: UploadFile = File(...)):

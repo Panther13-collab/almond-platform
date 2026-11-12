@@ -4288,7 +4288,7 @@ window.executeVipPassCheckout = function() {
         const curr = window.selectedVipCurrency || "INR";
         const parity = (window.VIP_PLANNED_PARITY && window.VIP_PLANNED_PARITY[curr]) || { planned: "₹699", inr_amount: 699 };
         const amountInr = parity.inr_amount || 699;
-        const planTitle = `Almond Jobs VIP Pass (30 Days — ${parity.planned})`;
+        const planTitle = `Almond Jobs 1-Month VIP Pass (${parity.planned})`;
         triggerRazorpayCheckout(amountInr, planTitle, {
             purchaseType: "vip_pass",
             currency: "INR"
@@ -5070,7 +5070,7 @@ function loadRazorpaySdk() {
 
 // 9. Razorpay Pro Checkout Flow
 
-window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Almond Jobs VIP Pass (30 Days)', optionsConfig = {}) {
+window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Almond Jobs 1-Month VIP Pass', optionsConfig = {}) {
     const parsedInr = parseInt(amountInr, 10);
     const finalAmount = Number.isFinite(parsedInr) ? parsedInr : 1;
     const amountPaise = finalAmount * 100;
@@ -5173,7 +5173,7 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Alm
                             if (typeof window.closeVipPassModal === "function") window.closeVipPassModal();
                             const vipLbl = document.getElementById("topVipPassLabel");
                             if (vipLbl) vipLbl.textContent = "VIP Active ✓";
-                            alert("VIP Pass Activated! All priority corporate postings and direct application portals are now fully unlocked.");
+                            alert("1-Month VIP Pass Activated! All priority corporate postings and direct application portals are now fully unlocked for 30 days.");
                             const searchBtn = document.getElementById("searchJobsBtn");
                             if (searchBtn && currentProfile) {
                                 searchBtn.click();

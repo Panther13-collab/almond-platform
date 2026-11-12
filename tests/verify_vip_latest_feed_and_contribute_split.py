@@ -51,6 +51,15 @@ class TestVipPassAndLatestFeedGating(unittest.TestCase):
         self.assertIn('👑 Unlock VIP Pass', self.html)
         self.assertNotIn('👑 Unlock VIP Pass &mdash; ₹1', self.html)
 
+        # 1-Month VIP Pass duration & no "equivalent to" wording
+        self.assertIn("Standard 1-Month VIP Pass", self.html)
+        self.assertIn("1 Month Access", self.html)
+        self.assertNotIn("USD eq.", self.html)
+        self.assertNotIn("INR eq.", self.html)
+        self.assertNotIn("EUR eq.", self.html)
+        self.assertNotIn("GBP eq.", self.html)
+        self.assertNotIn("&approx; $9.99 USD", self.html)
+
         # Rotating live reviews & dynamic supporters
         self.assertIn('id="miniLiveReviewCard"', self.html)
         self.assertIn('id="liveReviewEmotion"', self.html)

@@ -119,6 +119,19 @@ def init_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_traffic_path ON site_traffic (path);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_traffic_visitor ON site_traffic (visitor_hash);")
         
+        # Dedicated Pre-Approved / Admin VIP Grants Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS vip_grants (
+                email TEXT PRIMARY KEY,
+                granted_by TEXT DEFAULT 'admin',
+                granted_at REAL,
+                valid_until REAL,
+                status TEXT DEFAULT 'active',
+                notes TEXT DEFAULT ''
+            );
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_vip_grants_email ON vip_grants (email);")
+        
         # Auto-migrate existing database tables if columns are missing
         try:
             cursor.execute("ALTER TABLE users ADD COLUMN paid_until REAL DEFAULT 0;")
@@ -571,6 +584,11 @@ def signup_user(email: str, password: str, full_name: str = "", device_model: st
     now = time.time()
     clean_device = (device_model or "").strip()
 
+    has_grant, grant_until, grant_plan = check_and_apply_vip_grant(clean_email)
+    initial_paid = 1 if has_grant else 0
+    initial_plan = grant_plan if has_grant else 'free'
+    initial_until = grant_until if has_grant else 0
+
     # 1. Insert into local persistent SQLite DB
     try:
         with get_db() as conn:
@@ -578,9 +596,9 @@ def signup_user(email: str, password: str, full_name: str = "", device_model: st
             cursor.execute(
                 """
                 INSERT INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at, auth_provider, device_model)
-                VALUES (?, ?, ?, ?, ?, 0, 'free', 0, ?, ?, 'email', ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'email', ?)
                 """,
-                (user_id, clean_email, pw_hash, salt, full_name.strip(), now, now, clean_device)
+                (user_id, clean_email, pw_hash, salt, full_name.strip(), initial_paid, initial_plan, initial_until, now, now, clean_device)
             )
             conn.commit()
     except sqlite3.IntegrityError:
@@ -588,7 +606,7 @@ def signup_user(email: str, password: str, full_name: str = "", device_model: st
     except Exception as e:
         return {"status": "error", "message": f"Database error: {str(e)}"}
 
-    # 2. Mirror into Supabase Auth with auto email confirmation (ZERO transactional emails sent, preventing bounces)
+    # 2. Mirror into Supabase Auth with auto email confirmation
     if supabase_admin:
         try:
             supabase_admin.auth.admin.create_user({
@@ -597,7 +615,9 @@ def signup_user(email: str, password: str, full_name: str = "", device_model: st
                 "email_confirm": True,
                 "user_metadata": {
                     "full_name": full_name.strip(),
-                    "is_paid": False,
+                    "is_paid": bool(initial_paid),
+                    "plan": initial_plan,
+                    "paid_until": initial_until,
                     "local_user_id": user_id,
                     "device_model": clean_device
                 }
@@ -607,14 +627,22 @@ def signup_user(email: str, password: str, full_name: str = "", device_model: st
 
     # Generate session token
     token = _create_token(user_id, clean_email)
+    is_vip_active = bool(initial_paid and initial_until > now)
+    remaining_str = ""
+    if is_vip_active and initial_until > now:
+        diff = initial_until - now
+        days_rem = max(1, int(diff / 86400))
+        remaining_str = f"{days_rem}d left"
 
     return {
         "status": "success",
         "user_id": user_id,
         "email": clean_email,
         "full_name": full_name.strip() or clean_email.split("@")[0],
-        "is_paid": False,
-        "plan": "free",
+        "is_paid": is_vip_active,
+        "plan": initial_plan,
+        "paid_until": initial_until,
+        "remaining_str": remaining_str,
         "device_model": clean_device,
         "token": token
     }
@@ -655,10 +683,18 @@ def login_user(email: str, password: str, device_model: str = "") -> dict:
                 except Exception:
                     pass
 
+        has_grant, grant_until, grant_plan = check_and_apply_vip_grant(clean_email, user_id)
         token = _create_token(user_id, row["email"])
-
-        paid_until = row["paid_until"] or 0
-        is_paid = bool(row["is_paid"]) and (paid_until == 0 or paid_until > now)
+        if has_grant:
+            paid_until = grant_until
+            is_paid = True
+        else:
+            paid_until = row["paid_until"] or 0
+            is_paid = bool(row["is_paid"]) and (paid_until > now)
+            if row["is_paid"] and paid_until <= now:
+                cursor.execute("UPDATE users SET is_paid = 0, plan = 'free' WHERE id = ?", (user_id,))
+                conn.commit()
+                is_paid = False
 
         remaining_str = ""
         if is_paid and paid_until > now:
@@ -722,9 +758,19 @@ def login_or_signup_google_user(email: str, full_name: str = "", google_id: str 
                 except Exception:
                     pass
 
+            has_grant, grant_until, grant_plan = check_and_apply_vip_grant(clean_email, user_id)
             token = _create_token(user_id, row["email"])
-            paid_until = row["paid_until"] or 0
-            is_paid = bool(row["is_paid"]) and (paid_until == 0 or paid_until > now)
+            if has_grant:
+                paid_until = grant_until
+                is_paid = True
+                plan_name = grant_plan
+            else:
+                paid_until = row["paid_until"] or 0
+                is_paid = bool(row["is_paid"]) and (paid_until > now)
+                if row["is_paid"] and paid_until <= now:
+                    cursor.execute("UPDATE users SET is_paid = 0, plan = 'free' WHERE id = ?", (user_id,))
+                    conn.commit()
+                    is_paid = False
 
             remaining_str = ""
             if is_paid and paid_until > now:
@@ -754,12 +800,16 @@ def login_or_signup_google_user(email: str, full_name: str = "", google_id: str 
             pw_hash, salt = _hash_password(rand_password)
             name_val = full_name.strip() or clean_email.split("@")[0]
 
+            has_grant, grant_until, grant_plan = check_and_apply_vip_grant(clean_email)
+            initial_paid = 1 if has_grant else 0
+            initial_plan = grant_plan if has_grant else 'free'
+            initial_until = grant_until if has_grant else 0
             cursor.execute(
                 """
                 INSERT INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at, auth_provider, device_model)
-                VALUES (?, ?, ?, ?, ?, 0, 'free', 0, ?, ?, 'google', ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'google', ?)
                 """,
-                (user_id, clean_email, pw_hash, salt, name_val, now, now, clean_device)
+                (user_id, clean_email, pw_hash, salt, name_val, initial_paid, initial_plan, initial_until, now, now, clean_device)
             )
             conn.commit()
 
@@ -781,25 +831,27 @@ def login_or_signup_google_user(email: str, full_name: str = "", google_id: str 
                     print(f"[AUTH_DB] Supabase Google mirror note: {e}")
 
             token = _create_token(user_id, clean_email)
-            return {
-                "status": "success",
-                "user_id": user_id,
-                "email": clean_email,
-                "full_name": name_val,
-                "is_paid": False,
-                "plan": "free",
-                "device_model": clean_device,
-                "token": token
-            }
+            is_vip_active = bool(initial_paid and initial_until > now)
+            remaining_str = ""
+            if is_vip_active and initial_until > now:
+                diff = initial_until - now
+                if diff < 86400:
+                    hours = max(1, int(diff / 3600))
+                    remaining_str = f"{hours}h left"
+                else:
+                    days = int(diff / 86400)
+                    remaining_str = f"{days}d left"
 
-            token = _create_token(user_id, clean_email)
             return {
                 "status": "success",
                 "user_id": user_id,
                 "email": clean_email,
                 "full_name": name_val,
-                "is_paid": False,
-                "plan": "free",
+                "is_paid": is_vip_active,
+                "plan": initial_plan,
+                "paid_until": initial_until,
+                "remaining_str": remaining_str,
+                "device_model": clean_device,
                 "token": token
             }
 
@@ -845,37 +897,240 @@ def get_user_profile(user_id: str) -> dict:
             "created_at": row["created_at"]
         }
 
+
+def is_dummy_email(email: str) -> bool:
+    """Determine if an email address is a dummy, test, or synthetic test suite email."""
+    clean = (email or "").strip().lower()
+    if not clean or "@" not in clean:
+        return True
+
+    domain = clean.split("@")[-1]
+    dummy_domains = {
+        "example.com", "test.com", "dummy.com", "fake.com", "sample.com",
+        "mailinator.com", "tempmail.com", "10minutemail.com", "throwaway.com",
+        "guerrillamail.com", "trashmail.com", "localhost"
+    }
+    if domain in dummy_domains or domain.endswith(".test") or domain.endswith(".example"):
+        return True
+
+    local_part = clean.split("@")[0]
+    dummy_keywords = ["dummy", "fake", "sample", "temp", "mock", "tester", "test_", "_test", "testuser", "asdf", "qwerty"]
+    for kw in dummy_keywords:
+        if kw in local_part:
+            return True
+
+    test_prefixes = ["vip_split_", "supporter_feed_", "otp_test_", "smoke_test_", "perf_test_", "test_"]
+    for pfx in test_prefixes:
+        if local_part.startswith(pfx):
+            return True
+
+    return False
+
+
+def grant_vip_to_email(email: str, duration_days: int = 30, granted_by: str = "admin", notes: str = "") -> dict:
+    """
+    Grant 1-Month VIP Pass to an email address (pre-approved or immediately active).
+    When this candidate logs in, they automatically receive active VIP status.
+    """
+    clean_email = (email or "").strip().lower()
+    if not clean_email or "@" not in clean_email:
+        return {"status": "error", "message": "Invalid email address format."}
+
+    now = time.time()
+    valid_until = now + (duration_days * 86400)
+    valid_until_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(valid_until))
+
+    with get_db() as conn:
+        cursor = conn.cursor()
+        # 1. Insert or replace in vip_grants table
+        cursor.execute(
+            """
+            INSERT OR REPLACE INTO vip_grants (email, granted_by, granted_at, valid_until, status, notes)
+            VALUES (?, ?, ?, ?, 'active', ?)
+            """,
+            (clean_email, granted_by, now, valid_until, notes or "Granted by Admin")
+        )
+
+        # 2. If user already registered in users table, upgrade immediately
+        cursor.execute("SELECT id FROM users WHERE LOWER(email) = ?", (clean_email,))
+        user_row = cursor.fetchone()
+        user_id = user_row["id"] if user_row else None
+
+        if user_id:
+            cursor.execute(
+                """
+                UPDATE users SET is_paid = 1, plan = 'vip_pass_30d', paid_until = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (valid_until, now, user_id)
+            )
+
+        # 3. Record in payments ledger for audit history
+        pay_id = f"vip_grant_{secrets.token_hex(6)}"
+        cursor.execute(
+            """
+            INSERT INTO payments (id, user_id, payment_id, order_id, amount_inr, plan_name, status, created_at, supporter_name, supporter_message)
+            VALUES (?, ?, ?, ?, 0, 'Almond Jobs 1-Month VIP Pass (Admin Grant)', 'captured', ?, 'Admin Grant', ?)
+            """,
+            (pay_id, user_id or clean_email, f"adm_{secrets.token_hex(4)}", f"order_adm_{secrets.token_hex(4)}", now, f"VIP granted to {clean_email} by {granted_by}")
+        )
+        conn.commit()
+
+    if supabase_admin and user_id:
+        try:
+            supabase_admin.auth.admin.update_user_by_id(
+                user_id,
+                {"user_metadata": {"is_paid": True, "plan": "vip_pass_30d", "paid_until": valid_until}}
+            )
+        except Exception as e:
+            print(f"[AUTH_DB] Supabase grant sync note: {e}")
+
+    print(f"[AUTH_DB] Granted 1-Month VIP Pass to {clean_email} valid until {valid_until_str}.")
+    return {
+        "status": "success",
+        "message": f"Successfully granted 1-Month VIP Pass to {clean_email}.",
+        "email": clean_email,
+        "valid_until": valid_until,
+        "valid_until_str": valid_until_str,
+        "is_paid": True,
+        "days_remaining": duration_days
+    }
+
+
+def revoke_vip_from_email(email: str) -> dict:
+    """Revoke VIP Pass from an email address, reverting account to free tier."""
+    clean_email = (email or "").strip().lower()
+    if not clean_email:
+        return {"status": "error", "message": "Email is required."}
+
+    now = time.time()
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM users WHERE LOWER(email) = ?", (clean_email,))
+        u_row = cursor.fetchone()
+        u_id = u_row["id"] if u_row else clean_email
+        cursor.execute("UPDATE vip_grants SET status = 'revoked', valid_until = ? WHERE email = ?", (now, clean_email))
+        cursor.execute("UPDATE users SET is_paid = 0, plan = 'free', paid_until = ?, updated_at = ? WHERE LOWER(email) = ?", (now, now, clean_email))
+        cursor.execute("UPDATE payments SET status = 'revoked' WHERE (user_id = ? OR user_id = ?) AND plan_name LIKE '%Admin Grant%'", (u_id, clean_email))
+        conn.commit()
+
+    if supabase_admin:
+        try:
+            with get_db() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT id FROM users WHERE LOWER(email) = ?", (clean_email,))
+                u = cursor.fetchone()
+                if u:
+                    supabase_admin.auth.admin.update_user_by_id(u["id"], {"user_metadata": {"is_paid": False, "plan": "free", "paid_until": now}})
+        except Exception:
+            pass
+
+    print(f"[AUTH_DB] Revoked VIP Pass from {clean_email}.")
+    return {
+        "status": "success",
+        "message": f"Successfully revoked VIP Pass from {clean_email}.",
+        "email": clean_email,
+        "is_paid": False
+    }
+
+
+def check_and_apply_vip_grant(email: str, user_id: str = "") -> tuple:
+    """Check if the email has an active VIP grant, and update user record if found."""
+    clean_email = (email or "").strip().lower()
+    if not clean_email:
+        return (False, 0, "free")
+
+    now = time.time()
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT valid_until, status FROM vip_grants WHERE email = ? AND status = 'active'",
+            (clean_email,)
+        )
+        row = cursor.fetchone()
+        if row and row["valid_until"] > now:
+            valid_until = row["valid_until"]
+            if user_id:
+                cursor.execute(
+                    """
+                    UPDATE users SET is_paid = 1, plan = 'vip_pass_30d', paid_until = ?, updated_at = ?
+                    WHERE id = ?
+                    """,
+                    (valid_until, now, user_id)
+                )
+                conn.commit()
+            return (True, valid_until, "vip_pass_30d")
+        elif row and row["valid_until"] <= now:
+            cursor.execute("UPDATE vip_grants SET status = 'expired' WHERE email = ?", (clean_email,))
+            conn.commit()
+
+    return (False, 0, "free")
+
 def is_user_paid(user_id: str) -> bool:
-    """Check if the user has an active Pro/VIP subscription within valid timestamp bounds."""
+    """
+    Check if the user has an active 1-Month Pro/VIP subscription within valid timestamp bounds.
+    After one month from their date of purchase, their account is automatically removed from VIP.
+    """
     if not user_id:
         return False
 
     now = time.time()
     with get_db() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT is_paid, paid_until FROM users WHERE id = ?", (user_id,))
+        cursor.execute("SELECT id, email, is_paid, paid_until, plan FROM users WHERE id = ? OR LOWER(email) = ?", (user_id, user_id.lower()))
         row = cursor.fetchone()
-        if row and row["is_paid"] == 1:
-            paid_until = row["paid_until"] or 0
-            if paid_until == 0 or paid_until > now:
-                return True
+        if row:
+            user_email = (row["email"] or "").lower()
+            # 1. Check if email has active pre-approved VIP grant
+            cursor.execute("SELECT valid_until, status FROM vip_grants WHERE email = ? AND status = 'active'", (user_email,))
+            grant_row = cursor.fetchone()
+            if grant_row:
+                if grant_row["valid_until"] > now:
+                    if row["is_paid"] != 1 or row["paid_until"] != grant_row["valid_until"]:
+                        cursor.execute("UPDATE users SET is_paid = 1, plan = 'vip_pass_30d', paid_until = ? WHERE id = ?", (grant_row["valid_until"], row["id"]))
+                        conn.commit()
+                    return True
+                else:
+                    cursor.execute("UPDATE vip_grants SET status = 'expired' WHERE email = ?", (user_email,))
+                    conn.commit()
+
+            # 2. Check users table timestamp: strictly valid until 1 month from purchase
+            if row["is_paid"] == 1:
+                paid_until = row["paid_until"] or 0
+                if paid_until > now:
+                    return True
+                else:
+                    # One month expired from date of purchase: Automatically remove from VIP
+                    cursor.execute("UPDATE users SET is_paid = 0, plan = 'free' WHERE id = ?", (row["id"],))
+                    conn.commit()
+                    print(f"[AUTH_DB] VIP Pass expired for user {row['id']} ({row['email']}). Reverted to free tier.")
+                    return False
             else:
-                # Expired: Auto-revert
-                cursor.execute("UPDATE users SET is_paid = 0 WHERE id = ?", (user_id,))
-                conn.commit()
                 return False
 
-        # Also allow guest candidate sessions that completed a verified VIP checkout
+        # 3. Check if user_id itself is an email with active grant
+        if "@" in user_id:
+            cursor.execute("SELECT valid_until, status FROM vip_grants WHERE email = ? AND status = 'active'", (user_id.lower(),))
+            grant_row = cursor.fetchone()
+            if grant_row and grant_row["valid_until"] > now:
+                return True
+
+        # 4. Check payments table for captured VIP payment within 30 days (1 month)
+        uid_filter = row["id"] if row else user_id
         cursor.execute(
             """
-            SELECT 1 FROM payments
-            WHERE user_id = ? AND status = 'captured' AND created_at > ?
-            LIMIT 1
+            SELECT created_at FROM payments
+            WHERE (user_id = ? OR user_id = ?) AND status = 'captured' AND plan_name LIKE '%vip%'
+            ORDER BY created_at DESC LIMIT 1
             """,
-            (user_id, now - (30 * 86400))
+            (user_id, uid_filter)
         )
-        if cursor.fetchone():
-            return True
+        pay_row = cursor.fetchone()
+        if pay_row:
+            pay_ts = pay_row["created_at"] or 0
+            # Strict 30 days / 1 month from date of purchase
+            if (pay_ts + 30 * 86400) > now:
+                return True
 
     return False
 
@@ -1565,6 +1820,9 @@ def get_analytics_summary() -> dict:
         "total_users": total_users,
         "paid_users": paid_users,
         "google_users": google_users,
+        "genuine_users": sum(1 for c in candidates if not c.get("is_dummy")),
+        "dummy_users": sum(1 for c in candidates if c.get("is_dummy")),
+        "new_users_24h": sum(1 for c in candidates if c.get("is_new")),
         "today_date": today_str
     }
 
@@ -1573,14 +1831,24 @@ def get_all_users_admin() -> list:
     Retrieve all registered candidates formatted for the executive admin directory.
     Synchronizes seamlessly with Supabase Auth (if configured) so candidate accounts
     never vanish on ephemeral hosting (Render) restarts, and enriches candidates
-    with their email, authentication provider, and hardware device models.
+    with their email, authentication provider, hardware device models, VIP status,
+    and smart classification for test/dummy accounts vs genuine candidates.
     """
     candidates_by_email = {}
     now = time.time()
 
-    # 1. Fetch from local SQLite cache
+    # 1. Fetch active VIP grants
+    active_grants = {}
     with get_db() as conn:
         cursor = conn.cursor()
+        try:
+            cursor.execute("SELECT email, valid_until, status, granted_at FROM vip_grants WHERE status = 'active';")
+            for gr in cursor.fetchall():
+                active_grants[gr["email"].lower()] = gr
+        except Exception:
+            pass
+
+        # 2. Fetch from local SQLite cache
         cursor.execute("""
             SELECT id, email, full_name, plan, is_paid, paid_until, created_at, auth_provider,
                    COALESCE(device_model, '') as device_model
@@ -1593,20 +1861,43 @@ def get_all_users_admin() -> list:
                 continue
             created_ts = r["created_at"] or now
             paid_until = r["paid_until"] or 0
-            is_active_vip = bool(r["is_paid"]) and (paid_until == 0 or paid_until > now)
+
+            # VIP active check: check grant or user record
+            grant = active_grants.get(email_key)
+            if grant and grant["valid_until"] > now:
+                is_active_vip = True
+                paid_until = grant["valid_until"]
+            else:
+                is_active_vip = bool(r["is_paid"]) and (paid_until > now)
+
+            paid_until_str = ""
+            days_remaining = 0
+            if is_active_vip and paid_until > now:
+                diff = paid_until - now
+                days_remaining = max(1, int(diff / 86400))
+                paid_until_str = time.strftime("%Y-%m-%d", time.localtime(paid_until))
+
+            is_dummy = is_dummy_email(email_key)
+            is_new = (now - created_ts) <= (86400 * 1.5)
+
             candidates_by_email[email_key] = {
                 "id": r["id"],
                 "email": r["email"],
                 "full_name": r["full_name"] or "Candidate",
-                "plan": r["plan"] or "free",
+                "plan": "vip_pass_30d" if is_active_vip else (r["plan"] or "free"),
                 "is_paid": is_active_vip,
+                "paid_until": paid_until,
+                "paid_until_str": paid_until_str,
+                "days_remaining": days_remaining,
+                "is_dummy": is_dummy,
+                "is_new": is_new,
                 "auth_provider": r["auth_provider"] or ("google" if "google" in email_key else "email"),
                 "device_model": r["device_model"] or "",
                 "created_at": created_ts,
                 "created_at_str": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(created_ts))
             }
 
-    # 2. Synchronize with live Supabase Auth (guarantees candidate directory persistence on Render)
+    # 3. Synchronize with live Supabase Auth
     if supabase_admin:
         try:
             sp_users = supabase_admin.auth.admin.list_users() or []
@@ -1618,7 +1909,6 @@ def get_all_users_admin() -> list:
                 user_meta = getattr(u, "user_metadata", {}) or {}
                 app_meta = getattr(u, "app_metadata", {}) or {}
 
-                # Parse created_at
                 created_raw = getattr(u, "created_at", None)
                 if hasattr(created_raw, "timestamp"):
                     created_ts = created_raw.timestamp()
@@ -1635,6 +1925,23 @@ def get_all_users_admin() -> list:
                 provider = app_meta.get("provider") or ("google" if "google" in sp_email or user_meta.get("google_id") else "email")
                 sp_device = user_meta.get("device_model") or ""
                 sp_is_paid = bool(user_meta.get("is_paid", False))
+                sp_paid_until = float(user_meta.get("paid_until", 0))
+
+                grant = active_grants.get(sp_email)
+                if grant and grant["valid_until"] > now:
+                    sp_is_paid = True
+                    sp_paid_until = grant["valid_until"]
+                else:
+                    sp_is_paid = sp_is_paid and (sp_paid_until > now)
+
+                paid_until_str = ""
+                days_rem = 0
+                if sp_is_paid and sp_paid_until > now:
+                    days_rem = max(1, int((sp_paid_until - now) / 86400))
+                    paid_until_str = time.strftime("%Y-%m-%d", time.localtime(sp_paid_until))
+
+                is_dummy = is_dummy_email(sp_email)
+                is_new = (now - created_ts) <= (86400 * 1.5)
 
                 if sp_email not in candidates_by_email:
                     local_id = user_meta.get("local_user_id") or getattr(u, "id", str(uuid.uuid4()))
@@ -1642,29 +1949,18 @@ def get_all_users_admin() -> list:
                         "id": local_id,
                         "email": sp_email,
                         "full_name": full_name,
-                        "plan": "free" if not sp_is_paid else "vip",
+                        "plan": "free" if not sp_is_paid else "vip_pass_30d",
                         "is_paid": sp_is_paid,
+                        "paid_until": sp_paid_until,
+                        "paid_until_str": paid_until_str,
+                        "days_remaining": days_rem,
+                        "is_dummy": is_dummy,
+                        "is_new": is_new,
                         "auth_provider": provider,
                         "device_model": sp_device,
                         "created_at": created_ts,
                         "created_at_str": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(created_ts))
                     }
-
-                    # Backfill into local SQLite cache
-                    try:
-                        with get_db() as conn:
-                            cursor = conn.cursor()
-                            cursor.execute(
-                                """
-                                INSERT OR IGNORE INTO users 
-                                (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at, auth_provider, device_model)
-                                VALUES (?, ?, 'supabase_managed', 'salt', ?, ?, 'free', 0, ?, ?, ?, ?)
-                                """,
-                                (local_id, sp_email, full_name, 1 if sp_is_paid else 0, created_ts, created_ts, provider, sp_device)
-                            )
-                            conn.commit()
-                    except Exception as e:
-                        print(f"[AUTH_DB] SQLite backfill note: {e}")
                 else:
                     if sp_device and not candidates_by_email[sp_email].get("device_model"):
                         candidates_by_email[sp_email]["device_model"] = sp_device
@@ -1673,12 +1969,33 @@ def get_all_users_admin() -> list:
         except Exception as e:
             print(f"[AUTH_DB] Supabase user list sync note: {e}")
 
+    # 4. Include pre-approved VIP grants not yet logged in so admin can see them
+    for g_email, grant in active_grants.items():
+        if g_email not in candidates_by_email and grant["valid_until"] > now:
+            diff = grant["valid_until"] - now
+            days_rem = max(1, int(diff / 86400))
+            candidates_by_email[g_email] = {
+                "id": f"grant_{g_email}",
+                "email": g_email,
+                "full_name": "VIP Pre-Approved (Awaiting Sign-in)",
+                "plan": "vip_pass_30d",
+                "is_paid": True,
+                "paid_until": grant["valid_until"],
+                "paid_until_str": time.strftime("%Y-%m-%d", time.localtime(grant["valid_until"])),
+                "days_remaining": days_rem,
+                "is_dummy": is_dummy_email(g_email),
+                "is_new": True,
+                "auth_provider": "pre_approved",
+                "device_model": "Pending First Login",
+                "created_at": grant["granted_at"] or now,
+                "created_at_str": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(grant["granted_at"] or now))
+            }
+
     # Format device model display for candidates
     candidates = list(candidates_by_email.values())
     for c in candidates:
         dev = c.get("device_model") or ""
         if not dev:
-            # Fallback based on sign-in or default
             dev = "Desktop / Web Browser"
         c["device_display"] = dev
 

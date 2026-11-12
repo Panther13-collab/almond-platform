@@ -2280,10 +2280,10 @@
                     <span class="font-extrabold text-amber-900">Founder's Note:</span> When companies open new requisitions, the first 48 hours determine 80% of interview callbacks. Public portals inundate hiring managers with thousands of bot applications. Almond Jobs VIP gives you the direct, unfiltered gateway to corporate ATS systems the moment roles appear.
                 </div>
 
-                <!-- Multi-Currency Planned Parity Display -->
+                <!-- Multi-Currency Display (1-Month VIP Pass) -->
                 <div class="p-4 rounded-2xl bg-slate-950 text-white space-y-3 shadow-md">
                     <div class="flex items-center justify-between gap-2 flex-wrap">
-                        <span class="text-[10px] font-black uppercase tracking-wider text-amber-300">Standard 30-Day VIP Pass</span>
+                        <span class="text-[10px] font-black uppercase tracking-wider text-amber-300">Standard 1-Month VIP Pass</span>
                         <div class="flex items-center gap-1 bg-slate-800 p-1 rounded-xl text-[11px] font-bold">
                             <button type="button" onclick="selectVipCurrency('INR')" id="vipCurrBtn_INR" class="vip-curr-tab px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer">₹ INR</button>
                             <button type="button" onclick="selectVipCurrency('USD')" id="vipCurrBtn_USD" class="vip-curr-tab px-2.5 py-1 rounded-lg text-slate-300 hover:text-white cursor-pointer">$ USD</button>
@@ -2295,12 +2295,12 @@
                     <div class="flex items-baseline justify-between gap-3">
                         <div class="flex items-baseline gap-2.5">
                             <span id="vipMainPriceDisplay" class="text-3xl sm:text-4xl font-black text-amber-400">₹699</span>
-                            <span id="vipPlannedParityPrice" class="text-sm font-bold text-slate-400">($9.99 USD eq.)</span>
+                            <span id="vipPlannedParityPrice" class="text-sm font-bold text-slate-400"></span>
                         </div>
-                        <span class="text-[11px] font-extrabold text-emerald-300 bg-emerald-950/80 border border-emerald-700/70 px-2.5 py-1 rounded-full">30 Days Access</span>
+                        <span class="text-[11px] font-extrabold text-emerald-300 bg-emerald-950/80 border border-emerald-700/70 px-2.5 py-1 rounded-full">1 Month Access</span>
                     </div>
                     <p id="vipCurrencyParityNote" class="text-[11px] text-slate-300 leading-relaxed">
-                        Standard rate uses exact global parity (<strong>₹699 INR &approx; $9.99 USD</strong>). Full access to first-wave openings and direct corporate career links.
+                        1-Month VIP Pass provides instant full access to first-wave corporate openings, direct ATS portals, and complete dossier exports.
                     </p>
                 </div>
 
@@ -2320,12 +2320,12 @@
                     </div>
                     <div class="flex items-start gap-2.5 text-slate-800">
                         <span class="w-5 h-5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-black">✓</span>
-                        <span><strong>Continuous 30-Day Pass:</strong> Complete uninterrupted intelligence across all curated roles, specialized feeds, and compensation filters.</span>
+                        <span><strong>Continuous 1-Month VIP Pass:</strong> Full uninterrupted intelligence for one month from your date of activation across all curated roles, direct portals, and compensation filters.</span>
                     </div>
                 </div>
 
                 <button type="button" id="vipPassCheckoutBtn" onclick="executeVipPassCheckout()" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-700 hover:from-violet-500 hover:to-indigo-500 active:scale-98 text-white font-black text-sm sm:text-base tracking-wide shadow-lg shadow-violet-500/25 flex items-center justify-center gap-2 transition cursor-pointer">
-                    <span id="vipPassCheckoutBtnLabel">👑 Unlock VIP Pass Now &mdash; ₹699</span>
+                    <span id="vipPassCheckoutBtnLabel">👑 Unlock 1-Month VIP Pass &mdash; ₹699</span>
                 </button>
 
                 <div class="flex items-center justify-between text-[11px] text-slate-500 px-1">
@@ -2664,7 +2664,7 @@
 
         <!-- Scripts with Cache Busting Parameter -->
     <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
-    <script src="/static/app.js?v=20261113_v12_vip_founder_live"></script>
+    <script src="/static/app.js?v=20261113_v13_vip_1month_admin"></script>
     <script>
         lucide.createIcons();
     </script>
@@ -2898,10 +2898,10 @@
       };
 
       window.VIP_PLANNED_PARITY = {
-          INR: { symbol: "₹", planned: "₹699", eq: "$9.99 USD eq.", inr_amount: 699, note: "Standard 30-day VIP rate: ₹699 INR (exact global parity with $9.99 USD)." },
-          USD: { symbol: "$", planned: "$9.99", eq: "₹699 INR eq.", inr_amount: 699, note: "Standard 30-day VIP rate: $9.99 USD (₹699 INR equivalent at checkout)." },
-          EUR: { symbol: "€", planned: "€9.99", eq: "₹699 INR eq.", inr_amount: 699, note: "Standard 30-day VIP rate: €9.99 EUR (₹699 INR equivalent at checkout)." },
-          GBP: { symbol: "£", planned: "£9.99", eq: "₹699 INR eq.", inr_amount: 699, note: "Standard 30-day VIP rate: £9.99 GBP (₹699 INR equivalent at checkout)." }
+          INR: { symbol: "₹", planned: "₹699", inr_amount: 699, note: "Standard 1-Month VIP Pass rate: ₹699 INR." },
+          USD: { symbol: "$", planned: "$9.99", inr_amount: 699, note: "Standard 1-Month VIP Pass rate: $9.99 USD." },
+          EUR: { symbol: "€", planned: "€9.99", inr_amount: 699, note: "Standard 1-Month VIP Pass rate: €9.99 EUR." },
+          GBP: { symbol: "£", planned: "£9.99", inr_amount: 699, note: "Standard 1-Month VIP Pass rate: £9.99 GBP." }
       };
 
       window.selectedVipCurrency = "INR";
@@ -2921,9 +2921,9 @@
           var noteEl = document.getElementById("vipCurrencyParityNote");
           var btnLabel = document.getElementById("vipPassCheckoutBtnLabel");
           if (mainEl) mainEl.textContent = cfg.planned;
-          if (priceEl) priceEl.textContent = "(" + cfg.eq + ")";
+          if (priceEl) priceEl.textContent = "";
           if (noteEl) noteEl.textContent = cfg.note;
-          if (btnLabel) btnLabel.textContent = "👑 Unlock VIP Pass Now — " + cfg.planned + (curr !== 'INR' ? " (" + cfg.eq + ")" : "");
+          if (btnLabel) btnLabel.textContent = "👑 Unlock 1-Month VIP Pass — " + cfg.planned;
       };
 
       window.openVipPassModal = function() {
@@ -2961,7 +2961,7 @@
           var curr = window.selectedVipCurrency || "INR";
           var parity = (window.VIP_PLANNED_PARITY && window.VIP_PLANNED_PARITY[curr]) || { planned: "₹699", inr_amount: 699 };
           var amountInr = parity.inr_amount || 699;
-          var planTitle = "Almond Jobs VIP Pass (30 Days — " + parity.planned + ")";
+          var planTitle = "Almond Jobs 1-Month VIP Pass (" + parity.planned + ")";
           if (typeof triggerRazorpayCheckout === "function") {
               triggerRazorpayCheckout(amountInr, planTitle, {
                   purchaseType: "vip_pass",
