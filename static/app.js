@@ -2025,6 +2025,11 @@ function initJobSearch() {
 
             const data = await resp.json();
 
+            if (typeof data.is_paid === "boolean") {
+                localStorage.setItem("almond_is_paid", data.is_paid ? "true" : "false");
+                if (typeof window.updateTopProfileBar === "function") window.updateTopProfileBar();
+            }
+
             currentAtsJobs = data.jobs || [];
 
             currentJobs = currentAtsJobs;
@@ -3958,7 +3963,9 @@ function initExports() {
 // 7. Candidate Persistent User Identity
 
 function isUserLoggedIn() {
-    return Boolean(localStorage.getItem("almond_session_token") && localStorage.getItem("almond_user_id"));
+    const hasToken = Boolean(localStorage.getItem("almond_session_token") || localStorage.getItem("almond_auth_token"));
+    const hasUser = Boolean(localStorage.getItem("almond_user_id"));
+    return hasToken && hasUser;
 }
 
 function isUserPaid() {
@@ -4228,14 +4235,14 @@ window.openProfileModal = function(contextReason = "") {
                 statusBadge.textContent = remainingStr ? `VIP Active (${remainingStr}) ✓` : "VIP Active ✓";
                 statusBadge.className = "px-2.5 py-1 rounded-full text-[11px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs";
             } else {
-                statusBadge.textContent = "Free Tier (3 Matches)";
+                statusBadge.textContent = "Standard (7+ Days Open)";
                 statusBadge.className = "px-2.5 py-1 rounded-full text-[11px] font-black bg-slate-200 text-slate-700";
             }
         }
 
         const accessLevel = document.getElementById("profileAccessLevel");
         if (accessLevel) {
-            accessLevel.textContent = paid ? "100% Unlocked (All Portals)" : "3 Matches Preview";
+            accessLevel.textContent = paid ? "100% Unlocked (All Portals + 0-6d VIP)" : "7+ Days Visible • 0–6d VIP Locked";
             accessLevel.className = paid ? "font-bold text-emerald-700" : "font-bold text-violet-700";
         }
 
@@ -4463,7 +4470,10 @@ window.handleAuthSubmit = async function(e) {
         }
 
         // Store session tokens in localStorage
-        if (data.token) localStorage.setItem("almond_session_token", data.token);
+        if (data.token) {
+            localStorage.setItem("almond_session_token", data.token);
+            localStorage.setItem("almond_auth_token", data.token);
+        }
         if (data.user_id) localStorage.setItem("almond_user_id", data.user_id);
         if (data.email) localStorage.setItem("almond_user_email", data.email);
         if (data.full_name) localStorage.setItem("almond_user_name", data.full_name);
@@ -4478,7 +4488,7 @@ window.handleAuthSubmit = async function(e) {
             const searchBtn = document.getElementById("searchJobsBtn");
             if (searchBtn && typeof executeSearch === "function") {
                 executeSearch();
-                window.goToSlide(2);
+                window.goToSlide(3);
             }
         }
     } catch (err) {
@@ -4543,7 +4553,10 @@ window.handleVerifyOtpSubmit = async function() {
         }
 
         // Account verified & created! Store session
-        if (data.token) localStorage.setItem("almond_session_token", data.token);
+        if (data.token) {
+            localStorage.setItem("almond_session_token", data.token);
+            localStorage.setItem("almond_auth_token", data.token);
+        }
         if (data.user_id) localStorage.setItem("almond_user_id", data.user_id);
         if (data.email) localStorage.setItem("almond_user_email", data.email);
         if (data.full_name) localStorage.setItem("almond_user_name", data.full_name);
@@ -4682,11 +4695,15 @@ async function completeGoogleAuth(payload) {
             throw new Error(data.detail || data.message || "Google sign-in failed.");
         }
 
-        // Store session in localStorage
-        localStorage.setItem("almond_auth_token", data.token);
+        // Store session in localStorage (set both session and backup auth token keys)
+        if (data.token) {
+            localStorage.setItem("almond_session_token", data.token);
+            localStorage.setItem("almond_auth_token", data.token);
+        }
         localStorage.setItem("almond_user_id", data.user_id);
         localStorage.setItem("almond_user_email", data.email);
         localStorage.setItem("almond_user_name", data.full_name);
+        localStorage.setItem("almond_is_paid", data.is_paid ? "true" : "false");
 
         window.currentAuthUser = data;
 
@@ -4723,6 +4740,8 @@ async function completeGoogleAuth(payload) {
 
 window.handleLogout = function() {
     localStorage.removeItem("almond_session_token");
+    localStorage.removeItem("almond_auth_token");
+    localStorage.removeItem("almond_remaining_str");
     localStorage.removeItem("almond_user_id");
     localStorage.removeItem("almond_user_email");
     localStorage.removeItem("almond_user_name");
@@ -4768,8 +4787,10 @@ window.updateTopProfileBar = function() {
 
 window.initAuthSession = async function() {
     window.updateTopProfileBar();
-    const token = localStorage.getItem("almond_session_token");
-    const userId = localStorage.getItem("almond_user_id");
+    const token = localStorage.getItem("almond_session_token") || localStorage.getItem("almond_auth_token") || "";
+    const userId = localStorage.getItem("almond_user_id") || "";
+    const email = localStorage.getItem("almond_user_email") || "";
+    const fullName = localStorage.getItem("almond_user_name") || "";
 
     // Seamless Google OAuth callback handler
     try {
@@ -4797,11 +4818,16 @@ window.initAuthSession = async function() {
         const resp = await fetch("/api/auth/me", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token, user_id: userId })
+            body: JSON.stringify({ token, user_id: userId, email, full_name: fullName })
         });
         if (resp.ok) {
             const data = await resp.json();
             if (data.is_authenticated) {
+                const resolvedToken = data.token || token;
+                if (resolvedToken) {
+                    localStorage.setItem("almond_session_token", resolvedToken);
+                    localStorage.setItem("almond_auth_token", resolvedToken);
+                }
                 if (data.user_id) localStorage.setItem("almond_user_id", data.user_id);
                 if (data.email) localStorage.setItem("almond_user_email", data.email);
                 if (data.full_name) localStorage.setItem("almond_user_name", data.full_name);
@@ -4811,8 +4837,9 @@ window.initAuthSession = async function() {
                 if (typeof window.fetchKanbanFromCloud === "function") {
                     window.fetchKanbanFromCloud();
                 }
-            } else {
+            } else if (data.invalid_token === true) {
                 localStorage.removeItem("almond_session_token");
+                localStorage.removeItem("almond_auth_token");
                 window.updateTopProfileBar();
             }
         }

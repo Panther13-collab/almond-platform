@@ -28,6 +28,7 @@ from core.doc_exporter import (
 from core.config import Config
 from core.auth_db import (
     signup_user, login_user, is_user_paid, verify_session_token, get_user_profile,
+    recover_verified_session,
     get_user_kanban, save_user_kanban_application, sync_full_kanban,
     send_signup_otp, verify_otp_and_signup, login_or_signup_google_user,
     record_page_visit, get_analytics_summary, get_all_users_admin,
@@ -704,15 +705,17 @@ async def api_google_auth(request: Request, payload: dict = Body(...)):
 
 @app.post("/api/auth/me")
 async def api_me(payload: dict = Body(...)):
-    token = payload.get("token", "")
-    user_id = payload.get("user_id", "")
-    
+    token = (payload.get("token") or "").strip()
+    user_id = (payload.get("user_id") or "").strip()
+    email = (payload.get("email") or "").strip().lower()
+    full_name = (payload.get("full_name") or "").strip()
+
     user_data = None
     if token:
-        user_data = verify_session_token(token)
+        user_data = verify_session_token(token, email=email, full_name=full_name)
     elif user_id:
-        user_data = get_user_profile(user_id)
-        
+        user_data = recover_verified_session(user_id, email=email, full_name=full_name)
+
     if user_data:
         actual_id = user_data.get("id") or user_data.get("user_id")
         paid = is_user_paid(actual_id)
@@ -720,6 +723,7 @@ async def api_me(payload: dict = Body(...)):
         return JSONResponse(content={
             "status": "success",
             "is_authenticated": True,
+            "token": user_data.get("token") or token,
             "user_id": actual_id,
             "email": profile.get("email", ""),
             "full_name": profile.get("full_name", ""),
@@ -728,15 +732,18 @@ async def api_me(payload: dict = Body(...)):
             "remaining_str": profile.get("remaining_str", ""),
             "is_paid": paid,
             "price_inr": Config.PRICE_INR,
-            "price_usd": Config.PRICE_USD
+            "price_usd": Config.PRICE_USD,
+            "vip_price_inr": Config.VIP_TEST_PRICE_INR
         })
 
     return JSONResponse(content={
         "status": "success",
         "is_authenticated": False,
+        "invalid_token": bool(token),
         "is_paid": False,
         "price_inr": Config.PRICE_INR,
-        "price_usd": Config.PRICE_USD
+        "price_usd": Config.PRICE_USD,
+        "vip_price_inr": Config.VIP_TEST_PRICE_INR
     })
 
 @app.post("/api/security/verify-human")

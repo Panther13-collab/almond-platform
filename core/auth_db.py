@@ -190,7 +190,123 @@ def _create_token(user_id: str, email: str) -> str:
     signature = hmac.new(AUTH_SECRET_KEY.encode("utf-8"), data.encode("utf-8"), hashlib.sha256).hexdigest()
     return f"alm.{user_id}.{timestamp}.{signature}"
 
-def verify_session_token(token: str) -> dict:
+def _format_remaining_str(is_paid: bool, paid_until: float, now: float) -> str:
+    if not (is_paid and paid_until > now):
+        return ""
+    diff = paid_until - now
+    if diff < 86400:
+        hours = max(1, int(diff / 3600))
+        return f"{hours}h left"
+    days = int(diff / 86400)
+    return f"{days}d left"
+
+def _lookup_supabase_user_meta(user_id: str, email: str = "") -> dict:
+    """Best-effort lookup in Supabase Admin so ephemeral SQLite restarts preserve accounts and VIP state."""
+    if not supabase_admin:
+        return {}
+    clean_email = (email or "").strip().lower()
+    try:
+        resp = supabase_admin.auth.admin.get_user_by_id(user_id)
+        u = getattr(resp, "user", None)
+        if u and getattr(u, "email", ""):
+            meta = getattr(u, "user_metadata", None) or {}
+            return {"email": u.email.strip().lower(), "meta": meta, "supa_id": u.id}
+    except Exception:
+        pass
+    if clean_email:
+        try:
+            users_list = supabase_admin.auth.admin.list_users()
+            for u in users_list or []:
+                u_email = (getattr(u, "email", "") or "").strip().lower()
+                if u_email == clean_email:
+                    meta = getattr(u, "user_metadata", None) or {}
+                    if meta.get("local_user_id") == user_id or getattr(u, "id", "") == user_id:
+                        return {"email": u_email, "meta": meta, "supa_id": u.id}
+        except Exception:
+            pass
+    return {}
+
+def _rehydrate_user_row(user_id: str, email: str, full_name: str = "", supa_meta: dict = None) -> dict:
+    """Re-insert an already-verified candidate into local SQLite after an ephemeral container restart."""
+    now = time.time()
+    clean_email = (email or "").strip().lower()
+    meta = supa_meta or {}
+    name_val = (meta.get("full_name") or full_name or clean_email.split("@")[0]).strip()
+    is_paid = 1 if meta.get("is_paid") else 0
+    plan = meta.get("plan") or ("vip_pass_30d" if is_paid else "free")
+    paid_until = float(meta.get("paid_until") or 0)
+    pw_hash, salt = _hash_password(secrets.token_urlsafe(24))
+
+    with get_db() as conn:
+        cursor = conn.cursor()
+        # Recover payment status from SQLite payments if present
+        if not is_paid:
+            cursor.execute(
+                "SELECT plan_name, created_at FROM payments WHERE user_id = ? AND status = 'captured' ORDER BY created_at DESC LIMIT 1",
+                (user_id,)
+            )
+            prow = cursor.fetchone()
+            if prow:
+                is_paid = 1
+                plan = prow["plan_name"] or "vip_pass_30d"
+                paid_until = float(prow["created_at"] or now) + (30 * 86400)
+
+        cursor.execute(
+            """
+            INSERT OR IGNORE INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at, auth_provider)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'session_rehydrated')
+            """,
+            (user_id, clean_email, pw_hash, salt, name_val, is_paid, plan, paid_until, now, now)
+        )
+        conn.commit()
+        cursor.execute("SELECT id, email, full_name, is_paid, plan, paid_until, created_at FROM users WHERE id = ?", (user_id,))
+        row = cursor.fetchone()
+        if not row:
+            cursor.execute("SELECT id, email, full_name, is_paid, plan, paid_until, created_at FROM users WHERE email = ?", (clean_email,))
+            row = cursor.fetchone()
+        if not row:
+            return None
+        row_paid_until = row["paid_until"] or 0
+        row_is_paid = bool(row["is_paid"]) and (row_paid_until == 0 or row_paid_until > now)
+        return {
+            "id": row["id"],
+            "user_id": row["id"],
+            "email": row["email"],
+            "full_name": row["full_name"] or name_val,
+            "is_paid": row_is_paid,
+            "plan": row["plan"],
+            "paid_until": row_paid_until,
+            "remaining_str": _format_remaining_str(row_is_paid, row_paid_until, now),
+            "created_at": row["created_at"]
+        }
+
+def recover_verified_session(user_id: str, email: str = "", full_name: str = "") -> dict:
+    """Recover session when client holds user_id+email present in SQLite or Supabase (e.g. after ephemeral reset)."""
+    clean_email = (email or "").strip().lower()
+    if not user_id:
+        return None
+    prof = get_user_profile(user_id)
+    if prof and (not clean_email or prof.get("email", "").lower() == clean_email):
+        return {
+            "id": prof["user_id"],
+            "user_id": prof["user_id"],
+            "email": prof["email"],
+            "full_name": prof["full_name"],
+            "is_paid": prof["is_paid"],
+            "plan": prof["plan"],
+            "paid_until": prof["paid_until"],
+            "remaining_str": prof["remaining_str"],
+            "token": _create_token(prof["user_id"], prof["email"])
+        }
+    supa = _lookup_supabase_user_meta(user_id, clean_email)
+    if supa and supa.get("email"):
+        rehydrated = _rehydrate_user_row(user_id, supa["email"], full_name=full_name, supa_meta=supa.get("meta"))
+        if rehydrated:
+            rehydrated["token"] = _create_token(rehydrated["user_id"], rehydrated["email"])
+            return rehydrated
+    return None
+
+def verify_session_token(token: str, email: str = "", full_name: str = "") -> dict:
     if not token or not token.startswith("alm."):
         return None
     try:
@@ -203,45 +319,43 @@ def verify_session_token(token: str) -> dict:
         if time.time() - int(timestamp) > 30 * 86400:
             return None
             
-        # Verify HMAC signature
+        # Verify HMAC signature against SQLite first
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT id, email, full_name, is_paid, plan, paid_until, created_at FROM users WHERE id = ?", (user_id,))
             row = cursor.fetchone()
-            if not row:
-                return None
-            
-            data = f"{user_id}:{row['email']}:{timestamp}"
-            expected_sig = hmac.new(AUTH_SECRET_KEY.encode("utf-8"), data.encode("utf-8"), hashlib.sha256).hexdigest()
-            if not hmac.compare_digest(sig, expected_sig):
-                return None
-            
-            now = time.time()
-            paid_until = row["paid_until"] or 0
-            is_paid = bool(row["is_paid"]) and (paid_until == 0 or paid_until > now)
+            if row:
+                data = f"{user_id}:{row['email']}:{timestamp}"
+                expected_sig = hmac.new(AUTH_SECRET_KEY.encode("utf-8"), data.encode("utf-8"), hashlib.sha256).hexdigest()
+                if not hmac.compare_digest(sig, expected_sig):
+                    return None
+                
+                now = time.time()
+                paid_until = row["paid_until"] or 0
+                is_paid = bool(row["is_paid"]) and (paid_until == 0 or paid_until > now)
 
-            # Human-readable remaining string
-            remaining_str = ""
-            if is_paid and paid_until > now:
-                diff = paid_until - now
-                if diff < 86400:
-                    hours = max(1, int(diff / 3600))
-                    remaining_str = f"{hours}h left"
-                else:
-                    days = int(diff / 86400)
-                    remaining_str = f"{days}d left"
+                return {
+                    "id": row["id"],
+                    "user_id": row["id"],
+                    "email": row["email"],
+                    "full_name": row["full_name"],
+                    "is_paid": is_paid,
+                    "plan": row["plan"],
+                    "paid_until": paid_until,
+                    "remaining_str": _format_remaining_str(is_paid, paid_until, now),
+                    "created_at": row["created_at"]
+                }
 
-            return {
-                "id": row["id"],
-                "user_id": row["id"],
-                "email": row["email"],
-                "full_name": row["full_name"],
-                "is_paid": is_paid,
-                "plan": row["plan"],
-                "paid_until": paid_until,
-                "remaining_str": remaining_str,
-                "created_at": row["created_at"]
-            }
+        # Fallback when ephemeral SQLite restarted: verify cryptographic HMAC directly via email / Supabase
+        supa = _lookup_supabase_user_meta(user_id, email)
+        clean_email = (email or supa.get("email") or "").strip().lower()
+        if not clean_email:
+            return None
+        data = f"{user_id}:{clean_email}:{timestamp}"
+        expected_sig = hmac.new(AUTH_SECRET_KEY.encode("utf-8"), data.encode("utf-8"), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected_sig):
+            return None
+        return _rehydrate_user_row(user_id, clean_email, full_name=full_name, supa_meta=supa.get("meta"))
     except Exception as e:
         print(f"[AUTH_DB] Token verification note: {e}")
         return None
