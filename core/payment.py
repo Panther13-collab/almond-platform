@@ -188,7 +188,9 @@ def verify_razorpay_signature(
     signature: str,
     amount_inr: int = 1,
     plan_name: str = "",
-    purchase_type: str = "vip_pass"
+    purchase_type: str = "vip_pass",
+    supporter_name: str = "",
+    supporter_message: str = ""
 ):
     """
     Verify payment signature returned by Razorpay Checkout modal via HMAC-SHA256.
@@ -205,11 +207,22 @@ def verify_razorpay_signature(
 
     def _finalize_payment():
         if resolved_type == "contribution":
-            record_contribution_payment(user_id, payment_id, order_id, amount_inr, plan_name or "Coffee Contribution")
+            record_contribution_payment(
+                user_id,
+                payment_id,
+                order_id,
+                amount_inr,
+                plan_name or "Coffee Contribution",
+                supporter_name=supporter_name,
+                supporter_message=supporter_message
+            )
             return {
                 "status": "success",
                 "purchase_type": "contribution",
                 "is_paid": False,
+                "supporter_name": supporter_name,
+                "supporter_message": supporter_message,
+                "amount_inr": amount_inr,
                 "message": "Thank you for your generous coffee contribution!"
             }
         record_successful_payment(user_id, payment_id, order_id, amount_inr, plan_name or "Almond Jobs VIP Pass")

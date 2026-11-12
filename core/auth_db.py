@@ -148,6 +148,14 @@ def init_db():
             cursor.execute("ALTER TABLE payments ADD COLUMN plan_name TEXT DEFAULT '';")
         except Exception:
             pass
+        try:
+            cursor.execute("ALTER TABLE payments ADD COLUMN supporter_name TEXT DEFAULT '';")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE payments ADD COLUMN supporter_message TEXT DEFAULT '';")
+        except Exception:
+            pass
 
         try:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_traffic_is_bot ON site_traffic (is_bot);")
@@ -872,26 +880,68 @@ def is_user_paid(user_id: str) -> bool:
     return False
 
 
-def record_contribution_payment(user_id: str, payment_id: str, order_id: str, amount_inr: float, plan_name: str = "Coffee Contribution") -> bool:
-    """Record a voluntary supporter contribution without granting VIP Pass access."""
+def record_contribution_payment(
+    user_id: str,
+    payment_id: str,
+    order_id: str,
+    amount_inr: float,
+    plan_name: str = "Coffee Contribution",
+    supporter_name: str = "",
+    supporter_message: str = ""
+) -> bool:
+    """Record a voluntary supporter contribution with name and candidate message without granting VIP Pass access."""
     now = time.time()
+    clean_name = (supporter_name or "").strip()
+    clean_msg = (supporter_message or "").strip()
     try:
         with get_db() as conn:
             cursor = conn.cursor()
             pay_id = f"tip_{secrets.token_hex(6)}"
             cursor.execute(
                 """
-                INSERT OR REPLACE INTO payments (id, user_id, payment_id, order_id, amount_inr, plan_name, status, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, 'contribution', ?)
+                INSERT OR REPLACE INTO payments (id, user_id, payment_id, order_id, amount_inr, plan_name, status, created_at, supporter_name, supporter_message)
+                VALUES (?, ?, ?, ?, ?, ?, 'contribution', ?, ?, ?)
                 """,
-                (pay_id, user_id or "guest", payment_id, order_id, amount_inr, plan_name or "Coffee Contribution", now)
+                (pay_id, user_id or "guest", payment_id, order_id, amount_inr, plan_name or "Coffee Contribution", now, clean_name, clean_msg)
             )
             conn.commit()
-            print(f"[AUTH_DB] Recorded voluntary contribution {amount_inr} INR for user {user_id or 'guest'}.")
+            print(f"[AUTH_DB] Recorded voluntary contribution {amount_inr} INR from '{clean_name}'. Message: '{clean_msg}'.")
         return True
     except Exception as e:
         print(f"[AUTH_DB] Error recording contribution: {e}")
         return False
+
+def get_recent_contributions(limit: int = 20) -> list:
+    """Return latest candidate voluntary contributions with their genuine feedback."""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT p.id, p.amount_inr, p.plan_name, p.created_at,
+                   COALESCE(NULLIF(p.supporter_name, ''), u.full_name, 'Generous Candidate') as name,
+                   COALESCE(p.supporter_message, '') as message
+            FROM payments p
+            LEFT JOIN users u ON p.user_id = u.id
+            WHERE p.status = 'contribution'
+            ORDER BY p.created_at DESC
+            LIMIT ?
+            """,
+            (limit,)
+        )
+        rows = cursor.fetchall()
+        return [
+            {
+                "id": r["id"],
+                "name": r["name"],
+                "supporter_name": r["name"],
+                "amount_inr": r["amount_inr"],
+                "plan_name": r["plan_name"],
+                "message": r["message"],
+                "supporter_message": r["message"],
+                "created_at": r["created_at"],
+            }
+            for r in rows
+        ]
 
 def record_successful_payment(user_id: str, payment_id: str, order_id: str, amount_inr: float, plan_name: str = "") -> bool:
     """Record a captured payment with strict timestamp-based expiration (24h Day Sprint, 30d, or 90d)."""

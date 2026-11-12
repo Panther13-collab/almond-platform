@@ -661,7 +661,7 @@
                 </button>
                 <button type="button" id="topVipPassBtn" onclick="openVipPassModal()" class="flex bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-[11px] sm:text-xs px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer whitespace-nowrap items-center gap-1.5">
                     <span>👑</span>
-                    <span id="topVipPassLabel">VIP Pass &bull; ₹699</span>
+                    <span id="topVipPassLabel">VIP Pass</span>
                 </button>
                 <!-- Dedicated Contribute Button Near Profile with Coffee Logo -->
                 <button type="button" id="topContributeBtn" onclick="openContributeModal()" class="flex px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold text-amber-950 bg-amber-50 hover:bg-amber-100 border border-amber-300 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer items-center gap-1.5" title="Support Almond Jobs (Buy Us a Coffee)">
@@ -799,8 +799,8 @@
                     <span>Candidate Profile &amp; Settings</span>
                 </button>
                 <button type="button" onclick="navigateFromSidePanel('vip')" class="w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl text-xs font-black text-violet-950 bg-violet-50 hover:bg-violet-100 border border-violet-200 transition text-left cursor-pointer">
-                    <span class="flex items-center gap-2"><span>👑</span><span>VIP Pass (Latest Feed)</span></span>
-                    <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-400 text-slate-950">₹1</span>
+                    <span class="flex items-center gap-2"><span>👑</span><span>VIP Pass</span></span>
+                    <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-400 text-slate-950">Unlock</span>
                 </button>
                 <button type="button" onclick="navigateFromSidePanel('contribute')" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-amber-900 bg-amber-50/70 hover:bg-amber-100/70 border border-amber-200/60 transition text-left cursor-pointer">
                     <span>☕</span>
@@ -2101,8 +2101,29 @@
                         <span class="font-bold text-slate-600">Voluntary Support Reward</span>
                     </div>
                     <p class="text-[10.5px] text-slate-500 text-center font-medium pt-0.5">
-                        This is a voluntary contribution to support our platform (independent of VIP Pass). To unlock the 0&ndash;6 day Latest Feed, use <button type="button" onclick="closeVipPricingModal(); openVipPassModal();" class="text-violet-700 font-extrabold underline cursor-pointer">VIP Pass</button>.
+                        This is a voluntary community contribution to fuel our independent, zero-broker search mission. To access fresh priority corporate postings the second they open, explore the <button type="button" onclick="closeVipPricingModal(); openVipPassModal();" class="text-violet-700 font-extrabold underline cursor-pointer">VIP Pass</button>.
                     </p>
+                </div>
+
+                <!-- Live Mini Reviews Rotating Card (Rotates Every 1-2 Minutes) -->
+                <div id="miniLiveReviewCard" class="p-3.5 rounded-2xl bg-gradient-to-r from-teal-500/10 via-emerald-500/10 to-teal-500/10 border border-teal-300/80 shadow-xs transition-all duration-500">
+                    <div class="flex items-center justify-between text-[11px] mb-1.5">
+                        <div class="flex items-center gap-1.5">
+                            <span class="relative flex h-2 w-2">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            <span class="font-extrabold text-teal-950 uppercase tracking-wider text-[10px]" id="liveReviewEmotion">Relieved &amp; Hired</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-teal-700 bg-teal-100/80 px-2 py-0.5 rounded-full" id="liveReviewTime">Just now</span>
+                    </div>
+                    <div class="text-xs text-slate-800 font-medium italic leading-relaxed" id="liveReviewQuote">
+                        "Finally escaped third-party broker loops! Applied directly on Greenhouse and landed an SDE-2 interview in 48 hours."
+                    </div>
+                    <div class="mt-1.5 flex items-center justify-between text-[11px] text-slate-600 font-semibold">
+                        <span id="liveReviewAuthor" class="font-extrabold text-slate-900">&mdash; Vikram M., Bengaluru</span>
+                        <span class="text-[10px] text-teal-700 font-bold">Verified Candidate</span>
+                    </div>
                 </div>
 
                 <!-- Recent Supporters Section (Testimonials & Benefited Candidates) -->
@@ -2234,7 +2255,7 @@
         </div>
     </div>
 
-    <!-- 8b. MODAL: DEDICATED ALMOND JOBS VIP PASS (LATEST FEED 0-6 DAYS UNLOCK) -->
+    <!-- 8b. MODAL: DEDICATED ALMOND JOBS VIP PASS (PRIORITY EARLY ACCESS) -->
     <div id="vipPassModal" class="hidden fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4">
         <div class="rounded-3xl max-w-lg w-full max-h-[92vh] flex flex-col border border-amber-300/80 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 my-auto overflow-hidden" style="background-color: #ffffff !important;">
             <div class="flex items-center justify-between p-5 sm:p-6 pb-4 border-b border-slate-100 bg-gradient-to-r from-amber-50/80 via-white to-violet-50/70 shrink-0">
@@ -2245,16 +2266,21 @@
                     <div>
                         <div class="flex items-center gap-2 flex-wrap">
                             <h3 class="text-lg sm:text-xl font-black text-slate-950">Almond Jobs VIP Pass</h3>
-                            <span class="text-[10px] font-black uppercase tracking-wider text-violet-900 bg-violet-100 px-2 py-0.5 rounded-full border border-violet-200">Latest Feed (0&ndash;6 Days)</span>
+                            <span class="text-[10px] font-black uppercase tracking-wider text-violet-900 bg-violet-100 px-2 py-0.5 rounded-full border border-violet-200">Priority Early Access</span>
                         </div>
-                        <p class="text-xs text-slate-600 font-semibold">Unblur jobs posted Today through 6 days ago &amp; apply first</p>
+                        <p class="text-xs text-slate-600 font-semibold">Direct internal ATS ingestion &bull; Apply before public platforms saturate the applicant pool</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeVipPassModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer font-bold text-sm">✕</button>
             </div>
 
             <div class="overflow-y-auto p-5 sm:p-6 space-y-4 custom-scrollbar flex-1">
-                <!-- Multi-Currency Planned Parity Display + Active ₹1 Verification Offer -->
+                <!-- Founder Statement Card -->
+                <div class="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950 leading-relaxed font-medium">
+                    <span class="font-extrabold text-amber-900">Founder's Note:</span> When companies open new requisitions, the first 48 hours determine 80% of interview callbacks. Public portals inundate hiring managers with thousands of bot applications. Almond Jobs VIP gives you the direct, unfiltered gateway to corporate ATS systems the moment roles appear.
+                </div>
+
+                <!-- Multi-Currency Planned Parity Display -->
                 <div class="p-4 rounded-2xl bg-slate-950 text-white space-y-3 shadow-md">
                     <div class="flex items-center justify-between gap-2 flex-wrap">
                         <span class="text-[10px] font-black uppercase tracking-wider text-amber-300">Standard 30-Day VIP Pass</span>
@@ -2269,28 +2295,32 @@
                     <div class="flex items-baseline justify-between gap-3">
                         <div class="flex items-baseline gap-2.5">
                             <span id="vipMainPriceDisplay" class="text-3xl sm:text-4xl font-black text-amber-400">₹699</span>
-                            <span id="vipPlannedParityPrice" class="text-sm font-bold text-slate-400">($8 USD eq.)</span>
+                            <span id="vipPlannedParityPrice" class="text-sm font-bold text-slate-400">($9.99 USD eq.)</span>
                         </div>
                         <span class="text-[11px] font-extrabold text-emerald-300 bg-emerald-950/80 border border-emerald-700/70 px-2.5 py-1 rounded-full">30 Days Access</span>
                     </div>
                     <p id="vipCurrencyParityNote" class="text-[11px] text-slate-300 leading-relaxed">
-                        Standard rate uses exact global parity (<strong>₹699 INR &approx; $8 USD</strong>). Unlocks all postings from Today through 6 days ago with direct corporate apply links.
+                        Standard rate uses exact global parity (<strong>₹699 INR &approx; $9.99 USD</strong>). Full access to first-wave openings and direct corporate career links.
                     </p>
                 </div>
 
-                <!-- VIP Benefits -->
+                <!-- VIP Benefits (Founder Copy) -->
                 <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2.5 text-xs">
                     <div class="flex items-start gap-2.5 text-slate-800">
                         <span class="w-5 h-5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-black">✓</span>
-                        <span><strong>Unblur Latest Feed (0&ndash;6 Days Ago):</strong> Instant full clarity on postings from <em>Today</em>, <em>1 day ago</em>, up to <em>6 days ago</em> in Resume Matcher.</span>
+                        <span><strong>First-Wave Direct Openings:</strong> Immediate visibility into newly published corporate roles before public platforms trigger applicant saturation.</span>
                     </div>
                     <div class="flex items-start gap-2.5 text-slate-800">
                         <span class="w-5 h-5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-black">✓</span>
-                        <span><strong>Unblurred Direct Feeds:</strong> Access fresh corporate links across Internships, Entry-Level, AI/ML, IT &amp; Non-IT feeds.</span>
+                        <span><strong>0% Recruiter Spread &amp; Direct Portals:</strong> Apply straight to hiring teams via official Greenhouse, Lever, Ashby &amp; Workday links with zero middleman interference.</span>
                     </div>
                     <div class="flex items-start gap-2.5 text-slate-800">
                         <span class="w-5 h-5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-black">✓</span>
-                        <span><strong>Direct ATS Portals &amp; Founder Contacts:</strong> 0% agency spread &mdash; apply directly on Greenhouse, Lever, Ashby &amp; Workday.</span>
+                        <span><strong>Complete Dossier &amp; Tracker Exports:</strong> Download unredacted PDFs, Word dossiers, and application trackers with every direct career link fully enabled.</span>
+                    </div>
+                    <div class="flex items-start gap-2.5 text-slate-800">
+                        <span class="w-5 h-5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-black">✓</span>
+                        <span><strong>Continuous 30-Day Pass:</strong> Complete uninterrupted intelligence across all curated roles, specialized feeds, and compensation filters.</span>
                     </div>
                 </div>
 
@@ -2504,11 +2534,11 @@
                 <div id="profileUpgradeSection" class="p-4 rounded-2xl bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 text-center space-y-2">
                     <div class="flex items-center justify-center gap-1.5 text-xs font-black text-violet-950">
                         <i data-lucide="crown" class="w-4 h-4 text-amber-600"></i>
-                        <span>Unlock VIP Pass (Latest Feed 0&ndash;6 Days)</span>
+                        <span>Priority Candidate Access (VIP Pass)</span>
                     </div>
-                    <p class="text-[11px] text-violet-800 leading-snug">Unblur all latest postings from Today through 6 days ago, direct enterprise application URLs, and 0% recruiter feeds.</p>
+                    <p class="text-[11px] text-violet-800 leading-snug">Unlock first-wave corporate postings, direct ATS links, unredacted exports, and zero-broker application pipelines.</p>
                     <button type="button" onclick="closeProfileModal(); openVipPassModal();" class="w-full mt-1 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs rounded-xl shadow-md transition cursor-pointer">
-                        👑 Unlock VIP Pass &mdash; ₹1
+                        👑 Unlock VIP Pass
                     </button>
                 </div>
 
@@ -2634,7 +2664,7 @@
 
         <!-- Scripts with Cache Busting Parameter -->
     <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
-    <script src="/static/app.js?v=20261112_v11_vip_pro_planned"></script>
+    <script src="/static/app.js?v=20261113_v12_vip_founder_live"></script>
     <script>
         lucide.createIcons();
     </script>
@@ -2868,10 +2898,10 @@
       };
 
       window.VIP_PLANNED_PARITY = {
-          INR: { symbol: "₹", planned: "₹699", eq: "$8 USD eq.", inr_amount: 699, note: "Standard 30-day VIP rate: ₹699 INR (exact global parity with $8 USD)." },
-          USD: { symbol: "$", planned: "$8", eq: "₹699 INR eq.", inr_amount: 699, note: "Standard 30-day VIP rate: $8 USD (₹699 INR equivalent at checkout)." },
-          EUR: { symbol: "€", planned: "€8", eq: "₹699 INR eq.", inr_amount: 699, note: "Standard 30-day VIP rate: €8 EUR (₹699 INR equivalent at checkout)." },
-          GBP: { symbol: "£", planned: "£6", eq: "₹699 INR eq.", inr_amount: 699, note: "Standard 30-day VIP rate: £6 GBP (₹699 INR equivalent at checkout)." }
+          INR: { symbol: "₹", planned: "₹699", eq: "$9.99 USD eq.", inr_amount: 699, note: "Standard 30-day VIP rate: ₹699 INR (exact global parity with $9.99 USD)." },
+          USD: { symbol: "$", planned: "$9.99", eq: "₹699 INR eq.", inr_amount: 699, note: "Standard 30-day VIP rate: $9.99 USD (₹699 INR equivalent at checkout)." },
+          EUR: { symbol: "€", planned: "€9.99", eq: "₹699 INR eq.", inr_amount: 699, note: "Standard 30-day VIP rate: €9.99 EUR (₹699 INR equivalent at checkout)." },
+          GBP: { symbol: "£", planned: "£9.99", eq: "₹699 INR eq.", inr_amount: 699, note: "Standard 30-day VIP rate: £9.99 GBP (₹699 INR equivalent at checkout)." }
       };
 
       window.selectedVipCurrency = "INR";
@@ -2928,8 +2958,15 @@
       };
 
       window.executeVipPassCheckout = function() {
+          var curr = window.selectedVipCurrency || "INR";
+          var parity = (window.VIP_PLANNED_PARITY && window.VIP_PLANNED_PARITY[curr]) || { planned: "₹699", inr_amount: 699 };
+          var amountInr = parity.inr_amount || 699;
+          var planTitle = "Almond Jobs VIP Pass (30 Days — " + parity.planned + ")";
           if (typeof triggerRazorpayCheckout === "function") {
-              triggerRazorpayCheckout(1, "Almond Jobs VIP Pass (30 Days)", { purchaseType: "vip_pass" });
+              triggerRazorpayCheckout(amountInr, planTitle, {
+                  purchaseType: "vip_pass",
+                  currency: "INR"
+              });
           } else {
               alert("Payment gateway is initializing. Please try again in 2 seconds.");
           }

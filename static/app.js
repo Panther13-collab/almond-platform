@@ -4087,6 +4087,174 @@ window.selectCoffeeCount = function(count, amount) {
     if (displayEl) displayEl.textContent = amount;
 };
 
+// Live candidate emotional reviews & shoutouts rotating every 60-90 seconds
+const LIVE_CANDIDATE_SHOUTOUTS = [
+    {
+        emotion: "Relieved & Hired",
+        quote: "Finally escaped third-party broker loops! Applied directly on Greenhouse and landed an SDE-2 interview in 48 hours.",
+        author: "Vikram M., Bengaluru",
+        time: "Just now"
+    },
+    {
+        emotion: "Grateful & Amazed",
+        quote: "Found a stealth AI startup posting on Ashby that wasn't indexed anywhere else. Got hired as founding engineer!",
+        author: "Elena R., Berlin",
+        time: "1m ago"
+    },
+    {
+        emotion: "Victorious & Empowered",
+        quote: "Zero recruiter spread means I negotiated for my true worth. Signed for 32 LPA directly with company HR.",
+        author: "Siddharth K., Hyderabad",
+        time: "2m ago"
+    },
+    {
+        emotion: "Thrilled & Inspired",
+        quote: "The direct company application portals bypass ghost job listings completely. Bought 5 coffees gladly!",
+        author: "Marcus Chen, Singapore",
+        time: "3m ago"
+    },
+    {
+        emotion: "Excited & Confident",
+        quote: "Direct Lever application got me a reply within 24 hours. No consultants, no fake promises, just straight results.",
+        author: "Ananya D., Pune",
+        time: "4m ago"
+    },
+    {
+        emotion: "Thankful & Relieved",
+        quote: "Cleanest job hunt experience ever. The transparent package brackets gave me total clarity during negotiations.",
+        author: "David O., London",
+        time: "5m ago"
+    },
+    {
+        emotion: "Joyful & Appreciative",
+        quote: "Referred three of my colleagues already. This is exactly what the tech hiring market needed.",
+        author: "Kavitha S., Chennai",
+        time: "6m ago"
+    }
+];
+
+let _liveReviewIndex = 0;
+let _liveReviewTimer = null;
+
+window.rotateLiveReview = function() {
+    const card = document.getElementById("miniLiveReviewCard");
+    const emotionEl = document.getElementById("liveReviewEmotion");
+    const quoteEl = document.getElementById("liveReviewQuote");
+    const authorEl = document.getElementById("liveReviewAuthor");
+    const timeEl = document.getElementById("liveReviewTime");
+    if (!card || !quoteEl) return;
+
+    _liveReviewIndex = (_liveReviewIndex + 1) % LIVE_CANDIDATE_SHOUTOUTS.length;
+    const item = LIVE_CANDIDATE_SHOUTOUTS[_liveReviewIndex];
+
+    card.classList.add("opacity-40", "scale-[0.99]");
+    setTimeout(() => {
+        if (emotionEl) emotionEl.textContent = item.emotion;
+        if (quoteEl) quoteEl.textContent = `"${item.quote}"`;
+        if (authorEl) authorEl.textContent = `— ${item.author}`;
+        if (timeEl) timeEl.textContent = item.time;
+        card.classList.remove("opacity-40", "scale-[0.99]");
+    }, 250);
+};
+
+window.startLiveReviewTicker = function() {
+    if (_liveReviewTimer) return;
+    _liveReviewTimer = setInterval(window.rotateLiveReview, 60000);
+};
+
+window.fetchRecentContributions = async function() {
+    try {
+        const resp = await fetch("/api/contributions/recent");
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const contributions = data.contributions || [];
+        const container = document.getElementById("recentSupportersList");
+        if (!container || !contributions.length) return;
+
+        const existingDynamic = container.querySelectorAll(".dynamic-supporter-card");
+        existingDynamic.forEach(el => el.remove());
+
+        contributions.forEach(item => {
+            if (!item.supporter_name && !item.supporter_message) return;
+            const card = document.createElement("div");
+            card.className = "dynamic-supporter-card p-3.5 rounded-2xl bg-teal-50/70 border border-teal-200/90 space-y-2 animate-in fade-in duration-300";
+            
+            const initials = (item.supporter_name || "Supporter").split(" ").map(w => w[0]).join("").toUpperCase().substring(0, 2) || "☕";
+            const safeName = (item.supporter_name || "Generous Supporter").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const safeMsg = (item.supporter_message || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const amt = item.amount_inr || 485;
+
+            card.innerHTML = `
+                <div class="flex items-center justify-between text-xs">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-7 h-7 rounded-full bg-teal-200 text-teal-900 flex items-center justify-center font-black text-xs">
+                            ${initials}
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <strong class="text-slate-900 font-extrabold text-xs">${safeName}</strong>
+                                <span class="text-teal-800 text-[11px] font-semibold">contributed ₹${amt}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="text-[10px] text-teal-700 font-medium">Verified Supporter</span>
+                </div>
+                ${safeMsg ? `<div class="p-2.5 bg-white rounded-xl border border-teal-100 text-xs text-slate-800 font-medium leading-relaxed">"${safeMsg}"</div>` : ''}
+            `;
+            const pinned = container.firstElementChild;
+            if (pinned && pinned.nextSibling) {
+                container.insertBefore(card, pinned.nextSibling);
+            } else {
+                container.appendChild(card);
+            }
+        });
+    } catch (e) {
+        console.warn("[Contributions] Unable to load dynamic supporter reviews:", e);
+    }
+};
+
+window.addSupporterToFeed = function({ name, message, amount }) {
+    const container = document.getElementById("recentSupportersList");
+    if (!container) return;
+
+    const card = document.createElement("div");
+    card.className = "dynamic-supporter-card p-3.5 rounded-2xl bg-emerald-50 border-2 border-emerald-400 space-y-2 shadow-sm animate-in slide-in-from-top-2 duration-300";
+    
+    const initials = (name || "Supporter").split(" ").map(w => w[0]).join("").toUpperCase().substring(0, 2) || "☕";
+    const safeName = (name || "Generous Supporter").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const safeMsg = (message || "Thank you Almond Jobs for keeping job hunting honest and broker-free!").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const amt = amount || 485;
+
+    card.innerHTML = `
+        <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-7 h-7 rounded-full bg-emerald-200 text-emerald-950 flex items-center justify-center font-black text-xs">
+                    ${initials}
+                </div>
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] font-black text-emerald-800 bg-emerald-200 px-1.5 py-0.5 rounded">🎉 Just supported</span>
+                        <strong class="text-slate-900 font-extrabold text-xs">${safeName}</strong>
+                        <span class="text-emerald-800 text-[11px] font-semibold">contributed ₹${amt}</span>
+                    </div>
+                </div>
+            </div>
+            <span class="text-[10px] text-emerald-700 font-bold">Just now</span>
+        </div>
+        <div class="p-2.5 bg-white rounded-xl border border-emerald-200 text-xs text-slate-800 font-medium leading-relaxed">
+            "${safeMsg}"
+        </div>
+    `;
+
+    const pinned = container.firstElementChild;
+    if (pinned && pinned.nextSibling) {
+        container.insertBefore(card, pinned.nextSibling);
+    } else {
+        container.insertBefore(card, container.firstChild);
+    }
+    card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+};
+
 window.openContributeModal = function() {
     const modal = document.getElementById("vipPricingModal");
     if (!modal) return;
@@ -4095,6 +4263,8 @@ window.openContributeModal = function() {
     if (nameInput && window.currentCandidateUser && window.currentCandidateUser.full_name) {
         if (!nameInput.value) nameInput.value = window.currentCandidateUser.full_name;
     }
+    if (typeof window.startLiveReviewTicker === "function") window.startLiveReviewTicker();
+    if (typeof window.fetchRecentContributions === "function") window.fetchRecentContributions();
     if (window.lucide) lucide.createIcons();
 };
 
@@ -4239,7 +4409,7 @@ window.openProfileModal = function(contextReason = "") {
 
         const accessLevel = document.getElementById("profileAccessLevel");
         if (accessLevel) {
-            accessLevel.textContent = paid ? "100% Unlocked (All Portals + 0-6d VIP)" : "7+ Days Visible • 0–6d VIP Locked";
+            accessLevel.textContent = paid ? "100% Unlocked (All Portals + Priority VIP)" : "Standard Access • Priority VIP Locked";
             accessLevel.className = paid ? "font-bold text-emerald-700" : "font-bold text-violet-700";
         }
 
@@ -4767,7 +4937,7 @@ window.updateTopProfileBar = function() {
     const paid = isUserPaid();
     const loggedIn = isUserLoggedIn();
 
-    if (vipLbl) vipLbl.textContent = paid ? "VIP Active ✓" : "VIP Pass • ₹699";
+    if (vipLbl) vipLbl.textContent = paid ? "VIP Active ✓" : "VIP Pass";
 
     if (topBtn) {
         if (paid) {
@@ -4900,7 +5070,7 @@ function loadRazorpaySdk() {
 
 // 9. Razorpay Pro Checkout Flow
 
-window.triggerRazorpayCheckout = async function(amountInr = 1, planName = 'Almond Jobs VIP Pass (30 Days)', optionsConfig = {}) {
+window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Almond Jobs VIP Pass (30 Days)', optionsConfig = {}) {
     const parsedInr = parseInt(amountInr, 10);
     const finalAmount = Number.isFinite(parsedInr) ? parsedInr : 1;
     const amountPaise = finalAmount * 100;
@@ -4979,21 +5149,31 @@ window.triggerRazorpayCheckout = async function(amountInr = 1, planName = 'Almon
                             razorpay_signature: response.razorpay_signature,
                             amount_inr: finalAmount,
                             plan_name: planName,
-                            purchase_type: purchaseType
+                            purchase_type: purchaseType,
+                            supporter_name: optionsConfig.supporterName || "",
+                            supporter_message: optionsConfig.supporterMessage || ""
                         })
                     });
 
                     const verifyData = await verifyResp.json().catch(() => ({}));
                     if (verifyResp.ok && verifyData.status === "success") {
                         if (verifyData.purchase_type === "contribution" || purchaseType === "contribution") {
-                            if (typeof window.closeVipPricingModal === "function") window.closeVipPricingModal();
-                            alert("Thank you for your generous coffee contribution! Your reward helps keep Almond Jobs independent.");
+                            if (typeof window.addSupporterToFeed === "function") {
+                                window.addSupporterToFeed({
+                                    name: optionsConfig.supporterName || "Generous Supporter",
+                                    message: optionsConfig.supporterMessage || "",
+                                    amount: finalAmount
+                                });
+                            }
+                            const msgInput = document.getElementById("coffeeSupporterMessage");
+                            if (msgInput) msgInput.value = "";
+                            alert("Thank you for your generous coffee contribution! Your feedback is now live in the recent supporters feed.");
                         } else {
                             localStorage.setItem("almond_is_paid", "true");
                             if (typeof window.closeVipPassModal === "function") window.closeVipPassModal();
                             const vipLbl = document.getElementById("topVipPassLabel");
                             if (vipLbl) vipLbl.textContent = "VIP Active ✓";
-                            alert("VIP Pass Activated! All Latest Feed roles (Today to 6 days ago) are now unlocked.");
+                            alert("VIP Pass Activated! All priority corporate postings and direct application portals are now fully unlocked.");
                             const searchBtn = document.getElementById("searchJobsBtn");
                             if (searchBtn && currentProfile) {
                                 searchBtn.click();

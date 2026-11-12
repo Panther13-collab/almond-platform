@@ -12,8 +12,13 @@ class Config:
 
     # Pricing
     PRICE_INR = int(os.getenv("ALMOND_PRICE_INR", 699))
-    PRICE_USD = int(os.getenv("ALMOND_PRICE_USD", 8))
+    PRICE_USD = float(os.getenv("ALMOND_PRICE_USD", 9.99))
+    PRICE_EUR = float(os.getenv("ALMOND_PRICE_EUR", 9.99))
+    PRICE_GBP = float(os.getenv("ALMOND_PRICE_GBP", 9.99))
     VIP_PRICE_INR = int(os.getenv("ALMOND_VIP_PRICE_INR", 699))
+    VIP_PRICE_USD = float(os.getenv("ALMOND_VIP_PRICE_USD", 9.99))
+    VIP_PRICE_EUR = float(os.getenv("ALMOND_VIP_PRICE_EUR", 9.99))
+    VIP_PRICE_GBP = float(os.getenv("ALMOND_VIP_PRICE_GBP", 9.99))
     VIP_TEST_PRICE_INR = VIP_PRICE_INR
 
     # Supabase (Auth & Postgres Database)

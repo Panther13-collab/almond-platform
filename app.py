@@ -28,7 +28,7 @@ from core.doc_exporter import (
 from core.config import Config
 from core.auth_db import (
     signup_user, login_user, is_user_paid, verify_session_token, get_user_profile,
-    recover_verified_session,
+    recover_verified_session, get_recent_contributions,
     get_user_kanban, save_user_kanban_application, sync_full_kanban,
     send_signup_otp, verify_otp_and_signup, login_or_signup_google_user,
     record_page_visit, get_analytics_summary, get_all_users_admin,
@@ -746,6 +746,11 @@ async def api_me(payload: dict = Body(...)):
         "vip_price_inr": getattr(Config, "VIP_PRICE_INR", 699)
     })
 
+@app.get("/api/contributions/recent")
+async def api_recent_contributions(limit: int = Query(20, ge=1, le=50)):
+    items = get_recent_contributions(limit=limit)
+    return JSONResponse(content={"status": "success", "contributions": items})
+
 @app.post("/api/security/verify-human")
 async def api_verify_human_session(request: Request, payload: dict = Body(default={})):
     """
@@ -841,7 +846,14 @@ async def api_verify_payment(payload: dict = Body(...)):
             detail="Missing payment verification fields (razorpay_order_id, razorpay_payment_id, razorpay_signature).",
         )
 
-    res = verify_razorpay_signature(user_id, order_id, payment_id, signature, amount_inr, plan_name, purchase_type=purchase_type)
+    supporter_name = payload.get("supporter_name", "")
+    supporter_message = payload.get("supporter_message", "")
+    res = verify_razorpay_signature(
+        user_id, order_id, payment_id, signature, amount_inr, plan_name,
+        purchase_type=purchase_type,
+        supporter_name=supporter_name,
+        supporter_message=supporter_message
+    )
     if res.get("status") == "error":
         raise HTTPException(status_code=res.get("http_status", 400), detail=res.get("message"))
     return JSONResponse(content=res)

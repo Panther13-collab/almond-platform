@@ -34,14 +34,36 @@ class TestVipPassAndLatestFeedGating(unittest.TestCase):
             cls.js = f.read()
 
     def test_01_ui_separation_vip_pass_vs_contribute(self):
-        # Dedicated VIP Pass modal & ₹699 planned price + INR/USD planned parity
+        # Dedicated VIP Pass modal & ₹699 planned price + INR/USD/EUR/GBP planned parity
         self.assertIn('id="vipPassModal"', self.html)
         self.assertIn("Almond Jobs VIP Pass", self.html)
         self.assertIn("openVipPassModal()", self.html)
         self.assertIn("executeVipPassCheckout()", self.html)
         self.assertIn("VIP_PLANNED_PARITY", self.html)
         self.assertIn("₹699", self.html)
-        self.assertIn("$8", self.html)
+        self.assertIn("$9.99", self.html)
+        self.assertIn("€9.99", self.html)
+        self.assertIn("£9.99", self.html)
+
+        # No prices on navbar or outer surfaces
+        self.assertIn('<span id="topVipPassLabel">VIP Pass</span>', self.html)
+        self.assertNotIn('<span id="topVipPassLabel">VIP Pass &bull; ₹699</span>', self.html)
+        self.assertIn('👑 Unlock VIP Pass', self.html)
+        self.assertNotIn('👑 Unlock VIP Pass &mdash; ₹1', self.html)
+
+        # Rotating live reviews & dynamic supporters
+        self.assertIn('id="miniLiveReviewCard"', self.html)
+        self.assertIn('id="liveReviewEmotion"', self.html)
+        self.assertIn("startLiveReviewTicker", self.js)
+        self.assertIn("fetchRecentContributions", self.js)
+        self.assertIn("addSupporterToFeed", self.js)
+
+        # Founder voice: no 0-6 days robotic text in VIP modal
+        vip_pass_start = self.html.find('id="vipPassModal"')
+        prof_start = self.html.find('id="profileModal"')
+        vip_pass_html = self.html[vip_pass_start:prof_start]
+        self.assertNotIn("0&ndash;6", vip_pass_html)
+        self.assertNotIn("0-6", vip_pass_html)
 
         # Contribute button near profile with coffee logo
         self.assertIn('id="topContributeBtn"', self.html)
@@ -54,11 +76,11 @@ class TestVipPassAndLatestFeedGating(unittest.TestCase):
 
         # Contribute is cleanly separated: no "Upgrade to Direct Portal VIP Pass" inside #vipPricingModal
         vip_pricing_start = self.html.find('id="vipPricingModal"')
-        vip_pass_start = self.html.find('id="vipPassModal"')
         contribute_html = self.html[vip_pricing_start:vip_pass_start]
         self.assertIn("Buy Almond Jobs a coffee", contribute_html)
         self.assertNotIn("Upgrade to Direct Portal VIP Pass", contribute_html)
-        self.assertIn("independent of VIP Pass", contribute_html)
+        self.assertIn("independent", contribute_html)
+        self.assertNotIn("0&ndash;6 day", contribute_html)
 
         # Side menu has Contribute as the LAST option in navigation items
         side_panel_start = self.html.find('id="sidePanel"')
@@ -266,6 +288,44 @@ class TestVipPassAndLatestFeedGating(unittest.TestCase):
         self.assertTrue(os.path.exists(docx_free_path))
         if os.path.exists(docx_free_path):
             os.remove(docx_free_path)
+
+    def test_07_contributions_recent_feed_and_persisted_comments(self):
+        email = f"supporter_feed_{int(datetime.now().timestamp() * 1000)}@example.com"
+        user_res = login_or_signup_google_user(email, "Supporter Test", "google_supporter_feed_test")
+        uid = user_res["user_id"]
+
+        order_id = f"order_feed_{int(datetime.now().timestamp() * 1000)}"
+        payment_id = f"pay_feed_{int(datetime.now().timestamp() * 1000)}"
+        sig = hmac.new(
+            Config.RAZORPAY_KEY_SECRET.encode("utf-8"),
+            f"{order_id}|{payment_id}".encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
+
+        test_msg = "Super clean experience, direct links saved me hours!"
+        test_name = "Karthik Raja"
+
+        r = self.client.post("/api/payment/verify", json={
+            "user_id": uid,
+            "order_id": order_id,
+            "payment_id": payment_id,
+            "signature": sig,
+            "amount_inr": 485,
+            "plan_name": "Buy Almond Jobs 1 Coffee",
+            "purchase_type": "contribution",
+            "supporter_name": test_name,
+            "supporter_message": test_msg
+        })
+        self.assertEqual(r.status_code, 200)
+
+        # Verify /api/contributions/recent returns this supporter
+        r_feed = self.client.get("/api/contributions/recent")
+        self.assertEqual(r_feed.status_code, 200)
+        feed_data = r_feed.json()
+        self.assertIn("contributions", feed_data)
+        matches = [c for c in feed_data["contributions"] if c.get("supporter_name") == test_name]
+        self.assertTrue(len(matches) > 0, "Submitted supporter comment must be returned in recent contributions feed")
+        self.assertEqual(matches[0]["supporter_message"], test_msg)
 
 
 if __name__ == "__main__":
