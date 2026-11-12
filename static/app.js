@@ -4767,75 +4767,58 @@ function loadRazorpaySdk() {
 // 9. Razorpay Pro Checkout Flow
 
 window.triggerRazorpayCheckout = async function(amountInr = 699, planName = '1-Month Pro Hunt') {
-    const finalAmount = parseInt(amountInr, 10) || 699;
+    const parsedInr = parseInt(amountInr, 10);
+    const finalAmount = Number.isFinite(parsedInr) ? parsedInr : 699;
+    const amountPaise = finalAmount * 100;
+    if (amountPaise < 100) {
+        alert("Minimum payment amount is INR 1 (100 paise).");
+        return;
+    }
 
     const userId = getCandidateUserId();
+    const candidateUser = window.currentCandidateUser || {};
 
     try {
-
         if (typeof Razorpay === 'undefined') {
-
             await loadRazorpaySdk();
-
         }
-
     } catch (e) {
-
         alert('Payment gateway is temporarily unavailable. Please verify your connection and retry.');
-
         return;
-
     }
 
     try {
-
         // 1. Create order on backend
-
         const orderResp = await fetch("/api/payment/create-order", {
-
             method: "POST",
-
             headers: { "Content-Type": "application/json" },
-
             body: JSON.stringify({
-
                 user_id: userId,
-
                 amount_inr: finalAmount,
-
+                amount: amountPaise,
+                currency: "INR",
                 plan_name: planName
-
             })
-
         });
 
+        const orderData = await orderResp.json().catch(() => ({}));
         if (!orderResp.ok) {
-
-            const err = await orderResp.json().catch(() => ({}));
-
-            throw new Error(err.detail || "Unable to initialize Razorpay checkout session.");
-
+            throw new Error(orderData.detail || orderData.message || "Unable to initialize Razorpay checkout session.");
         }
 
-        const orderData = await orderResp.json();
-
         if (orderData.status !== "success" || !orderData.order_id) {
-
-            throw new Error(orderData.message || "Failed to generate checkout order.");
-
+            throw new Error(orderData.message || orderData.detail || "Failed to generate checkout order.");
         }
 
         // 2. Launch Razorpay Checkout Modal
-
         const options = {
-
             key: orderData.key_id,
-
             amount: orderData.amount,
-
             currency: orderData.currency || "INR",
-
             name: "Almond Jobs",
+            description: planName,
+            order_id: orderData.order_id,
+            image: window.location.origin + "/static/logo-512.png",
             modal: {
                 ondismiss: function() {
                     console.log("[Razorpay] Checkout modal dismissed without completion.");
@@ -4844,113 +4827,64 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = '1-M
                     }
                 }
             },
-            order_id: orderData.order_id,
-
-            image: window.location.origin + "/static/logo-512.png",
-
             handler: async function (response) {
-
                 // 3. Verify signature securely on backend
-
                 try {
-
                     const verifyResp = await fetch("/api/payment/verify", {
-
                         method: "POST",
-
                         headers: { "Content-Type": "application/json" },
-
                         body: JSON.stringify({
-
                             user_id: userId,
-
                             order_id: response.razorpay_order_id,
-
                             payment_id: response.razorpay_payment_id,
-
                             signature: response.razorpay_signature,
-
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
                             amount_inr: finalAmount,
                             plan_name: planName
-
                         })
-
                     });
 
-                    const verifyData = await verifyResp.json();
-
-                    if (verifyData.status === "success") {
-
+                    const verifyData = await verifyResp.json().catch(() => ({}));
+                    if (verifyResp.ok && verifyData.status === "success") {
                         localStorage.setItem("almond_is_paid", "true");
-
-                        alert("🎉 Payment Successful! Your account has been upgraded to Almond Pro. All direct application portals and STAR pitches are now unlocked.");
-
-                        // Re-trigger search to refresh card lock state
-
+                        alert("Payment Successful! Your account has been upgraded to Almond Pro. All direct application portals and STAR pitches are now unlocked.");
                         const searchBtn = document.getElementById("searchJobsBtn");
-
                         if (searchBtn && currentProfile) {
-
                             searchBtn.click();
-
                         }
-
                     } else {
-
-                        alert("Payment verification could not be confirmed: " + (verifyData.message || "Unknown error"));
-
+                        const reason = verifyData.detail || verifyData.message || "Signature verification failed.";
+                        alert("Payment verification could not be confirmed: " + reason);
                     }
-
                 } catch (vErr) {
-
                     alert("Error verifying payment signature: " + vErr.message);
-
                 }
-
             },
-
             prefill: {
-
-                name: currentProfile?.name || "Candidate",
-
-                email: currentProfile?.email || "candidate@almondjobs.co",
-
-                contact: currentProfile?.phone || "9999999999"
-
+                name: currentProfile?.name || candidateUser.full_name || "Candidate",
+                email: currentProfile?.email || candidateUser.email || "candidate@almondjobs.com",
+                contact: currentProfile?.phone || ""
             },
-
             notes: {
-
                 platform: "Almond Jobs Direct Intelligence",
-
                 user_id: userId
-
             },
-
             theme: {
-
                 color: "#c5a059"
-
             }
-
         };
 
         const rzpInstance = new Razorpay(options);
-
         rzpInstance.on("payment.failed", function (response) {
-
-            alert("Payment failed: " + (response.error?.description || "Transaction cancelled"));
-
+            const errDesc = response?.error?.description || response?.error?.reason || "Transaction failed";
+            alert("Payment failed: " + errDesc);
         });
-
         rzpInstance.open();
-
     } catch (e) {
-
         alert("Payment initialization error: " + e.message);
-
     }
-
 };
 
 // 10. Proof-of-Human Presence Barrier ("Hold to Verify" Guard)

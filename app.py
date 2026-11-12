@@ -765,29 +765,64 @@ async def api_verify_human_session(request: Request, payload: dict = Body(defaul
     return response
 
 @app.post("/api/payment/create-order")
+@app.post("/api/create-order")
 async def api_create_order(payload: dict = Body(...)):
-    user_id = payload.get("user_id", "")
-    amount_inr = int(payload.get("amount_inr", Config.PRICE_INR))
-    res = create_razorpay_order(user_id, amount_inr)
+    user_id = str(payload.get("user_id", "") or "")
+    currency = str(payload.get("currency", "INR") or "INR")
+    receipt = payload.get("receipt")
+    plan_name = str(payload.get("plan_name", "") or "")
+
+    try:
+        if payload.get("amount") is not None:
+            amount_paise = int(payload.get("amount"))
+        else:
+            amount_inr = int(payload.get("amount_inr", Config.PRICE_INR))
+            amount_paise = amount_inr * 100
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Invalid payment amount.")
+
+    if amount_paise < 100:
+        raise HTTPException(status_code=400, detail="Minimum order amount is 100 paise (INR 1.00).")
+
+    res = create_razorpay_order(
+        user_id=user_id,
+        amount_paise=amount_paise,
+        currency=currency,
+        receipt=receipt,
+        plan_name=plan_name,
+    )
     if res.get("status") == "error":
-        raise HTTPException(status_code=500, detail=res.get("message"))
+        raise HTTPException(status_code=res.get("http_status", 500), detail=res.get("message"))
     return JSONResponse(content=res)
 
 @app.post("/api/payment/verify")
+@app.post("/api/verify-payment")
 async def api_verify_payment(payload: dict = Body(...)):
-    user_id = payload.get("user_id", "")
-    order_id = payload.get("order_id", "")
-    payment_id = payload.get("payment_id", "")
-    signature = payload.get("signature", "")
-    amount_inr = int(payload.get("amount_inr", Config.PRICE_INR))
-    plan_name = payload.get("plan_name", "")
+    user_id = str(payload.get("user_id", "") or "")
+    order_id = str(payload.get("order_id") or payload.get("razorpay_order_id") or "").strip()
+    payment_id = str(payload.get("payment_id") or payload.get("razorpay_payment_id") or "").strip()
+    signature = str(payload.get("signature") or payload.get("razorpay_signature") or "").strip()
+    plan_name = str(payload.get("plan_name", "") or "")
 
-    if not order_id or not payment_id:
-        raise HTTPException(status_code=400, detail="Missing payment verification fields.")
+    try:
+        if payload.get("amount_inr") is not None:
+            amount_inr = int(payload.get("amount_inr"))
+        elif payload.get("amount") is not None:
+            amount_inr = int(int(payload.get("amount")) / 100)
+        else:
+            amount_inr = Config.PRICE_INR
+    except (TypeError, ValueError):
+        amount_inr = Config.PRICE_INR
+
+    if not order_id or not payment_id or not signature:
+        raise HTTPException(
+            status_code=400,
+            detail="Missing payment verification fields (razorpay_order_id, razorpay_payment_id, razorpay_signature).",
+        )
 
     res = verify_razorpay_signature(user_id, order_id, payment_id, signature, amount_inr, plan_name)
     if res.get("status") == "error":
-        raise HTTPException(status_code=400, detail=res.get("message"))
+        raise HTTPException(status_code=res.get("http_status", 400), detail=res.get("message"))
     return JSONResponse(content=res)
 
 @app.post("/api/kanban/get")

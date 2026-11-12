@@ -44,7 +44,12 @@ class Config:
 
     @classmethod
     def is_razorpay_configured(cls) -> bool:
-        return bool(cls.RAZORPAY_KEY_ID and not cls.RAZORPAY_KEY_ID.startswith("rzp_test_placeholder"))
+        return bool(
+            cls.RAZORPAY_KEY_ID
+            and not cls.RAZORPAY_KEY_ID.startswith("rzp_test_placeholder")
+            and cls.RAZORPAY_KEY_SECRET
+            and cls.RAZORPAY_KEY_SECRET != "test_secret_placeholder"
+        )
 
     @classmethod
     def is_smtp_configured(cls) -> bool:
