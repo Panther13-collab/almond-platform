@@ -13,7 +13,8 @@ class Config:
     # Pricing
     PRICE_INR = int(os.getenv("ALMOND_PRICE_INR", 699))
     PRICE_USD = int(os.getenv("ALMOND_PRICE_USD", 8))
-    VIP_TEST_PRICE_INR = int(os.getenv("ALMOND_VIP_PRICE_INR", 1))
+    VIP_PRICE_INR = int(os.getenv("ALMOND_VIP_PRICE_INR", 699))
+    VIP_TEST_PRICE_INR = VIP_PRICE_INR
 
     # Supabase (Auth & Postgres Database)
     SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()

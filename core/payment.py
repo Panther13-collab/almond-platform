@@ -89,12 +89,12 @@ def apply_vip_latest_feed_lock(jobs: list, user_is_paid: bool = False, max_days:
                 job["hn_url"] = "#unlock-vip"
             if "founder_email" in job:
                 job["founder_email"] = ""
-            job["title"] = "Latest Direct Opportunity (VIP Pass)"
+            job["title"] = "Confidential Role (VIP Pass)"
             if "role" in job:
-                job["role"] = "Latest Direct Opportunity (VIP Pass)"
-            job["company"] = "Verified Direct Employer"
+                job["role"] = "Confidential Role (VIP Pass)"
+            # KEEP COMPANY NAME VISIBLE to tempt candidates with employer identity
             if "summary" in job:
-                job["summary"] = "Unlock VIP Pass to view full role details and direct corporate portal link."
+                job["summary"] = "Unlock VIP Pass to view full designation details and direct application portal link."
             if "full_text" in job:
                 job["full_text"] = ""
             if "matched_skills" in job:
@@ -108,7 +108,7 @@ def apply_vip_latest_feed_lock(jobs: list, user_is_paid: bool = False, max_days:
 
 def create_razorpay_order(
     user_id: str = "",
-    amount_inr: int = 1,
+    amount_inr: int = getattr(Config, "VIP_PRICE_INR", 699),
     amount_paise: int = None,
     currency: str = "INR",
     receipt: str = None,

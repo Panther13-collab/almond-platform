@@ -2586,12 +2586,12 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
 
         const companyInitial = ((job.company || 'AJ').replace(/[^a-zA-Z0-9]/g, '').substring(0, 2) || 'AJ').toUpperCase();
 
-        const blurCls = isLocked ? "blur-[5px] select-none pointer-events-none opacity-75" : "";
+        const titleBlurCls = isLocked ? "blur-[5px] select-none pointer-events-none opacity-80" : "";
         const vipLockBannerHtml = isLocked ? `
             <div class="my-2.5 p-3 rounded-xl bg-gradient-to-r from-amber-50 via-violet-50 to-indigo-50 border border-violet-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-2xs">
                 <div class="flex items-center gap-2 text-xs font-extrabold text-slate-900">
                     <span class="w-6 h-6 rounded-lg bg-violet-600 text-white flex items-center justify-center shrink-0">🔒</span>
-                    <span>Latest Feed (${dateInfo.label}) &mdash; Blurred until VIP Pass unlock</span>
+                    <span>Designation blurred &bull; Unlocked with VIP Pass (${dateInfo.label})</span>
                 </div>
                 <button type="button" onclick="openVipPassModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs shadow-sm hover:scale-105 active:scale-95 transition cursor-pointer shrink-0">
                     👑 Unlock VIP for Latest Feed
@@ -2602,23 +2602,27 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
         card.innerHTML = `
             <!-- Line 1: Identity, Title, Direct ATS Verification & Live Badges -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
-                <div class="flex items-center gap-3 min-w-0 ${blurCls}">
+                <div class="flex items-center gap-3 min-w-0">
+                    <!-- Unblurred Company Initial -->
                     <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/90 text-amber-950 font-black text-xs sm:text-sm flex items-center justify-center flex-shrink-0 shadow-2xs">
                         ${companyInitial}
                     </div>
                     <div class="min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <h3 class="text-base sm:text-lg font-black text-slate-950 group-hover:text-amber-900 transition-colors tracking-tight truncate">
+                            <!-- Only Designation/Title is Blurred When Locked -->
+                            <h3 class="text-base sm:text-lg font-black text-slate-950 group-hover:text-amber-900 transition-colors tracking-tight truncate ${titleBlurCls}">
                                 ${job.title}
                             </h3>
-                            <span class="text-xs font-black text-slate-700">@ ${job.company}</span>
+                            <!-- Unblurred Company Name (Always Crisp & Visible to Tempt Candidates) -->
+                            <span class="text-xs font-black text-slate-900 bg-amber-50/90 px-2.5 py-0.5 rounded-lg border border-amber-300 shadow-2xs">@ ${job.company}</span>
                         </div>
-                        <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 flex-wrap">
-                            <span class="flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3 text-slate-400"></i>${job.location_tag || job.location || 'Remote'}</span>
+                        <!-- Unblurred Location & Work Mode -->
+                        <div class="flex items-center gap-2 text-xs font-semibold text-slate-600 flex-wrap">
+                            <span class="flex items-center gap-1 font-bold text-slate-700"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-500"></i>${job.location_tag || job.location || 'Remote'}</span>
                             <span>&bull;</span>
-                            <span class="text-slate-700 font-bold">${job.work_mode || 'Remote'}</span>
+                            <span class="text-slate-800 font-extrabold">${job.work_mode || 'Remote'}</span>
                             <span>&bull;</span>
-                            <span>${empTag}</span>
+                            <span class="font-bold text-slate-600">${empTag}</span>
                         </div>
                     </div>
                 </div>
@@ -2638,10 +2642,11 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
 
             ${vipLockBannerHtml}
 
-            <!-- Line 2: Compensation, 0% Spread Guarantee & Overlap Skills -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2.5 text-xs ${blurCls}">
+            <!-- Line 2: Unblurred Compensation & Estimated Package + Matched Skills -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2.5 text-xs">
+                <!-- Unblurred Estimated Package Display -->
                 <div class="flex items-center gap-2">
-                    <span class="font-black text-xs sm:text-sm text-slate-950 bg-amber-50/70 border border-amber-200/80 px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-2xs">
+                    <span class="font-black text-xs sm:text-sm text-slate-950 bg-amber-50/80 border border-amber-300 px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-2xs">
                         <i data-lucide="badge-dollar-sign" class="w-3.5 h-3.5 text-emerald-700"></i>
                         <span>${cleanCompDisplay}</span>
                     </span>
@@ -2650,7 +2655,8 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
                     </span>
                 </div>
 
-                <div class="flex items-center gap-1.5 flex-wrap">
+                <!-- Secondary Info: Skills & Skill Gap -->
+                <div class="flex items-center gap-1.5 flex-wrap ${isLocked ? 'blur-[4px] select-none pointer-events-none opacity-60' : ''}">
                     ${matchedSkillsHtml ? `
                         <span class="text-[11px] font-bold text-slate-500">Skills:</span>
                         ${matchedSkillsHtml}
@@ -2664,7 +2670,7 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
 
             <!-- Line 3: Direct Action Toolbar -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2.5 border-t border-slate-100">
-                <div class="flex items-center gap-2 flex-wrap ${blurCls}">
+                <div class="flex items-center gap-2 flex-wrap ${isLocked ? 'opacity-40 pointer-events-none' : ''}">
                     ${pitchBtnHtml}
                     ${alreadyAppliedBadgeHtml}
                 </div>
@@ -3207,46 +3213,30 @@ function renderFounderCards(founderJobs) {
 
                         </div>
 
-                        <div class="${founderBlurCls}">
-                        <!-- Job Title -->
-
-                        <h3 class="text-xl sm:text-2xl font-black text-slate-950 group-hover:text-orange-600 transition-colors tracking-tight leading-tight">
-
+                        <!-- Job Title (Designation blurred if locked) -->
+                        <h3 class="text-xl sm:text-2xl font-black text-slate-950 group-hover:text-orange-600 transition-colors tracking-tight leading-tight ${founderBlurCls}">
                             ${job.title}
-
                         </h3>
 
-                        <!-- Company, Location -->
-
+                        <!-- Unblurred Company Name and Location (Tempts Candidates with Company Identity) -->
                         <div class="flex items-center flex-wrap gap-2 text-sm font-bold text-slate-700 pt-2">
-
-                            <span class="flex items-center space-x-1.5 text-slate-950 font-black">
-
+                            <span class="flex items-center space-x-1.5 text-slate-950 font-black bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-300">
                                 <i data-lucide="building-2" class="w-4 h-4 text-orange-600"></i>
-
                                 <span>${job.company}</span>
-
                             </span>
-
                             <span class="text-slate-400">•</span>
-
                             <span class="flex items-center space-x-1.5 text-slate-800 font-extrabold">
-
                                 <i data-lucide="map-pin" class="w-4 h-4 text-slate-600"></i>
-
                                 <span>${job.location || 'Remote'}</span>
-
                             </span>
-
                         </div>
 
-                        ${emailPill ? `<div class="pt-2">${emailPill}</div>` : ''}
-
-                        <p class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium pt-2 line-clamp-3">
-
-                            ${job.summary || job.full_text || ''}
-
-                        </p>
+                        <!-- Secondary Info (Summary and Direct Contact blurred if locked) -->
+                        <div class="${founderBlurCls}">
+                            ${emailPill ? `<div class="pt-2">${emailPill}</div>` : ''}
+                            <p class="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium pt-2 line-clamp-3">
+                                ${job.summary || job.full_text || ''}
+                            </p>
                         </div>
 
                         <!-- Overlap Skills -->
@@ -4125,7 +4115,14 @@ window.closeVipPassModal = function() {
 
 window.executeVipPassCheckout = function() {
     if (typeof triggerRazorpayCheckout === "function") {
-        triggerRazorpayCheckout(1, "Almond Jobs VIP Pass (30 Days)", { purchaseType: "vip_pass" });
+        const curr = window.selectedVipCurrency || "INR";
+        const parity = (window.VIP_PLANNED_PARITY && window.VIP_PLANNED_PARITY[curr]) || { planned: "₹699", inr_amount: 699 };
+        const amountInr = parity.inr_amount || 699;
+        const planTitle = `Almond Jobs VIP Pass (30 Days — ${parity.planned})`;
+        triggerRazorpayCheckout(amountInr, planTitle, {
+            purchaseType: "vip_pass",
+            currency: "INR"
+        });
     }
 };
 
@@ -4764,20 +4761,51 @@ window.updateTopProfileBar = function() {
     const initialsSpan = document.getElementById("topProfileInitials");
     const topBtn = document.getElementById("topProfileBtn");
     const vipLbl = document.getElementById("topVipPassLabel");
-    if (vipLbl) vipLbl.textContent = isUserPaid() ? "VIP Active ✓" : "VIP Pass • ₹1";
+    const vipCrown = document.getElementById("topProfileVipCrown");
+    const vipBadge = document.getElementById("topProfileVipBadge");
+    const modalAvatarBox = document.getElementById("modalUserAvatarBox");
+    const paid = isUserPaid();
+    const loggedIn = isUserLoggedIn();
 
-    if (isUserLoggedIn()) {
-        if (indicator) indicator.classList.remove("hidden");
+    if (vipLbl) vipLbl.textContent = paid ? "VIP Active ✓" : "VIP Pass • ₹699";
+
+    if (topBtn) {
+        if (paid) {
+            // Distinctive VIP / PRO luxury golden ring and gradient dial
+            topBtn.className = "relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-amber-400 via-yellow-300 to-amber-500 ring-2 ring-amber-400 ring-offset-2 ring-offset-white text-slate-950 font-black flex items-center justify-center transition shadow-md shadow-amber-500/30 cursor-pointer group shrink-0";
+            if (vipCrown) vipCrown.classList.remove("hidden");
+            if (vipBadge) vipBadge.classList.remove("hidden");
+            if (indicator) indicator.classList.add("hidden");
+        } else {
+            topBtn.className = "relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 hover:bg-violet-50 border border-slate-300 hover:border-violet-300 text-slate-700 hover:text-violet-700 flex items-center justify-center transition shadow-2xs cursor-pointer group shrink-0";
+            if (vipCrown) vipCrown.classList.add("hidden");
+            if (vipBadge) vipBadge.classList.add("hidden");
+            if (indicator) {
+                if (loggedIn) indicator.classList.remove("hidden");
+                else indicator.classList.add("hidden");
+            }
+        }
+    }
+
+    if (modalAvatarBox) {
+        if (paid) {
+            modalAvatarBox.className = "w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-yellow-500 text-slate-950 flex items-center justify-center border-2 border-amber-300 shadow-md ring-2 ring-amber-400/40";
+        } else {
+            modalAvatarBox.className = "w-10 h-10 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center border border-violet-200 shadow-2xs";
+        }
+    }
+
+    if (loggedIn) {
         const name = getCandidateUserName();
         const initials = name.split(" ").map(w => w[0]).join("").toUpperCase().substring(0, 2) || "CA";
         if (initialsSpan) {
             initialsSpan.textContent = initials;
+            initialsSpan.className = paid ? "text-[10px] font-black text-slate-950 uppercase" : "text-[10px] font-black text-violet-800 uppercase";
             initialsSpan.classList.remove("hidden");
         }
         if (topIcon) topIcon.classList.add("hidden");
-        if (topBtn) topBtn.title = `${name} (${getCandidateUserEmail()}) - Profile`;
+        if (topBtn) topBtn.title = `${name} (${getCandidateUserEmail()}) ${paid ? '👑 [VIP PRO ACTIVE]' : ''} - Profile`;
     } else {
-        if (indicator) indicator.classList.add("hidden");
         if (initialsSpan) initialsSpan.classList.add("hidden");
         if (topIcon) topIcon.classList.remove("hidden");
         if (topBtn) topBtn.title = "Candidate Profile & Sign In";
@@ -5699,16 +5727,19 @@ function renderCuratedCards(items, total) {
                         <span class="px-2 py-0.5 rounded-md ${isLocked ? 'bg-amber-100 text-amber-950 border border-amber-300 font-black' : 'bg-slate-100 text-slate-600 font-semibold'} text-[10px]">${item.date_posted_str || 'Recent'}</span>
                         ${isLocked ? `<span class="text-[10px] font-black text-violet-800 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded-md">🔒 VIP Latest Feed</span>` : ''}
                     </div>
-                    <div class="space-y-1 ${cardBlurCls}">
+                    <div class="space-y-1">
+                        <!-- Unblurred Company Name, Package, & Sponsorship -->
                         <div class="flex items-center gap-2 flex-wrap">
-                            <span class="text-xs font-black text-slate-900">${item.company}</span>
+                            <span class="text-xs font-black text-slate-950 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">@ ${item.company}</span>
                             <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-bold uppercase tracking-wide">DIRECT FEED • ${provider.toUpperCase()}</span>
                             ${pkgBadge}
                             ${sponsorshipBadge}
                         </div>
-                        <h4 class="text-sm font-extrabold text-slate-950 truncate">${item.role}</h4>
-                        <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                            <span>📍 ${item.location}</span>
+                        <!-- Designation / Role is Blurred when Locked -->
+                        <h4 class="text-sm font-extrabold text-slate-950 truncate ${cardBlurCls}">${item.role}</h4>
+                        <!-- Unblurred Location & Category -->
+                        <div class="flex items-center gap-2 text-xs text-slate-600 font-medium">
+                            <span class="font-bold text-slate-700">📍 ${item.location}</span>
                             <span>•</span>
                             <span class="text-violet-700 font-bold">${item.category}</span>
                         </div>

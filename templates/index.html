@@ -661,11 +661,18 @@
                 </button>
                 <button type="button" id="topVipPassBtn" onclick="openVipPassModal()" class="flex bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-[11px] sm:text-xs px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer whitespace-nowrap items-center gap-1.5">
                     <span>👑</span>
-                    <span id="topVipPassLabel">VIP Pass &bull; ₹1</span>
+                    <span id="topVipPassLabel">VIP Pass &bull; ₹699</span>
+                </button>
+                <!-- Dedicated Contribute Button Near Profile with Coffee Logo -->
+                <button type="button" id="topContributeBtn" onclick="openContributeModal()" class="flex px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold text-amber-950 bg-amber-50 hover:bg-amber-100 border border-amber-300 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer items-center gap-1.5" title="Support Almond Jobs (Buy Us a Coffee)">
+                    <span class="text-sm">☕</span>
+                    <span class="hidden md:inline font-black">Contribute</span>
                 </button>
                 <button type="button" id="topProfileBtn" onclick="openProfileModal()" class="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 hover:bg-violet-50 border border-slate-300 hover:border-violet-300 text-slate-700 hover:text-violet-700 flex items-center justify-center transition shadow-2xs cursor-pointer group shrink-0" title="Candidate Profile & Settings" aria-label="Candidate Profile">
                     <i id="topProfileIcon" data-lucide="user" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
                     <span id="topProfileInitials" class="hidden text-[10px] font-black text-violet-800 uppercase">CA</span>
+                    <span id="topProfileVipCrown" class="hidden absolute -top-2 -right-1 text-xs select-none">👑</span>
+                    <span id="topProfileVipBadge" class="hidden absolute -bottom-1 -right-1 px-1 py-0.2 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black text-[8px] rounded-full border border-white shadow-2xs leading-tight">VIP</span>
                     <span id="profileActiveIndicator" class="hidden absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white shadow-xs"></span>
                 </button>
             </div>
@@ -2250,7 +2257,7 @@
                 <!-- Multi-Currency Planned Parity Display + Active ₹1 Verification Offer -->
                 <div class="p-4 rounded-2xl bg-slate-950 text-white space-y-3 shadow-md">
                     <div class="flex items-center justify-between gap-2 flex-wrap">
-                        <span class="text-[10px] font-black uppercase tracking-wider text-amber-300">Live Launch Verification Price</span>
+                        <span class="text-[10px] font-black uppercase tracking-wider text-amber-300">Standard 30-Day VIP Pass</span>
                         <div class="flex items-center gap-1 bg-slate-800 p-1 rounded-xl text-[11px] font-bold">
                             <button type="button" onclick="selectVipCurrency('INR')" id="vipCurrBtn_INR" class="vip-curr-tab px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer">₹ INR</button>
                             <button type="button" onclick="selectVipCurrency('USD')" id="vipCurrBtn_USD" class="vip-curr-tab px-2.5 py-1 rounded-lg text-slate-300 hover:text-white cursor-pointer">$ USD</button>
@@ -2261,13 +2268,13 @@
 
                     <div class="flex items-baseline justify-between gap-3">
                         <div class="flex items-baseline gap-2.5">
-                            <span class="text-3xl sm:text-4xl font-black text-amber-400">₹1</span>
-                            <span id="vipPlannedParityPrice" class="text-sm font-bold text-slate-400 line-through">₹699 ($8 USD eq.)</span>
+                            <span id="vipMainPriceDisplay" class="text-3xl sm:text-4xl font-black text-amber-400">₹699</span>
+                            <span id="vipPlannedParityPrice" class="text-sm font-bold text-slate-400">($8 USD eq.)</span>
                         </div>
                         <span class="text-[11px] font-extrabold text-emerald-300 bg-emerald-950/80 border border-emerald-700/70 px-2.5 py-1 rounded-full">30 Days Access</span>
                     </div>
                     <p id="vipCurrencyParityNote" class="text-[11px] text-slate-300 leading-relaxed">
-                        Planned standard VIP rate uses INR/USD parity (<strong>₹699 INR &approx; $8 USD</strong>). Temporarily set to <strong>₹1</strong> so you can verify live Razorpay checkout immediately.
+                        Standard rate uses exact global parity (<strong>₹699 INR &approx; $8 USD</strong>). Unlocks all postings from Today through 6 days ago with direct corporate apply links.
                     </p>
                 </div>
 
@@ -2288,7 +2295,7 @@
                 </div>
 
                 <button type="button" id="vipPassCheckoutBtn" onclick="executeVipPassCheckout()" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-700 hover:from-violet-500 hover:to-indigo-500 active:scale-98 text-white font-black text-sm sm:text-base tracking-wide shadow-lg shadow-violet-500/25 flex items-center justify-center gap-2 transition cursor-pointer">
-                    <span>👑 Unlock VIP Pass Now &mdash; ₹1</span>
+                    <span id="vipPassCheckoutBtnLabel">👑 Unlock VIP Pass Now &mdash; ₹699</span>
                 </button>
 
                 <div class="flex items-center justify-between text-[11px] text-slate-500 px-1">
@@ -2627,7 +2634,7 @@
 
         <!-- Scripts with Cache Busting Parameter -->
     <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
-    <script src="/static/app.js?v=20261112_v10_session_persist"></script>
+    <script src="/static/app.js?v=20261112_v11_vip_pro_planned"></script>
     <script>
         lucide.createIcons();
     </script>
@@ -2861,13 +2868,16 @@
       };
 
       window.VIP_PLANNED_PARITY = {
-          INR: { symbol: "₹", planned: "₹699", eq: "$8 USD eq.", note: "Planned standard VIP rate uses INR/USD parity (₹699 INR ≈ $8 USD). Temporarily ₹1 for live Razorpay verification." },
-          USD: { symbol: "$", planned: "$8", eq: "₹699 INR eq.", note: "Planned USD VIP rate is $8 USD (matching ₹699 INR parity). Temporarily ₹1 INR during live checkout verification." },
-          EUR: { symbol: "€", planned: "€8", eq: "₹699 INR eq.", note: "Planned EUR VIP rate is €8 EUR (matching ₹699 / $8 parity). Temporarily ₹1 INR during live checkout verification." },
-          GBP: { symbol: "£", planned: "£6", eq: "₹699 INR eq.", note: "Planned GBP VIP rate is £6 GBP (matching ₹699 / $8 parity). Temporarily ₹1 INR during live checkout verification." }
+          INR: { symbol: "₹", planned: "₹699", eq: "$8 USD eq.", inr_amount: 699, note: "Standard 30-day VIP rate: ₹699 INR (exact global parity with $8 USD)." },
+          USD: { symbol: "$", planned: "$8", eq: "₹699 INR eq.", inr_amount: 699, note: "Standard 30-day VIP rate: $8 USD (₹699 INR equivalent at checkout)." },
+          EUR: { symbol: "€", planned: "€8", eq: "₹699 INR eq.", inr_amount: 699, note: "Standard 30-day VIP rate: €8 EUR (₹699 INR equivalent at checkout)." },
+          GBP: { symbol: "£", planned: "£6", eq: "₹699 INR eq.", inr_amount: 699, note: "Standard 30-day VIP rate: £6 GBP (₹699 INR equivalent at checkout)." }
       };
 
+      window.selectedVipCurrency = "INR";
+
       window.selectVipCurrency = function(curr) {
+          window.selectedVipCurrency = curr || "INR";
           var tabs = document.querySelectorAll(".vip-curr-tab");
           tabs.forEach(function(btn) {
               var isSel = btn.id === ("vipCurrBtn_" + curr);
@@ -2876,10 +2886,14 @@
                   : "vip-curr-tab px-2.5 py-1 rounded-lg text-slate-300 hover:text-white cursor-pointer";
           });
           var cfg = window.VIP_PLANNED_PARITY[curr] || window.VIP_PLANNED_PARITY.INR;
+          var mainEl = document.getElementById("vipMainPriceDisplay");
           var priceEl = document.getElementById("vipPlannedParityPrice");
           var noteEl = document.getElementById("vipCurrencyParityNote");
-          if (priceEl) priceEl.textContent = cfg.planned + " (" + cfg.eq + ")";
+          var btnLabel = document.getElementById("vipPassCheckoutBtnLabel");
+          if (mainEl) mainEl.textContent = cfg.planned;
+          if (priceEl) priceEl.textContent = "(" + cfg.eq + ")";
           if (noteEl) noteEl.textContent = cfg.note;
+          if (btnLabel) btnLabel.textContent = "👑 Unlock VIP Pass Now — " + cfg.planned + (curr !== 'INR' ? " (" + cfg.eq + ")" : "");
       };
 
       window.openVipPassModal = function() {

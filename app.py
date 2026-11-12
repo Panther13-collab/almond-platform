@@ -733,7 +733,7 @@ async def api_me(payload: dict = Body(...)):
             "is_paid": paid,
             "price_inr": Config.PRICE_INR,
             "price_usd": Config.PRICE_USD,
-            "vip_price_inr": Config.VIP_TEST_PRICE_INR
+            "vip_price_inr": getattr(Config, "VIP_PRICE_INR", 699)
         })
 
     return JSONResponse(content={
@@ -743,7 +743,7 @@ async def api_me(payload: dict = Body(...)):
         "is_paid": False,
         "price_inr": Config.PRICE_INR,
         "price_usd": Config.PRICE_USD,
-        "vip_price_inr": Config.VIP_TEST_PRICE_INR
+        "vip_price_inr": getattr(Config, "VIP_PRICE_INR", 699)
     })
 
 @app.post("/api/security/verify-human")
@@ -952,7 +952,7 @@ async def find_jobs(payload: dict = Body(...)):
             "is_paid": user_is_paid,
             "price_inr": Config.PRICE_INR,
             "price_usd": Config.PRICE_USD,
-            "vip_price_inr": Config.VIP_TEST_PRICE_INR
+            "vip_price_inr": getattr(Config, "VIP_PRICE_INR", 699)
         })
     finally:
         release_search_slot()
@@ -1034,8 +1034,10 @@ async def download_dossier(payload: dict = Body(...)):
     if not jobs:
         raise HTTPException(status_code=400, detail="No jobs to export.")
 
-    # Determine entitlement: Free tier has links 4+ locked with upgrade CTA
+    # Determine entitlement: Free tier has latest 0-6d links locked with upgrade CTA
     user_paid = is_user_paid(user_id) if user_id else bool(payload.get("is_paid"))
+    # Server-side guard: enforce VIP lock on export jobs if user is not paid
+    jobs = apply_vip_latest_feed_lock([dict(x) for x in jobs], user_is_paid=user_paid)
     cand_slug = (profile.get("name") or "Candidate").replace(" ", "_")
     
     if doc_format == "docx":

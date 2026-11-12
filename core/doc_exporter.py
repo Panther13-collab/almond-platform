@@ -56,10 +56,20 @@ def add_hyperlink(paragraph, url, text, color="B47B38", underline=True):
     paragraph._p.append(hyperlink)
     return hyperlink
 
-VIP_PORTAL_URL = "http://127.0.0.1:8000/?action=vip"
-# TEST MODE: Display all links unblurred without payment gateway restriction for tester access
-# When VIP link restriction is re-enabled, set TEST_MODE_UNLOCKED_LINKS = False
-TEST_MODE_UNLOCKED_LINKS = True
+from core.payment import get_job_age_days, VIP_LATEST_FEED_MAX_DAYS
+
+VIP_PORTAL_URL = "https://almondjobs.com/?action=vip"
+
+def is_export_job_locked(job: dict, is_paid: bool = False) -> bool:
+    """Determine if a job link must be locked/redacted in exported documents."""
+    if is_paid:
+        return False
+    if not isinstance(job, dict):
+        return False
+    if job.get("is_locked") is True:
+        return True
+    age = get_job_age_days(job)
+    return age is not None and age <= VIP_LATEST_FEED_MAX_DAYS
 
 def export_to_docx(candidate_profile, jobs, output_path, is_paid: bool = False):
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
@@ -106,10 +116,11 @@ def export_to_docx(candidate_profile, jobs, output_path, is_paid: bool = False):
 
     doc.add_heading("2. Verified Direct Corporate Postings", level=1)
     for i, j in enumerate(jobs, 1):
-        is_locked = False if TEST_MODE_UNLOCKED_LINKS else ((not is_paid) and (i > 3))
+        is_locked = is_export_job_locked(j, is_paid=is_paid)
+        job_title = "Confidential Role (VIP Pass Required)" if is_locked else (j.get('title') or 'Verified Role')
 
         p_job = doc.add_paragraph()
-        r_num = p_job.add_run(f"#{i}: {j.get('title')}\n")
+        r_num = p_job.add_run(f"#{i}: {job_title}\n")
         r_num.bold = True
         r_num.font.size = Pt(11.5)
         r_num.font.color.rgb = RGBColor(180, 123, 56)
@@ -134,7 +145,8 @@ def export_to_docx(candidate_profile, jobs, output_path, is_paid: bool = False):
             add_hyperlink(p_job, VIP_PORTAL_URL, "[LOCKED] Unlock Direct Portal (VIP Access Required) ->", color="7C3AED")
         else:
             p_job.add_run("Direct Corporate Portal: ").bold = True
-            add_hyperlink(p_job, j.get("url", "#"), f"Open {j.get('company')} {j.get('source')} Portal")
+            apply_url = j.get("url") or j.get("apply_url") or "#"
+            add_hyperlink(p_job, apply_url, f"Open {j.get('company')} {j.get('source')} Portal")
 
         doc.add_paragraph("." * 40)
 
@@ -187,8 +199,9 @@ async def export_to_pdf_async(candidate_profile, jobs, output_path, is_paid: boo
 <h3 style="color: #23170f; margin-bottom: 8px;">Direct Corporate Postings</h3>
 """
     for i, j in enumerate(jobs, 1):
-        is_locked = False if TEST_MODE_UNLOCKED_LINKS else ((not is_paid) and (i > 3))
-        j_title_esc = htmllib.escape(str(j.get('title', '')))
+        is_locked = is_export_job_locked(j, is_paid=is_paid)
+        raw_title = "Confidential Role (VIP Pass Required)" if is_locked else (j.get('title') or 'Direct Role')
+        j_title_esc = htmllib.escape(str(raw_title))
         j_comp_esc = htmllib.escape(str(j.get('company', '')))
         j_src_esc = htmllib.escape(str(j.get('source', 'Corporate Feed')))
         j_loc_esc = htmllib.escape(str(j.get('location_tag', j.get('location', 'Remote'))))
@@ -283,11 +296,12 @@ def _export_pdf_pure_python(candidate_profile, jobs, output_path, is_paid: bool 
         if pdf.get_y() > 245:
             pdf.add_page()
 
-        is_locked = False if TEST_MODE_UNLOCKED_LINKS else ((not is_paid) and (idx > 3))
+        is_locked = is_export_job_locked(j, is_paid=is_paid)
+        display_title = "Confidential Role (VIP Pass Required)" if is_locked else (j.get('title') or 'Direct Role')
 
         pdf.set_font('Helvetica', 'B', 10)
         pdf.set_text_color(30, 58, 138)
-        title = latin_safe(f"#{idx}: {j.get('title', '')} @ {j.get('company', '')}")
+        title = latin_safe(f"#{idx}: {display_title} @ {j.get('company', '')}")
         score = f"{j.get('cvmatch_score', 0)}% Match"
         pdf.cell(150, 5.5, title[:65], new_x='RIGHT')
         pdf.set_font('Helvetica', 'B', 8.5)
@@ -328,17 +342,19 @@ def export_to_csv(jobs, output_path, is_paid: bool = False):
         writer = csv.writer(f)
         writer.writerow(["Company", "Role", "Direct Portal", "Location", "Work Mode", "Package", "Match Score", "Direct Apply URL", "Status", "Notes"])
         for idx, j in enumerate(jobs):
-            is_locked = False if TEST_MODE_UNLOCKED_LINKS else ((not is_paid) and (idx >= 3))
+            is_locked = is_export_job_locked(j, is_paid=is_paid)
             if is_locked:
                 apply_url = f"LOCKED (VIP Required: {VIP_PORTAL_URL})"
-                status_str = "VIP Locked Portal"
+                status_str = "VIP Locked Portal (0-6d)"
+                role_str = "Confidential Role (VIP Required)"
             else:
                 apply_url = j.get("url", "")
                 status_str = "Ready to Apply"
+                role_str = j.get("title", "")
 
             writer.writerow([
                 j.get("company", ""),
-                j.get("title", ""),
+                role_str,
                 j.get("source", ""),
                 j.get("location_tag", j.get("location", "")),
                 j.get("work_mode", ""),
