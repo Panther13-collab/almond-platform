@@ -300,7 +300,9 @@ def render_category_page(slug: str) -> str:
             {
                 "@type": "Organization",
                 "@id": f"{BASE_URL}/#organization",
-                "name": "Almond Jobs Technologies",
+                "name": "PantherClaws Enterprises",
+                "legalName": "PantherClaws Enterprises",
+                "alternateName": ["Almond Jobs", "Almond Jobs Technologies"],
                 "url": BASE_URL,
                 "logo": f"{BASE_URL}/static/logo.png",
                 "sameAs": [
@@ -491,7 +493,7 @@ def render_category_page(slug: str) -> str:
     <footer class="w-full bg-white border-t border-slate-200 py-8 px-4 text-center text-xs text-slate-500">
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="text-left">
-                <p class="font-bold text-slate-700">&copy; 2026 Almond Jobs. Direct Enterprise Job Ingestion Network.</p>
+                <p class="font-bold text-slate-700">&copy; 2026 Almond Jobs &mdash; Operated by PantherClaws Enterprises (UDYAM-TN-03-0224850). Direct Enterprise Job Ingestion Network.</p>
                 <p class="text-[11px] text-slate-400 mt-0.5">Almond Jobs (almondjobs.com) connects candidates directly to enterprise ATS portals with 0% recruiter markup. Not affiliated with agricultural farming.</p>
             </div>
             <div class="flex items-center gap-4 shrink-0">

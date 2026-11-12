@@ -62,7 +62,7 @@ def _base_legal_layout(title: str, subtitle: str, content_html: str, canonical_p
     <!-- Footer Links -->
     <footer class="w-full bg-white border-t border-slate-200 py-8 px-4 text-center text-xs text-slate-500">
         <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-            <span>&copy; 2026 Almond Jobs Technologies. Direct Enterprise Career Intelligence.</span>
+            <span>&copy; 2026 Almond Jobs &mdash; Operated by PantherClaws Enterprises (UDYAM-TN-03-0224850).</span>
             <div class="flex items-center gap-4 font-semibold text-slate-600 flex-wrap justify-center">
                 <a href="/terms" class="hover:text-violet-600 transition">Terms of Service</a>
                 <span>•</span>
@@ -83,7 +83,7 @@ def render_terms_page() -> str:
     content = """
     <section class="space-y-3">
         <h2 class="text-base sm:text-lg font-black text-slate-900">1. Acceptance of Terms</h2>
-        <p>By accessing or using the services provided by Almond Jobs ("Almond Jobs", "we", "our", or "us") via https://almondjobs.com (the "Platform"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.</p>
+        <p>By accessing or using the Software-as-a-Service (SaaS) platform <strong>Almond Jobs</strong> ("Platform") via <strong>https://almondjobs.com</strong> — owned, developed, and operated by <strong>PantherClaws Enterprises</strong> (Sole Proprietorship, MSME Udyam Reg. No. UDYAM-TN-03-0224850, 153/1A, Kadai Veethi, Kalapatty, Coimbatore, Tamil Nadu &ndash; 641048, India; "we", "our", or "us") — you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.</p>
     </section>
 
     <section class="space-y-3">
@@ -98,7 +98,7 @@ def render_terms_page() -> str:
 
     <section class="space-y-3">
         <h2 class="text-base sm:text-lg font-black text-slate-900">4. Payments, Subscriptions, and Contributions</h2>
-        <p>Access to certain features or voluntary support contributions ("Buy Almond Jobs a Coffee") are processed securely through our authorized payment gateway partner, <strong>Razorpay</strong>. All charges are in Indian Rupees (INR) or specified local currency. By initiating a payment, you authorize Razorpay and our payment infrastructure to process the specified amount via UPI, NetBanking, Debit/Credit Card, or Wallets.</p>
+        <p>Access to SaaS platform features, AI-powered career discovery plans, candidate technical dossiers, and platform supporter tiers ("Buy Almond Jobs a Coffee" / Pro Platform Access) provided by <strong>PantherClaws Enterprises</strong> are processed securely through our authorized payment gateway partner, <strong>Razorpay Software Private Limited</strong>. All charges are in Indian Rupees (INR) or specified local currency. By initiating a payment, you authorize Razorpay and our payment infrastructure to process the specified amount via UPI, NetBanking, Debit/Credit Card, or Wallets.</p>
     </section>
 
     <section class="space-y-3">
@@ -113,7 +113,7 @@ def render_terms_page() -> str:
 
     <section class="space-y-3">
         <h2 class="text-base sm:text-lg font-black text-slate-900">6. Intellectual Property & Disclaimers</h2>
-        <p>All proprietary code, algorithms, visual layouts, and content on Almond Jobs are the intellectual property of Almond Jobs Technologies. Employer trademarks (e.g. Ashby, Greenhouse, Lever, Workday) belong to their respective owners and are referenced solely for nominative identification of career portals.</p>
+        <p>All proprietary code, algorithms, visual layouts, SaaS software modules, and content on Almond Jobs are the intellectual property of <strong>PantherClaws Enterprises</strong>. Employer trademarks (e.g. Ashby, Greenhouse, Lever, Workday) belong to their respective owners and are referenced solely for nominative identification of career portals.</p>
     </section>
 
     <section class="space-y-3">
@@ -123,7 +123,7 @@ def render_terms_page() -> str:
 
     <section class="space-y-3">
         <h2 class="text-base sm:text-lg font-black text-slate-900">8. Contact & Official Notices</h2>
-        <p>For any legal inquiries, terms clarification, or official notices, please contact our legal desk at <a href="mailto:almondjobs.official@gmail.com" class="text-violet-600 underline font-semibold">almondjobs.official@gmail.com</a>.</p>
+        <p>For any legal inquiries, terms clarification, or official notices, please contact our corporate and legal compliance desk at <strong>PantherClaws Enterprises</strong> (153/1A, Kadai Veethi, Kalapatty, Coimbatore, Tamil Nadu &ndash; 641048, India) via <a href="mailto:pantherclaws.enquiry@gmail.com" class="text-violet-600 underline font-semibold">pantherclaws.enquiry@gmail.com</a> or <a href="mailto:almondjobs.official@gmail.com" class="text-violet-600 underline font-semibold">almondjobs.official@gmail.com</a> (Tel: +91 9655439463).</p>
     </section>
     """
     return _base_legal_layout(
@@ -137,7 +137,7 @@ def render_privacy_page() -> str:
     content = """
     <section class="space-y-3">
         <h2 class="text-base sm:text-lg font-black text-slate-900">1. Information We Collect</h2>
-        <p>We respect your privacy and collect only the minimum information necessary to deliver high-quality career intelligence services:</p>
+        <p><strong>PantherClaws Enterprises</strong> (operating <strong>Almond Jobs</strong> at https://almondjobs.com) respects your privacy and collects only the minimum information necessary to deliver high-quality SaaS career intelligence services:</p>
         <ul class="list-disc pl-5 space-y-1">
             <li><strong>Account Information:</strong> Name, verified email address, and profile picture (when authenticating via Google OAuth).</li>
             <li><strong>Resume & Career Data:</strong> Text extracted from candidate resumes uploaded to synthesize STAR pitches and match direct ATS vacancies.</li>
@@ -178,7 +178,7 @@ def render_refund_page() -> str:
     content = """
     <section class="space-y-3">
         <h2 class="text-base sm:text-lg font-black text-slate-900">1. Overview of Digital Services & Voluntary Contributions</h2>
-        <p>Almond Jobs provides instant digital career tools, candidate profile optimizations, and a voluntary community support model ("Buy Almond Jobs a Coffee"). Because digital features and application dossiers are generated instantaneously upon access, please review our refund and cancellation terms below.</p>
+        <p><strong>PantherClaws Enterprises</strong> operates <strong>Almond Jobs</strong> (https://almondjobs.com), providing instant SaaS career intelligence tools, digital candidate technical dossiers, profile optimization software, and candidate supporter/access plans ("Buy Almond Jobs a Coffee" / Pro Access). Because digital SaaS features and application dossiers are provisioned instantaneously upon access, please review our refund and cancellation terms below.</p>
     </section>
 
     <section class="space-y-3">
@@ -222,24 +222,25 @@ def render_contact_page() -> str:
     content = """
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4">
         <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-            <h3 class="font-black text-slate-950 text-sm uppercase tracking-wider">Customer Support & Inquiries</h3>
-            <p class="text-slate-600 text-xs leading-relaxed">For billing assistance, platform questions, technical troubleshooting, or contribution queries:</p>
-            <div class="pt-2">
+            <h3 class="font-black text-slate-950 text-sm uppercase tracking-wider">Customer Support & Billing</h3>
+            <p class="text-slate-600 text-xs leading-relaxed">For SaaS billing assistance, platform support, technical troubleshooting, or refund requests:</p>
+            <div class="pt-2 space-y-1">
                 <a href="mailto:almondjobs.official@gmail.com" class="inline-flex items-center gap-2 font-bold text-violet-700 hover:text-violet-900 text-sm">
                     <span>✉ almondjobs.official@gmail.com</span>
                 </a>
+                <p class="text-xs font-bold text-slate-700">📞 +91 9655439463</p>
                 <p class="text-[11px] text-slate-500 mt-1">Average response time: 24–48 business hours</p>
             </div>
         </div>
 
         <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-            <h3 class="font-black text-slate-950 text-sm uppercase tracking-wider">Business & Partnerships</h3>
-            <p class="text-slate-600 text-xs leading-relaxed">For corporate direct ATS ingestion, API access, or verified employer career feed integration:</p>
-            <div class="pt-2">
-                <a href="mailto:almondjobs.official@gmail.com" class="inline-flex items-center gap-2 font-bold text-emerald-700 hover:text-emerald-900 text-sm">
-                    <span>✉ almondjobs.official@gmail.com</span>
+            <h3 class="font-black text-slate-950 text-sm uppercase tracking-wider">Corporate & KYC Compliance</h3>
+            <p class="text-slate-600 text-xs leading-relaxed">For enterprise inquiries, parent entity verification, API access, or legal notices:</p>
+            <div class="pt-2 space-y-1">
+                <a href="mailto:pantherclaws.enquiry@gmail.com" class="inline-flex items-center gap-2 font-bold text-emerald-700 hover:text-emerald-900 text-sm">
+                    <span>✉ pantherclaws.enquiry@gmail.com</span>
                 </a>
-                <p class="text-[11px] text-slate-500 mt-1">Direct corporate integrations desk</p>
+                <p class="text-[11px] text-slate-500 mt-1">Parent Entity Desk — PantherClaws Enterprises</p>
             </div>
         </div>
     </div>
@@ -249,19 +250,30 @@ def render_contact_page() -> str:
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-700">
             <div>
                 <p class="font-bold text-slate-900">Operating Entity:</p>
-                <p class="text-slate-600">Almond Jobs Technologies</p>
+                <p class="text-slate-600">PantherClaws Enterprises (Sole Proprietorship)</p>
             </div>
             <div>
-                <p class="font-bold text-slate-900">Operating Hours:</p>
-                <p class="text-slate-600">Monday to Friday, 9:00 AM – 6:00 PM IST</p>
+                <p class="font-bold text-slate-900">MSME Udyam Registration No.:</p>
+                <p class="text-slate-600 font-semibold">UDYAM-TN-03-0224850</p>
             </div>
             <div>
-                <p class="font-bold text-slate-900">Official Website:</p>
+                <p class="font-bold text-slate-900">Registered Office Address:</p>
+                <p class="text-slate-600">153/1A, Kadai Veethi, Kalapatty, Coimbatore, Tamil Nadu &ndash; 641048, India</p>
+            </div>
+            <div>
+                <p class="font-bold text-slate-900">Contact Number &amp; Hours:</p>
+                <p class="text-slate-600">+91 9655439463 &bull; Mon–Fri, 9:00 AM – 6:00 PM IST</p>
+            </div>
+            <div>
+                <p class="font-bold text-slate-900">Official SaaS Website:</p>
                 <p class="text-slate-600"><a href="https://almondjobs.com" class="underline hover:text-violet-600">https://almondjobs.com</a></p>
             </div>
             <div>
                 <p class="font-bold text-slate-900">Grievance & Compliance Desk:</p>
-                <p class="text-slate-600"><a href="mailto:almondjobs.official@gmail.com" class="underline hover:text-violet-600">almondjobs.official@gmail.com</a></p>
+                <p class="text-slate-600">
+                    <a href="mailto:pantherclaws.enquiry@gmail.com" class="underline hover:text-violet-600">pantherclaws.enquiry@gmail.com</a> /
+                    <a href="mailto:almondjobs.official@gmail.com" class="underline hover:text-violet-600">almondjobs.official@gmail.com</a>
+                </p>
             </div>
         </div>
     </section>
