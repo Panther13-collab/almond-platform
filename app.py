@@ -33,7 +33,7 @@ from core.auth_db import (
     record_page_visit, get_analytics_summary, get_all_users_admin,
     parse_device_hardware, is_bot_or_scanner
 )
-from core.payment import create_razorpay_order, verify_razorpay_signature
+from core.payment import apply_vip_latest_feed_lock, create_razorpay_order, verify_razorpay_signature
 from core.security import BotShieldMiddleware, validate_uploaded_file, acquire_search_slot, release_search_slot
 from core.sitemap_generator import (
     generate_sitemap_index, generate_main_sitemap,
@@ -767,16 +767,23 @@ async def api_verify_human_session(request: Request, payload: dict = Body(defaul
 @app.post("/api/payment/create-order")
 @app.post("/api/create-order")
 async def api_create_order(payload: dict = Body(...)):
+    token = str(payload.get("token", "") or "")
     user_id = str(payload.get("user_id", "") or "")
+    if token:
+        user_data = verify_session_token(token)
+        if user_data:
+            user_id = user_data.get("id") or user_data.get("user_id") or user_id
     currency = str(payload.get("currency", "INR") or "INR")
     receipt = payload.get("receipt")
     plan_name = str(payload.get("plan_name", "") or "")
+    purchase_type = str(payload.get("purchase_type", "vip_pass") or "vip_pass")
 
     try:
         if payload.get("amount") is not None:
             amount_paise = int(payload.get("amount"))
         else:
-            amount_inr = int(payload.get("amount_inr", Config.PRICE_INR))
+            default_inr = Config.VIP_TEST_PRICE_INR if purchase_type == "vip_pass" else Config.PRICE_INR
+            amount_inr = int(payload.get("amount_inr", default_inr))
             amount_paise = amount_inr * 100
     except (TypeError, ValueError):
         raise HTTPException(status_code=400, detail="Invalid payment amount.")
@@ -790,6 +797,7 @@ async def api_create_order(payload: dict = Body(...)):
         currency=currency,
         receipt=receipt,
         plan_name=plan_name,
+        purchase_type=purchase_type,
     )
     if res.get("status") == "error":
         raise HTTPException(status_code=res.get("http_status", 500), detail=res.get("message"))
@@ -798,11 +806,17 @@ async def api_create_order(payload: dict = Body(...)):
 @app.post("/api/payment/verify")
 @app.post("/api/verify-payment")
 async def api_verify_payment(payload: dict = Body(...)):
+    token = str(payload.get("token", "") or "")
     user_id = str(payload.get("user_id", "") or "")
+    if token:
+        user_data = verify_session_token(token)
+        if user_data:
+            user_id = user_data.get("id") or user_data.get("user_id") or user_id
     order_id = str(payload.get("order_id") or payload.get("razorpay_order_id") or "").strip()
     payment_id = str(payload.get("payment_id") or payload.get("razorpay_payment_id") or "").strip()
     signature = str(payload.get("signature") or payload.get("razorpay_signature") or "").strip()
     plan_name = str(payload.get("plan_name", "") or "")
+    purchase_type = str(payload.get("purchase_type", "vip_pass") or "vip_pass")
 
     try:
         if payload.get("amount_inr") is not None:
@@ -820,7 +834,7 @@ async def api_verify_payment(payload: dict = Body(...)):
             detail="Missing payment verification fields (razorpay_order_id, razorpay_payment_id, razorpay_signature).",
         )
 
-    res = verify_razorpay_signature(user_id, order_id, payment_id, signature, amount_inr, plan_name)
+    res = verify_razorpay_signature(user_id, order_id, payment_id, signature, amount_inr, plan_name, purchase_type=purchase_type)
     if res.get("status") == "error":
         raise HTTPException(status_code=res.get("http_status", 400), detail=res.get("message"))
     return JSONResponse(content=res)
@@ -917,34 +931,10 @@ async def find_jobs(payload: dict = Body(...)):
                     }
                 }
 
-        # TEST MODE: Display all links without restriction for multi-domain verification & tester access.
-        # Payment gateway remains fully operational for VIP access, but all direct links are unblurred.
-        # When VIP link restriction is re-enabled, set TEST_MODE_UNLOCKED_LINKS = False.
-        TEST_MODE_UNLOCKED_LINKS = True
-
-        if TEST_MODE_UNLOCKED_LINKS or user_is_paid:
-            for j in ats_jobs:
-                j["is_locked"] = False
-            for j in linkedin_jobs:
-                j["is_locked"] = False
-            for j in founder_jobs:
-                j["is_locked"] = False
-        else:
-            for idx, j in enumerate(ats_jobs):
-                if idx >= 3:
-                    j["is_locked"] = True
-                    j["real_url"] = j.get("url")
-                    j["url"] = "#unlock-pro"
-                else:
-                    j["is_locked"] = False
-
-            for idx, j in enumerate(linkedin_jobs):
-                if idx >= 2:
-                    j["is_locked"] = True
-                    j["real_url"] = j.get("url")
-                    j["url"] = "#unlock-pro"
-                else:
-                    j["is_locked"] = False
+        # Latest feed gating (Today through 6 days ago requires active VIP Pass)
+        apply_vip_latest_feed_lock(ats_jobs, user_is_paid=user_is_paid)
+        apply_vip_latest_feed_lock(linkedin_jobs, user_is_paid=user_is_paid)
+        apply_vip_latest_feed_lock(founder_jobs, user_is_paid=user_is_paid)
 
         return JSONResponse(content={
             "status": "success", 
@@ -954,7 +944,8 @@ async def find_jobs(payload: dict = Body(...)):
             "founder_jobs": founder_jobs,
             "is_paid": user_is_paid,
             "price_inr": Config.PRICE_INR,
-            "price_usd": Config.PRICE_USD
+            "price_usd": Config.PRICE_USD,
+            "vip_price_inr": Config.VIP_TEST_PRICE_INR
         })
     finally:
         release_search_slot()
@@ -975,7 +966,11 @@ async def find_linkedin_jobs(payload: dict = Body(...)):
         )
 
     try:
+        user_id = str(payload.get("user_id", "") or "")
+        user_is_paid = is_user_paid(user_id) if user_id else False
         li_jobs, has_more, total_found = fetch_linkedin_postings(profile, preferences, limit=limit, offset=offset)
+        li_jobs = [dict(j) for j in li_jobs]
+        apply_vip_latest_feed_lock(li_jobs, user_is_paid=user_is_paid)
         return JSONResponse(content={
             "status": "success", 
             "total": total_found, 
@@ -1014,7 +1009,10 @@ async def find_founder_jobs(payload: dict = Body(...)):
         )
 
     try:
-        founder_jobs = fetch_hn_founder_jobs(profile, preferences)
+        user_id = str(payload.get("user_id", "") or "")
+        user_is_paid = is_user_paid(user_id) if user_id else False
+        founder_jobs = [dict(j) for j in fetch_hn_founder_jobs(profile, preferences)]
+        apply_vip_latest_feed_lock(founder_jobs, user_is_paid=user_is_paid)
         return JSONResponse(content={"status": "success", "total": len(founder_jobs), "jobs": founder_jobs})
     finally:
         release_search_slot()

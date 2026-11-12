@@ -6,6 +6,7 @@ import os
 import threading
 from typing import List, Dict, Any, Optional
 from core.job_engine import clean_job_url
+from core.payment import apply_vip_latest_feed_lock
 
 # Local cache paths to avoid unnecessary network latency
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "feed_cache")
@@ -561,18 +562,10 @@ def query_curated_feed(
             diff_days = max(0, (now_ts - posted_ts) // 86400)
             item_copy["date_posted_str"] = f"{diff_days}d ago" if diff_days > 0 else "Today"
 
-        absolute_idx = offset + idx
-        # TEST MODE: Display all curated feed links unblurred without payment restriction for testers
-        # When VIP link restriction is re-enabled, set TEST_MODE_UNLOCKED_LINKS = False
-        TEST_MODE_UNLOCKED_LINKS = True
-
-        if not TEST_MODE_UNLOCKED_LINKS and not user_is_paid and absolute_idx >= 10:
-            item_copy["is_locked"] = True
-            item_copy["real_url"] = item_copy.get("url")
-            item_copy["url"] = "#unlock-pro"
-        else:
-            item_copy["is_locked"] = False
+        item_copy["days_ago"] = diff_days if posted_ts and posted_ts > 100000 else None
         processed_items.append(item_copy)
+
+    apply_vip_latest_feed_lock(processed_items, user_is_paid=user_is_paid)
 
     return {
         "total": total_count,

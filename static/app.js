@@ -1243,6 +1243,13 @@ function initHeroInfoModal() {
         });
     }
 
+    const vipPassModal = document.getElementById('vipPassModal');
+    if (vipPassModal) {
+        vipPassModal.addEventListener('click', (e) => {
+            if (e.target === vipPassModal && typeof window.closeVipPassModal === 'function') closeVipPassModal();
+        });
+    }
+
     const profileModal = document.getElementById('profileModal');
     if (profileModal) {
         profileModal.addEventListener('click', (e) => {
@@ -1254,6 +1261,7 @@ function initHeroInfoModal() {
         if (e.key === 'Escape') {
             closeHeroInfoModal();
             closeVipPricingModal();
+            if (typeof window.closeVipPassModal === 'function') window.closeVipPassModal();
             closeProfileModal();
         }
     });
@@ -2117,7 +2125,20 @@ function initJobSearch() {
 
 // Helper to format posting date with human-readable freshness badges
 
-function formatJobDate(dateStr) {
+function isJobLatestFeedLocked(job) {
+    if (isUserPaid()) return false;
+    if (!job || typeof job !== "object") return false;
+    if (typeof job.is_locked === "boolean") return job.is_locked;
+    if (typeof job.days_ago === "number") return job.days_ago <= 6;
+    return false;
+}
+
+function formatJobDate(dateStr, daysAgo = null) {
+    if (typeof daysAgo === "number" && Number.isFinite(daysAgo) && daysAgo >= 0) {
+        if (daysAgo === 0) return { label: "Posted Today", isToday: true, tooltip: "Fresh vacancy active today" };
+        if (daysAgo === 1) return { label: "1 day ago", isToday: false, tooltip: "Posted 1 day ago" };
+        if (daysAgo < 7) return { label: `${daysAgo} days ago`, isToday: false, tooltip: `Posted ${daysAgo} days ago` };
+    }
 
     if (!dateStr) {
 
@@ -2228,6 +2249,8 @@ function initLinkedinToggle() {
             body: JSON.stringify({
 
                 profile: currentProfile,
+
+                user_id: getCandidateUserId(),
 
                 offset: offset,
 
@@ -2465,8 +2488,10 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
             </span>
         `;
 
-        // Date Badge
-        const dateInfo = formatJobDate(job.posted_at || job.created_at);
+        const isLocked = isJobLatestFeedLocked(job);
+
+        // Date Badge (ALWAYS clearly visible even when latest post is blurred)
+        const dateInfo = formatJobDate(job.posted_at || job.created_at, job.days_ago);
         const dateBadgeHtml = dateInfo.isToday
             ? `<span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-900 border border-emerald-200 text-[11px] font-black" title="${dateInfo.tooltip}">
                 <i data-lucide="zap" class="w-3 h-3 text-emerald-600"></i>
@@ -2533,15 +2558,19 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
             </button>
         `;
 
-        const applyBtnHtml = isLinkedin
-            ? `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="direct-apply-link inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#0A66C2] hover:bg-[#004182] text-white text-xs sm:text-sm font-black rounded-xl shadow-xs transition" data-container="${containerId}" data-idx="${globalIdx}">
-                <span>Apply on LinkedIn</span>
-                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-               </a>`
-            : `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="direct-apply-link inline-flex items-center justify-center gap-1.5 px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-xs shadow-emerald-600/20 transition transform active:scale-98" data-container="${containerId}" data-idx="${globalIdx}">
-                <span>Apply Direct ↗</span>
-                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-               </a>`;
+        const applyBtnHtml = isLocked
+            ? `<button type="button" onclick="openVipPassModal()" class="inline-flex items-center justify-center gap-1.5 px-5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-xs shadow-violet-600/20 transition cursor-pointer">
+                <span>👑 Unlock VIP for Latest Feed</span>
+               </button>`
+            : (isLinkedin
+                ? `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="direct-apply-link inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#0A66C2] hover:bg-[#004182] text-white text-xs sm:text-sm font-black rounded-xl shadow-xs transition" data-container="${containerId}" data-idx="${globalIdx}">
+                    <span>Apply on LinkedIn</span>
+                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                   </a>`
+                : `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="direct-apply-link inline-flex items-center justify-center gap-1.5 px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-xs shadow-emerald-600/20 transition transform active:scale-98" data-container="${containerId}" data-idx="${globalIdx}">
+                    <span>Apply Direct ↗</span>
+                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                   </a>`);
 
         const matchedSkillsHtml = (job.matched_skills || []).slice(0, 5).map(s => 
             `<span class="px-2 py-0.5 bg-slate-50 text-slate-800 text-[11px] font-bold rounded-lg border border-slate-200">${s}</span>`
@@ -2552,10 +2581,23 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
 
         const companyInitial = ((job.company || 'AJ').replace(/[^a-zA-Z0-9]/g, '').substring(0, 2) || 'AJ').toUpperCase();
 
+        const blurCls = isLocked ? "blur-[5px] select-none pointer-events-none opacity-75" : "";
+        const vipLockBannerHtml = isLocked ? `
+            <div class="my-2.5 p-3 rounded-xl bg-gradient-to-r from-amber-50 via-violet-50 to-indigo-50 border border-violet-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-2xs">
+                <div class="flex items-center gap-2 text-xs font-extrabold text-slate-900">
+                    <span class="w-6 h-6 rounded-lg bg-violet-600 text-white flex items-center justify-center shrink-0">🔒</span>
+                    <span>Latest Feed (${dateInfo.label}) &mdash; Blurred until VIP Pass unlock</span>
+                </div>
+                <button type="button" onclick="openVipPassModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs shadow-sm hover:scale-105 active:scale-95 transition cursor-pointer shrink-0">
+                    👑 Unlock VIP for Latest Feed
+                </button>
+            </div>
+        ` : "";
+
         card.innerHTML = `
             <!-- Line 1: Identity, Title, Direct ATS Verification & Live Badges -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
-                <div class="flex items-center gap-3 min-w-0">
+                <div class="flex items-center gap-3 min-w-0 ${blurCls}">
                     <div class="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/90 text-amber-950 font-black text-xs sm:text-sm flex items-center justify-center flex-shrink-0 shadow-2xs">
                         ${companyInitial}
                     </div>
@@ -2576,8 +2618,9 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
                     </div>
                 </div>
 
+                <!-- Always crisp & unblurred Freshness / Match Header -->
                 <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap flex-shrink-0">
-                    ${atsPill}
+                    ${isLocked ? `<span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-950 border border-amber-300 text-[10px] font-black uppercase tracking-wider">🔒 VIP Latest</span>` : atsPill}
                     ${liveBadgeHtml}
                     ${dateBadgeHtml}
                     <span class="text-xs sm:text-sm font-black px-2.5 py-1 rounded-xl flex items-center gap-1.5 ${scoreColor}">
@@ -2588,8 +2631,10 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
                 </div>
             </div>
 
+            ${vipLockBannerHtml}
+
             <!-- Line 2: Compensation, 0% Spread Guarantee & Overlap Skills -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2.5 text-xs">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2.5 text-xs ${blurCls}">
                 <div class="flex items-center gap-2">
                     <span class="font-black text-xs sm:text-sm text-slate-950 bg-amber-50/70 border border-amber-200/80 px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-2xs">
                         <i data-lucide="badge-dollar-sign" class="w-3.5 h-3.5 text-emerald-700"></i>
@@ -2614,7 +2659,7 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
 
             <!-- Line 3: Direct Action Toolbar -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2.5 border-t border-slate-100">
-                <div class="flex items-center gap-2 flex-wrap">
+                <div class="flex items-center gap-2 flex-wrap ${blurCls}">
                     ${pitchBtnHtml}
                     ${alreadyAppliedBadgeHtml}
                 </div>
@@ -3078,9 +3123,12 @@ function renderFounderCards(founderJobs) {
 
         `;
 
+        const isFounderLocked = isJobLatestFeedLocked(job);
+        const founderBlurCls = isFounderLocked ? "blur-[5px] select-none pointer-events-none opacity-75" : "";
+
         // Date Badge
 
-        const dateInfo = formatJobDate(job.posted_at || job.created_at);
+        const dateInfo = formatJobDate(job.posted_at || job.created_at, job.days_ago);
 
         const dateBadgeHtml = dateInfo.isToday
 
@@ -3154,6 +3202,7 @@ function renderFounderCards(founderJobs) {
 
                         </div>
 
+                        <div class="${founderBlurCls}">
                         <!-- Job Title -->
 
                         <h3 class="text-xl sm:text-2xl font-black text-slate-950 group-hover:text-orange-600 transition-colors tracking-tight leading-tight">
@@ -3193,6 +3242,7 @@ function renderFounderCards(founderJobs) {
                             ${job.summary || job.full_text || ''}
 
                         </p>
+                        </div>
 
                         <!-- Overlap Skills -->
 
@@ -3298,13 +3348,15 @@ function renderFounderCards(founderJobs) {
 
                     <div class="mt-6 pt-4 border-t border-slate-200">
 
-                        <a href="${job.url}" target="_blank" rel="noopener noreferrer" class="direct-apply-link w-full py-3.5 px-5 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-black text-xs sm:text-sm rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-orange-500/25 transition transform active:scale-98" data-container="founderCardsWrapper" data-idx="${idx}">
-
-                            <span>Direct Apply to Founder →</span>
-
-                            <i data-lucide="external-link" class="w-4 h-4"></i>
-
-                        </a>
+                        ${isFounderLocked
+                            ? `<button type="button" onclick="openVipPassModal()" class="w-full py-3.5 px-5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm rounded-xl flex items-center justify-center space-x-2 shadow-lg transition cursor-pointer">
+                                <span>👑 Unlock VIP for Latest Feed</span>
+                               </button>`
+                            : `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="direct-apply-link w-full py-3.5 px-5 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-black text-xs sm:text-sm rounded-xl flex items-center justify-center space-x-2 shadow-lg shadow-orange-500/25 transition transform active:scale-98" data-container="founderCardsWrapper" data-idx="${idx}">
+                                <span>Direct Apply to Founder →</span>
+                                <i data-lucide="external-link" class="w-4 h-4"></i>
+                               </a>`
+                        }
 
                     </div>
 
@@ -4049,8 +4101,29 @@ window.openContributeModal = function() {
     if (window.lucide) lucide.createIcons();
 };
 
+window.openVipPassModal = function() {
+    const modal = document.getElementById("vipPassModal");
+    if (!modal) return;
+    modal.classList.remove("hidden");
+    modal.style.display = "flex";
+    if (window.lucide) lucide.createIcons();
+};
+
+window.closeVipPassModal = function() {
+    const modal = document.getElementById("vipPassModal");
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.style.display = "none";
+};
+
+window.executeVipPassCheckout = function() {
+    if (typeof triggerRazorpayCheckout === "function") {
+        triggerRazorpayCheckout(1, "Almond Jobs VIP Pass (30 Days)", { purchaseType: "vip_pass" });
+    }
+};
+
 window.openVipPricingModal = function() {
-    window.openContributeModal();
+    window.openVipPassModal();
 };
 
 window.executeCoffeeContribution = function() {
@@ -4062,7 +4135,11 @@ window.executeCoffeeContribution = function() {
     const planTitle = `Buy Almond Jobs ${count} Coffee${count > 1 ? 's' : ''}`;
 
     if (typeof triggerRazorpayCheckout === "function") {
-        triggerRazorpayCheckout(amount, planTitle);
+        triggerRazorpayCheckout(amount, planTitle, {
+            purchaseType: "contribution",
+            supporterName: name,
+            supporterMessage: message
+        });
     }
 };
 
@@ -4667,6 +4744,8 @@ window.updateTopProfileBar = function() {
     const topIcon = document.getElementById("topProfileIcon");
     const initialsSpan = document.getElementById("topProfileInitials");
     const topBtn = document.getElementById("topProfileBtn");
+    const vipLbl = document.getElementById("topVipPassLabel");
+    if (vipLbl) vipLbl.textContent = isUserPaid() ? "VIP Active ✓" : "VIP Pass • ₹1";
 
     if (isUserLoggedIn()) {
         if (indicator) indicator.classList.remove("hidden");
@@ -4766,16 +4845,18 @@ function loadRazorpaySdk() {
 
 // 9. Razorpay Pro Checkout Flow
 
-window.triggerRazorpayCheckout = async function(amountInr = 699, planName = '1-Month Pro Hunt') {
+window.triggerRazorpayCheckout = async function(amountInr = 1, planName = 'Almond Jobs VIP Pass (30 Days)', optionsConfig = {}) {
     const parsedInr = parseInt(amountInr, 10);
-    const finalAmount = Number.isFinite(parsedInr) ? parsedInr : 699;
+    const finalAmount = Number.isFinite(parsedInr) ? parsedInr : 1;
     const amountPaise = finalAmount * 100;
     if (amountPaise < 100) {
         alert("Minimum payment amount is INR 1 (100 paise).");
         return;
     }
 
+    const purchaseType = optionsConfig.purchaseType || "vip_pass";
     const userId = getCandidateUserId();
+    const sessionToken = localStorage.getItem("almond_session_token") || "";
     const candidateUser = window.currentCandidateUser || {};
 
     try {
@@ -4794,10 +4875,12 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = '1-M
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 user_id: userId,
+                token: sessionToken,
                 amount_inr: finalAmount,
                 amount: amountPaise,
                 currency: "INR",
-                plan_name: planName
+                plan_name: planName,
+                purchase_type: purchaseType
             })
         });
 
@@ -4822,9 +4905,6 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = '1-M
             modal: {
                 ondismiss: function() {
                     console.log("[Razorpay] Checkout modal dismissed without completion.");
-                    if (typeof window.openPaymentExitIntent === "function") {
-                        window.openPaymentExitIntent(planName, finalAmount);
-                    }
                 }
             },
             handler: async function (response) {
@@ -4835,6 +4915,7 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = '1-M
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                             user_id: userId,
+                            token: sessionToken,
                             order_id: response.razorpay_order_id,
                             payment_id: response.razorpay_payment_id,
                             signature: response.razorpay_signature,
@@ -4842,17 +4923,30 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = '1-M
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature,
                             amount_inr: finalAmount,
-                            plan_name: planName
+                            plan_name: planName,
+                            purchase_type: purchaseType
                         })
                     });
 
                     const verifyData = await verifyResp.json().catch(() => ({}));
                     if (verifyResp.ok && verifyData.status === "success") {
-                        localStorage.setItem("almond_is_paid", "true");
-                        alert("Payment Successful! Your account has been upgraded to Almond Pro. All direct application portals and STAR pitches are now unlocked.");
-                        const searchBtn = document.getElementById("searchJobsBtn");
-                        if (searchBtn && currentProfile) {
-                            searchBtn.click();
+                        if (verifyData.purchase_type === "contribution" || purchaseType === "contribution") {
+                            if (typeof window.closeVipPricingModal === "function") window.closeVipPricingModal();
+                            alert("Thank you for your generous coffee contribution! Your reward helps keep Almond Jobs independent.");
+                        } else {
+                            localStorage.setItem("almond_is_paid", "true");
+                            if (typeof window.closeVipPassModal === "function") window.closeVipPassModal();
+                            const vipLbl = document.getElementById("topVipPassLabel");
+                            if (vipLbl) vipLbl.textContent = "VIP Active ✓";
+                            alert("VIP Pass Activated! All Latest Feed roles (Today to 6 days ago) are now unlocked.");
+                            const searchBtn = document.getElementById("searchJobsBtn");
+                            if (searchBtn && currentProfile) {
+                                searchBtn.click();
+                            }
+                            const curatedModal = document.getElementById("curatedFeedsModal");
+                            if (curatedModal && !curatedModal.classList.contains("hidden") && typeof window.fetchCuratedFeeds === "function") {
+                                window.fetchCuratedFeeds();
+                            }
                         }
                     } else {
                         const reason = verifyData.detail || verifyData.message || "Signature verification failed.";
@@ -5545,9 +5639,8 @@ function renderCuratedCards(items, total) {
     `;
 
     items.forEach((item, idx) => {
-        // TEST MODE: Display all curated feed links unblurred without payment restriction for testers
-        // When VIP restriction is re-enabled, restore: const isLocked = Boolean(item.is_locked);
-        const isLocked = false;
+        const isLocked = isJobLatestFeedLocked(item);
+        const cardBlurCls = isLocked ? "blur-[5px] select-none pointer-events-none opacity-75" : "";
         const provider = item.provider || 'Direct Portal';
         const sponsorshipBadge = item.sponsorship === 'Visa Sponsored'
             ? `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-300 text-[10px] font-black">🛂 Visa Sponsored</span>`
@@ -5559,9 +5652,9 @@ function renderCuratedCards(items, total) {
         let actionBtn = '';
         if (isLocked) {
             actionBtn = `
-                <button type="button" onclick="openVipPricingModal()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black text-xs shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5 shrink-0">
+                <button type="button" onclick="openVipPassModal()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black text-xs shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5 shrink-0">
                     <i data-lucide="lock" class="w-3.5 h-3.5"></i>
-                    <span>Unlock Portal (VIP)</span>
+                    <span>Unlock VIP for Latest Feed</span>
                 </button>
             `;
         } else {
@@ -5574,19 +5667,24 @@ function renderCuratedCards(items, total) {
 
         html += `
             <div class="curated-job-card p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:border-violet-300 hover:shadow-sm transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div class="space-y-1 min-w-0 flex-1">
+                <div class="space-y-1.5 min-w-0 flex-1">
                     <div class="flex items-center gap-2 flex-wrap">
-                        <span class="text-xs font-black text-slate-900">${item.company}</span>
-                        <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-bold uppercase tracking-wide">DIRECT FEED • ${provider.toUpperCase()}</span>
-                        ${pkgBadge}
-                        ${sponsorshipBadge}
-                        <span class="text-[10px] text-slate-400 font-semibold">${item.date_posted_str}</span>
+                        <span class="px-2 py-0.5 rounded-md ${isLocked ? 'bg-amber-100 text-amber-950 border border-amber-300 font-black' : 'bg-slate-100 text-slate-600 font-semibold'} text-[10px]">${item.date_posted_str || 'Recent'}</span>
+                        ${isLocked ? `<span class="text-[10px] font-black text-violet-800 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded-md">🔒 VIP Latest Feed</span>` : ''}
                     </div>
-                    <h4 class="text-sm font-extrabold text-slate-950 truncate">${item.role}</h4>
-                    <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                        <span>📍 ${item.location}</span>
-                        <span>•</span>
-                        <span class="text-violet-700 font-bold">${item.category}</span>
+                    <div class="space-y-1 ${cardBlurCls}">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-xs font-black text-slate-900">${item.company}</span>
+                            <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-bold uppercase tracking-wide">DIRECT FEED • ${provider.toUpperCase()}</span>
+                            ${pkgBadge}
+                            ${sponsorshipBadge}
+                        </div>
+                        <h4 class="text-sm font-extrabold text-slate-950 truncate">${item.role}</h4>
+                        <div class="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                            <span>📍 ${item.location}</span>
+                            <span>•</span>
+                            <span class="text-violet-700 font-bold">${item.category}</span>
+                        </div>
                     </div>
                 </div>
                 ${actionBtn}
@@ -5844,6 +5942,10 @@ window.navigateFromSidePanel = function(actionType, param, query = "") {
         } else if (actionType === 'who') {
             if (typeof openHeroInfoModal === 'function') {
                 openHeroInfoModal('ats');
+            }
+        } else if (actionType === 'vip') {
+            if (typeof openVipPassModal === 'function') {
+                openVipPassModal();
             }
         } else if (actionType === 'contribute') {
             if (typeof openContributeModal === 'function') {

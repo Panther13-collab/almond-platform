@@ -743,7 +743,41 @@ def is_user_paid(user_id: str) -> bool:
                 conn.commit()
                 return False
 
+        # Also allow guest candidate sessions that completed a verified VIP checkout
+        cursor.execute(
+            """
+            SELECT 1 FROM payments
+            WHERE user_id = ? AND status = 'captured' AND created_at > ?
+            LIMIT 1
+            """,
+            (user_id, now - (30 * 86400))
+        )
+        if cursor.fetchone():
+            return True
+
     return False
+
+
+def record_contribution_payment(user_id: str, payment_id: str, order_id: str, amount_inr: float, plan_name: str = "Coffee Contribution") -> bool:
+    """Record a voluntary supporter contribution without granting VIP Pass access."""
+    now = time.time()
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            pay_id = f"tip_{secrets.token_hex(6)}"
+            cursor.execute(
+                """
+                INSERT OR REPLACE INTO payments (id, user_id, payment_id, order_id, amount_inr, plan_name, status, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, 'contribution', ?)
+                """,
+                (pay_id, user_id or "guest", payment_id, order_id, amount_inr, plan_name or "Coffee Contribution", now)
+            )
+            conn.commit()
+            print(f"[AUTH_DB] Recorded voluntary contribution {amount_inr} INR for user {user_id or 'guest'}.")
+        return True
+    except Exception as e:
+        print(f"[AUTH_DB] Error recording contribution: {e}")
+        return False
 
 def record_successful_payment(user_id: str, payment_id: str, order_id: str, amount_inr: float, plan_name: str = "") -> bool:
     """Record a captured payment with strict timestamp-based expiration (24h Day Sprint, 30d, or 90d)."""
@@ -754,7 +788,10 @@ def record_successful_payment(user_id: str, payment_id: str, order_id: str, amou
     # 1. Day Sprint: 24 Hours
     # 2. 90-Day Mastery: 90 Days
     # 3. 30-Day Pro Hunt: 30 Days (Default)
-    if "day" in plan_lower or "24" in plan_lower or amount_inr <= 200:
+    if "vip" in plan_lower:
+        duration_seconds = 30 * 86400 # 30 days VIP Pass
+        plan_code = "vip_pass_30d"
+    elif "day" in plan_lower or "24" in plan_lower or amount_inr <= 200:
         duration_seconds = 24 * 3600 # 24 hours
         plan_code = "day_sprint_24h"
     elif "90" in plan_lower or "mastery" in plan_lower or "3-month" in plan_lower or amount_inr > 700:
