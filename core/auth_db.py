@@ -291,34 +291,248 @@ def _format_remaining_str(is_paid: bool, paid_until: float, now: float) -> str:
     days = int(diff / 86400)
     return f"{days}d left"
 
+SYSTEM_STORE_EMAIL = "system_store@almondjobs.internal"
+_supabase_users_cache = {"ts": 0, "users": []}
+_system_store_cache = {"ts": 0, "store": {}, "uid": None}
+_cloud_synced_on_boot = False
+
+def _fetch_all_supabase_users(force: bool = False) -> list:
+    """Fetch all users across all pages from Supabase with a high-performance in-memory cache."""
+    if not supabase_admin:
+        return []
+    now = time.time()
+    if not force and _supabase_users_cache["users"] and (now - _supabase_users_cache["ts"] < 60):
+        return _supabase_users_cache["users"]
+    try:
+        all_users = []
+        page = 1
+        while True:
+            batch = supabase_admin.auth.admin.list_users(page=page, per_page=1000)
+            if not batch:
+                break
+            all_users.extend(batch)
+            if len(batch) < 1000:
+                break
+            page += 1
+        _supabase_users_cache["ts"] = now
+        _supabase_users_cache["users"] = all_users
+        return all_users
+    except Exception as e:
+        print(f"[AUTH_DB] Supabase user fetch note: {e}")
+        return _supabase_users_cache.get("users", [])
+
+def _find_supabase_user(email: str = "", user_id: str = ""):
+    """Look up a user in Supabase by email, Supabase Auth UUID, or local_user_id metadata."""
+    if not supabase_admin:
+        return None
+    clean_email = (email or "").strip().lower()
+    clean_uid = str(user_id or "").strip()
+
+    if clean_uid and len(clean_uid) >= 32 and "-" in clean_uid:
+        try:
+            resp = supabase_admin.auth.admin.get_user_by_id(clean_uid)
+            u = getattr(resp, "user", resp)
+            if u and getattr(u, "id", None):
+                return u
+        except Exception:
+            pass
+
+    for u in _fetch_all_supabase_users():
+        u_email = (getattr(u, "email", "") or "").strip().lower()
+        if clean_email and u_email == clean_email:
+            return u
+        if clean_uid and getattr(u, "id", None) == clean_uid:
+            return u
+        meta = getattr(u, "user_metadata", {}) or {}
+        if clean_uid and meta.get("local_user_id") == clean_uid:
+            return u
+
+    for u in _fetch_all_supabase_users(force=True):
+        u_email = (getattr(u, "email", "") or "").strip().lower()
+        if clean_email and u_email == clean_email:
+            return u
+        if clean_uid and getattr(u, "id", None) == clean_uid:
+            return u
+        meta = getattr(u, "user_metadata", {}) or {}
+        if clean_uid and meta.get("local_user_id") == clean_uid:
+            return u
+
+    return None
+
+def _get_system_store(force: bool = False) -> dict:
+    """Retrieve global platform persistence store from Supabase."""
+    if not supabase_admin:
+        return {}
+    now = time.time()
+    if not force and _system_store_cache["store"] and (now - _system_store_cache["ts"] < 60):
+        return _system_store_cache["store"]
+
+    try:
+        all_u = _fetch_all_supabase_users(force=force)
+        sys_u = None
+        for u in all_u:
+            if (getattr(u, "email", "") or "").lower() == SYSTEM_STORE_EMAIL:
+                sys_u = u
+                break
+        if not sys_u:
+            res = supabase_admin.auth.admin.create_user({
+                "email": SYSTEM_STORE_EMAIL,
+                "email_confirm": True,
+                "user_metadata": {"vip_grants": {}, "contributions": []}
+            })
+            sys_u = getattr(res, "user", res)
+        meta = getattr(sys_u, "user_metadata", {}) or {}
+        _system_store_cache["ts"] = now
+        _system_store_cache["store"] = meta
+        _system_store_cache["uid"] = getattr(sys_u, "id", None)
+        return meta
+    except Exception as e:
+        print(f"[AUTH_DB] system_store lookup note: {e}")
+        return _system_store_cache.get("store", {})
+
+def _update_system_store(updates: dict):
+    """Write updates to global platform persistence store in Supabase."""
+    if not supabase_admin:
+        return
+    try:
+        current = _get_system_store()
+        current.update(updates)
+        uid = _system_store_cache.get("uid")
+        if not uid:
+            all_u = _fetch_all_supabase_users()
+            for u in all_u:
+                if (getattr(u, "email", "") or "").lower() == SYSTEM_STORE_EMAIL:
+                    uid = u.id
+                    break
+        if uid:
+            supabase_admin.auth.admin.update_user_by_id(uid, {"user_metadata": current})
+            _system_store_cache["ts"] = time.time()
+            _system_store_cache["store"] = current
+            print(f"[AUTH_DB] Successfully saved system store updates to Supabase.")
+    except Exception as e:
+        print(f"[AUTH_DB] Warning updating system_store: {e}")
+
+def sync_from_supabase_cloud(force: bool = False):
+    """Hydrate local SQLite database from Supabase cloud on container startup."""
+    global _cloud_synced_on_boot
+    if not supabase_admin:
+        return
+    if _cloud_synced_on_boot and not force:
+        return
+    _cloud_synced_on_boot = True
+    try:
+        store = _get_system_store(force=force)
+        now = time.time()
+        
+        # 1. Restore VIP grants from system_store
+        grants = store.get("vip_grants", {})
+        if grants:
+            with get_db() as conn:
+                cursor = conn.cursor()
+                for em, g in grants.items():
+                    val_until = float(g.get("paid_until", 0))
+                    if val_until > now:
+                        cursor.execute(
+                            """
+                            INSERT OR REPLACE INTO vip_grants (email, granted_by, granted_at, valid_until, status, notes)
+                            VALUES (?, ?, ?, ?, 'active', ?)
+                            """,
+                            (em.lower(), g.get("granted_by", "admin"), g.get("granted_at", now), val_until, g.get("notes", "Restored from cloud"))
+                        )
+                conn.commit()
+
+        # 2. Restore active VIP users from Supabase users
+        all_sp_users = _fetch_all_supabase_users(force=force)
+        with get_db() as conn:
+            cursor = conn.cursor()
+            for u in all_sp_users:
+                em = (getattr(u, "email", "") or "").strip().lower()
+                if not em or em == SYSTEM_STORE_EMAIL:
+                    continue
+                meta = getattr(u, "user_metadata", {}) or {}
+                is_p = bool(meta.get("is_paid"))
+                p_until = float(meta.get("paid_until") or 0)
+                if is_p and (p_until == 0 or p_until > now):
+                    u_id = meta.get("local_user_id") or u.id
+                    plan = meta.get("plan") or "vip_pass_30d"
+                    fn = meta.get("full_name") or em.split("@")[0]
+                    dev = meta.get("device_model") or ""
+                    cursor.execute(
+                        """
+                        INSERT OR IGNORE INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at, auth_provider, device_model)
+                        VALUES (?, ?, 'cloud_synced', 'salt', ?, 1, ?, ?, ?, ?, 'cloud', ?)
+                        """,
+                        (u_id, em, fn, plan, p_until, now, now, dev)
+                    )
+                    cursor.execute(
+                        """
+                        INSERT OR REPLACE INTO vip_grants (email, granted_by, granted_at, valid_until, status, notes)
+                        VALUES (?, 'cloud_sync', ?, ?, 'active', 'Auto-restored from cloud')
+                        """,
+                        (em, now, p_until)
+                    )
+            conn.commit()
+            
+        print("[AUTH_DB] Successfully hydrated cloud state from Supabase.")
+    except Exception as e:
+        print(f"[AUTH_DB] Notice during cloud sync: {e}")
+
+# Initial cloud state hydration on process startup
+sync_from_supabase_cloud()
+
 def sync_supabase_vip_metadata(email: str, is_paid: bool, plan: str, paid_until: float, local_user_id: str = ""):
     """Ensure VIP state is permanently preserved in Supabase Auth across container restarts."""
     if not supabase_admin:
         return
     clean_email = (email or "").strip().lower()
-    if not clean_email:
+    if not clean_email or clean_email == SYSTEM_STORE_EMAIL:
         return
     try:
-        target_uid = None
-        users_list = supabase_admin.auth.admin.list_users()
-        for u in users_list or []:
-            if (getattr(u, "email", "") or "").strip().lower() == clean_email:
-                target_uid = getattr(u, "id", None)
-                break
-        
-        if not target_uid and local_user_id:
-            target_uid = local_user_id
-
-        if target_uid:
-            supabase_admin.auth.admin.update_user_by_id(target_uid, {
+        now = time.time()
+        target_user = _find_supabase_user(email=clean_email, user_id=local_user_id)
+        if target_user:
+            meta = getattr(target_user, "user_metadata", {}) or {}
+            meta.update({
+                "is_paid": bool(is_paid),
+                "plan": plan,
+                "paid_until": float(paid_until),
+                "local_user_id": local_user_id or meta.get("local_user_id") or getattr(target_user, "id", ""),
+                "vip_granted_by": "admin" if is_paid else meta.get("vip_granted_by", "")
+            })
+            supabase_admin.auth.admin.update_user_by_id(target_user.id, {"user_metadata": meta})
+            print(f"[AUTH_DB] Successfully synchronized VIP metadata to Supabase for {clean_email} ({plan}).")
+        else:
+            rand_pwd = secrets.token_urlsafe(32)
+            supabase_admin.auth.admin.create_user({
+                "email": clean_email,
+                "password": rand_pwd,
+                "email_confirm": True,
                 "user_metadata": {
                     "is_paid": bool(is_paid),
                     "plan": plan,
                     "paid_until": float(paid_until),
-                    "local_user_id": local_user_id
+                    "local_user_id": local_user_id or str(uuid.uuid4()),
+                    "vip_granted_by": "admin" if is_paid else ""
                 }
             })
-            print(f"[AUTH_DB] Successfully synchronized VIP metadata to Supabase for {clean_email} ({plan}).")
+            print(f"[AUTH_DB] Created pre-approved VIP user in Supabase for {clean_email} ({plan}).")
+
+        # Invalidate users cache
+        _supabase_users_cache["ts"] = 0
+
+        # Update system_store
+        store = _get_system_store()
+        grants = store.get("vip_grants", {})
+        if is_paid:
+            grants[clean_email] = {
+                "plan": plan,
+                "paid_until": float(paid_until),
+                "granted_by": "admin",
+                "granted_at": now
+            }
+        else:
+            grants.pop(clean_email, None)
+        _update_system_store({"vip_grants": grants})
     except Exception as e:
         print(f"[AUTH_DB] Supabase VIP sync note: {e}")
 
@@ -327,24 +541,11 @@ def _lookup_supabase_user_meta(user_id: str, email: str = "") -> dict:
     if not supabase_admin:
         return {}
     clean_email = (email or "").strip().lower()
-    try:
-        resp = supabase_admin.auth.admin.get_user_by_id(user_id)
-        u = getattr(resp, "user", None)
-        if u and getattr(u, "email", ""):
-            meta = getattr(u, "user_metadata", None) or {}
-            return {"email": u.email.strip().lower(), "meta": meta, "supa_id": u.id}
-    except Exception:
-        pass
-    if clean_email:
-        try:
-            users_list = supabase_admin.auth.admin.list_users()
-            for u in users_list or []:
-                u_email = (getattr(u, "email", "") or "").strip().lower()
-                if u_email == clean_email:
-                    meta = getattr(u, "user_metadata", None) or {}
-                    return {"email": u_email, "meta": meta, "supa_id": u.id}
-        except Exception:
-            pass
+    u = _find_supabase_user(email=clean_email, user_id=user_id)
+    if u:
+        meta = getattr(u, "user_metadata", None) or {}
+        u_email = (getattr(u, "email", "") or clean_email).strip().lower()
+        return {"email": u_email, "meta": meta, "supa_id": u.id}
     return {}
 
 def _rehydrate_user_row(user_id: str, email: str, full_name: str = "", supa_meta: dict = None) -> dict:
@@ -356,7 +557,19 @@ def _rehydrate_user_row(user_id: str, email: str, full_name: str = "", supa_meta
     is_paid = 1 if meta.get("is_paid") else 0
     plan = meta.get("plan") or ("vip_pass_30d" if is_paid else "free")
     paid_until = float(meta.get("paid_until") or 0)
-    pw_hash, salt = _hash_password(secrets.token_urlsafe(24))
+    
+    if meta.get("password_hash") and meta.get("salt"):
+        pw_hash = meta["password_hash"]
+        salt = meta["salt"]
+    else:
+        pw_hash, salt = _hash_password(secrets.token_urlsafe(24))
+
+    # Check system_store grants as well
+    sys_grant = _get_system_store().get("vip_grants", {}).get(clean_email)
+    if sys_grant and float(sys_grant.get("paid_until", 0)) > now:
+        is_paid = 1
+        paid_until = max(paid_until, float(sys_grant["paid_until"]))
+        plan = sys_grant.get("plan", "vip_pass_30d")
 
     with get_db() as conn:
         cursor = conn.cursor()
@@ -382,11 +595,19 @@ def _rehydrate_user_row(user_id: str, email: str, full_name: str = "", supa_meta
 
         cursor.execute(
             """
-            INSERT OR IGNORE INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at, auth_provider)
+            INSERT OR REPLACE INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at, auth_provider)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'session_rehydrated')
             """,
             (user_id, clean_email, pw_hash, salt, name_val, is_paid, plan, paid_until, now, now)
         )
+        if is_paid and paid_until > now:
+            cursor.execute(
+                """
+                INSERT OR REPLACE INTO vip_grants (email, granted_by, granted_at, valid_until, status, notes)
+                VALUES (?, 'cloud_sync', ?, ?, 'active', 'Auto-rehydrated')
+                """,
+                (clean_email, now, paid_until)
+            )
         conn.commit()
         cursor.execute("SELECT id, email, full_name, is_paid, plan, paid_until, created_at FROM users WHERE id = ?", (user_id,))
         row = cursor.fetchone()
@@ -717,19 +938,40 @@ def signup_user(email: str, password: str, full_name: str = "", device_model: st
     # 2. Mirror into Supabase Auth with auto email confirmation
     if supabase_admin:
         try:
-            supabase_admin.auth.admin.create_user({
-                "email": clean_email,
-                "password": password,
-                "email_confirm": True,
-                "user_metadata": {
+            existing_sp = _find_supabase_user(email=clean_email)
+            if existing_sp:
+                meta = getattr(existing_sp, "user_metadata", {}) or {}
+                meta.update({
                     "full_name": full_name.strip(),
                     "is_paid": bool(initial_paid),
                     "plan": initial_plan,
                     "paid_until": initial_until,
                     "local_user_id": user_id,
-                    "device_model": clean_device
-                }
-            })
+                    "device_model": clean_device,
+                    "password_hash": pw_hash,
+                    "salt": salt
+                })
+                supabase_admin.auth.admin.update_user_by_id(existing_sp.id, {
+                    "password": password,
+                    "user_metadata": meta
+                })
+            else:
+                supabase_admin.auth.admin.create_user({
+                    "email": clean_email,
+                    "password": password,
+                    "email_confirm": True,
+                    "user_metadata": {
+                        "full_name": full_name.strip(),
+                        "is_paid": bool(initial_paid),
+                        "plan": initial_plan,
+                        "paid_until": initial_until,
+                        "local_user_id": user_id,
+                        "device_model": clean_device,
+                        "password_hash": pw_hash,
+                        "salt": salt
+                    }
+                })
+            _supabase_users_cache["ts"] = 0
         except Exception as e:
             print(f"[AUTH_DB] Supabase admin create_user note: {e}")
 
@@ -768,8 +1010,68 @@ def login_user(email: str, password: str, device_model: str = "") -> dict:
         row = cursor.fetchone()
         
         if not row:
-            return {"status": "error", "message": "No account found with this email. Please sign up."}
+            # Ephemeral container restart fallback: check Supabase Auth cloud
+            supa_user = _find_supabase_user(email=clean_email)
+            if not supa_user:
+                return {"status": "error", "message": "No account found with this email. Please sign up."}
             
+            supa_meta = getattr(supa_user, "user_metadata", {}) or {}
+            auth_ok = False
+            
+            # 1. Try Supabase sign_in_with_password
+            if supabase_client:
+                try:
+                    sign_res = supabase_client.auth.sign_in_with_password({"email": clean_email, "password": password})
+                    if sign_res and getattr(sign_res, "user", None):
+                        auth_ok = True
+                except Exception:
+                    auth_ok = False
+            
+            # 2. Fallback: check stored password hash and salt in supa_meta
+            if not auth_ok and supa_meta.get("password_hash") and supa_meta.get("salt"):
+                expected_hash, _ = _hash_password(password, supa_meta["salt"])
+                if hmac.compare_digest(supa_meta["password_hash"], expected_hash):
+                    auth_ok = True
+            
+            if not auth_ok:
+                return {"status": "error", "message": "Incorrect password. Please verify and try again."}
+
+            # Authenticated! Rehydrate user row into SQLite
+            u_id = supa_meta.get("local_user_id") or supa_user.id
+            fn = supa_meta.get("full_name") or clean_email.split("@")[0]
+            re_hash, re_salt = _hash_password(password)
+            is_p = 1 if supa_meta.get("is_paid") else 0
+            pl = supa_meta.get("plan") or ("vip_pass_30d" if is_p else "free")
+            p_until = float(supa_meta.get("paid_until") or 0)
+            now_ts = time.time()
+
+            # Check system store grants as well
+            sys_grant = _get_system_store().get("vip_grants", {}).get(clean_email)
+            if sys_grant and float(sys_grant.get("paid_until", 0)) > now_ts:
+                is_p = 1
+                p_until = max(p_until, float(sys_grant["paid_until"]))
+                pl = sys_grant.get("plan", "vip_pass_30d")
+
+            cursor.execute(
+                """
+                INSERT OR REPLACE INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at, auth_provider, device_model)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'email', ?)
+                """,
+                (u_id, clean_email, re_hash, re_salt, fn, is_p, pl, p_until, now_ts, now_ts, clean_device)
+            )
+            if is_p and p_until > now_ts:
+                cursor.execute(
+                    """
+                    INSERT OR REPLACE INTO vip_grants (email, granted_by, granted_at, valid_until, status, notes)
+                    VALUES (?, 'cloud_sync', ?, ?, 'active', 'Restored on login')
+                    """,
+                    (clean_email, now_ts, p_until)
+                )
+            conn.commit()
+            
+            cursor.execute("SELECT id, email, password_hash, salt, full_name, is_paid, plan, paid_until, COALESCE(device_model, '') as device_model FROM users WHERE email = ?", (clean_email,))
+            row = cursor.fetchone()
+
         expected_hash, _ = _hash_password(password, row["salt"])
         if not hmac.compare_digest(row["password_hash"], expected_hash):
             return {"status": "error", "message": "Incorrect password. Please verify and try again."}
@@ -847,6 +1149,45 @@ def login_or_signup_google_user(email: str, full_name: str = "", google_id: str 
         cursor = conn.cursor()
         cursor.execute("SELECT id, email, full_name, is_paid, plan, paid_until, COALESCE(device_model, '') as device_model FROM users WHERE email = ?", (clean_email,))
         row = cursor.fetchone()
+
+        if not row:
+            # Ephemeral restart fallback: check Supabase Auth cloud
+            supa_user = _find_supabase_user(email=clean_email)
+            if supa_user:
+                supa_meta = getattr(supa_user, "user_metadata", {}) or {}
+                user_id = supa_meta.get("local_user_id") or supa_user.id
+                name_val = supa_meta.get("full_name") or full_name.strip() or clean_email.split("@")[0]
+                is_paid_val = 1 if supa_meta.get("is_paid") else 0
+                plan_val = supa_meta.get("plan") or ("vip_pass_30d" if is_paid_val else "free")
+                paid_until_val = float(supa_meta.get("paid_until") or 0)
+                
+                # Check system store grants
+                sys_grant = _get_system_store().get("vip_grants", {}).get(clean_email)
+                if sys_grant and float(sys_grant.get("paid_until", 0)) > now:
+                    is_paid_val = 1
+                    paid_until_val = max(paid_until_val, float(sys_grant["paid_until"]))
+                    plan_val = sys_grant.get("plan", "vip_pass_30d")
+
+                rand_password = secrets.token_urlsafe(32)
+                pw_hash, salt = _hash_password(rand_password)
+                cursor.execute(
+                    """
+                    INSERT OR REPLACE INTO users (id, email, password_hash, salt, full_name, is_paid, plan, paid_until, created_at, updated_at, auth_provider, device_model)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'google', ?)
+                    """,
+                    (user_id, clean_email, pw_hash, salt, name_val, is_paid_val, plan_val, paid_until_val, now, now, clean_device)
+                )
+                if is_paid_val and paid_until_val > now:
+                    cursor.execute(
+                        """
+                        INSERT OR REPLACE INTO vip_grants (email, granted_by, granted_at, valid_until, status, notes)
+                        VALUES (?, 'cloud_sync', ?, ?, 'active', 'Restored on Google login')
+                        """,
+                        (clean_email, now, paid_until_val)
+                    )
+                conn.commit()
+                cursor.execute("SELECT id, email, full_name, is_paid, plan, paid_until, COALESCE(device_model, '') as device_model FROM users WHERE email = ?", (clean_email,))
+                row = cursor.fetchone()
 
         if row:
             user_id = row["id"]
@@ -972,6 +1313,17 @@ def get_user_profile(user_id: str) -> dict:
         cursor.execute("SELECT id, email, full_name, is_paid, plan, paid_until, created_at FROM users WHERE id = ?", (user_id,))
         row = cursor.fetchone()
         if not row:
+            clean_email = str(user_id).strip().lower() if "@" in str(user_id) else ""
+            supa_u = _find_supabase_user(email=clean_email, user_id=str(user_id))
+            if supa_u:
+                meta = getattr(supa_u, "user_metadata", {}) or {}
+                u_email = (getattr(supa_u, "email", "") or clean_email).lower()
+                u_id = meta.get("local_user_id") or supa_u.id
+                rehydrated = _rehydrate_user_row(u_id, u_email, supa_meta=meta)
+                if rehydrated:
+                    cursor.execute("SELECT id, email, full_name, is_paid, plan, paid_until, created_at FROM users WHERE id = ?", (rehydrated["user_id"],))
+                    row = cursor.fetchone()
+        if not row:
             return None
 
         now = time.time()
@@ -1013,7 +1365,7 @@ def get_user_profile(user_id: str) -> dict:
 def is_dummy_email(email: str) -> bool:
     """Determine if an email address is a dummy, test, or synthetic test suite email."""
     clean = (email or "").strip().lower()
-    if not clean or "@" not in clean:
+    if not clean or "@" not in clean or clean == SYSTEM_STORE_EMAIL:
         return True
 
     domain = clean.split("@")[-1]
@@ -1155,7 +1507,7 @@ def revoke_vip_from_email(email: str) -> dict:
 def check_and_apply_vip_grant(email: str, user_id: str = "") -> tuple:
     """Check if the email has an active VIP grant, and update user record if found."""
     clean_email = (email or "").strip().lower()
-    if not clean_email:
+    if not clean_email or clean_email == SYSTEM_STORE_EMAIL:
         return (False, 0, "free")
 
     now = time.time()
@@ -1181,6 +1533,29 @@ def check_and_apply_vip_grant(email: str, user_id: str = "") -> tuple:
         elif row and row["valid_until"] <= now:
             cursor.execute("UPDATE vip_grants SET status = 'expired' WHERE email = ?", (clean_email,))
             conn.commit()
+
+        # Cloud fallback: check system_store grants
+        sg = _get_system_store().get("vip_grants", {}).get(clean_email)
+        if sg and float(sg.get("paid_until", 0)) > now:
+            val_until = float(sg["paid_until"])
+            pl_code = sg.get("plan", "vip_pass_30d")
+            cursor.execute(
+                """
+                INSERT OR REPLACE INTO vip_grants (email, granted_by, granted_at, valid_until, status, notes)
+                VALUES (?, ?, ?, ?, 'active', ?)
+                """,
+                (clean_email, sg.get("granted_by", "admin"), sg.get("granted_at", now), val_until, sg.get("notes", "Restored from system store"))
+            )
+            if user_id:
+                cursor.execute(
+                    """
+                    UPDATE users SET is_paid = 1, plan = ?, paid_until = ?, updated_at = ?
+                    WHERE id = ?
+                    """,
+                    (pl_code, val_until, now, user_id)
+                )
+            conn.commit()
+            return (True, val_until, pl_code)
 
     return (False, 0, "free")
 
@@ -1268,8 +1643,51 @@ def is_user_paid(user_id: str) -> bool:
                 if (pay_ts + dur) > now:
                     return True
 
+    # Ephemeral container restart fallback: Check Supabase cloud
+    if clean_email:
+        sg = _get_system_store().get("vip_grants", {}).get(clean_email)
+        if sg and float(sg.get("paid_until", 0)) > now:
+            val_until = float(sg["paid_until"])
+            with get_db() as conn:
+                conn.cursor().execute(
+                    "INSERT OR REPLACE INTO vip_grants (email, granted_by, granted_at, valid_until, status, notes) VALUES (?, ?, ?, ?, 'active', ?)",
+                    (clean_email, sg.get("granted_by", "admin"), now, val_until, "Restored from system store")
+                )
+                conn.commit()
+            return True
+
+    supa_u = _find_supabase_user(email=clean_email, user_id=clean_uid)
+    if supa_u:
+        meta = getattr(supa_u, "user_metadata", {}) or {}
+        sp_paid = bool(meta.get("is_paid"))
+        sp_until = float(meta.get("paid_until") or 0)
+        if sp_paid and (sp_until == 0 or sp_until > now):
+            u_email = (getattr(supa_u, "email", "") or clean_email).lower()
+            u_id = meta.get("local_user_id") or supa_u.id
+            _rehydrate_user_row(u_id, u_email, supa_meta=meta)
+            return True
+
     return False
 
+
+def _sync_contribution_to_system_store(contrib: dict):
+    """Synchronize voluntary contribution and founder reply to cloud system store."""
+    if not supabase_admin:
+        return
+    try:
+        store = _get_system_store()
+        c_list = store.get("contributions", [])
+        found = False
+        for idx, item in enumerate(c_list):
+            if item.get("id") == contrib.get("id") or item.get("payment_id") == contrib.get("payment_id"):
+                c_list[idx] = {**item, **contrib}
+                found = True
+                break
+        if not found:
+            c_list.insert(0, contrib)
+        _update_system_store({"contributions": c_list[:100]})
+    except Exception as e:
+        print(f"[AUTH_DB] Notice syncing contribution to cloud: {e}")
 
 def record_contribution_payment(
     user_id: str,
@@ -1285,9 +1703,9 @@ def record_contribution_payment(
     clean_name = (supporter_name or "").strip()
     clean_msg = (supporter_message or "").strip()
     try:
+        pay_id = f"tip_{secrets.token_hex(6)}"
         with get_db() as conn:
             cursor = conn.cursor()
-            pay_id = f"tip_{secrets.token_hex(6)}"
             cursor.execute(
                 """
                 INSERT OR REPLACE INTO payments (id, user_id, payment_id, order_id, amount_inr, plan_name, status, created_at, supporter_name, supporter_message)
@@ -1297,6 +1715,20 @@ def record_contribution_payment(
             )
             conn.commit()
             print(f"[AUTH_DB] Recorded voluntary contribution {amount_inr} INR from '{clean_name}'. Message: '{clean_msg}'.")
+            
+        _sync_contribution_to_system_store({
+            "id": pay_id,
+            "user_id": user_id or "guest",
+            "payment_id": payment_id,
+            "order_id": order_id,
+            "amount_inr": amount_inr,
+            "plan_name": plan_name or "Coffee Contribution",
+            "supporter_name": clean_name,
+            "supporter_message": clean_msg,
+            "created_at": now,
+            "admin_reply": "",
+            "admin_replied_at": 0
+        })
         return True
     except Exception as e:
         print(f"[AUTH_DB] Error recording contribution: {e}")
@@ -1306,6 +1738,27 @@ def get_recent_contributions(limit: int = 20) -> list:
     """Return latest candidate voluntary contributions with their genuine feedback."""
     with get_db() as conn:
         cursor = conn.cursor()
+        cursor.execute("SELECT count(*) as cnt FROM payments WHERE status = 'contribution';")
+        cnt_row = cursor.fetchone()
+        if not cnt_row or cnt_row["cnt"] == 0:
+            # Ephemeral restart fallback: hydrate from cloud system store
+            store = _get_system_store()
+            saved_contribs = store.get("contributions", [])
+            for c in saved_contribs:
+                cursor.execute(
+                    """
+                    INSERT OR IGNORE INTO payments (id, user_id, payment_id, order_id, amount_inr, plan_name, status, created_at, supporter_name, supporter_message, admin_reply, admin_replied_at)
+                    VALUES (?, ?, ?, ?, ?, ?, 'contribution', ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        c.get("id"), c.get("user_id", "guest"), c.get("payment_id", c.get("id")),
+                        c.get("order_id", ""), c.get("amount_inr", 485), c.get("plan_name", "Coffee Contribution"),
+                        c.get("created_at", time.time()), c.get("supporter_name", ""), c.get("supporter_message", ""),
+                        c.get("admin_reply", ""), c.get("admin_replied_at", 0)
+                    )
+                )
+            conn.commit()
+
         cursor.execute(
             """
             SELECT p.id, p.payment_id, p.amount_inr, p.plan_name, p.created_at,
@@ -1358,6 +1811,13 @@ def add_admin_reply_to_contribution(payment_id: str, reply_text: str) -> dict:
             (clean_reply, now, clean_id, clean_id)
         )
         conn.commit()
+
+    _sync_contribution_to_system_store({
+        "id": clean_id,
+        "payment_id": clean_id,
+        "admin_reply": clean_reply,
+        "admin_replied_at": now
+    })
 
     return {"status": "success", "message": "Reply published to community feed successfully."}
 
@@ -2023,6 +2483,20 @@ def get_all_users_admin() -> list:
         except Exception:
             pass
 
+    # Merge system_store cloud VIP grants
+    sys_grants = _get_system_store().get("vip_grants", {})
+    for g_em, g_info in sys_grants.items():
+        em_low = g_em.lower()
+        if em_low not in active_grants and float(g_info.get("paid_until", 0)) > now:
+            active_grants[em_low] = {
+                "email": em_low,
+                "valid_until": float(g_info["paid_until"]),
+                "status": "active",
+                "granted_at": g_info.get("granted_at", now)
+            }
+
+    with get_db() as conn:
+        cursor = conn.cursor()
         # 2. Fetch from local SQLite cache
         cursor.execute("""
             SELECT id, email, full_name, plan, is_paid, paid_until, created_at, auth_provider,
@@ -2032,7 +2506,7 @@ def get_all_users_admin() -> list:
         """)
         for r in cursor.fetchall():
             email_key = (r["email"] or "").strip().lower()
-            if not email_key:
+            if not email_key or email_key == SYSTEM_STORE_EMAIL:
                 continue
             created_ts = r["created_at"] or now
             paid_until = r["paid_until"] or 0
@@ -2075,10 +2549,10 @@ def get_all_users_admin() -> list:
     # 3. Synchronize with live Supabase Auth
     if supabase_admin:
         try:
-            sp_users = supabase_admin.auth.admin.list_users() or []
+            sp_users = _fetch_all_supabase_users() or []
             for u in sp_users:
                 sp_email = (getattr(u, "email", "") or "").strip().lower()
-                if not sp_email:
+                if not sp_email or sp_email == SYSTEM_STORE_EMAIL:
                     continue
                 
                 user_meta = getattr(u, "user_metadata", {}) or {}
