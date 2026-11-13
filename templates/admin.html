@@ -3,54 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Almond Jobs — Executive Command & Traffic Telemetry</title>
+    <title>Almond Jobs &bull; Executive Command &amp; Telemetry Suite</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #090d16;
+            background-color: #080c14;
             color: #f1f5f9;
         }
         .font-mono {
             font-family: 'JetBrains Mono', monospace;
         }
-        .almond-gold {
-            color: #e6c687;
-        }
-        .bg-gold-glow {
-            background: linear-gradient(135deg, rgba(230,198,135,0.15) 0%, rgba(202,159,85,0.05) 100%);
-            border: 1px solid rgba(230,198,135,0.3);
-        }
         .card-surface {
-            background: rgba(17, 24, 39, 0.75);
-            backdrop-filter: blur(12px);
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(14px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .card-surface:hover {
-            border-color: rgba(230, 198, 135, 0.25);
+            border-color: rgba(245, 158, 11, 0.25);
         }
-        @keyframes pulse-subtle {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(0.95); }
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.1) 100%);
+            border-color: rgba(245, 158, 11, 0.6);
+            color: #fbbf24;
+            font-weight: 800;
         }
-        .pulse-dot {
-            animation: pulse-subtle 2s infinite ease-in-out;
+        .tab-btn {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(15, 23, 42, 0.6);
+            color: #94a3b8;
+            transition: all 0.2s ease;
+        }
+        .tab-btn:hover {
+            color: #f8fafc;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .filter-pill.active {
+            background-color: #f59e0b;
+            color: #0f172a;
+            border-color: #f59e0b;
+            font-weight: 800;
+        }
+        .filter-pill {
+            background-color: rgba(30, 41, 59, 0.8);
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(245, 158, 11, 0.3);
+            border-radius: 9999px;
         }
     </style>
 </head>
 <body class="min-h-screen antialiased flex flex-col justify-between">
 
     <!-- Authentication Lock Screen (Shown if key is missing or invalid) -->
-    <div id="auth-lock-view" class="{% if is_authenticated %}hidden{% else %}flex{% endif %} fixed inset-0 z-50 items-center justify-center p-4 bg-[#090d16]/95 backdrop-blur-xl">
+    <div id="auth-lock-view" class="{% if is_authenticated %}hidden{% else %}flex{% endif %} fixed inset-0 z-50 items-center justify-center p-4 bg-[#080c14]/95 backdrop-blur-xl">
         <div class="card-surface max-w-md w-full p-8 rounded-2xl border border-white/10 shadow-2xl text-center space-y-6">
             <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-3xl">
-                🌰
+                &#127792;
             </div>
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-white">Almond Jobs Telemetry</h1>
-                <p class="text-sm text-slate-400 mt-2">Executive Traffic, Live Engagements & Candidate Sign-In Portal</p>
+                <h1 class="text-2xl font-bold tracking-tight text-white">Almond Jobs Executive Suite</h1>
+                <p class="text-sm text-slate-400 mt-2">Executive Traffic, Dynamic Pricing &amp; Candidate Intelligence</p>
             </div>
             
             <form id="key-form" method="GET" action="/admin" class="space-y-4">
@@ -59,772 +83,794 @@
                     <input type="password" id="admin-key" name="key" placeholder="Enter admin secret key" required 
                            class="w-full px-4 py-3 bg-slate-900/90 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent font-mono text-sm">
                     {% if auth_error %}
-                    <p class="text-xs text-rose-400 mt-2 font-medium">⚠️ Invalid admin access key. Please verify credentials.</p>
+                    <p class="text-xs text-rose-400 mt-2 font-medium">&#9888;&#65039; Invalid admin access key. Please verify credentials.</p>
                     {% endif %}
                 </div>
                 <button type="submit" class="w-full py-3 px-6 rounded-xl font-bold text-sm tracking-wide bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 hover:from-amber-300 hover:to-amber-400 shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                    Unlock Executive Dashboard
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    Unlock Executive Console
                 </button>
             </form>
-            <p class="text-xs text-slate-500">Zero-cost internal telemetry engine. Protected by salted tokens.</p>
+            <p class="text-xs text-slate-500">Zero-cost internal engine. Google / Anthropic platform grade.</p>
         </div>
     </div>
 
     {% if is_authenticated %}
-    <!-- Top Navigation Header -->
-    <header class="card-surface sticky top-0 z-40 border-b border-white/10 px-6 py-4">
+    <!-- Top Executive Header -->
+    <header class="card-surface sticky top-0 z-40 border-b border-white/10 px-6 py-3.5">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-xl">
-                    🌰
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-xl text-amber-400 font-black">
+                    &#127792;
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <span class="font-extrabold text-lg text-white tracking-tight">Almond Jobs</span>
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span> Live Telemetry
-                        </span>
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 hidden sm:inline-flex">
-                            🛡️ Bot Filter Active
-                        </span>
+                        <span class="text-base font-extrabold tracking-tight text-white">Almond Jobs</span>
+                        <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">Executive Suite</span>
                     </div>
-                    <p class="text-xs text-slate-400">Executive Traffic, Engagements & Candidate Sign-ins</p>
+                    <p class="text-xs text-slate-400">Platform Command, Pricing Governance &amp; Candidate Telemetry</p>
                 </div>
             </div>
 
+            <!-- Status Badges & Quick Action Controls -->
             <div class="flex items-center gap-3">
-                <div class="text-right hidden sm:block">
-                    <div class="text-xs text-slate-400">Session Date</div>
-                    <div class="text-xs font-mono font-bold text-amber-300">{{ analytics.today_date }}</div>
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Production Live</span>
                 </div>
-                <a href="/admin?key={{ admin_key }}" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 transition flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    Refresh
-                </a>
-                <a href="/" target="_blank" class="px-3.5 py-2 text-xs font-semibold rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                    View Live Site
-                </a>
-                <a href="/admin?logout=1" class="px-3 py-2 text-xs font-semibold rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 transition">
-                    Lock
+                <button type="button" onclick="window.location.reload()" class="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition" title="Refresh Dashboard">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </button>
+                <a href="/admin?logout=1" class="px-3.5 py-1.5 rounded-xl bg-slate-800/80 hover:bg-rose-500/20 hover:text-rose-300 border border-slate-700 hover:border-rose-500/30 text-xs font-semibold text-slate-400 transition flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Lock Session
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- Main Dashboard Container -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8 flex-1 w-full">
+    <!-- Global Executive Tab Navigation Bar -->
+    <div class="sticky top-[69px] z-30 bg-[#080c14]/90 backdrop-blur-md border-b border-white/5 py-3 px-6">
+        <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
+            <button type="button" onclick="switchAdminTab('overview')" id="tab-btn-overview" class="tab-btn active px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer">
+                <span>&#128202;</span> Overview &amp; KPIs
+            </button>
+            <button type="button" onclick="switchAdminTab('pricing')" id="tab-btn-pricing" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer">
+                <span>&#127991;&#65039;</span> Pricing &amp; Festival Offers
+            </button>
+            <button type="button" onclick="switchAdminTab('candidates')" id="tab-btn-candidates" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer">
+                <span>&#128101;</span> Candidate Directory
+                <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-700 text-slate-300 font-mono">{{ candidates|length }}</span>
+            </button>
+            <button type="button" onclick="switchAdminTab('grants')" id="tab-btn-grants" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer">
+                <span>&#128081;</span> VIP Grants &amp; Access
+            </button>
+            <button type="button" onclick="switchAdminTab('security')" id="tab-btn-security" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer">
+                <span>&#128737;&#65039;</span> Security Shield &amp; Devices
+            </button>
+        </div>
+    </div>
 
-        <!-- Section 1: KPI Metrics Grid -->
-        <section>
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-                <div>
-                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                        Core Telemetry & Engagements
-                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-normal">Real Candidate Traffic</span>
+    <!-- Main Executive Content Area -->
+    <main class="max-w-7xl mx-auto px-6 py-8 flex-1 space-y-8 w-full">
+
+        <!-- ============================================================= -->
+        <!-- TAB 1: OVERVIEW & KPIS -->
+        <!-- ============================================================= -->
+        <div id="panel-overview" class="space-y-6">
+            <!-- Executive Metrics Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div class="card-surface p-5 rounded-2xl space-y-2 border-l-4 border-l-amber-400">
+                    <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                        <span>Total Verified Visitors</span>
+                        <span class="text-amber-400">&#128100;</span>
+                    </div>
+                    <div class="text-3xl font-extrabold text-white tracking-tight">{{ analytics.unique_visitors_total or 0 }}</div>
+                    <p class="text-xs text-slate-400">Unique candidate footprints</p>
+                </div>
+
+                <div class="card-surface p-5 rounded-2xl space-y-2 border-l-4 border-l-emerald-400">
+                    <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                        <span>Genuine Humans</span>
+                        <span class="text-emerald-400">&#10003;</span>
+                    </div>
+                    <div class="text-3xl font-extrabold text-emerald-400 tracking-tight">{{ analytics.human_percentage or 100 }}%</div>
+                    <p class="text-xs text-slate-400">{{ analytics.unique_visitors_genuine or 0 }} genuine candidates filtered</p>
+                </div>
+
+                <div class="card-surface p-5 rounded-2xl space-y-2 border-l-4 border-l-violet-400">
+                    <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                        <span>Registered Candidates</span>
+                        <span class="text-violet-400">&#128196;</span>
+                    </div>
+                    <div class="text-3xl font-extrabold text-white tracking-tight">{{ candidates|length }}</div>
+                    <p class="text-xs text-slate-400">{{ genuine_count }} genuine &bull; {{ dummy_count }} test profiles</p>
+                </div>
+
+                <div class="card-surface p-5 rounded-2xl space-y-2 border-l-4 border-l-amber-500">
+                    <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                        <span>Active VIP Members</span>
+                        <span class="text-amber-400">&#128081;</span>
+                    </div>
+                    <div class="text-3xl font-extrabold text-amber-400 tracking-tight">{{ vip_count }}</div>
+                    <p class="text-xs text-slate-400">Unrestricted ATS Ingestion Access</p>
+                </div>
+            </div>
+
+            <!-- Executive Quick Management Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div onclick="switchAdminTab('pricing')" class="card-surface p-6 rounded-2xl cursor-pointer hover:border-amber-400 transition space-y-3 group">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-2xl text-amber-400 group-hover:scale-110 transition">
+                        &#127991;&#65039;
+                    </div>
+                    <h3 class="text-lg font-bold text-white group-hover:text-amber-400 transition">Pricing &amp; Festival Offers</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">Adjust offer prices and original crossed-out prices for 1m, 3m (30% off), and 6m (35% off) across INR, USD, EUR, GBP. Safe for existing VIP members.</p>
+                    <span class="text-xs font-bold text-amber-400 flex items-center gap-1">Manage Pricing &rarr;</span>
+                </div>
+
+                <div onclick="switchAdminTab('candidates')" class="card-surface p-6 rounded-2xl cursor-pointer hover:border-violet-400 transition space-y-3 group">
+                    <div class="w-12 h-12 rounded-xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-2xl text-violet-400 group-hover:scale-110 transition">
+                        &#128101;
+                    </div>
+                    <h3 class="text-lg font-bold text-white group-hover:text-violet-400 transition">Candidate Directory &amp; Filters</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">Search candidate profiles, filter by Genuine, VIP Active, New Registrations, and Dummy accounts. Export candidate spreadsheets to CSV.</p>
+                    <span class="text-xs font-bold text-violet-400 flex items-center gap-1">View Candidates &rarr;</span>
+                </div>
+
+                <div onclick="switchAdminTab('grants')" class="card-surface p-6 rounded-2xl cursor-pointer hover:border-emerald-400 transition space-y-3 group">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-2xl text-emerald-400 group-hover:scale-110 transition">
+                        &#128081;
+                    </div>
+                    <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition">Instant VIP Grants</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">Pre-approve VIP passes for candidate email addresses with selectable validity (30d, 90d, 180d). Accounts automatically unlock VIP upon sign-in.</p>
+                    <span class="text-xs font-bold text-emerald-400 flex items-center gap-1">Grant Access &rarr;</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 2: PRICING & FESTIVAL OFFERS MANAGER -->
+        <!-- ============================================================= -->
+        <div id="panel-pricing" class="hidden space-y-6">
+            <!-- Pricing Overview Banner -->
+            <div class="card-surface p-6 rounded-2xl space-y-2 border-l-4 border-l-amber-400">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <span>&#127991;&#65039;</span> Dynamic Subscription Pricing &amp; Festival Manager
                     </h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Automated vulnerability scanners and crawler noise separated & filtered</p>
+                    <span class="text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30">Instant Live Sync</span>
                 </div>
-                <span class="text-xs text-slate-500 font-mono">Salted Device Hashing &bull; Zero Cookies Required</span>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Set individual offer prices, original crossed-out prices, and promotional discount badges across all currencies. 
+                    <strong class="text-amber-300">Safety Guarantee:</strong> Updating prices here takes effect immediately on public modals and checkout sessions without restarting the server, and <span class="underline">never alters or truncates</span> existing VIP candidates' validity dates.
+                </p>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <!-- Card 1: Verified Candidate Visits -->
-                <div class="card-surface p-5 rounded-2xl relative overflow-hidden group border-amber-500/20 bg-amber-500/[0.02]">
-                    <div class="text-xs font-medium text-amber-300">Verified Visits</div>
-                    <div class="text-2xl lg:text-3xl font-extrabold text-white mt-2 font-mono">{{ analytics.total_pageviews }}</div>
-                    <div class="text-[11px] text-slate-400 mt-1">Real candidate hits</div>
-                    <div class="absolute -right-2 -bottom-2 text-amber-500/10 text-5xl font-mono select-none pointer-events-none font-bold">#</div>
-                </div>
-
-                <!-- Card 2: Today's Real Visits -->
-                <div class="card-surface p-5 rounded-2xl relative overflow-hidden group border-amber-500/30 bg-amber-500/[0.04]">
-                    <div class="text-xs font-medium text-amber-300 flex items-center justify-between">
-                        <span>Today's Visits</span>
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
-                    </div>
-                    <div class="text-2xl lg:text-3xl font-extrabold text-amber-300 mt-2 font-mono">{{ analytics.today_pageviews }}</div>
-                    <div class="text-[11px] text-amber-200/60 mt-1">Hits logged today</div>
-                </div>
-
-                <!-- Card 3: Unique Candidates -->
-                <div class="card-surface p-5 rounded-2xl relative overflow-hidden group">
-                    <div class="text-xs font-medium text-slate-400">Unique Candidates</div>
-                    <div class="text-2xl lg:text-3xl font-extrabold text-sky-400 mt-2 font-mono">{{ analytics.unique_visitors_total }}</div>
-                    <div class="text-[11px] text-slate-500 mt-1">Distinct candidates</div>
-                </div>
-
-                <!-- Card 4: Security Shield Filtered -->
-                <div class="card-surface p-5 rounded-2xl relative overflow-hidden group border-rose-500/20 bg-rose-500/[0.03]">
-                    <div class="text-xs font-medium text-rose-300 flex items-center justify-between">
-                        <span>Bot Probes Blocked</span>
-                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono">FILTERED</span>
-                    </div>
-                    <div class="text-2xl lg:text-3xl font-extrabold text-rose-400 mt-2 font-mono">{{ analytics.bot_probes_total }}</div>
-                    <div class="text-[11px] text-rose-200/60 mt-1">WP & scanner probes</div>
-                </div>
-
-                <!-- Card 5: Registered Candidates Directory -->
-                <div class="card-surface p-5 rounded-2xl relative overflow-hidden group border-emerald-500/20 bg-emerald-500/[0.03]">
-                    <div class="text-xs font-medium text-emerald-400 flex items-center justify-between">
-                        <span>Registered Users</span>
-                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">SUPABASE</span>
-                    </div>
-                    <div class="text-2xl lg:text-3xl font-extrabold text-emerald-400 mt-2 font-mono">{{ candidates|length }}</div>
-                    <div class="text-[11px] text-emerald-300/60 mt-1">Candidate accounts</div>
-                </div>
-
-                <!-- Card 6: VIP Pro Candidates -->
-                <div class="card-surface p-5 rounded-2xl relative overflow-hidden group border-purple-500/20 bg-purple-500/[0.03]">
-                    <div class="text-xs font-medium text-purple-300">VIP Candidates</div>
-                    <div class="text-2xl lg:text-3xl font-extrabold text-purple-300 mt-2 font-mono">{{ analytics.paid_users }}</div>
-                    <div class="text-[11px] text-purple-200/60 mt-1">Pro subscribers</div>
-                </div>
+            <!-- Toast Alert for Live Save Feedback -->
+            <div id="pricing-save-toast" class="hidden p-4 rounded-xl bg-emerald-950/90 border border-emerald-500 text-emerald-300 text-xs font-bold flex items-center justify-between shadow-lg">
+                <span id="pricing-save-toast-msg">&#10003; Pricing updated successfully!</span>
+                <button type="button" onclick="this.parentElement.classList.add('hidden')" class="text-emerald-400 hover:text-white">&times;</button>
             </div>
-        </section>
 
-        <!-- Section 2: Hardware Device Breakdown & Top Visited Routes -->
-        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Left: Device & Hardware Model Breakdown -->
-            <div class="card-surface p-6 rounded-2xl space-y-5">
-                <div class="flex items-center justify-between border-b border-white/5 pb-3">
-                    <h3 class="font-bold text-sm text-white flex items-center gap-2">
-                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                        Device & Hardware Breakdown
-                    </h3>
-                    <span class="text-xs text-slate-400">Mobile & Desktop</span>
-                </div>
+            <!-- Tier Cards Grid (1m, 3m, 6m) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                <div class="space-y-4">
-                    {% set total_devices = analytics.desktop_views + analytics.mobile_views %}
-                    {% set desktop_pct = (analytics.desktop_views / total_devices * 100)|round|int if total_devices > 0 else 50 %}
-                    {% set mobile_pct = 100 - desktop_pct if total_devices > 0 else 50 %}
-
-                    <div class="w-full bg-slate-800 rounded-full h-3.5 flex overflow-hidden p-0.5 border border-white/10">
-                        <div class="bg-amber-400 h-full rounded-full transition-all duration-500" style="width: {{ desktop_pct }}%"></div>
-                        <div class="bg-sky-400 h-full rounded-full transition-all duration-500" style="width: {{ mobile_pct }}%"></div>
+                <!-- 1-MONTH VIP PASS -->
+                <div class="card-surface p-6 rounded-2xl space-y-5 border border-slate-700/80">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Duration: 30 Days</span>
+                            <h3 class="text-lg font-extrabold text-white">1-Month VIP Pass</h3>
+                        </div>
+                        <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Standard Tier</span>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3 pt-1">
-                        <div class="p-3 rounded-xl bg-slate-900/60 border border-white/5">
-                            <div class="flex items-center gap-2 text-xs font-semibold text-amber-400">
-                                <span class="w-2 h-2 rounded-full bg-amber-400"></span> Desktop / Laptop
-                            </div>
-                            <div class="text-lg font-mono font-bold text-white mt-1">{{ analytics.desktop_views }} <span class="text-xs text-slate-400">({{ desktop_pct }}%)</span></div>
-                        </div>
-
-                        <div class="p-3 rounded-xl bg-slate-900/60 border border-white/5">
-                            <div class="flex items-center gap-2 text-xs font-semibold text-sky-400">
-                                <span class="w-2 h-2 rounded-full bg-sky-400"></span> Mobile & Tablet
-                            </div>
-                            <div class="text-lg font-mono font-bold text-white mt-1">{{ analytics.mobile_views }} <span class="text-xs text-slate-400">({{ mobile_pct }}%)</span></div>
-                        </div>
-                    </div>
-
-                    <!-- Detected Hardware Models List -->
-                    <div class="pt-2">
-                        <div class="text-xs font-semibold text-slate-300 mb-2 flex items-center justify-between">
-                            <span>Detected Hardware Models</span>
-                            <span class="text-[10px] text-amber-400 font-mono">Live Hardware Feed</span>
-                        </div>
-                        <div class="space-y-2">
-                            {% for dev in analytics.hardware_devices %}
-                            <div class="p-2.5 rounded-xl bg-slate-900/70 border border-white/5 flex items-center justify-between text-xs hover:border-amber-400/30 transition">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-amber-400 font-mono text-sm">
-                                        {% if 'poco' in dev.model.lower() or 'xiaomi' in dev.model.lower() or 'samsung' in dev.model.lower() or 'pixel' in dev.model.lower() or 'iphone' in dev.model.lower() or 'android' in dev.model.lower() %}📱{% else %}💻{% endif %}
-                                    </span>
-                                    <div>
-                                        <div class="font-medium text-white">{{ dev.model }}</div>
-                                        <div class="text-[10px] text-slate-400">{{ dev.brand }}</div>
-                                    </div>
+                    <div class="space-y-4 text-xs">
+                        <!-- INR -->
+                        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                            <span class="font-bold text-amber-400 block">&#8377; Indian Rupee (INR)</span>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-1">Offer Price (&#8377;)</label>
+                                    <input type="number" id="price_1m_inr" value="{{ pricing_tiers['1m'].inr_price if pricing_tiers else 699 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
                                 </div>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                                    {{ dev.hits }} hits
-                                </span>
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-1">Original Price (&#8377;)</label>
+                                    <input type="number" id="orig_1m_inr" value="{{ pricing_tiers['1m'].inr_original if pricing_tiers else 699 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
+                                </div>
                             </div>
-                            {% else %}
-                            <div class="p-3 rounded-xl bg-slate-900/50 border border-white/5 text-xs text-slate-400 text-center">
-                                Detailed hardware models populate as candidates browse & sign in.
+                        </div>
+
+                        <!-- USD -->
+                        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                            <span class="font-bold text-emerald-400 block">$ US Dollar (USD)</span>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-1">Offer Price ($)</label>
+                                    <input type="number" step="0.01" id="price_1m_usd" value="{{ pricing_tiers['1m'].usd_price if pricing_tiers else 9.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-1">Original Price ($)</label>
+                                    <input type="number" step="0.01" id="orig_1m_usd" value="{{ pricing_tiers['1m'].usd_original if pricing_tiers else 9.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
+                                </div>
                             </div>
-                            {% endfor %}
+                        </div>
+
+                        <!-- EUR & GBP -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">&euro; EUR Offer</label>
+                                <input type="number" step="0.01" id="price_1m_eur" value="{{ pricing_tiers['1m'].eur_price if pricing_tiers else 9.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
+                                <input type="hidden" id="orig_1m_eur" value="{{ pricing_tiers['1m'].eur_original if pricing_tiers else 9.99 }}">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">&pound; GBP Offer</label>
+                                <input type="number" step="0.01" id="price_1m_gbp" value="{{ pricing_tiers['1m'].gbp_price if pricing_tiers else 9.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
+                                <input type="hidden" id="orig_1m_gbp" value="{{ pricing_tiers['1m'].gbp_original if pricing_tiers else 9.99 }}">
+                            </div>
+                        </div>
+
+                        <!-- Promotional Badging -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Discount % (Optional)</label>
+                                <input type="number" id="disc_1m_pct" value="{{ pricing_tiers['1m'].discount_pct if pricing_tiers else 0 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-xs focus:border-amber-400 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Badge Text</label>
+                                <input type="text" id="badge_1m_text" value="{{ pricing_tiers['1m'].badge_text if pricing_tiers else 'Standard VIP' }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-amber-400 focus:outline-none">
+                            </div>
                         </div>
                     </div>
 
-                    <div class="p-3 rounded-xl bg-amber-500/[0.04] border border-amber-500/20 text-xs text-slate-300">
-                        💡 <strong class="text-amber-300">Hardware Detection:</strong> Detects Poco M2 Pro, Samsung Galaxy A/S series, iPhones, and Windows 11/Mac desktop environments automatically.
-                    </div>
-                </div>
-            </div>
-
-            <!-- Middle: Top Visited Routes with Security Shield Probes Switcher -->
-            <div class="card-surface p-6 rounded-2xl space-y-4 lg:col-span-2">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3">
-                    <div>
-                        <h3 class="font-bold text-sm text-white flex items-center gap-2">
-                            <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                            Top Visited Routes & Career Landing Pages
-                        </h3>
-                        <span class="text-xs text-slate-400">Audit candidate intent vs security probe noise</span>
-                    </div>
-
-                    <!-- Interactive Route Tabs -->
-                    <div class="flex items-center gap-2">
-                        <button type="button" id="tab-btn-verified" onclick="switchRouteTab('verified')" 
-                                class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 transition">
-                            Verified Candidate Routes
-                        </button>
-                        <button type="button" id="tab-btn-probes" onclick="switchRouteTab('probes')" 
-                                class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 border border-white/5 hover:text-white transition flex items-center gap-1.5">
-                            <span>Security Probes Blocked</span>
-                            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-500/20 text-rose-300 font-mono">{{ analytics.bot_probes_total }}</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Table 1: Verified Candidate Routes -->
-                <div id="table-verified-routes" class="overflow-x-auto">
-                    <table class="w-full text-left text-xs">
-                        <thead>
-                            <tr class="text-slate-400 border-b border-white/5 font-semibold">
-                                <th class="pb-2.5">Candidate Route / URL</th>
-                                <th class="pb-2.5 text-right">Candidate Hits</th>
-                                <th class="pb-2.5 text-right">Unique Candidates</th>
-                                <th class="pb-2.5 text-right">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-white/5">
-                            {% for page in analytics.top_pages %}
-                            <tr class="hover:bg-white/[0.02] transition">
-                                <td class="py-2.5 font-mono text-amber-300 font-medium">
-                                    <a href="{{ page.path }}" target="_blank" class="hover:underline flex items-center gap-1.5">
-                                        {{ page.path }}
-                                        <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                                    </a>
-                                </td>
-                                <td class="py-2.5 text-right font-mono font-bold text-white">{{ page.hits }}</td>
-                                <td class="py-2.5 text-right font-mono text-slate-300">{{ page.uniques }}</td>
-                                <td class="py-2.5 text-right">
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Verified Real</span>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="4" class="py-4 text-center text-slate-500">No candidate pages recorded yet. Visits will populate in real time!</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Table 2: Filtered Scanner Probes (Initially Hidden) -->
-                <div id="table-probes-routes" class="overflow-x-auto hidden">
-                    <table class="w-full text-left text-xs">
-                        <thead>
-                            <tr class="text-slate-400 border-b border-white/5 font-semibold">
-                                <th class="pb-2.5">Vulnerability Probe Target</th>
-                                <th class="pb-2.5 text-right">Probe Hits</th>
-                                <th class="pb-2.5 text-right">Distinct Scanners</th>
-                                <th class="pb-2.5 text-right">Shield Protection</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-white/5">
-                            {% for probe in analytics.top_blocked_probes %}
-                            <tr class="hover:bg-white/[0.02] transition">
-                                <td class="py-2.5 font-mono text-rose-300 font-medium">
-                                    {{ probe.path }}
-                                </td>
-                                <td class="py-2.5 text-right font-mono font-bold text-rose-400">{{ probe.hits }}</td>
-                                <td class="py-2.5 text-right font-mono text-slate-400">{{ probe.uniques }}</td>
-                                <td class="py-2.5 text-right">
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/20">Filtered Noise</span>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="4" class="py-4 text-center text-slate-500">No scanner probes logged. Your firewall is clean!</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- Section 3: Registered Candidate Directory (Who Logged In) -->
-        <section class="card-surface p-6 rounded-2xl space-y-5">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h2 class="text-lg font-bold text-white tracking-tight">Registered Candidates Directory</h2>
-                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono">
-                            {{ candidates|length }} Accounts
-                        </span>
-                    </div>
-                    <p class="text-xs text-slate-400 mt-1">Real-time candidate log: Accounts registered via Google OAuth or Verified OTP with exact hardware device</p>
-                </div>
-
-                <div class="flex items-center gap-3">
-                    <div class="relative">
-                        <input type="text" id="candidate-search" placeholder="Search by email, name, device, plan..." 
-                               class="px-3.5 py-2 pl-9 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-400 w-64 sm:w-72 font-sans">
-                        <svg class="w-4 h-4 text-slate-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </div>
-
-                    <a href="/api/admin/export-users?key={{ admin_key }}" download="almond_candidates_export.csv" 
-                       class="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-bold text-xs rounded-xl hover:from-amber-300 hover:to-amber-400 transition flex items-center gap-1.5 shadow-md shadow-amber-500/10">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        Download CSV Export
-                    </a>
-                </div>
-            </div>
-
-            <!-- Executive VIP Quick Grant Card -->
-            <div class="card-surface p-4 rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-purple-500/5 to-amber-500/10 flex flex-col md:flex-row items-center justify-between gap-4">
-                <div class="flex items-center gap-3 w-full md:w-auto">
-                    <div class="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-black text-xl shadow-md shrink-0">
-                        👑
-                    </div>
-                    <div>
-                        <div class="text-xs font-bold text-white flex items-center gap-2">
-                            <span>Grant 1-Month VIP Access to Email</span>
-                            <span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30 uppercase">Instant Activation</span>
-                        </div>
-                        <p class="text-[11px] text-slate-400 mt-0.5">Enter candidate email. When they sign in, they immediately receive full 1-Month VIP access (crown, gold dial, unblurred feeds &amp; direct links).</p>
-                    </div>
-                </div>
-
-                <form id="admin-grant-form" onsubmit="handleAdminGrantSubmit(event)" class="flex items-center gap-2 w-full md:w-auto">
-                    <input type="email" id="admin-grant-email" placeholder="candidate@example.com" required
-                           class="px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-400 w-full sm:w-64 font-mono">
-                    <button type="submit" id="admin-grant-btn"
-                            class="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition whitespace-nowrap cursor-pointer flex items-center gap-1.5 shrink-0">
-                        <span>Grant 1-Month VIP</span>
+                    <button type="button" onclick="saveTierPricing('1m')" id="save-btn-1m" class="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white transition flex items-center justify-center gap-2 cursor-pointer">
+                        <span>Save 1-Month Pricing</span>
                     </button>
-                </form>
-            </div>
+                </div>
 
-            <!-- Smart Multi-Filter Bar: Real vs Dummy, Recency, VIP Tier, Providers -->
-            <div class="space-y-3 bg-slate-900/40 p-4 rounded-xl border border-white/5">
-                <!-- Quick Filter Pills Row -->
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-1">Quick Filters:</span>
-                    <button type="button" onclick="setQuickFilter('all')" id="pill-all" class="filter-pill active px-3 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950 shadow-xs cursor-pointer transition">
+                <!-- 3-MONTH CAREER SPRINT -->
+                <div class="card-surface p-6 rounded-2xl space-y-5 border-2 border-amber-500/70 shadow-lg shadow-amber-950/20">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">Duration: 90 Days</span>
+                            <h3 class="text-lg font-extrabold text-white">3-Month Career Sprint</h3>
+                        </div>
+                        <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">Popular Tier</span>
+                    </div>
+
+                    <div class="space-y-4 text-xs">
+                        <!-- INR -->
+                        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                            <span class="font-bold text-amber-400 block">&#8377; Indian Rupee (INR)</span>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-1">Offer Price (&#8377;)</label>
+                                    <input type="number" id="price_3m_inr" value="{{ pricing_tiers['3m'].inr_price if pricing_tiers else 1799 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-1">Original Price (&#8377;)</label>
+                                    <input type="number" id="orig_3m_inr" value="{{ pricing_tiers['3m'].inr_original if pricing_tiers else 2599 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- USD -->
+                        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                            <span class="font-bold text-emerald-400 block">$ US Dollar (USD)</span>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-1">Offer Price ($)</label>
+                                    <input type="number" step="0.01" id="price_3m_usd" value="{{ pricing_tiers['3m'].usd_price if pricing_tiers else 24.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-1">Original Price ($)</label>
+                                    <input type="number" step="0.01" id="orig_3m_usd" value="{{ pricing_tiers['3m'].usd_original if pricing_tiers else 34.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- EUR & GBP -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">&euro; EUR Offer</label>
+                                <input type="number" step="0.01" id="price_3m_eur" value="{{ pricing_tiers['3m'].eur_price if pricing_tiers else 24.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
+                                <input type="hidden" id="orig_3m_eur" value="{{ pricing_tiers['3m'].eur_original if pricing_tiers else 34.99 }}">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">&pound; GBP Offer</label>
+                                <input type="number" step="0.01" id="price_3m_gbp" value="{{ pricing_tiers['3m'].gbp_price if pricing_tiers else 24.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
+                                <input type="hidden" id="orig_3m_gbp" value="{{ pricing_tiers['3m'].gbp_original if pricing_tiers else 34.99 }}">
+                            </div>
+                        </div>
+
+                        <!-- Promotional Badging -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Discount % (e.g. 30)</label>
+                                <input type="number" id="disc_3m_pct" value="{{ pricing_tiers['3m'].discount_pct if pricing_tiers else 30 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-xs focus:border-amber-400 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Discount Label</label>
+                                <input type="text" id="disc_3m_label" value="{{ pricing_tiers['3m'].discount_label if pricing_tiers else '30% OFF Limited Offer' }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-amber-400 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="saveTierPricing('3m')" id="save-btn-3m" class="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 transition flex items-center justify-center gap-2 cursor-pointer shadow-md">
+                        <span>Save 3-Month Pricing</span>
+                    </button>
+                </div>
+
+                <!-- 6-MONTH CAREER DOMINANCE -->
+                <div class="card-surface p-6 rounded-2xl space-y-5 border border-violet-500/50 shadow-lg shadow-violet-950/20">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] font-black uppercase tracking-wider text-violet-400">Duration: 180 Days</span>
+                            <h3 class="text-lg font-extrabold text-white">6-Month Dominance</h3>
+                        </div>
+                        <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/40">Best Value Tier</span>
+                    </div>
+
+                    <div class="space-y-4 text-xs">
+                        <!-- INR -->
+                        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                            <span class="font-bold text-violet-400 block">&#8377; Indian Rupee (INR)</span>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-1">Offer Price (&#8377;)</label>
+                                    <input type="number" id="price_6m_inr" value="{{ pricing_tiers['6m'].inr_price if pricing_tiers else 2799 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-violet-400 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-1">Original Price (&#8377;)</label>
+                                    <input type="number" id="orig_6m_inr" value="{{ pricing_tiers['6m'].inr_original if pricing_tiers else 4299 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-violet-400 focus:outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- USD -->
+                        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                            <span class="font-bold text-emerald-400 block">$ US Dollar (USD)</span>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-1">Offer Price ($)</label>
+                                    <input type="number" step="0.01" id="price_6m_usd" value="{{ pricing_tiers['6m'].usd_price if pricing_tiers else 38.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-violet-400 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-1">Original Price ($)</label>
+                                    <input type="number" step="0.01" id="orig_6m_usd" value="{{ pricing_tiers['6m'].usd_original if pricing_tiers else 59.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-violet-400 focus:outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- EUR & GBP -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">&euro; EUR Offer</label>
+                                <input type="number" step="0.01" id="price_6m_eur" value="{{ pricing_tiers['6m'].eur_price if pricing_tiers else 38.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-violet-400 focus:outline-none">
+                                <input type="hidden" id="orig_6m_eur" value="{{ pricing_tiers['6m'].eur_original if pricing_tiers else 59.99 }}">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">&pound; GBP Offer</label>
+                                <input type="number" step="0.01" id="price_6m_gbp" value="{{ pricing_tiers['6m'].gbp_price if pricing_tiers else 38.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-violet-400 focus:outline-none">
+                                <input type="hidden" id="orig_6m_gbp" value="{{ pricing_tiers['6m'].gbp_original if pricing_tiers else 59.99 }}">
+                            </div>
+                        </div>
+
+                        <!-- Promotional Badging -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Discount % (e.g. 35)</label>
+                                <input type="number" id="disc_6m_pct" value="{{ pricing_tiers['6m'].discount_pct if pricing_tiers else 35 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-xs focus:border-violet-400 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-400 block mb-1">Discount Label</label>
+                                <input type="text" id="disc_6m_label" value="{{ pricing_tiers['6m'].discount_label if pricing_tiers else '35% OFF Limited Offer' }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-violet-400 focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="saveTierPricing('6m')" id="save-btn-6m" class="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white transition flex items-center justify-center gap-2 cursor-pointer shadow-md">
+                        <span>Save 6-Month Pricing</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 3: CANDIDATE DIRECTORY & FILTERS -->
+        <!-- ============================================================= -->
+        <div id="panel-candidates" class="hidden space-y-6">
+            <div class="card-surface p-6 rounded-2xl space-y-5">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <span>&#128101;</span> Registered Candidate Directory
+                        </h2>
+                        <p class="text-xs text-slate-400">Total accounts: {{ candidates|length }} candidates</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <a href="/api/admin/export-users" target="_blank" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 text-xs font-bold transition flex items-center gap-2">
+                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Export CSV
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Instant Search Bar -->
+                <div class="relative">
+                    <input type="text" id="candidate-search" placeholder="Search by candidate name, email, device model, or plan..."
+                           class="w-full px-4 py-3 pl-10 bg-slate-900/90 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
+                    <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+
+                <!-- Quick Filter Pills -->
+                <div class="flex items-center gap-2 flex-wrap text-xs">
+                    <button type="button" onclick="setQuickFilter('all')" id="pill-all" class="filter-pill active px-3 py-1.5 rounded-lg cursor-pointer">
                         All (<span id="count-all">{{ candidates|length }}</span>)
                     </button>
-                    <button type="button" onclick="setQuickFilter('genuine')" id="pill-genuine" class="filter-pill px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white border border-white/5 cursor-pointer transition">
-                        ✨ Genuine Real (<span id="count-genuine">{{ genuine_count }}</span>)
+                    <button type="button" onclick="setQuickFilter('genuine')" id="pill-genuine" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer">
+                        Genuine Candidates (<span id="count-genuine">{{ genuine_count }}</span>)
                     </button>
-                    <button type="button" onclick="setQuickFilter('new')" id="pill-new" class="filter-pill px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white border border-white/5 cursor-pointer transition">
-                        ⚡ Newly Added (24h) (<span id="count-new">{{ new_count }}</span>)
+                    <button type="button" onclick="setQuickFilter('vip')" id="pill-vip" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer">
+                        VIP Active (<span id="count-vip">{{ vip_count }}</span>)
                     </button>
-                    <button type="button" onclick="setQuickFilter('vip')" id="pill-vip" class="filter-pill px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white border border-white/5 cursor-pointer transition">
-                        ⭐ Active VIP (<span id="count-vip">{{ vip_count }}</span>)
+                    <button type="button" onclick="setQuickFilter('new')" id="pill-new" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer">
+                        New Registrations (<span id="count-new">{{ new_count }}</span>)
                     </button>
-                    <button type="button" onclick="setQuickFilter('dummy')" id="pill-dummy" class="filter-pill px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white border border-white/5 cursor-pointer transition">
-                        🧪 Test / Dummy (<span id="count-dummy">{{ dummy_count }}</span>)
+                    <button type="button" onclick="setQuickFilter('dummy')" id="pill-dummy" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer">
+                        Test / Dummy (<span id="count-dummy">{{ dummy_count }}</span>)
                     </button>
                 </div>
 
-                <!-- Fine-Grained Dropdowns Row -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 pt-1">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Account Classification</label>
-                        <select id="filter-type" onchange="applyFilters()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-400">
-                            <option value="all">All Accounts (Real &amp; Test)</option>
-                            <option value="genuine">Genuine Candidates (Hide Dummy)</option>
-                            <option value="dummy">Dummy / Test Accounts Only</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Registration Date</label>
-                        <select id="filter-recency" onchange="applyFilters()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-400">
-                            <option value="all">All Time</option>
-                            <option value="24h">Newly Added (Last 24 Hours)</option>
-                            <option value="7d">Last 7 Days</option>
-                            <option value="30d">Last 30 Days</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Membership Status</label>
-                        <select id="filter-vip" onchange="applyFilters()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-400">
-                            <option value="all">All Tiers</option>
-                            <option value="vip">VIP Active Only</option>
-                            <option value="free">Standard Free Only</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Sign-In Method</label>
-                        <select id="filter-provider" onchange="applyFilters()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-400">
-                            <option value="all">All Providers</option>
-                            <option value="google">Google OAuth</option>
-                            <option value="email">Email OTP</option>
-                            <option value="pre_approved">Pre-Approved</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Status & Active Results Counter -->
-                <div class="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-white/5">
-                    <div>
-                        Showing <strong class="text-amber-300 font-mono" id="showing-count">{{ candidates|length }}</strong> of <span class="font-mono">{{ candidates|length }}</span> accounts
-                    </div>
-                    <button type="button" onclick="resetFilters()" class="text-[11px] text-slate-400 hover:text-amber-300 underline cursor-pointer">
-                        Reset All Filters
-                    </button>
+                <!-- Candidates Table -->
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
+                                <th class="py-3 px-3">Candidate</th>
+                                <th class="py-3 px-3">Classification</th>
+                                <th class="py-3 px-3">Device / Hardware</th>
+                                <th class="py-3 px-3">Membership Tier</th>
+                                <th class="py-3 px-3">VIP Expiration</th>
+                                <th class="py-3 px-3">Registered At</th>
+                                <th class="py-3 px-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="candidates-table-body" class="divide-y divide-slate-800/60 font-mono">
+                            {% for c in candidates %}
+                            <tr class="candidate-row hover:bg-slate-800/40 transition" 
+                                data-name="{{ c.full_name|lower }}" 
+                                data-email="{{ c.email|lower }}" 
+                                data-device="{{ c.device_display|lower }}" 
+                                data-is-dummy="{{ 'true' if c.is_dummy else 'false' }}"
+                                data-is-vip="{{ 'true' if c.is_paid else 'false' }}"
+                                data-is-new="{{ 'true' if c.is_new else 'false' }}"
+                                data-created-ts="{{ c.created_at }}">
+                                <td class="py-3 px-3 font-sans">
+                                    <div class="font-bold text-white text-sm">{{ c.full_name or 'Anonymous Candidate' }}</div>
+                                    <div class="text-slate-400 text-xs font-mono">{{ c.email }}</div>
+                                </td>
+                                <td class="py-3 px-3">
+                                    {% if c.is_dummy %}
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">Test / Dummy</span>
+                                    {% else %}
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Genuine</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-3 text-slate-300 font-sans text-xs">
+                                    {{ c.device_display }}
+                                </td>
+                                <td class="py-3 px-3">
+                                    {% if c.is_paid %}
+                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40">VIP ACTIVE</span>
+                                    {% else %}
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] text-slate-400 bg-slate-900 border border-slate-800">Free Tier</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 px-3 text-slate-300">
+                                    {{ c.paid_until_str or 'N/A' }}
+                                </td>
+                                <td class="py-3 px-3 text-slate-400">
+                                    {{ c.created_at_str }}
+                                </td>
+                                <td class="py-3 px-3 text-right">
+                                    {% if c.is_paid %}
+                                    <button type="button" onclick="adminRevokeVip('{{ c.email }}')" class="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[11px] font-bold transition">Revoke</button>
+                                    {% else %}
+                                    <button type="button" onclick="adminGrantVip('{{ c.email }}')" class="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-bold transition">Grant VIP</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
+        </div>
 
-            <!-- Candidate Table -->
-            <div class="overflow-x-auto rounded-xl border border-white/5">
-                <table class="w-full text-left text-xs" id="candidate-table">
-                    <thead>
-                        <tr class="bg-slate-900/90 text-slate-400 font-semibold border-b border-white/10 uppercase tracking-wider text-[11px]">
-                            <th class="py-3 px-4">Candidate</th>
-                            <th class="py-3 px-4">Email Address</th>
-                            <th class="py-3 px-4">Sign-In Method</th>
-                            <th class="py-3 px-4">Device / Hardware Model</th>
-                            <th class="py-3 px-4">Plan / Status</th>
-                            <th class="py-3 px-4">VIP Access</th>
-                            <th class="py-3 px-4 text-right">Joined Date & Time</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-white/5" id="candidate-table-body">
-                        {% for user in candidates %}
-                        <tr class="hover:bg-white/[0.02] transition candidate-row"
-                            id="row-{{ user.email|replace('@', '_')|replace('.', '_') }}"
-                            data-email="{{ user.email|lower }}"
-                            data-name="{{ (user.full_name or '')|lower }}"
-                            data-is-dummy="{{ 'true' if user.is_dummy else 'false' }}"
-                            data-is-new="{{ 'true' if user.is_new else 'false' }}"
-                            data-is-vip="{{ 'true' if user.is_paid else 'false' }}"
-                            data-provider="{{ user.auth_provider }}"
-                            data-created-ts="{{ user.created_at }}"
-                            data-device="{{ (user.device_display or '')|lower }}">
-                            <td class="py-3 px-4 font-semibold text-white">
-                                <div class="flex items-center gap-2.5">
-                                    <div class="w-7 h-7 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center font-bold text-amber-300 text-xs uppercase shrink-0">
-                                        {{ user.full_name[:1] if user.full_name else 'C' }}
-                                    </div>
-                                    <div>
-                                        <div class="flex items-center gap-1.5 flex-wrap">
-                                            <span class="candidate-name">{{ user.full_name }}</span>
-                                            {% if user.is_dummy %}
-                                            <span class="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700">TEST</span>
-                                            {% endif %}
-                                            {% if user.is_new %}
-                                            <span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">NEW</span>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="py-3 px-4 font-mono text-slate-200 candidate-email font-medium">
-                                <a href="mailto:{{ user.email }}" class="hover:text-amber-300 transition flex items-center gap-1.5">
-                                    {{ user.email }}
-                                </a>
-                            </td>
-                            <td class="py-3 px-4 candidate-provider">
-                                {% if user.auth_provider == 'google' or 'google' in user.email %}
-                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/20">
-                                    <svg class="w-3 h-3" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
-                                    Google OAuth
-                                </span>
-                                {% elif user.auth_provider == 'pre_approved' %}
-                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                                    👑 Pre-Approved
-                                </span>
-                                {% else %}
-                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-500/10 text-sky-300 border border-sky-500/20">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                                    Email OTP
-                                </span>
-                                {% endif %}
-                            </td>
-                            <td class="py-3 px-4 candidate-device">
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-900 border border-white/10 text-slate-200 font-mono">
-                                    {{ user.device_display }}
-                                </span>
-                            </td>
-                            <td class="py-3 px-4 candidate-plan">
-                                <span class="font-mono text-slate-300 uppercase text-[11px] font-semibold">
-                                    {{ user.plan }}
-                                </span>
-                            </td>
-                            <td class="py-3 px-4" id="vip-cell-{{ user.email|replace('@', '_')|replace('.', '_') }}">
-                                {% if user.is_paid %}
-                                <div class="flex items-center gap-2">
-                                    <div>
-                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                                            ⭐ VIP ACTIVE
-                                        </span>
-                                        {% if user.paid_until_str %}
-                                        <div class="text-[9.5px] text-slate-400 font-mono mt-0.5">Exp: {{ user.paid_until_str }} ({{ user.days_remaining }}d)</div>
-                                        {% endif %}
-                                    </div>
-                                    <button type="button" onclick="adminRevokeVip('{{ user.email }}')" title="Revoke VIP Access"
-                                            class="px-2 py-1 bg-rose-500/10 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-[10px] font-bold rounded cursor-pointer transition">
-                                        Revoke
-                                    </button>
-                                </div>
-                                {% else %}
-                                <div class="flex items-center gap-2">
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400">
-                                        Standard Free
-                                    </span>
-                                    <button type="button" onclick="adminGrantVip('{{ user.email }}')" title="Grant 1-Month VIP"
-                                            class="px-2 py-1 bg-amber-500/15 hover:bg-amber-500/30 border border-amber-500/30 text-amber-300 text-[10px] font-black rounded cursor-pointer transition flex items-center gap-1">
-                                        👑 Grant VIP
-                                    </button>
-                                </div>
-                                {% endif %}
-                            </td>
-                            <td class="py-3 px-4 text-right font-mono text-slate-400 text-[11px]">
-                                {{ user.created_at_str }}
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="7" class="py-8 text-center text-slate-500">No candidates registered yet.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <!-- ============================================================= -->
+        <!-- TAB 4: VIP GRANTS & ACCESS GOVERNANCE -->
+        <!-- ============================================================= -->
+        <div id="panel-grants" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Instant Grant Form Card -->
+                <div class="card-surface p-6 rounded-2xl space-y-4 border border-amber-500/30">
+                    <div class="flex items-center gap-2 text-amber-400">
+                        <span class="text-2xl">&#128081;</span>
+                        <h2 class="text-lg font-bold text-white">Instant VIP Pass Grant</h2>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Enter any candidate email to instantly grant or extend VIP Pass access. If the candidate hasn't registered yet, a pre-approved VIP record will be created and automatically attached upon their first login.
+                    </p>
+
+                    <form id="admin-grant-form" onsubmit="handleAdminGrantSubmit(event)" class="space-y-3 pt-2">
+                        <div>
+                            <label for="admin-grant-email" class="block text-xs font-semibold text-slate-300 mb-1">Candidate Email Address</label>
+                            <input type="email" id="admin-grant-email" placeholder="candidate@example.com" required 
+                                   class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs font-mono focus:border-amber-400 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label for="admin-grant-duration" class="block text-xs font-semibold text-slate-300 mb-1">Pass Duration</label>
+                            <select id="admin-grant-duration" class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs font-medium focus:border-amber-400 focus:outline-none">
+                                <option value="30">30 Days (1-Month VIP Pass)</option>
+                                <option value="90">90 Days (3-Month Career Sprint)</option>
+                                <option value="180">180 Days (6-Month Career Dominance)</option>
+                                <option value="1">24 Hours (Day Sprint)</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" id="admin-grant-btn" class="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 hover:from-amber-300 hover:to-amber-400 transition flex items-center justify-center gap-2 cursor-pointer shadow-md">
+                            <span>Grant VIP Access Immediately</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- VIP Access Rules & FAQ Card -->
+                <div class="card-surface p-6 rounded-2xl space-y-4">
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <span>&#128161;</span> VIP Governance Architecture
+                    </h3>
+                    <ul class="space-y-3 text-xs text-slate-300 leading-relaxed">
+                        <li class="flex items-start gap-2">
+                            <span class="text-emerald-400 font-bold">&#10003;</span>
+                            <span><strong>Zero Rekeying Surprises:</strong> Admin grants persist across logins via local SQLite and Supabase synchronizations.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-emerald-400 font-bold">&#10003;</span>
+                            <span><strong>Strict Timestamp Expirations:</strong> Access is controlled by absolute UNIX timestamps (<code class="text-amber-300">paid_until</code>). Once elapsed, accounts automatically revert to standard tier without manual revocation.</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-emerald-400 font-bold">&#10003;</span>
+                            <span><strong>Instant Revocation:</strong> Revoking access instantly downgrades the member and locks latest corporate links in all active client sessions.</span>
+                        </li>
+                    </ul>
+                </div>
             </div>
-        </section>
+        </div>
 
-        <!-- Section 4: External 100% Free Monitoring Ecosystem Hub -->
-        <section class="card-surface p-6 rounded-2xl space-y-5 border-amber-500/20">
-            <div>
-                <h3 class="text-sm font-bold uppercase tracking-wider text-amber-300 flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    External 100% Free Analytics Ecosystem (Already Configured)
+        <!-- ============================================================= -->
+        <!-- TAB 5: SECURITY SHIELD & HARDWARE ANALYTICS -->
+        <!-- ============================================================= -->
+        <div id="panel-security" class="hidden space-y-6">
+            <!-- Hardware & Device Breakdown -->
+            <div class="card-surface p-6 rounded-2xl space-y-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <span>&#128241;</span> Candidate Device &amp; Hardware Telemetry
                 </h3>
-                <p class="text-xs text-slate-400 mt-1">Jump directly to your official Google & Microsoft webmaster hubs</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <!-- Tool 1: Google Search Console -->
-                <div class="p-5 rounded-xl bg-slate-900/80 border border-white/10 hover:border-amber-400/40 transition space-y-3 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <span class="font-bold text-white text-sm">Google Search Console</span>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">VERIFIED</span>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
+                        <span class="font-bold text-slate-400 uppercase tracking-wider block">Top Hardware Brands</span>
+                        <div class="space-y-1">
+                            {% for brand, count in analytics.hardware_brands.items() %}
+                            <div class="flex items-center justify-between py-1 border-b border-slate-800">
+                                <span class="text-white">{{ brand }}</span>
+                                <span class="font-mono text-amber-400 font-bold">{{ count }}</span>
+                            </div>
+                            {% endfor %}
                         </div>
-                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-                            Tracks organic Google search queries, impressions, click-through rates (CTR), and Google indexation health for almondjobs.com.
-                        </p>
                     </div>
-                    <a href="https://search.google.com/search-console" target="_blank" 
-                       class="w-full py-2 px-3 text-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-white/10 transition flex items-center justify-center gap-1.5">
-                        Open Google Console
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                    </a>
-                </div>
-
-                <!-- Tool 2: Microsoft Bing Webmaster Tools -->
-                <div class="p-5 rounded-xl bg-slate-900/80 border border-white/10 hover:border-amber-400/40 transition space-y-3 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <span class="font-bold text-white text-sm">Bing Webmaster Tools</span>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">VERIFIED</span>
+                    <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
+                        <span class="font-bold text-slate-400 uppercase tracking-wider block">Popular Device Models</span>
+                        <div class="space-y-1">
+                            {% for model, count in analytics.hardware_models.items() %}
+                            <div class="flex items-center justify-between py-1 border-b border-slate-800">
+                                <span class="text-white">{{ model }}</span>
+                                <span class="font-mono text-emerald-400 font-bold">{{ count }}</span>
+                            </div>
+                            {% endfor %}
                         </div>
-                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-                            Monitors Bing, Yahoo, and Microsoft Copilot AI search bot indexing and crawl frequency for all 3.3M+ sitemap links.
-                        </p>
                     </div>
-                    <a href="https://www.bing.com/webmasters" target="_blank" 
-                       class="w-full py-2 px-3 text-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-white/10 transition flex items-center justify-center gap-1.5">
-                        Open Bing Webmaster
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                    </a>
-                </div>
-
-                <!-- Tool 3: Render Server Metrics -->
-                <div class="p-5 rounded-xl bg-slate-900/80 border border-white/10 hover:border-amber-400/40 transition space-y-3 flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <span class="font-bold text-white text-sm">Render Server Metrics</span>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">HOSTING</span>
-                        </div>
-                        <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-                            Real-time HTTP requests per second, bandwidth egress, CPU/memory performance, and server status codes.
-                        </p>
-                    </div>
-                    <a href="https://dashboard.render.com" target="_blank" 
-                       class="w-full py-2 px-3 text-center rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-white/10 transition flex items-center justify-center gap-1.5">
-                        Open Render Metrics
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                    </a>
                 </div>
             </div>
-        </section>
+
+            <!-- Route Intelligence & Security Shield -->
+            <div class="card-surface p-6 rounded-2xl space-y-4">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <span>&#128737;&#65039;</span> Bot Interception &amp; Route Telemetry
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="tab-btn-verified" onclick="switchRouteTab('verified')" class="px-3 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950">Verified Routes</button>
+                        <button type="button" id="tab-btn-probes" onclick="switchRouteTab('probes')" class="px-3 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white bg-slate-800">Blocked Probes</button>
+                    </div>
+                </div>
+
+                <div id="table-verified-routes" class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-xs font-mono">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 font-sans uppercase">
+                                <th class="py-2 px-3">Path</th>
+                                <th class="py-2 px-3 text-right">Hits</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/40">
+                            {% for route in analytics.top_routes %}
+                            <tr>
+                                <td class="py-2 px-3 text-slate-200">{{ route.path }}</td>
+                                <td class="py-2 px-3 text-right text-amber-400 font-bold">{{ route.hits }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="table-probes-routes" class="overflow-x-auto custom-scrollbar hidden">
+                    <table class="w-full text-left text-xs font-mono">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 font-sans uppercase">
+                                <th class="py-2 px-3">Blocked Scanner Path</th>
+                                <th class="py-2 px-3 text-right">Interceptions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/40">
+                            {% for probe in analytics.scanner_probes %}
+                            <tr class="text-rose-400">
+                                <td class="py-2 px-3">{{ probe.path }}</td>
+                                <td class="py-2 px-3 text-right font-bold">{{ probe.hits }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
     </main>
 
-    <!-- Footer -->
-    <footer class="card-surface border-t border-white/10 py-6 px-6 text-center text-xs text-slate-500">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-            <span>&copy; 2026 Almond Jobs Technologies. Internal Executive Telemetry.</span>
-            <span class="font-mono text-[11px] text-slate-400">Security Mode: Bot Shield &bull; Salted Token Hashing &bull; GDPR Compliant</span>
-        </div>
+    <!-- Executive Footer -->
+    <footer class="card-surface border-t border-white/10 px-6 py-4 text-center text-xs text-slate-500">
+        Almond Jobs Executive Suite &bull; Internal High-Performance Engine &bull; Zero Third-Party Tracker Reliance
     </footer>
 
-    <!-- Interactive Scripts for Route Tabs and Instant Search Filter -->
+    <!-- Interactive Dashboard Script -->
     <script>
-        function switchRouteTab(tab) {
-            const tableVerified = document.getElementById('table-verified-routes');
-            const tableProbes = document.getElementById('table-probes-routes');
-            const btnVerified = document.getElementById('tab-btn-verified');
-            const btnProbes = document.getElementById('tab-btn-probes');
+        const ADMIN_KEY = "{{ admin_key }}";
 
-            if (tab === 'verified') {
-                if (tableVerified) tableVerified.classList.remove('hidden');
-                if (tableProbes) tableProbes.classList.add('hidden');
-                if (btnVerified) {
-                    btnVerified.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 transition';
+        // --- TAB SWITCHER CONTROLLER ---
+        window.switchAdminTab = function(tabName) {
+            const tabs = ['overview', 'pricing', 'candidates', 'grants', 'security'];
+            tabs.forEach(function(t) {
+                const btn = document.getElementById('tab-btn-' + t);
+                const panel = document.getElementById('panel-' + t);
+                if (btn) {
+                    if (t === tabName) {
+                        btn.className = 'tab-btn active px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer';
+                    } else {
+                        btn.className = 'tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer';
+                    }
                 }
-                if (btnProbes) {
-                    btnProbes.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 border border-white/5 hover:text-white transition flex items-center gap-1.5';
-                }
-            } else {
-                if (tableVerified) tableVerified.classList.add('hidden');
-                if (tableProbes) tableProbes.classList.remove('hidden');
-                if (btnProbes) {
-                    btnProbes.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40 transition flex items-center gap-1.5';
-                }
-                if (btnVerified) {
-                    btnVerified.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 border border-white/5 hover:text-white transition';
-                }
-            }
-        }
-
-        // --- CANDIDATE DIRECTORY SMART MULTI-FILTER ENGINE ---
-        let currentQuickFilter = 'all';
-
-        function setQuickFilter(mode) {
-            currentQuickFilter = mode;
-            const pills = document.querySelectorAll('.filter-pill');
-            pills.forEach(p => {
-                if (p.id === 'pill-' + mode) {
-                    p.className = 'filter-pill active px-3 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950 shadow-xs cursor-pointer transition';
-                } else {
-                    p.className = 'filter-pill px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white border border-white/5 cursor-pointer transition';
+                if (panel) {
+                    if (t === tabName) {
+                        panel.classList.remove('hidden');
+                    } else {
+                        panel.classList.add('hidden');
+                    }
                 }
             });
+            sessionStorage.setItem('almond_admin_active_tab', tabName);
+        };
 
-            const typeSelect = document.getElementById('filter-type');
-            const recencySelect = document.getElementById('filter-recency');
-            const vipSelect = document.getElementById('filter-vip');
+        // Restore tab on load
+        const savedTab = sessionStorage.getItem('almond_admin_active_tab');
+        if (savedTab && ['overview', 'pricing', 'candidates', 'grants', 'security'].includes(savedTab)) {
+            window.switchAdminTab(savedTab);
+        }
 
-            if (mode === 'genuine') {
-                if (typeSelect) typeSelect.value = 'genuine';
-            } else if (mode === 'dummy') {
-                if (typeSelect) typeSelect.value = 'dummy';
-            } else if (mode === 'new') {
-                if (recencySelect) recencySelect.value = '24h';
-            } else if (mode === 'vip') {
-                if (vipSelect) vipSelect.value = 'vip';
-            } else if (mode === 'all') {
-                if (typeSelect) typeSelect.value = 'all';
-                if (recencySelect) recencySelect.value = 'all';
-                if (vipSelect) vipSelect.value = 'all';
+        // --- PRICING MANAGER AJAX CONTROLLER ---
+        window.saveTierPricing = async function(tierId) {
+            const btn = document.getElementById('save-btn-' + tierId);
+            if (btn) btn.disabled = true;
+
+            const payload = {
+                tier_id: tierId,
+                inr_price: parseInt(document.getElementById('price_' + tierId + '_inr')?.value || 699),
+                inr_original: parseInt(document.getElementById('orig_' + tierId + '_inr')?.value || 699),
+                usd_price: parseFloat(document.getElementById('price_' + tierId + '_usd')?.value || 9.99),
+                usd_original: parseFloat(document.getElementById('orig_' + tierId + '_usd')?.value || 9.99),
+                eur_price: parseFloat(document.getElementById('price_' + tierId + '_eur')?.value || 9.99),
+                eur_original: parseFloat(document.getElementById('orig_' + tierId + '_eur')?.value || 9.99),
+                gbp_price: parseFloat(document.getElementById('price_' + tierId + '_gbp')?.value || 9.99),
+                gbp_original: parseFloat(document.getElementById('orig_' + tierId + '_gbp')?.value || 9.99),
+                discount_pct: parseInt(document.getElementById('disc_' + tierId + '_pct')?.value || 0),
+                discount_label: (document.getElementById('disc_' + tierId + '_label')?.value || '').trim(),
+                badge_text: (document.getElementById('badge_' + tierId + '_text')?.value || '').trim(),
+                key: ADMIN_KEY
+            };
+
+            try {
+                const resp = await fetch('/api/admin/pricing', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-admin-key': ADMIN_KEY
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const res = await resp.json().catch(() => ({}));
+                if (btn) btn.disabled = false;
+
+                if (resp.ok && res.success) {
+                    const toast = document.getElementById('pricing-save-toast');
+                    const toastMsg = document.getElementById('pricing-save-toast-msg');
+                    if (toast && toastMsg) {
+                        toastMsg.textContent = '&#10003; Pricing for ' + tierId.toUpperCase() + ' saved and synchronized live!';
+                        toast.classList.remove('hidden');
+                        setTimeout(() => toast.classList.add('hidden'), 5000);
+                    }
+                } else {
+                    alert('Error saving pricing: ' + (res.detail || res.message || 'Unknown error'));
+                }
+            } catch (err) {
+                if (btn) btn.disabled = false;
+                alert('Network error saving pricing: ' + err.message);
             }
+        };
 
+        // --- CANDIDATE DIRECTORY FILTER CONTROLLER ---
+        let currentFilter = 'all';
+
+        function setQuickFilter(type) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-pill').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById('pill-' + type);
+            if (activeBtn) activeBtn.classList.add('active');
             applyFilters();
         }
 
-        function resetFilters() {
-            currentQuickFilter = 'all';
-            const searchInput = document.getElementById('candidate-search');
-            if (searchInput) searchInput.value = '';
-            const typeSelect = document.getElementById('filter-type');
-            if (typeSelect) typeSelect.value = 'all';
-            const recencySelect = document.getElementById('filter-recency');
-            if (recencySelect) recencySelect.value = 'all';
-            const vipSelect = document.getElementById('filter-vip');
-            if (vipSelect) vipSelect.value = 'all';
-            const providerSelect = document.getElementById('filter-provider');
-            if (providerSelect) providerSelect.value = 'all';
-
-            setQuickFilter('all');
-        }
-
         function applyFilters() {
-            const query = (document.getElementById('candidate-search')?.value || '').toLowerCase().trim();
-            const filterType = document.getElementById('filter-type')?.value || 'all';
-            const filterRecency = document.getElementById('filter-recency')?.value || 'all';
-            const filterVip = document.getElementById('filter-vip')?.value || 'all';
-            const filterProvider = document.getElementById('filter-provider')?.value || 'all';
-
-            const now = Date.now() / 1000;
+            const query = (document.getElementById('candidate-search')?.value || '').trim().toLowerCase();
             const rows = document.querySelectorAll('.candidate-row');
-            let visibleCount = 0;
 
             rows.forEach(row => {
-                const email = row.getAttribute('data-email') || '';
                 const name = row.getAttribute('data-name') || '';
+                const email = row.getAttribute('data-email') || '';
                 const device = row.getAttribute('data-device') || '';
-                const provider = row.getAttribute('data-provider') || '';
                 const isDummy = row.getAttribute('data-is-dummy') === 'true';
-                const isNew = row.getAttribute('data-is-new') === 'true';
                 const isVip = row.getAttribute('data-is-vip') === 'true';
-                const createdTs = parseFloat(row.getAttribute('data-created-ts') || '0');
+                const isNew = row.getAttribute('data-is-new') === 'true';
 
-                // 1. Text Search Check
-                const textMatch = !query || name.includes(query) || email.includes(query) || device.includes(query) || provider.includes(query);
+                const textMatch = !query || name.includes(query) || email.includes(query) || device.includes(query);
 
-                // 2. Account Classification Check
                 let typeMatch = true;
-                if (filterType === 'genuine') typeMatch = !isDummy;
-                else if (filterType === 'dummy') typeMatch = isDummy;
+                if (currentFilter === 'genuine') typeMatch = !isDummy;
+                else if (currentFilter === 'dummy') typeMatch = isDummy;
+                else if (currentFilter === 'vip') typeMatch = isVip;
+                else if (currentFilter === 'new') typeMatch = isNew;
 
-                // 3. Recency Check
-                let recencyMatch = true;
-                if (filterRecency === '24h') {
-                    recencyMatch = (now - createdTs) <= 86400 * 1.5;
-                } else if (filterRecency === '7d') {
-                    recencyMatch = (now - createdTs) <= 7 * 86400;
-                } else if (filterRecency === '30d') {
-                    recencyMatch = (now - createdTs) <= 30 * 86400;
-                }
-
-                // 4. VIP Tier Check
-                let vipMatch = true;
-                if (filterVip === 'vip') vipMatch = isVip;
-                else if (filterVip === 'free') vipMatch = !isVip;
-
-                // 5. Provider Check
-                let providerMatch = true;
-                if (filterProvider !== 'all') {
-                    providerMatch = provider.includes(filterProvider);
-                }
-
-                if (textMatch && typeMatch && recencyMatch && vipMatch && providerMatch) {
+                if (textMatch && typeMatch) {
                     row.style.display = '';
-                    visibleCount++;
                 } else {
                     row.style.display = 'none';
                 }
             });
-
-            const showingEl = document.getElementById('showing-count');
-            if (showingEl) showingEl.textContent = visibleCount;
         }
 
-        const searchInput = document.getElementById('candidate-search');
-        if (searchInput) {
-            searchInput.addEventListener('input', applyFilters);
-        }
+        document.getElementById('candidate-search')?.addEventListener('input', applyFilters);
 
         // --- VIP GRANT & REVOKE AJAX CONTROLLER ---
-        const ADMIN_KEY = "{{ admin_key }}";
-
-        async function apiGrantVip(email, action = 'grant') {
+        async function apiGrantVip(email, action = 'grant', duration = 30) {
             try {
                 const resp = await fetch('/api/admin/grant-vip', {
                     method: 'POST',
@@ -835,7 +881,7 @@
                     body: JSON.stringify({
                         email: email,
                         action: action,
-                        duration_days: 30,
+                        duration_days: duration,
                         key: ADMIN_KEY
                     })
                 });
@@ -851,18 +897,18 @@
             }
         }
 
-        async function adminGrantVip(email) {
-            if (!confirm('Grant 1-Month VIP Pass to ' + email + '?\nTheir account will immediately have 30 days of full VIP access upon sign-in.')) {
+        window.adminGrantVip = async function(email) {
+            if (!confirm('Grant VIP Pass to ' + email + '?\nTheir account will immediately have 30 days of full VIP access upon sign-in.')) {
                 return;
             }
-            const res = await apiGrantVip(email, 'grant');
+            const res = await apiGrantVip(email, 'grant', 30);
             if (res && res.status === 'success') {
                 alert('Success: ' + res.message);
                 window.location.reload();
             }
-        }
+        };
 
-        async function adminRevokeVip(email) {
+        window.adminRevokeVip = async function(email) {
             if (!confirm('Revoke VIP Pass from ' + email + '?\nTheir account will revert to the Standard Free tier.')) {
                 return;
             }
@@ -871,18 +917,20 @@
                 alert('Success: ' + res.message);
                 window.location.reload();
             }
-        }
+        };
 
-        async function handleAdminGrantSubmit(e) {
+        window.handleAdminGrantSubmit = async function(e) {
             e.preventDefault();
             const input = document.getElementById('admin-grant-email');
+            const durationSelect = document.getElementById('admin-grant-duration');
             const email = (input?.value || '').trim();
+            const duration = parseInt(durationSelect?.value || '30');
             if (!email) return;
 
             const btn = document.getElementById('admin-grant-btn');
             if (btn) btn.disabled = true;
 
-            const res = await apiGrantVip(email, 'grant');
+            const res = await apiGrantVip(email, 'grant', duration);
             if (btn) btn.disabled = false;
 
             if (res && res.status === 'success') {
@@ -890,7 +938,26 @@
                 if (input) input.value = '';
                 window.location.reload();
             }
-        }
+        };
+
+        window.switchRouteTab = function(type) {
+            const tableVer = document.getElementById('table-verified-routes');
+            const tableProbe = document.getElementById('table-probes-routes');
+            const btnVer = document.getElementById('tab-btn-verified');
+            const btnProbe = document.getElementById('tab-btn-probes');
+
+            if (type === 'verified') {
+                tableVer?.classList.remove('hidden');
+                tableProbe?.classList.add('hidden');
+                btnVer.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950';
+                btnProbe.className = 'px-3 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white bg-slate-800';
+            } else {
+                tableVer?.classList.add('hidden');
+                tableProbe?.classList.remove('hidden');
+                btnVer.className = 'px-3 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white bg-slate-800';
+                btnProbe.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950';
+            }
+        };
     </script>
     {% endif %}
 
