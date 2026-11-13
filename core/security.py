@@ -95,7 +95,7 @@ rate_limiter = SlidingWindowRateLimiter()
 # =====================================================================
 # Protects worker threads from starvation when bots hit search simultaneously
 CURRENT_SEARCH_WORKERS = 0
-MAX_CONCURRENT_SEARCHES = 4
+MAX_CONCURRENT_SEARCHES = 24
 
 def acquire_search_slot() -> bool:
     global CURRENT_SEARCH_WORKERS

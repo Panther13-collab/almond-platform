@@ -4182,6 +4182,7 @@ window.fetchRecentContributions = async function() {
             const initials = (item.supporter_name || "Supporter").split(" ").map(w => w[0]).join("").toUpperCase().substring(0, 2) || "☕";
             const safeName = (item.supporter_name || "Generous Supporter").replace(/</g, "&lt;").replace(/>/g, "&gt;");
             const safeMsg = (item.supporter_message || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const safeReply = (item.admin_reply || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
             const amt = item.amount_inr || 485;
 
             card.innerHTML = `
@@ -4200,6 +4201,14 @@ window.fetchRecentContributions = async function() {
                     <span class="text-[10px] text-teal-700 font-medium">Verified Supporter</span>
                 </div>
                 ${safeMsg ? `<div class="p-2.5 bg-white rounded-xl border border-teal-100 text-xs text-slate-800 font-medium leading-relaxed">"${safeMsg}"</div>` : ''}
+                ${safeReply ? `
+                <div class="mt-2 p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-xs space-y-1">
+                    <div class="flex items-center gap-1.5 font-bold text-amber-900 text-[11px]">
+                        <span>🌰 Almond Jobs Founder</span>
+                        <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-200 text-amber-900 font-extrabold uppercase">Official Response</span>
+                    </div>
+                    <p class="text-slate-800 font-medium text-[11.5px] leading-relaxed">"${safeReply}"</p>
+                </div>` : ''}
             `;
             const pinned = container.firstElementChild;
             if (pinned && pinned.nextSibling) {

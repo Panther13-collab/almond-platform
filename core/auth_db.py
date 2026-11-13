@@ -169,6 +169,14 @@ def init_db():
             cursor.execute("ALTER TABLE payments ADD COLUMN supporter_message TEXT DEFAULT '';")
         except Exception:
             pass
+        try:
+            cursor.execute("ALTER TABLE payments ADD COLUMN admin_reply TEXT DEFAULT '';")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE payments ADD COLUMN admin_replied_at REAL DEFAULT 0;")
+        except Exception:
+            pass
 
         try:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_traffic_is_bot ON site_traffic (is_bot);")
@@ -283,6 +291,37 @@ def _format_remaining_str(is_paid: bool, paid_until: float, now: float) -> str:
     days = int(diff / 86400)
     return f"{days}d left"
 
+def sync_supabase_vip_metadata(email: str, is_paid: bool, plan: str, paid_until: float, local_user_id: str = ""):
+    """Ensure VIP state is permanently preserved in Supabase Auth across container restarts."""
+    if not supabase_admin:
+        return
+    clean_email = (email or "").strip().lower()
+    if not clean_email:
+        return
+    try:
+        target_uid = None
+        users_list = supabase_admin.auth.admin.list_users()
+        for u in users_list or []:
+            if (getattr(u, "email", "") or "").strip().lower() == clean_email:
+                target_uid = getattr(u, "id", None)
+                break
+        
+        if not target_uid and local_user_id:
+            target_uid = local_user_id
+
+        if target_uid:
+            supabase_admin.auth.admin.update_user_by_id(target_uid, {
+                "user_metadata": {
+                    "is_paid": bool(is_paid),
+                    "plan": plan,
+                    "paid_until": float(paid_until),
+                    "local_user_id": local_user_id
+                }
+            })
+            print(f"[AUTH_DB] Successfully synchronized VIP metadata to Supabase for {clean_email} ({plan}).")
+    except Exception as e:
+        print(f"[AUTH_DB] Supabase VIP sync note: {e}")
+
 def _lookup_supabase_user_meta(user_id: str, email: str = "") -> dict:
     """Best-effort lookup in Supabase Admin so ephemeral SQLite restarts preserve accounts and VIP state."""
     if not supabase_admin:
@@ -303,8 +342,7 @@ def _lookup_supabase_user_meta(user_id: str, email: str = "") -> dict:
                 u_email = (getattr(u, "email", "") or "").strip().lower()
                 if u_email == clean_email:
                     meta = getattr(u, "user_metadata", None) or {}
-                    if meta.get("local_user_id") == user_id or getattr(u, "id", "") == user_id:
-                        return {"email": u_email, "meta": meta, "supa_id": u.id}
+                    return {"email": u_email, "meta": meta, "supa_id": u.id}
         except Exception:
             pass
     return {}
@@ -322,11 +360,19 @@ def _rehydrate_user_row(user_id: str, email: str, full_name: str = "", supa_meta
 
     with get_db() as conn:
         cursor = conn.cursor()
-        # Recover payment status from SQLite payments if present
+        # 1. Recover active grant from vip_grants table
+        cursor.execute("SELECT valid_until FROM vip_grants WHERE LOWER(email) = ? AND status = 'active'", (clean_email,))
+        grant_row = cursor.fetchone()
+        if grant_row and grant_row["valid_until"] > now:
+            is_paid = 1
+            paid_until = max(paid_until, grant_row["valid_until"])
+            plan = "vip_pass_30d"
+
+        # 2. Recover payment status from SQLite payments if present
         if not is_paid:
             cursor.execute(
-                "SELECT plan_name, created_at FROM payments WHERE user_id = ? AND status = 'captured' ORDER BY created_at DESC LIMIT 1",
-                (user_id,)
+                "SELECT plan_name, created_at FROM payments WHERE (user_id = ? OR LOWER(user_id) = ?) AND status = 'captured' ORDER BY created_at DESC LIMIT 1",
+                (user_id, clean_email)
             )
             prow = cursor.fetchone()
             if prow:
@@ -1006,6 +1052,19 @@ def grant_vip_to_email(email: str, duration_days: int = 30, granted_by: str = "a
     valid_until = now + (duration_days * 86400)
     valid_until_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(valid_until))
 
+    if duration_days >= 150:
+        plan_code = "vip_pass_180d"
+        plan_label = "6-Month VIP Dominance"
+    elif duration_days >= 60:
+        plan_code = "vip_pass_90d"
+        plan_label = "3-Month Career Sprint"
+    elif duration_days <= 2:
+        plan_code = "day_sprint_24h"
+        plan_label = "24-Hour Day Sprint"
+    else:
+        plan_code = "vip_pass_30d"
+        plan_label = "1-Month VIP Pass"
+
     with get_db() as conn:
         cursor = conn.cursor()
         # 1. Insert or replace in vip_grants table
@@ -1014,7 +1073,7 @@ def grant_vip_to_email(email: str, duration_days: int = 30, granted_by: str = "a
             INSERT OR REPLACE INTO vip_grants (email, granted_by, granted_at, valid_until, status, notes)
             VALUES (?, ?, ?, ?, 'active', ?)
             """,
-            (clean_email, granted_by, now, valid_until, notes or "Granted by Admin")
+            (clean_email, granted_by, now, valid_until, notes or f"Granted by {granted_by} ({duration_days}d)")
         )
 
         # 2. If user already registered in users table, upgrade immediately
@@ -1025,10 +1084,10 @@ def grant_vip_to_email(email: str, duration_days: int = 30, granted_by: str = "a
         if user_id:
             cursor.execute(
                 """
-                UPDATE users SET is_paid = 1, plan = 'vip_pass_30d', paid_until = ?, updated_at = ?
+                UPDATE users SET is_paid = 1, plan = ?, paid_until = ?, updated_at = ?
                 WHERE id = ?
                 """,
-                (valid_until, now, user_id)
+                (plan_code, valid_until, now, user_id)
             )
 
         # 3. Record in payments ledger for audit history
@@ -1036,20 +1095,13 @@ def grant_vip_to_email(email: str, duration_days: int = 30, granted_by: str = "a
         cursor.execute(
             """
             INSERT INTO payments (id, user_id, payment_id, order_id, amount_inr, plan_name, status, created_at, supporter_name, supporter_message)
-            VALUES (?, ?, ?, ?, 0, 'Almond Jobs 1-Month VIP Pass (Admin Grant)', 'captured', ?, 'Admin Grant', ?)
+            VALUES (?, ?, ?, ?, 0, ?, 'captured', ?, 'Admin Grant', ?)
             """,
-            (pay_id, user_id or clean_email, f"adm_{secrets.token_hex(4)}", f"order_adm_{secrets.token_hex(4)}", now, f"VIP granted to {clean_email} by {granted_by}")
+            (pay_id, user_id or clean_email, f"adm_{secrets.token_hex(4)}", f"order_adm_{secrets.token_hex(4)}", f"Almond Jobs {plan_label} (Admin Grant)", now, f"VIP granted to {clean_email} by {granted_by}")
         )
         conn.commit()
 
-    if supabase_admin and user_id:
-        try:
-            supabase_admin.auth.admin.update_user_by_id(
-                user_id,
-                {"user_metadata": {"is_paid": True, "plan": "vip_pass_30d", "paid_until": valid_until}}
-            )
-        except Exception as e:
-            print(f"[AUTH_DB] Supabase grant sync note: {e}")
+    sync_supabase_vip_metadata(clean_email, True, plan_code, valid_until, user_id or "")
 
     print(f"[AUTH_DB] Granted 1-Month VIP Pass to {clean_email} valid until {valid_until_str}.")
     return {
@@ -1134,69 +1186,87 @@ def check_and_apply_vip_grant(email: str, user_id: str = "") -> tuple:
 
 def is_user_paid(user_id: str) -> bool:
     """
-    Check if the user has an active 1-Month Pro/VIP subscription within valid timestamp bounds.
-    After one month from their date of purchase, their account is automatically removed from VIP.
+    Check if the user has an active VIP subscription within valid timestamp bounds.
+    Bulletproof multi-source check: active VIP grants table -> users table timestamp -> payments ledger.
     """
     if not user_id:
         return False
 
     now = time.time()
+    clean_uid = str(user_id).strip()
+    clean_email = clean_uid.lower() if "@" in clean_uid else ""
+
     with get_db() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT id, email, is_paid, paid_until, plan FROM users WHERE id = ? OR LOWER(email) = ?", (user_id, user_id.lower()))
+        cursor.execute("SELECT id, email, is_paid, paid_until, plan FROM users WHERE id = ? OR LOWER(email) = ?", (clean_uid, clean_uid.lower()))
         row = cursor.fetchone()
         if row:
             user_email = (row["email"] or "").lower()
             # 1. Check if email has active pre-approved VIP grant
-            cursor.execute("SELECT valid_until, status FROM vip_grants WHERE email = ? AND status = 'active'", (user_email,))
+            cursor.execute("SELECT valid_until, status FROM vip_grants WHERE LOWER(email) = ? AND status = 'active'", (user_email,))
             grant_row = cursor.fetchone()
             if grant_row:
                 if grant_row["valid_until"] > now:
                     if row["is_paid"] != 1 or row["paid_until"] != grant_row["valid_until"]:
-                        cursor.execute("UPDATE users SET is_paid = 1, plan = 'vip_pass_30d', paid_until = ? WHERE id = ?", (grant_row["valid_until"], row["id"]))
+                        cursor.execute("UPDATE users SET is_paid = 1, paid_until = ? WHERE id = ?", (grant_row["valid_until"], row["id"]))
                         conn.commit()
                     return True
                 else:
-                    cursor.execute("UPDATE vip_grants SET status = 'expired' WHERE email = ?", (user_email,))
+                    cursor.execute("UPDATE vip_grants SET status = 'expired' WHERE LOWER(email) = ?", (user_email,))
                     conn.commit()
 
-            # 2. Check users table timestamp: strictly valid until 1 month from purchase
-            if row["is_paid"] == 1:
-                paid_until = row["paid_until"] or 0
-                if paid_until > now:
+            # 2. Check users table timestamp: valid within bounds
+            paid_until = row["paid_until"] or 0
+            if row["is_paid"] == 1 and paid_until > now:
+                return True
+            elif row["is_paid"] == 1 and paid_until <= now:
+                cursor.execute("UPDATE users SET is_paid = 0, plan = 'free' WHERE id = ?", (row["id"],))
+                conn.commit()
+                print(f"[AUTH_DB] VIP Pass expired for user {row['id']} ({row['email']}). Reverted to free tier.")
+
+            # 3. Check payments ledger for active captured VIP purchase
+            cursor.execute(
+                """
+                SELECT created_at, plan_name FROM payments
+                WHERE (user_id = ? OR LOWER(user_id) = ?) AND status = 'captured' AND (LOWER(plan_name) LIKE '%vip%' OR LOWER(plan_name) LIKE '%dominance%' OR LOWER(plan_name) LIKE '%sprint%')
+                ORDER BY created_at DESC LIMIT 1
+                """,
+                (row["id"], user_email)
+            )
+            pay_row = cursor.fetchone()
+            if pay_row:
+                pay_ts = pay_row["created_at"] or 0
+                pl_lower = (pay_row["plan_name"] or "").lower()
+                dur = 180 * 86400 if ("180" in pl_lower or "dominance" in pl_lower) else (90 * 86400 if ("90" in pl_lower or "sprint" in pl_lower) else 30 * 86400)
+                if (pay_ts + dur) > now:
+                    cursor.execute("UPDATE users SET is_paid = 1, paid_until = ? WHERE id = ?", (pay_ts + dur, row["id"]))
+                    conn.commit()
                     return True
-                else:
-                    # One month expired from date of purchase: Automatically remove from VIP
-                    cursor.execute("UPDATE users SET is_paid = 0, plan = 'free' WHERE id = ?", (row["id"],))
-                    conn.commit()
-                    print(f"[AUTH_DB] VIP Pass expired for user {row['id']} ({row['email']}). Reverted to free tier.")
-                    return False
-            else:
-                return False
 
-        # 3. Check if user_id itself is an email with active grant
-        if "@" in user_id:
-            cursor.execute("SELECT valid_until, status FROM vip_grants WHERE email = ? AND status = 'active'", (user_id.lower(),))
+            return False
+
+        # If user not in local users table yet (e.g. checked by email directly)
+        if clean_email:
+            cursor.execute("SELECT valid_until, status FROM vip_grants WHERE LOWER(email) = ? AND status = 'active'", (clean_email,))
             grant_row = cursor.fetchone()
             if grant_row and grant_row["valid_until"] > now:
                 return True
 
-        # 4. Check payments table for captured VIP payment within 30 days (1 month)
-        uid_filter = row["id"] if row else user_id
-        cursor.execute(
-            """
-            SELECT created_at FROM payments
-            WHERE (user_id = ? OR user_id = ?) AND status = 'captured' AND plan_name LIKE '%vip%'
-            ORDER BY created_at DESC LIMIT 1
-            """,
-            (user_id, uid_filter)
-        )
-        pay_row = cursor.fetchone()
-        if pay_row:
-            pay_ts = pay_row["created_at"] or 0
-            # Strict 30 days / 1 month from date of purchase
-            if (pay_ts + 30 * 86400) > now:
-                return True
+            cursor.execute(
+                """
+                SELECT created_at, plan_name FROM payments
+                WHERE LOWER(user_id) = ? AND status = 'captured' AND (LOWER(plan_name) LIKE '%vip%' OR LOWER(plan_name) LIKE '%dominance%' OR LOWER(plan_name) LIKE '%sprint%')
+                ORDER BY created_at DESC LIMIT 1
+                """,
+                (clean_email,)
+            )
+            pay_row = cursor.fetchone()
+            if pay_row:
+                pay_ts = pay_row["created_at"] or 0
+                pl_lower = (pay_row["plan_name"] or "").lower()
+                dur = 180 * 86400 if ("180" in pl_lower or "dominance" in pl_lower) else (90 * 86400 if ("90" in pl_lower or "sprint" in pl_lower) else 30 * 86400)
+                if (pay_ts + dur) > now:
+                    return True
 
     return False
 
@@ -1238,9 +1308,11 @@ def get_recent_contributions(limit: int = 20) -> list:
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT p.id, p.amount_inr, p.plan_name, p.created_at,
+            SELECT p.id, p.payment_id, p.amount_inr, p.plan_name, p.created_at,
                    COALESCE(NULLIF(p.supporter_name, ''), u.full_name, 'Generous Candidate') as name,
-                   COALESCE(p.supporter_message, '') as message
+                   COALESCE(p.supporter_message, '') as message,
+                   COALESCE(p.admin_reply, '') as admin_reply,
+                   COALESCE(p.admin_replied_at, 0) as admin_replied_at
             FROM payments p
             LEFT JOIN users u ON p.user_id = u.id
             WHERE p.status = 'contribution'
@@ -1253,16 +1325,41 @@ def get_recent_contributions(limit: int = 20) -> list:
         return [
             {
                 "id": r["id"],
+                "payment_id": r["payment_id"] if "payment_id" in r.keys() else r["id"],
                 "name": r["name"],
                 "supporter_name": r["name"],
                 "amount_inr": r["amount_inr"],
                 "plan_name": r["plan_name"],
                 "message": r["message"],
                 "supporter_message": r["message"],
+                "admin_reply": r["admin_reply"] if "admin_reply" in r.keys() else "",
+                "admin_replied_at": r["admin_replied_at"] if "admin_replied_at" in r.keys() else 0,
                 "created_at": r["created_at"],
             }
             for r in rows
         ]
+
+def add_admin_reply_to_contribution(payment_id: str, reply_text: str) -> dict:
+    """Store founder / admin response to a candidate community contribution."""
+    clean_id = (payment_id or "").strip()
+    clean_reply = (reply_text or "").strip()
+    if not clean_id or not clean_reply:
+        return {"status": "error", "message": "Payment ID and reply message are required."}
+
+    now = time.time()
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            UPDATE payments 
+            SET admin_reply = ?, admin_replied_at = ? 
+            WHERE id = ? OR payment_id = ?
+            """,
+            (clean_reply, now, clean_id, clean_id)
+        )
+        conn.commit()
+
+    return {"status": "success", "message": "Reply published to community feed successfully."}
 
 def record_successful_payment(user_id: str, payment_id: str, order_id: str, amount_inr: float, plan_name: str = "") -> bool:
     """Record a captured payment with strict timestamp-based expiration (24h Day Sprint, 30d, or 90d)."""
@@ -1290,7 +1387,7 @@ def record_successful_payment(user_id: str, payment_id: str, order_id: str, amou
     elif "90" in plan_lower or "mastery" in plan_lower or "3-month" in plan_lower or "3 month" in plan_lower or "sprint" in plan_lower or (amount_inr >= 1500 and amount_inr < 2500):
         duration_seconds = 90 * 86400 # 90 days (3 months)
         plan_code = "vip_pass_90d"
-    elif "day" in plan_lower or "24" in plan_lower or amount_inr <= 200:
+    elif "day" in plan_lower or "24" in plan_lower:
         duration_seconds = 24 * 3600 # 24 hours
         plan_code = "day_sprint_24h"
     elif "vip" in plan_lower:
@@ -1327,20 +1424,18 @@ def record_successful_payment(user_id: str, payment_id: str, order_id: str, amou
         print(f"[AUTH_DB] Error writing payment to SQLite: {e}")
 
     # 2. Update Supabase if available
-    if supabase_admin and user_id:
-        try:
-            supabase_admin.auth.admin.update_user_by_id(user_id, {
-                "user_metadata": {
-                    "is_paid": True,
-                    "plan": plan_code,
-                    "paid_until": paid_until,
-                    "payment_id": payment_id,
-                    "order_id": order_id,
-                    "paid_at": now
-                }
-            })
-        except Exception as e:
-            print(f"[AUTH_DB] Error updating Supabase user metadata: {e}")
+    user_email_for_supa = ""
+    try:
+        with get_db() as conn:
+            c = conn.cursor()
+            c.execute("SELECT email FROM users WHERE id = ?", (user_id,))
+            r = c.fetchone()
+            if r:
+                user_email_for_supa = r["email"]
+    except Exception:
+        pass
+    if user_email_for_supa or user_id:
+        sync_supabase_vip_metadata(user_email_for_supa or user_id, True, plan_code, paid_until, user_id)
 
     return True
 

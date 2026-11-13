@@ -29,6 +29,7 @@ from core.config import Config
 from core.auth_db import (
     signup_user, login_user, is_user_paid, verify_session_token, get_user_profile,
     recover_verified_session, get_recent_contributions, grant_vip_to_email, revoke_vip_from_email,
+    add_admin_reply_to_contribution,
     get_user_kanban, save_user_kanban_application, sync_full_kanban,
     send_signup_otp, verify_otp_and_signup, login_or_signup_google_user,
     record_page_visit, get_analytics_summary, get_all_users_admin,
@@ -362,7 +363,8 @@ async def serve_admin_dashboard(
             dummy_count=dummy_count,
             new_count=new_count,
             vip_count=vip_count,
-            pricing_tiers=get_dynamic_pricing()
+            pricing_tiers=get_dynamic_pricing(),
+            contributions=get_recent_contributions(limit=50)
         )
         response = HTMLResponse(content=rendered)
         # Store secure session cookie for convenience so user stays logged in
@@ -482,6 +484,28 @@ async def api_admin_grant_vip(request: Request, payload: dict = Body(...)):
         res = revoke_vip_from_email(email)
     else:
         res = grant_vip_to_email(email, duration_days=duration_days, granted_by="Admin Portal")
+
+    return JSONResponse(content=res)
+
+@app.post("/api/admin/reply-contribution")
+async def api_admin_reply_contribution(request: Request, payload: dict = Body(...)):
+    """Executive admin endpoint to reply to candidate community contributions."""
+    cookie_key = request.cookies.get("almond_admin_key")
+    header_key = request.headers.get("x-admin-key")
+    query_key = payload.get("key")
+    provided_key = (query_key or cookie_key or header_key or "").strip()
+
+    if provided_key != Config.ADMIN_SECRET_KEY:
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin secret key.")
+
+    payment_id = (payload.get("payment_id") or "").strip()
+    reply_text = (payload.get("reply") or "").strip()
+    if not payment_id or not reply_text:
+        raise HTTPException(status_code=400, detail="Payment ID and reply message are required.")
+
+    res = add_admin_reply_to_contribution(payment_id, reply_text)
+    if res.get("status") == "error":
+        raise HTTPException(status_code=400, detail=res.get("message"))
 
     return JSONResponse(content=res)
 

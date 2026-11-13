@@ -701,6 +701,60 @@
                     </ul>
                 </div>
             </div>
+
+            <!-- Supporter Contributions & Founder Replies Card -->
+            <div class="card-surface p-6 rounded-2xl space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            <span>&#9749;</span> Supporter Contributions &amp; Community Messages
+                        </h3>
+                        <p class="text-xs text-slate-400">View voluntary candidate coffee contributions and publish official founder replies to the live community feed.</p>
+                    </div>
+                    <span class="text-xs font-bold px-3 py-1 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30">{{ contributions|length if contributions else 0 }} Messages</span>
+                </div>
+
+                <div class="space-y-3">
+                    {% for item in contributions or [] %}
+                    <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-3" id="contrib-row-{{ item.id }}">
+                        <div class="flex items-center justify-between text-xs">
+                            <div class="flex items-center gap-2">
+                                <span class="font-extrabold text-white">{{ item.supporter_name or item.name or 'Generous Candidate' }}</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">&#8377;{{ item.amount_inr }} Contribution</span>
+                            </div>
+                            <span class="text-[11px] text-slate-500">{{ item.plan_name }}</span>
+                        </div>
+
+                        {% if item.message %}
+                        <div class="p-3 bg-slate-950/80 rounded-lg border border-slate-800/80 text-xs text-slate-300 leading-relaxed italic">
+                            "{{ item.message }}"
+                        </div>
+                        {% endif %}
+
+                        <!-- Existing Founder Reply or Reply Form -->
+                        {% if item.admin_reply %}
+                        <div class="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs space-y-1">
+                            <div class="flex items-center justify-between text-[11px] font-bold text-amber-400">
+                                <span>&#127792; Founder Response (Published)</span>
+                                <span class="text-emerald-400">&#10003; Live on platform</span>
+                            </div>
+                            <p class="text-slate-200">"{{ item.admin_reply }}"</p>
+                        </div>
+                        {% else %}
+                        <form onsubmit="handleContributionReply(event, '{{ item.id }}')" class="flex items-center gap-2 pt-1">
+                            <input type="text" id="reply-input-{{ item.id }}" placeholder="Write a warm founder reply to display on the platform..." required
+                                   class="flex-1 px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs placeholder-slate-500 focus:outline-none focus:border-amber-400">
+                            <button type="submit" id="reply-btn-{{ item.id }}" class="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs rounded-lg transition shrink-0 cursor-pointer shadow-sm">
+                                Post Reply
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p class="text-xs text-slate-500 py-4 text-center">No community contributions recorded yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
 
         <!-- ============================================================= -->
@@ -1026,6 +1080,42 @@
                 alert('Success: ' + res.message);
                 if (input) input.value = '';
                 window.location.reload();
+            }
+        };
+
+        window.handleContributionReply = async function(e, paymentId) {
+            e.preventDefault();
+            const input = document.getElementById('reply-input-' + paymentId);
+            const btn = document.getElementById('reply-btn-' + paymentId);
+            const replyText = (input?.value || '').trim();
+            if (!replyText) return;
+
+            if (btn) btn.disabled = true;
+
+            try {
+                const resp = await fetch('/api/admin/reply-contribution', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-admin-key': ADMIN_KEY
+                    },
+                    body: JSON.stringify({
+                        payment_id: paymentId,
+                        reply: replyText,
+                        key: ADMIN_KEY
+                    })
+                });
+                const data = await resp.json().catch(() => ({}));
+                if (resp.ok && data.status === 'success') {
+                    alert('Reply published live to the platform community feed!');
+                    window.location.reload();
+                } else {
+                    alert('Error posting reply: ' + (data.detail || data.message || 'Unknown error'));
+                    if (btn) btn.disabled = false;
+                }
+            } catch (err) {
+                alert('Network error posting reply: ' + err.message);
+                if (btn) btn.disabled = false;
             }
         };
 
