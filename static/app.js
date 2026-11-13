@@ -5508,6 +5508,10 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Alm
             modal: {
                 ondismiss: function() {
                     console.log("[Razorpay] Checkout modal dismissed without completion.");
+                    if (typeof window.openPaymentExitIntent === "function") {
+                        const currSym = optionsConfig.currency_symbol || (typeof window.getCurrencySymbol === "function" ? window.getCurrencySymbol(optionsConfig.currency || "INR") : "₹");
+                        window.openPaymentExitIntent(planName, finalAmount, currSym, optionsConfig);
+                    }
                 }
             },
             handler: async function (response) {
@@ -5909,11 +5913,11 @@ if (typeof window.initAuthSession === 'function') {
 // =========================================================================
 window._lastExitIntentData = null;
 
-window.openPaymentExitIntent = function(planName = "Day Sprint", finalAmount = 199) {
+window.openPaymentExitIntent = function(planName = "Career Sprint", finalAmount = 1799, currencySymbol = "₹", optionsConfig = null) {
     const modal = document.getElementById("paymentExitIntentModal");
     if (!modal) return;
 
-    window._lastExitIntentData = { planName, finalAmount };
+    window._lastExitIntentData = { planName, finalAmount, currencySymbol, optionsConfig };
 
     const emojiEl = document.getElementById("exitIntentEmoji");
     const badgeEl = document.getElementById("exitIntentBadge");
@@ -5925,36 +5929,29 @@ window.openPaymentExitIntent = function(planName = "Day Sprint", finalAmount = 1
     const discountEl = document.getElementById("exitIntentDiscountNote");
 
     const nameLower = (planName || "").toLowerCase();
-    const isDay = nameLower.includes("day") || nameLower.includes("24") || finalAmount <= 200;
-    const isMastery = nameLower.includes("mastery") || nameLower.includes("90") || nameLower.includes("3-month") || finalAmount > 700;
+    const is1m = nameLower.includes("1-month") || nameLower.includes("30") || (finalAmount <= 700 && !nameLower.includes("3") && !nameLower.includes("6"));
+    const is6m = nameLower.includes("6-month") || nameLower.includes("180") || nameLower.includes("dominance");
 
-    if (isDay) {
-        if (emojiEl) emojiEl.textContent = "☕";
-        if (badgeEl) badgeEl.textContent = "24-Hour Career Sprint Pass";
-        if (titleEl) titleEl.textContent = "Wait! Your New Life Deserves This.";
-        if (msgEl) msgEl.textContent = "Your new life beginning with us deserves at least the price of a coffee. Don't let a few rupees stand between you and a broker-free direct enterprise career.";
-        if (planNameEl) planNameEl.textContent = "Day Sprint Pass (24 Hours)";
-        if (planSubEl) planSubEl.textContent = "24 Hours Unlimited Direct Portal Access & STAR Pitches";
-    } else if (isMastery) {
-        if (emojiEl) emojiEl.textContent = "🍽️";
-        if (badgeEl) badgeEl.textContent = "90-Day Career Mastery Pass";
-        if (titleEl) titleEl.textContent = "Transform Your Career for the Price of Dinner.";
-        if (msgEl) msgEl.textContent = "Your career transformation deserves at least the price of a nice weekend dinner. Unlock the full executive vault, direct Workday and Ashby feeds, and 90 days of accelerated career intelligence.";
-        if (planNameEl) planNameEl.textContent = "Career Mastery (90 Days)";
-        if (planSubEl) planSubEl.textContent = "Full Executive Vault, Ashby & Workday Direct Feeds";
-    } else {
-        // 30-Day Pro Hunt (Default)
+    if (is1m) {
         if (emojiEl) emojiEl.textContent = "🎬";
-        if (badgeEl) badgeEl.textContent = "Most Popular 30-Day Pro Hunt";
+        if (badgeEl) badgeEl.textContent = "Standard 1-Month VIP Pass";
         if (titleEl) titleEl.textContent = "A Career Upgrade Costs Less Than a Movie Ticket.";
-        if (msgEl) msgEl.textContent = "Your new life beginning with us deserves at least the price of a movie ticket. For just ₹" + finalAmount + ", you get 30 full days of unlimited direct corporate applications, live founder feeds, and tailored STAR pitches.";
-        if (planNameEl) planNameEl.textContent = "Pro Hunt Pass (30 Days)";
-        if (planSubEl) planSubEl.textContent = "30 Days of Unlimited Direct Job Applications";
+        if (msgEl) msgEl.textContent = `Your career transformation deserves at least the price of a movie ticket. For just ${currencySymbol}${finalAmount}, unlock 30 full days of direct corporate ATS applications, live founder feeds, and tailored STAR pitches.`;
+        if (planNameEl) planNameEl.textContent = "1-Month VIP Pass (30 Days)";
+        if (planSubEl) planSubEl.textContent = "30 Days of Unlimited Direct Job Applications & Zero Recruiter Ghosting";
+    } else {
+        // 3-Month or 6-Month: Weekend dinner comparison
+        if (emojiEl) emojiEl.textContent = "🍽️";
+        if (badgeEl) badgeEl.textContent = is6m ? "6-Month Career Dominance" : "3-Month Career Sprint";
+        if (titleEl) titleEl.textContent = "Transform Your Career for the Price of Dinner.";
+        if (msgEl) msgEl.textContent = `Your career transformation deserves at least the price of a nice weekend dinner. For just ${currencySymbol}${finalAmount}, unlock continuous direct ATS access, the executive vault, and unredacted salary & hiring signals.`;
+        if (planNameEl) planNameEl.textContent = is6m ? "Career Dominance (180 Days)" : "Career Sprint (90 Days)";
+        if (planSubEl) planSubEl.textContent = is6m ? "Full 180 Days of Continuous High-Compensation Role Monitoring" : "Full 90 Days of Uninterrupted Job Hunt Acceleration";
     }
 
-    if (priceEl) priceEl.textContent = "₹" + finalAmount;
+    if (priceEl) priceEl.textContent = `${currencySymbol}${finalAmount}`;
     if (discountEl) {
-        discountEl.textContent = currentVipDiscount > 0 ? "Coupon Applied (Saved ₹" + currentVipDiscount + ")" : "Candidate-First Pricing";
+        discountEl.textContent = is1m ? "Standard Pricing" : "Limited Time Discount Applied";
     }
 
     modal.classList.remove("hidden");
@@ -5963,13 +5960,15 @@ window.openPaymentExitIntent = function(planName = "Day Sprint", finalAmount = 1
 
 window.closeExitIntentModal = function() {
     const modal = document.getElementById("paymentExitIntentModal");
-    if (modal) modal.classList.add("hidden");
+    if (!modal) return;
+    modal.classList.add("hidden");
 };
 
 window.resumePaymentFromExitIntent = function() {
     window.closeExitIntentModal();
     if (window._lastExitIntentData) {
-        triggerRazorpayCheckout(window._lastExitIntentData.finalAmount, window._lastExitIntentData.planName);
+        const { planName, finalAmount, optionsConfig } = window._lastExitIntentData;
+        triggerRazorpayCheckout(finalAmount, planName, optionsConfig || {});
     }
 };
 
