@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Almond Jobs &bull; Executive Command &amp; Telemetry Suite</title>
+    <title>Almond Jobs Telemetry &bull; Executive Command Suite</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -73,8 +73,8 @@
                 &#127792;
             </div>
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-white">Almond Jobs Executive Suite</h1>
-                <p class="text-sm text-slate-400 mt-2">Executive Traffic, Dynamic Pricing &amp; Candidate Intelligence</p>
+                <h1 class="text-2xl font-bold tracking-tight text-white">Almond Jobs Telemetry</h1>
+                <p class="text-sm text-slate-400 mt-2">Executive Traffic, Live Engagements &amp; Candidate Sign-In Portal</p>
             </div>
             
             <form id="key-form" method="GET" action="/admin" class="space-y-4">
@@ -87,7 +87,7 @@
                     {% endif %}
                 </div>
                 <button type="submit" class="w-full py-3 px-6 rounded-xl font-bold text-sm tracking-wide bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 hover:from-amber-300 hover:to-amber-400 shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                     Unlock Executive Console
                 </button>
             </form>
@@ -105,7 +105,7 @@
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <span class="text-base font-extrabold tracking-tight text-white">Almond Jobs</span>
+                        <span class="text-base font-extrabold tracking-tight text-white">Almond Jobs Telemetry</span>
                         <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">Executive Suite</span>
                     </div>
                     <p class="text-xs text-slate-400">Platform Command, Pricing Governance &amp; Candidate Telemetry</p>
@@ -158,6 +158,11 @@
         <!-- TAB 1: OVERVIEW & KPIS -->
         <!-- ============================================================= -->
         <div id="panel-overview" class="space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">Core Telemetry & Engagements</h2>
+                <span class="text-xs text-slate-400">Live candidate session stream</span>
+            </div>
+
             <!-- Executive Metrics Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 <div class="card-surface p-5 rounded-2xl space-y-2 border-l-4 border-l-amber-400">
@@ -212,7 +217,7 @@
                     <div class="w-12 h-12 rounded-xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-2xl text-violet-400 group-hover:scale-110 transition">
                         &#128101;
                     </div>
-                    <h3 class="text-lg font-bold text-white group-hover:text-violet-400 transition">Candidate Directory &amp; Filters</h3>
+                    <h3 class="text-lg font-bold text-white group-hover:text-violet-400 transition">Registered Candidates Directory</h3>
                     <p class="text-xs text-slate-400 leading-relaxed">Search candidate profiles, filter by Genuine, VIP Active, New Registrations, and Dummy accounts. Export candidate spreadsheets to CSV.</p>
                     <span class="text-xs font-bold text-violet-400 flex items-center gap-1">View Candidates &rarr;</span>
                 </div>
@@ -485,14 +490,14 @@
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                            <span>&#128101;</span> Registered Candidate Directory
+                            <span>&#128101;</span> Registered Candidates Directory
                         </h2>
                         <p class="text-xs text-slate-400">Total accounts: {{ candidates|length }} candidates</p>
                     </div>
                     <div class="flex items-center gap-3">
                         <a href="/api/admin/export-users" target="_blank" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 text-xs font-bold transition flex items-center gap-2">
                             <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            Export CSV
+                            Download CSV Export
                         </a>
                     </div>
                 </div>
@@ -504,23 +509,70 @@
                     <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
 
-                <!-- Quick Filter Pills -->
-                <div class="flex items-center gap-2 flex-wrap text-xs">
-                    <button type="button" onclick="setQuickFilter('all')" id="pill-all" class="filter-pill active px-3 py-1.5 rounded-lg cursor-pointer">
-                        All (<span id="count-all">{{ candidates|length }}</span>)
-                    </button>
-                    <button type="button" onclick="setQuickFilter('genuine')" id="pill-genuine" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer">
-                        Genuine Candidates (<span id="count-genuine">{{ genuine_count }}</span>)
-                    </button>
-                    <button type="button" onclick="setQuickFilter('vip')" id="pill-vip" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer">
-                        VIP Active (<span id="count-vip">{{ vip_count }}</span>)
-                    </button>
-                    <button type="button" onclick="setQuickFilter('new')" id="pill-new" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer">
-                        New Registrations (<span id="count-new">{{ new_count }}</span>)
-                    </button>
-                    <button type="button" onclick="setQuickFilter('dummy')" id="pill-dummy" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer">
-                        Test / Dummy (<span id="count-dummy">{{ dummy_count }}</span>)
-                    </button>
+                <!-- Smart Multi-Filter Bar: Real vs Dummy, Recency, VIP Tier, Providers -->
+                <div class="space-y-3 bg-slate-900/40 p-4 rounded-xl border border-white/5">
+                    <!-- Quick Filter Pills Row -->
+                    <div class="space-y-1.5">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-1 block">Quick Filters:</span>
+                        <div class="flex items-center gap-2 flex-wrap text-xs">
+                            <button type="button" onclick="setQuickFilter('all')" id="pill-all" class="filter-pill active px-3 py-1.5 rounded-lg cursor-pointer font-bold">
+                                All (<span id="count-all">{{ candidates|length }}</span>)
+                            </button>
+                            <button type="button" onclick="setQuickFilter('genuine')" id="pill-genuine" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer font-bold">
+                                ✨ Genuine Real (<span id="count-genuine">{{ genuine_count }}</span>)
+                            </button>
+                            <button type="button" onclick="setQuickFilter('vip')" id="pill-vip" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer font-bold">
+                                ⭐ Active VIP (<span id="count-vip">{{ vip_count }}</span>)
+                            </button>
+                            <button type="button" onclick="setQuickFilter('new')" id="pill-new" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer font-bold">
+                                ⚡ Newly Added (24h) (<span id="count-new">{{ new_count }}</span>)
+                            </button>
+                            <button type="button" onclick="setQuickFilter('dummy')" id="pill-dummy" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer font-bold">
+                                🧪 Test / Dummy (<span id="count-dummy">{{ dummy_count }}</span>)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Fine-Grained Dropdowns Row -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 pt-1">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Account Classification</label>
+                            <select id="filter-type" onchange="applyFilters()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-400">
+                                <option value="all">All Accounts (Real &amp; Test)</option>
+                                <option value="genuine">Genuine Candidates (Hide Dummy)</option>
+                                <option value="dummy">Dummy / Test Accounts Only</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Registration Date</label>
+                            <select id="filter-recency" onchange="applyFilters()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-400">
+                                <option value="all">All Time</option>
+                                <option value="24h">Newly Added (Last 24 Hours)</option>
+                                <option value="7d">Last 7 Days</option>
+                                <option value="30d">Last 30 Days</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Membership Status</label>
+                            <select id="filter-vip" onchange="applyFilters()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-400">
+                                <option value="all">All Tiers</option>
+                                <option value="vip">VIP Active Only</option>
+                                <option value="free">Standard Free Only</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Sign-In Method</label>
+                            <select id="filter-provider" onchange="applyFilters()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-400">
+                                <option value="all">All Providers</option>
+                                <option value="google">Google OAuth</option>
+                                <option value="email">Email OTP</option>
+                                <option value="pre_approved">Pre-Approved</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Candidates Table -->
@@ -543,10 +595,11 @@
                                 data-name="{{ c.full_name|lower }}" 
                                 data-email="{{ c.email|lower }}" 
                                 data-device="{{ c.device_display|lower }}" 
+                                data-provider="{{ c.auth_provider|lower if c.auth_provider else 'email' }}"
                                 data-is-dummy="{{ 'true' if c.is_dummy else 'false' }}"
                                 data-is-vip="{{ 'true' if c.is_paid else 'false' }}"
                                 data-is-new="{{ 'true' if c.is_new else 'false' }}"
-                                data-created-ts="{{ c.created_at }}">
+                                data-created="{{ c.created_at }}">
                                 <td class="py-3 px-3 font-sans">
                                     <div class="font-bold text-white text-sm">{{ c.full_name or 'Anonymous Candidate' }}</div>
                                     <div class="text-slate-400 text-xs font-mono">{{ c.email }}</div>
@@ -598,7 +651,7 @@
                 <div class="card-surface p-6 rounded-2xl space-y-4 border border-amber-500/30">
                     <div class="flex items-center gap-2 text-amber-400">
                         <span class="text-2xl">&#128081;</span>
-                        <h2 class="text-lg font-bold text-white">Instant VIP Pass Grant</h2>
+                        <h2 class="text-lg font-bold text-white">Grant 1-Month VIP Access to Email</h2>
                     </div>
                     <p class="text-xs text-slate-300 leading-relaxed">
                         Enter any candidate email to instantly grant or extend VIP Pass access. If the candidate hasn't registered yet, a pre-approved VIP record will be created and automatically attached upon their first login.
@@ -657,30 +710,19 @@
             <!-- Hardware & Device Breakdown -->
             <div class="card-surface p-6 rounded-2xl space-y-4">
                 <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                    <span>&#128241;</span> Candidate Device &amp; Hardware Telemetry
+                    <span>&#128241;</span> Device & Hardware Breakdown
                 </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
-                        <span class="font-bold text-slate-400 uppercase tracking-wider block">Top Hardware Brands</span>
-                        <div class="space-y-1">
-                            {% for brand, count in analytics.hardware_brands.items() %}
-                            <div class="flex items-center justify-between py-1 border-b border-slate-800">
-                                <span class="text-white">{{ brand }}</span>
-                                <span class="font-mono text-amber-400 font-bold">{{ count }}</span>
-                            </div>
-                            {% endfor %}
+                <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2 text-xs">
+                    <span class="font-bold text-slate-400 uppercase tracking-wider block">Candidate Devices &amp; Hardware Models</span>
+                    <div class="space-y-1">
+                        {% for dev in analytics.hardware_devices or [] %}
+                        <div class="flex items-center justify-between py-1.5 border-b border-slate-800">
+                            <span class="text-white font-medium">{{ dev.brand or 'Generic' }} &bull; {{ dev.model or 'Desktop Browser' }}</span>
+                            <span class="font-mono text-emerald-400 font-bold">{{ dev.hits }} candidate visits</span>
                         </div>
-                    </div>
-                    <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
-                        <span class="font-bold text-slate-400 uppercase tracking-wider block">Popular Device Models</span>
-                        <div class="space-y-1">
-                            {% for model, count in analytics.hardware_models.items() %}
-                            <div class="flex items-center justify-between py-1 border-b border-slate-800">
-                                <span class="text-white">{{ model }}</span>
-                                <span class="font-mono text-emerald-400 font-bold">{{ count }}</span>
-                            </div>
-                            {% endfor %}
-                        </div>
+                        {% else %}
+                        <p class="text-slate-500 py-2">No hardware visits recorded yet.</p>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
@@ -692,8 +734,8 @@
                         <span>&#128737;&#65039;</span> Bot Interception &amp; Route Telemetry
                     </h3>
                     <div class="flex items-center gap-2">
-                        <button type="button" id="tab-btn-verified" onclick="switchRouteTab('verified')" class="px-3 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950">Verified Routes</button>
-                        <button type="button" id="tab-btn-probes" onclick="switchRouteTab('probes')" class="px-3 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white bg-slate-800">Blocked Probes</button>
+                        <button type="button" id="tab-btn-verified" onclick="switchRouteTab('verified')" class="px-3 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950">Verified Candidate Routes</button>
+                        <button type="button" id="tab-btn-probes" onclick="switchRouteTab('probes')" class="px-3 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white bg-slate-800">Security Probes Blocked</button>
                     </div>
                 </div>
 
@@ -706,11 +748,13 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-800/40">
-                            {% for route in analytics.top_routes %}
+                            {% for page in analytics.top_pages or [] %}
                             <tr>
-                                <td class="py-2 px-3 text-slate-200">{{ route.path }}</td>
-                                <td class="py-2 px-3 text-right text-amber-400 font-bold">{{ route.hits }}</td>
+                                <td class="py-2 px-3 text-slate-200">{{ page.path }}</td>
+                                <td class="py-2 px-3 text-right text-amber-400 font-bold">{{ page.views }}</td>
                             </tr>
+                            {% else %}
+                            <tr><td colspan="2" class="py-2 px-3 text-slate-500">No route visits yet.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -725,11 +769,13 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-800/40">
-                            {% for probe in analytics.scanner_probes %}
+                            {% for probe in analytics.top_blocked_probes or [] %}
                             <tr class="text-rose-400">
                                 <td class="py-2 px-3">{{ probe.path }}</td>
                                 <td class="py-2 px-3 text-right font-bold">{{ probe.hits }}</td>
                             </tr>
+                            {% else %}
+                            <tr><td colspan="2" class="py-2 px-3 text-slate-500">No scanner probes intercepted yet.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -741,7 +787,7 @@
 
     <!-- Executive Footer -->
     <footer class="card-surface border-t border-white/10 px-6 py-4 text-center text-xs text-slate-500">
-        Almond Jobs Executive Suite &bull; Internal High-Performance Engine &bull; Zero Third-Party Tracker Reliance
+        Almond Jobs Telemetry &bull; Internal High-Performance Engine &bull; Zero Third-Party Tracker Reliance
     </footer>
 
     <!-- Interactive Dashboard Script -->
@@ -829,37 +875,80 @@
         };
 
         // --- CANDIDATE DIRECTORY FILTER CONTROLLER ---
-        let currentFilter = 'all';
+        let currentQuickFilter = 'all';
 
-        function setQuickFilter(type) {
-            currentFilter = type;
-            document.querySelectorAll('.filter-pill').forEach(btn => btn.classList.remove('active'));
-            const activeBtn = document.getElementById('pill-' + type);
-            if (activeBtn) activeBtn.classList.add('active');
+        function setQuickFilter(mode) {
+            currentQuickFilter = mode;
+            const pills = document.querySelectorAll('.filter-pill');
+            pills.forEach(p => {
+                if (p.id === 'pill-' + mode) {
+                    p.classList.add('active');
+                } else {
+                    p.classList.remove('active');
+                }
+            });
+
+            const typeSelect = document.getElementById('filter-type');
+            const recencySelect = document.getElementById('filter-recency');
+            const vipSelect = document.getElementById('filter-vip');
+
+            if (mode === 'genuine') {
+                if (typeSelect) typeSelect.value = 'genuine';
+            } else if (mode === 'dummy') {
+                if (typeSelect) typeSelect.value = 'dummy';
+            } else if (mode === 'new') {
+                if (recencySelect) recencySelect.value = '24h';
+            } else if (mode === 'vip') {
+                if (vipSelect) vipSelect.value = 'vip';
+            } else if (mode === 'all') {
+                if (typeSelect) typeSelect.value = 'all';
+                if (recencySelect) recencySelect.value = 'all';
+                if (vipSelect) vipSelect.value = 'all';
+            }
+
             applyFilters();
         }
 
         function applyFilters() {
-            const query = (document.getElementById('candidate-search')?.value || '').trim().toLowerCase();
+            const query = (document.getElementById('candidate-search')?.value || '').toLowerCase().trim();
+            const filterType = document.getElementById('filter-type')?.value || 'all';
+            const filterRecency = document.getElementById('filter-recency')?.value || 'all';
+            const filterVip = document.getElementById('filter-vip')?.value || 'all';
+            const filterProvider = document.getElementById('filter-provider')?.value || 'all';
+
+            const now = Date.now() / 1000;
             const rows = document.querySelectorAll('.candidate-row');
 
             rows.forEach(row => {
-                const name = row.getAttribute('data-name') || '';
-                const email = row.getAttribute('data-email') || '';
-                const device = row.getAttribute('data-device') || '';
+                const email = (row.getAttribute('data-email') || '').toLowerCase();
+                const name = (row.getAttribute('data-name') || '').toLowerCase();
+                const device = (row.getAttribute('data-device') || '').toLowerCase();
+                const provider = (row.getAttribute('data-provider') || '').toLowerCase();
                 const isDummy = row.getAttribute('data-is-dummy') === 'true';
                 const isVip = row.getAttribute('data-is-vip') === 'true';
-                const isNew = row.getAttribute('data-is-new') === 'true';
+                const created = parseFloat(row.getAttribute('data-created') || '0');
 
                 const textMatch = !query || name.includes(query) || email.includes(query) || device.includes(query);
 
                 let typeMatch = true;
-                if (currentFilter === 'genuine') typeMatch = !isDummy;
-                else if (currentFilter === 'dummy') typeMatch = isDummy;
-                else if (currentFilter === 'vip') typeMatch = isVip;
-                else if (currentFilter === 'new') typeMatch = isNew;
+                if (filterType === 'genuine') typeMatch = !isDummy;
+                else if (filterType === 'dummy') typeMatch = isDummy;
 
-                if (textMatch && typeMatch) {
+                let recencyMatch = true;
+                if (filterRecency === '24h') recencyMatch = (now - created) <= 86400;
+                else if (filterRecency === '7d') recencyMatch = (now - created) <= (86400 * 7);
+                else if (filterRecency === '30d') recencyMatch = (now - created) <= (86400 * 30);
+
+                let vipMatch = true;
+                if (filterVip === 'vip') vipMatch = isVip;
+                else if (filterVip === 'free') vipMatch = !isVip;
+
+                let providerMatch = true;
+                if (filterProvider !== 'all') {
+                    providerMatch = provider.includes(filterProvider);
+                }
+
+                if (textMatch && typeMatch && recencyMatch && vipMatch && providerMatch) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
