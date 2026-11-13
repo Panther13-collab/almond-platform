@@ -147,6 +147,26 @@ class TestVipActiveModalAndUpgrades(unittest.TestCase):
         self.assertIn("vipModalActiveMemberView", js)
         self.assertIn("almond_plan_tier", js)
 
+    def test_09_founder_copywriting_audit(self):
+        """Founder copywriting audit validates clean delivery, authoritative anti-broker stance, and zero stale references."""
+        index_path = os.path.join(os.path.dirname(__file__), "..", "templates", "index.html")
+        with open(index_path, "r", encoding="utf-8") as f:
+            html = f.read()
+
+        # Zero "approx" or "eq." currency texts
+        self.assertNotIn("approx", html.lower())
+        self.assertNotIn("eq.", html.lower())
+
+        # Zero stale slide references in empty state
+        self.assertNotIn("Upload your resume on Slide 3", html)
+        self.assertIn("Upload your resume in the matching workspace above", html)
+
+        # High-conviction founder voice points
+        self.assertIn("0% Recruiter Spread", html)
+        self.assertIn("First-Wave Direct Openings", html)
+        self.assertIn("Bypass Stale Boards. Apply at the Source.", html)
+        self.assertIn("Landed Direct Interviews on Almond Jobs?", html)
+
 
 if __name__ == "__main__":
     unittest.main()
