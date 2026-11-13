@@ -32,7 +32,7 @@ from core.auth_db import (
     get_user_kanban, save_user_kanban_application, sync_full_kanban,
     send_signup_otp, verify_otp_and_signup, login_or_signup_google_user,
     record_page_visit, get_analytics_summary, get_all_users_admin,
-    parse_device_hardware, is_bot_or_scanner
+    parse_device_hardware, is_bot_or_scanner, get_dynamic_pricing, update_tier_pricing
 )
 from core.payment import apply_vip_latest_feed_lock, create_razorpay_order, verify_razorpay_signature
 from core.security import BotShieldMiddleware, validate_uploaded_file, acquire_search_slot, release_search_slot
@@ -361,7 +361,8 @@ async def serve_admin_dashboard(
             genuine_count=genuine_count,
             dummy_count=dummy_count,
             new_count=new_count,
-            vip_count=vip_count
+            vip_count=vip_count,
+            pricing_tiers=get_dynamic_pricing()
         )
         response = HTMLResponse(content=rendered)
         # Store secure session cookie for convenience so user stays logged in
@@ -429,6 +430,35 @@ async def export_candidates_csv(request: Request, key: Optional[str] = Query(Non
         media_type="text/csv",
         headers={"Content-Disposition": 'attachment; filename="almond_candidates_export.csv"'}
     )
+
+
+@app.get("/api/pricing")
+async def api_get_pricing():
+    """Retrieve dynamic multi-tier subscription pricing across all currencies."""
+    tiers = get_dynamic_pricing()
+    return JSONResponse(content={"success": True, "tiers": tiers})
+
+
+@app.post("/api/admin/pricing")
+async def api_admin_update_pricing(request: Request, payload: dict = Body(...)):
+    """Admin endpoint to update pricing, strike base prices, discounts and badges without touching existing VIP validity."""
+    cookie_key = request.cookies.get("almond_admin_key")
+    header_key = request.headers.get("x-admin-key")
+    query_key = payload.get("key")
+    provided_key = (query_key or cookie_key or header_key or "").strip()
+
+    if provided_key != Config.ADMIN_SECRET_KEY:
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin secret key.")
+
+    tier_id = str(payload.get("tier_id", "") or "").strip().lower()
+    if not tier_id:
+        raise HTTPException(status_code=400, detail="Missing required 'tier_id'.")
+
+    try:
+        updated_tiers = update_tier_pricing(tier_id, payload)
+        return JSONResponse(content={"success": True, "message": f"Pricing updated for tier '{tier_id}'.", "tiers": updated_tiers})
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/api/admin/grant-vip")
 async def api_admin_grant_vip(request: Request, payload: dict = Body(...)):

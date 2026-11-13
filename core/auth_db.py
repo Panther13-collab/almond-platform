@@ -194,6 +194,49 @@ def init_db():
         except Exception:
             pass
 
+        # Dedicated Dynamic Pricing Table for Festival & Promotional Configuration
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS pricing_config (
+                tier_id TEXT PRIMARY KEY,
+                plan_code TEXT NOT NULL,
+                name TEXT NOT NULL,
+                duration_days INTEGER NOT NULL,
+                inr_price INTEGER NOT NULL,
+                inr_original INTEGER NOT NULL,
+                usd_price REAL NOT NULL,
+                usd_original REAL NOT NULL,
+                eur_price REAL NOT NULL,
+                eur_original REAL NOT NULL,
+                gbp_price REAL NOT NULL,
+                gbp_original REAL NOT NULL,
+                discount_pct INTEGER DEFAULT 0,
+                discount_label TEXT DEFAULT '',
+                badge_text TEXT DEFAULT '',
+                is_active INTEGER DEFAULT 1,
+                updated_at REAL
+            );
+        ''')
+
+        # Seed default pricing tiers if empty
+        cursor.execute("SELECT COUNT(*) AS cnt FROM pricing_config;")
+        row_cnt = cursor.fetchone()
+        if not row_cnt or row_cnt["cnt"] == 0:
+            now_ts = time.time()
+            cursor.execute('''
+                INSERT INTO pricing_config (
+                    tier_id, plan_code, name, duration_days,
+                    inr_price, inr_original,
+                    usd_price, usd_original,
+                    eur_price, eur_original,
+                    gbp_price, gbp_original,
+                    discount_pct, discount_label, badge_text,
+                    is_active, updated_at
+                ) VALUES 
+                ('1m', 'vip_pass_30d', '1-Month VIP Pass', 30, 699, 699, 9.99, 9.99, 9.99, 9.99, 9.99, 9.99, 0, '', 'Standard VIP', 1, ?),
+                ('3m', 'vip_pass_90d', '3-Month Career Sprint Pass', 90, 1799, 2599, 24.99, 34.99, 24.99, 34.99, 24.99, 34.99, 30, '30% OFF Limited Offer', 'Career Sprint', 1, ?),
+                ('6m', 'vip_pass_180d', '6-Month Career Dominance Pass', 180, 2799, 4299, 38.99, 59.99, 38.99, 59.99, 38.99, 59.99, 35, '35% OFF Limited Offer', 'Best Value', 1, ?);
+            ''', (now_ts, now_ts, now_ts))
+
         conn.commit()
 
 # Run initialization at import
@@ -2038,3 +2081,150 @@ def get_all_users_admin() -> list:
 
     candidates.sort(key=lambda x: x.get("created_at", 0), reverse=True)
     return candidates
+
+
+# =========================================================================
+# DYNAMIC PRICING & FESTIVAL OFFER CONTROLLERS
+# =========================================================================
+
+def get_dynamic_pricing() -> dict:
+    """
+    Retrieve active pricing tiers from SQLite pricing_config table with fallback to Config.VIP_TIERS.
+    Returns clean dictionary keyed by tier_id ('1m', '3m', '6m').
+    """
+    tiers = {}
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT tier_id, plan_code, name, duration_days,
+                       inr_price, inr_original,
+                       usd_price, usd_original,
+                       eur_price, eur_original,
+                       gbp_price, gbp_original,
+                       discount_pct, discount_label, badge_text,
+                       is_active, updated_at
+                FROM pricing_config
+                WHERE is_active = 1
+                ORDER BY duration_days ASC;
+            ''')
+            rows = cursor.fetchall()
+            for row in rows:
+                t_id = row["tier_id"]
+                tiers[t_id] = {
+                    "id": t_id,
+                    "plan_code": row["plan_code"],
+                    "name": row["name"],
+                    "duration_days": row["duration_days"],
+                    "inr_price": row["inr_price"],
+                    "inr_original": row["inr_original"],
+                    "usd_price": float(row["usd_price"]),
+                    "usd_original": float(row["usd_original"]),
+                    "eur_price": float(row["eur_price"]),
+                    "eur_original": float(row["eur_original"]),
+                    "gbp_price": float(row["gbp_price"]),
+                    "gbp_original": float(row["gbp_original"]),
+                    "discount_pct": row["discount_pct"],
+                    "discount_label": row["discount_label"] or "",
+                    "badge_text": row["badge_text"] or "",
+                    "INR": row["inr_price"],
+                    "USD": float(row["usd_price"]),
+                    "EUR": float(row["eur_price"]),
+                    "GBP": float(row["gbp_price"]),
+                    "updated_at": row["updated_at"]
+                }
+    except Exception as e:
+        print(f"[AUTH_DB] Warning: Could not read pricing_config from database: {e}")
+
+    # Fallback to Config.VIP_TIERS if table returned empty
+    if not tiers:
+        for t_id, cfg in Config.VIP_TIERS.items():
+            inr = cfg.get("INR", 699)
+            usd = cfg.get("USD", 9.99)
+            orig_inr = 2599 if t_id == "3m" else (4299 if t_id == "6m" else inr)
+            orig_usd = 34.99 if t_id == "3m" else (59.99 if t_id == "6m" else usd)
+            disc = 30 if t_id == "3m" else (35 if t_id == "6m" else 0)
+            tiers[t_id] = {
+                "id": t_id,
+                "plan_code": cfg.get("plan_code", f"vip_pass_{cfg.get('duration_days', 30)}d"),
+                "name": cfg.get("name", "VIP Pass"),
+                "duration_days": cfg.get("duration_days", 30),
+                "inr_price": inr,
+                "inr_original": orig_inr,
+                "usd_price": usd,
+                "usd_original": orig_usd,
+                "eur_price": cfg.get("EUR", usd),
+                "eur_original": orig_usd,
+                "gbp_price": cfg.get("GBP", usd),
+                "gbp_original": orig_usd,
+                "discount_pct": disc,
+                "discount_label": f"{disc}% OFF Limited Offer" if disc > 0 else "",
+                "badge_text": cfg.get("tag", ""),
+                "INR": inr,
+                "USD": usd,
+                "EUR": cfg.get("EUR", usd),
+                "GBP": cfg.get("GBP", usd),
+                "updated_at": time.time()
+            }
+    return tiers
+
+
+def update_tier_pricing(tier_id: str, data: dict) -> dict:
+    """
+    Update pricing configuration for a specific tier (1m, 3m, 6m).
+    CRITICAL: Does NOT touch existing user records or alter paid_until expiration dates.
+    """
+    tier_id = (tier_id or "").strip().lower()
+    if tier_id not in ("1m", "3m", "6m"):
+        raise ValueError(f"Invalid tier_id '{tier_id}'. Expected '1m', '3m', or '6m'.")
+
+    now_ts = time.time()
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM pricing_config WHERE tier_id = ?", (tier_id,))
+        existing = cursor.fetchone()
+        if not existing:
+            raise ValueError(f"Tier '{tier_id}' does not exist in pricing_config.")
+
+        inr_price = int(data.get("inr_price", existing["inr_price"]))
+        inr_original = int(data.get("inr_original", existing["inr_original"]))
+        usd_price = float(data.get("usd_price", existing["usd_price"]))
+        usd_original = float(data.get("usd_original", existing["usd_original"]))
+        eur_price = float(data.get("eur_price", existing["eur_price"]))
+        eur_original = float(data.get("eur_original", existing["eur_original"]))
+        gbp_price = float(data.get("gbp_price", existing["gbp_price"]))
+        gbp_original = float(data.get("gbp_original", existing["gbp_original"]))
+        discount_pct = int(data.get("discount_pct", existing["discount_pct"]))
+        discount_label = str(data.get("discount_label", existing["discount_label"]) or "")
+        badge_text = str(data.get("badge_text", existing["badge_text"]) or "")
+        name = str(data.get("name", existing["name"]) or existing["name"])
+
+        cursor.execute('''
+            UPDATE pricing_config
+            SET name = ?,
+                inr_price = ?,
+                inr_original = ?,
+                usd_price = ?,
+                usd_original = ?,
+                eur_price = ?,
+                eur_original = ?,
+                gbp_price = ?,
+                gbp_original = ?,
+                discount_pct = ?,
+                discount_label = ?,
+                badge_text = ?,
+                updated_at = ?
+            WHERE tier_id = ?;
+        ''', (
+            name,
+            inr_price, inr_original,
+            usd_price, usd_original,
+            eur_price, eur_original,
+            gbp_price, gbp_original,
+            discount_pct, discount_label, badge_text,
+            now_ts, tier_id
+        ))
+        conn.commit()
+        print(f"[AUTH_DB] Successfully updated pricing config for tier '{tier_id}' at {now_ts}.")
+
+    return get_dynamic_pricing()
