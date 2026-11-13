@@ -211,6 +211,25 @@ def _create_token(user_id: str, email: str) -> str:
     signature = hmac.new(AUTH_SECRET_KEY.encode("utf-8"), data.encode("utf-8"), hashlib.sha256).hexdigest()
     return f"alm.{user_id}.{timestamp}.{signature}"
 
+def _get_plan_tier(is_paid: bool, plan: str) -> str:
+    if not is_paid:
+        return "free"
+    p = str(plan or "").lower()
+    if "180" in p or "6-month" in p or "6 month" in p or "6m" in p or "dominance" in p:
+        return "6m"
+    if "90" in p or "mastery" in p or "3-month" in p or "3 month" in p or "3m" in p or "sprint" in p:
+        return "3m"
+    return "1m"
+
+def _format_paid_until(paid_until: float) -> str:
+    if not paid_until:
+        return ""
+    try:
+        from datetime import datetime, timezone
+        return datetime.fromtimestamp(paid_until, tz=timezone.utc).strftime("%b %d, %Y")
+    except Exception:
+        return ""
+
 def _format_remaining_str(is_paid: bool, paid_until: float, now: float) -> str:
     if not (is_paid and paid_until > now):
         return ""
@@ -886,13 +905,17 @@ def get_user_profile(user_id: str) -> dict:
                 days = int(diff / 86400)
                 remaining_str = f"{days}d left"
 
+        plan_tier = _get_plan_tier(is_paid, row["plan"])
+        paid_until_formatted = _format_paid_until(paid_until)
         return {
             "user_id": row["id"],
             "email": row["email"],
             "full_name": row["full_name"] or row["email"].split("@")[0],
             "is_paid": is_paid,
             "plan": row["plan"],
+            "plan_tier": plan_tier,
             "paid_until": paid_until,
+            "paid_until_formatted": paid_until_formatted,
             "remaining_str": remaining_str,
             "created_at": row["created_at"]
         }
@@ -1207,20 +1230,34 @@ def record_successful_payment(user_id: str, payment_id: str, order_id: str, amou
     # 1. Day Sprint: 24 Hours
     # 2. 90-Day Mastery: 90 Days
     # 3. 30-Day Pro Hunt: 30 Days (Default)
-    if "vip" in plan_lower:
-        duration_seconds = 30 * 86400 # 30 days VIP Pass
-        plan_code = "vip_pass_30d"
+    base_time = now
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT paid_until FROM users WHERE id = ? OR LOWER(email) = ?", (user_id, str(user_id).lower()))
+            existing_user = cursor.fetchone()
+            if existing_user and existing_user["paid_until"] and existing_user["paid_until"] > now:
+                base_time = float(existing_user["paid_until"])
+    except Exception:
+        pass
+
+    if "180" in plan_lower or "6-month" in plan_lower or "6 month" in plan_lower or "dominance" in plan_lower or amount_inr >= 2500:
+        duration_seconds = 180 * 86400 # 180 days (6 months)
+        plan_code = "vip_pass_180d"
+    elif "90" in plan_lower or "mastery" in plan_lower or "3-month" in plan_lower or "3 month" in plan_lower or "sprint" in plan_lower or (amount_inr >= 1500 and amount_inr < 2500):
+        duration_seconds = 90 * 86400 # 90 days (3 months)
+        plan_code = "vip_pass_90d"
     elif "day" in plan_lower or "24" in plan_lower or amount_inr <= 200:
         duration_seconds = 24 * 3600 # 24 hours
         plan_code = "day_sprint_24h"
-    elif "90" in plan_lower or "mastery" in plan_lower or "3-month" in plan_lower or amount_inr > 700:
-        duration_seconds = 90 * 86400 # 90 days
-        plan_code = "mastery_90d"
+    elif "vip" in plan_lower:
+        duration_seconds = 30 * 86400 # 30 days VIP Pass
+        plan_code = "vip_pass_30d"
     else:
         duration_seconds = 30 * 86400 # 30 days
-        plan_code = "pro_hunt_30d"
+        plan_code = "vip_pass_30d"
 
-    paid_until = now + duration_seconds
+    paid_until = base_time + duration_seconds
     
     # 1. Update SQLite
     try:

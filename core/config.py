@@ -21,6 +21,45 @@ class Config:
     VIP_PRICE_GBP = float(os.getenv("ALMOND_VIP_PRICE_GBP", 9.99))
     VIP_TEST_PRICE_INR = VIP_PRICE_INR
 
+    VIP_TIERS = {
+        "1m": {
+            "id": "1m",
+            "name": "1-Month VIP Pass",
+            "tag": "Standard VIP",
+            "duration_days": 30,
+            "duration_seconds": 30 * 86400,
+            "plan_code": "vip_pass_30d",
+            "INR": 699,
+            "USD": 9.99,
+            "EUR": 9.99,
+            "GBP": 9.99,
+        },
+        "3m": {
+            "id": "3m",
+            "name": "3-Month Career Sprint Pass",
+            "tag": "Career Sprint",
+            "duration_days": 90,
+            "duration_seconds": 90 * 86400,
+            "plan_code": "vip_pass_90d",
+            "INR": 1799,
+            "USD": 24.99,
+            "EUR": 24.99,
+            "GBP": 24.99,
+        },
+        "6m": {
+            "id": "6m",
+            "name": "6-Month Career Dominance Pass",
+            "tag": "Career Dominance",
+            "duration_days": 180,
+            "duration_seconds": 180 * 86400,
+            "plan_code": "vip_pass_180d",
+            "INR": 2999,
+            "USD": 39.99,
+            "EUR": 39.99,
+            "GBP": 39.99,
+        }
+    }
+
     # Supabase (Auth & Postgres Database)
     SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
     SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "").strip()

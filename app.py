@@ -763,12 +763,15 @@ async def api_me(payload: dict = Body(...)):
             "email": profile.get("email", ""),
             "full_name": profile.get("full_name", ""),
             "plan": profile.get("plan", "free"),
+            "plan_tier": profile.get("plan_tier", "1m" if paid else "free"),
             "paid_until": profile.get("paid_until", 0),
+            "paid_until_formatted": profile.get("paid_until_formatted", ""),
             "remaining_str": profile.get("remaining_str", ""),
             "is_paid": paid,
             "price_inr": Config.PRICE_INR,
             "price_usd": Config.PRICE_USD,
-            "vip_price_inr": getattr(Config, "VIP_PRICE_INR", 699)
+            "vip_price_inr": getattr(Config, "VIP_PRICE_INR", 699),
+            "vip_tiers": getattr(Config, "VIP_TIERS", {})
         })
 
     return JSONResponse(content={
@@ -776,9 +779,11 @@ async def api_me(payload: dict = Body(...)):
         "is_authenticated": False,
         "invalid_token": bool(token),
         "is_paid": False,
+        "plan_tier": "free",
         "price_inr": Config.PRICE_INR,
         "price_usd": Config.PRICE_USD,
-        "vip_price_inr": getattr(Config, "VIP_PRICE_INR", 699)
+        "vip_price_inr": getattr(Config, "VIP_PRICE_INR", 699),
+        "vip_tiers": getattr(Config, "VIP_TIERS", {})
     })
 
 @app.get("/api/contributions/recent")
