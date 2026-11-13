@@ -2255,26 +2255,27 @@
         </div>
     </div>
 
-    <!-- 8b. MODAL: DEDICATED ALMOND JOBS VIP PASS (PRIORITY EARLY ACCESS) -->
+    <!-- 8b. MODAL: DEDICATED ALMOND JOBS VIP PASS (PRIORITY EARLY ACCESS & ACTIVE MEMBER DASHBOARD) -->
     <div id="vipPassModal" class="hidden fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4">
         <div class="rounded-3xl max-w-lg w-full max-h-[92vh] flex flex-col border border-amber-300/80 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 my-auto overflow-hidden" style="background-color: #ffffff !important;">
             <div class="flex items-center justify-between p-5 sm:p-6 pb-4 border-b border-slate-100 bg-gradient-to-r from-amber-50/80 via-white to-violet-50/70 shrink-0">
                 <div class="flex items-center space-x-3">
-                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-950 flex items-center justify-center text-2xl shadow-sm">
+                    <div id="vipModalHeaderIcon" class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-500 text-slate-950 flex items-center justify-center text-2xl shadow-sm">
                         👑
                     </div>
                     <div>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <h3 class="text-lg sm:text-xl font-black text-slate-950">Almond Jobs VIP Pass</h3>
-                            <span class="text-[10px] font-black uppercase tracking-wider text-violet-900 bg-violet-100 px-2 py-0.5 rounded-full border border-violet-200">Priority Early Access</span>
+                            <h3 id="vipModalHeaderTitle" class="text-lg sm:text-xl font-black text-slate-950">Almond Jobs VIP Pass</h3>
+                            <span id="vipModalHeaderBadge" class="text-[10px] font-black uppercase tracking-wider text-violet-900 bg-violet-100 px-2 py-0.5 rounded-full border border-violet-200">Priority Early Access</span>
                         </div>
-                        <p class="text-xs text-slate-600 font-semibold">Direct internal ATS ingestion &bull; Apply before public platforms saturate the applicant pool</p>
+                        <p id="vipModalHeaderSubtitle" class="text-xs text-slate-600 font-semibold">Direct internal ATS ingestion &bull; Apply before public platforms saturate the applicant pool</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeVipPassModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer font-bold text-sm">✕</button>
             </div>
 
-            <div class="overflow-y-auto p-5 sm:p-6 space-y-4 custom-scrollbar flex-1">
+            <!-- VIEW 1: UNPAID PURCHASE FLOW (Default for Guests & Unpaid Candidates) -->
+            <div id="vipModalPurchaseView" class="overflow-y-auto p-5 sm:p-6 space-y-4 custom-scrollbar flex-1">
                 <!-- Founder Statement Card -->
                 <div class="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950 leading-relaxed font-medium">
                     <span class="font-extrabold text-amber-900">Founder's Note:</span> When companies open new requisitions, the first 48 hours determine 80% of interview callbacks. Public portals inundate hiring managers with thousands of bot applications. Almond Jobs VIP gives you the direct, unfiltered gateway to corporate ATS systems the moment roles appear.
@@ -2334,6 +2335,129 @@
                         Verified Razorpay Live Checkout (UPI, Cards, NetBanking)
                     </span>
                     <span class="font-bold text-slate-600">One-Time Pass</span>
+                </div>
+            </div>
+
+            <!-- VIEW 2: ACTIVE VIP MEMBER VIEW (Displayed when user is already VIP) -->
+            <div id="vipModalActiveMemberView" class="hidden overflow-y-auto p-5 sm:p-6 space-y-4 custom-scrollbar flex-1">
+                <!-- Active Member Dossier Card -->
+                <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-950 text-white space-y-2.5 shadow-md border border-emerald-500/40">
+                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span class="text-xs font-black uppercase tracking-wider text-emerald-400" id="vipActiveMemberPlanBadge">Active VIP Member</span>
+                        </div>
+                        <span id="vipActiveExpiryBadge" class="text-[11px] font-extrabold text-emerald-300 bg-emerald-900/60 border border-emerald-600/60 px-2.5 py-0.5 rounded-full">Valid</span>
+                    </div>
+                    <div class="flex items-baseline justify-between gap-3 flex-wrap">
+                        <div>
+                            <h4 id="vipActiveMemberPlanTitle" class="text-lg font-black text-white">1-Month VIP Pass Active</h4>
+                            <p id="vipActiveMemberExpiryDetail" class="text-xs text-slate-300 font-medium">Valid until Dec 13, 2026 &bull; 30 days left</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-emerald-400 font-black">100% Direct Ingestion</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unlocked Exclusive Advantages (What You Have Apart from Others) -->
+                <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/90 space-y-2.5 text-xs text-amber-950">
+                    <div class="flex items-center gap-2 font-black text-amber-900 text-xs uppercase tracking-wide">
+                        <span>⚡</span>
+                        <span>Your Unlocked VIP Advantages (vs Standard Feed)</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-[11px]">
+                        <div class="flex items-start gap-2 bg-white/80 p-2.5 rounded-xl border border-amber-200/60">
+                            <span class="text-emerald-700 font-black text-sm shrink-0">✓</span>
+                            <div>
+                                <strong class="text-slate-900 block">First-Wave Direct Openings</strong>
+                                <span class="text-slate-600">Immediate access to 0-6 day roles before candidate saturation</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 bg-white/80 p-2.5 rounded-xl border border-amber-200/60">
+                            <span class="text-emerald-700 font-black text-sm shrink-0">✓</span>
+                            <div>
+                                <strong class="text-slate-900 block">0% Recruiter Spread</strong>
+                                <span class="text-slate-600">Direct ATS portals (Greenhouse, Lever, Ashby, Workday)</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 bg-white/80 p-2.5 rounded-xl border border-amber-200/60">
+                            <span class="text-emerald-700 font-black text-sm shrink-0">✓</span>
+                            <div>
+                                <strong class="text-slate-900 block">Unrestricted Exports</strong>
+                                <span class="text-slate-600">100% clickable PDF dossiers, Word docs &amp; CSV trackers</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2 bg-white/80 p-2.5 rounded-xl border border-amber-200/60">
+                            <span class="text-emerald-700 font-black text-sm shrink-0">✓</span>
+                            <div>
+                                <strong class="text-slate-900 block">Unredacted Designations</strong>
+                                <span class="text-slate-600">Exact titles, hiring manager signals &amp; salary ranges</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tier Extension & Upgrade Section -->
+                <div id="vipUpgradeSection" class="p-4 rounded-2xl bg-slate-900 text-white space-y-3.5 border border-slate-800">
+                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                        <div>
+                            <span class="text-[10px] font-black uppercase tracking-wider text-amber-300">Upgrade or Extend Coverage</span>
+                            <h4 id="vipUpgradeSectionTitle" class="text-sm font-black text-white">Continuous Career Sprint Coverage</h4>
+                        </div>
+                        <!-- Multi-Currency Switcher for Upgrade -->
+                        <div class="flex items-center gap-1 bg-slate-800 p-1 rounded-xl text-[11px] font-bold">
+                            <button type="button" onclick="selectVipUpgradeCurrency('INR')" id="vipUpCurrBtn_INR" class="vip-up-curr-tab px-2 py-0.5 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer">₹ INR</button>
+                            <button type="button" onclick="selectVipUpgradeCurrency('USD')" id="vipUpCurrBtn_USD" class="vip-up-curr-tab px-2 py-0.5 rounded-lg text-slate-300 hover:text-white cursor-pointer">$ USD</button>
+                            <button type="button" onclick="selectVipUpgradeCurrency('EUR')" id="vipUpCurrBtn_EUR" class="vip-up-curr-tab px-2 py-0.5 rounded-lg text-slate-300 hover:text-white cursor-pointer">€ EUR</button>
+                            <button type="button" onclick="selectVipUpgradeCurrency('GBP')" id="vipUpCurrBtn_GBP" class="vip-up-curr-tab px-2 py-0.5 rounded-lg text-slate-300 hover:text-white cursor-pointer">£ GBP</button>
+                        </div>
+                    </div>
+
+                    <!-- Upgrade Cards Grid (3m and 6m, or 6m extension) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="vipUpgradeCardsContainer">
+                        <!-- 3-Month Option -->
+                        <div id="vipUpgradeCard_3m" onclick="selectVipUpgradeTier('3m')" class="vip-up-card p-3.5 rounded-2xl bg-slate-800/80 hover:bg-slate-800 border-2 border-amber-400/90 cursor-pointer transition relative space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">Career Sprint</span>
+                                <span class="text-[10px] font-black bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full">Popular</span>
+                            </div>
+                            <div class="text-base font-black text-white" id="vipUpgradeTitle_3m">3-Month Pass</div>
+                            <div class="text-xl font-black text-amber-300" id="vipUpgradePrice_3m">₹1,799</div>
+                            <p class="text-[10px] text-slate-300 leading-tight">+90 days stacked onto current pass. Complete job hunt cycle coverage.</p>
+                        </div>
+
+                        <!-- 6-Month Option -->
+                        <div id="vipUpgradeCard_6m" onclick="selectVipUpgradeTier('6m')" class="vip-up-card p-3.5 rounded-2xl bg-slate-800/40 hover:bg-slate-800 border-2 border-slate-700 cursor-pointer transition relative space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-violet-400">Career Dominance</span>
+                                <span class="text-[10px] font-black bg-violet-500 text-white px-2 py-0.5 rounded-full">Best Value</span>
+                            </div>
+                            <div class="text-base font-black text-white" id="vipUpgradeTitle_6m">6-Month Pass</div>
+                            <div class="text-xl font-black text-violet-300" id="vipUpgradePrice_6m">₹2,999</div>
+                            <p class="text-[10px] text-slate-300 leading-tight">+180 days stacked. Uninterrupted high-compensation role monitoring.</p>
+                        </div>
+                    </div>
+
+                    <!-- Upgrade CTA Button -->
+                    <button type="button" id="vipUpgradeCheckoutBtn" onclick="executeVipUpgradeCheckout()" class="w-full py-3 px-5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-md transition cursor-pointer flex items-center justify-center gap-2">
+                        <span id="vipUpgradeCheckoutBtnLabel">🚀 Upgrade to 3-Month Sprint &mdash; ₹1,799</span>
+                    </button>
+                    <p class="text-[10px] text-slate-400 text-center">New duration is seamlessly stacked onto your existing VIP expiration date.</p>
+                </div>
+
+                <!-- Bottom Voluntary Contribute Section -->
+                <div class="p-4 rounded-2xl bg-amber-50/80 border border-amber-300 text-center space-y-2">
+                    <div class="flex items-center justify-center gap-1.5 text-xs font-black text-amber-950">
+                        <span>☕</span>
+                        <span>Landed Direct Interviews on Almond Jobs?</span>
+                    </div>
+                    <p class="text-xs text-amber-900 leading-relaxed font-medium">
+                        If our platform helped you skip recruiter ghosting and land offers, you can support our mission with a voluntary coffee contribution.
+                    </p>
+                    <button type="button" onclick="closeVipPassModal(); openContributeModal();" class="mt-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-extrabold text-xs shadow-sm hover:scale-105 active:scale-95 transition cursor-pointer">
+                        <span>☕ Support Our Mission / Buy Us a Coffee</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -2531,6 +2655,7 @@
                     </div>
                 </div>
 
+                <!-- If Unpaid: Show Unlock VIP Section -->
                 <div id="profileUpgradeSection" class="p-4 rounded-2xl bg-gradient-to-br from-violet-50 to-indigo-50 border border-violet-200 text-center space-y-2">
                     <div class="flex items-center justify-center gap-1.5 text-xs font-black text-violet-950">
                         <i data-lucide="crown" class="w-4 h-4 text-amber-600"></i>
@@ -2539,6 +2664,30 @@
                     <p class="text-[11px] text-violet-800 leading-snug">Unlock first-wave corporate postings, direct ATS links, unredacted exports, and zero-broker application pipelines.</p>
                     <button type="button" onclick="closeProfileModal(); openVipPassModal();" class="w-full mt-1 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs rounded-xl shadow-md transition cursor-pointer">
                         👑 Unlock VIP Pass
+                    </button>
+                </div>
+
+                <!-- If Paid: Show Active VIP Member Dashboard Card -->
+                <div id="profileActiveVipSection" class="hidden p-4 rounded-2xl bg-gradient-to-br from-amber-50/90 via-yellow-50/70 to-emerald-50/80 border border-amber-300 text-center space-y-2">
+                    <div class="flex items-center justify-center gap-1.5 text-xs font-black text-slate-950">
+                        <span class="text-base">👑</span>
+                        <span id="profileActiveVipBadgeLabel">Active VIP Member Pass</span>
+                    </div>
+                    <p id="profileActiveVipDetail" class="text-[11px] text-slate-700 leading-snug font-medium">Valid until Dec 13, 2026 &bull; 30 days left &bull; 100% Unlocked</p>
+                    <button type="button" onclick="closeProfileModal(); openVipPassModal();" class="w-full mt-1 py-2.5 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow-sm transition cursor-pointer flex items-center justify-center gap-1.5">
+                        <span>👑 Manage VIP &amp; Upgrade Tier</span>
+                    </button>
+                </div>
+
+                <!-- Profile Voluntary Community Contribution CTA -->
+                <div id="profileContributeSection" class="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-1.5">
+                    <div class="flex items-center justify-center gap-1.5 text-[11px] font-black text-slate-900">
+                        <span>☕</span>
+                        <span>Support Almond Jobs (Buy Us a Coffee)</span>
+                    </div>
+                    <p class="text-[10px] text-slate-600 leading-snug">Landed an offer or direct interviews? Voluntary contributions keep our direct ATS ingestion independent.</p>
+                    <button type="button" onclick="closeProfileModal(); openContributeModal();" class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-800 text-[11px] font-bold rounded-lg border border-slate-300 transition cursor-pointer">
+                        <span>☕ Buy Us a Coffee</span>
                     </button>
                 </div>
 

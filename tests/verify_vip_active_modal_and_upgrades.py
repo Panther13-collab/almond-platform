@@ -109,6 +109,31 @@ class TestVipActiveModalAndUpgrades(unittest.TestCase):
         self.assertIn("3m", data["vip_tiers"])
         self.assertIn("6m", data["vip_tiers"])
 
+    def test_07_index_html_has_dual_vip_views_and_upgrade_ui(self):
+        """index.html contains both unpaid purchase view and active member view with upgrades and contribute CTA."""
+        index_path = os.path.join(os.path.dirname(__file__), "..", "templates", "index.html")
+        with open(index_path, "r", encoding="utf-8") as f:
+            html = f.read()
+
+        # Dual modal views
+        self.assertIn('id="vipModalPurchaseView"', html)
+        self.assertIn('id="vipModalActiveMemberView"', html)
+
+        # Active member details
+        self.assertIn('id="vipActiveMemberPlanBadge"', html)
+        self.assertIn('id="vipActiveMemberPlanTitle"', html)
+        self.assertIn('id="vipUpgradeSection"', html)
+        self.assertIn('id="vipUpgradeCard_3m"', html)
+        self.assertIn('id="vipUpgradeCard_6m"', html)
+        self.assertIn('id="vipUpgradeCheckoutBtn"', html)
+
+        # Active member contribute CTA
+        self.assertIn('openContributeModal()', html)
+
+        # Candidate profile active VIP section & contribute section
+        self.assertIn('id="profileActiveVipSection"', html)
+        self.assertIn('id="profileContributeSection"', html)
+
 
 if __name__ == "__main__":
     unittest.main()
