@@ -2278,55 +2278,98 @@
             <div id="vipModalPurchaseView" class="overflow-y-auto p-5 sm:p-6 space-y-4 custom-scrollbar flex-1">
                 <!-- Founder Statement Card -->
                 <div class="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs text-amber-950 leading-relaxed font-medium">
-                    <span class="font-extrabold text-amber-900">Founder's Note:</span> When companies open new requisitions, the first 48 hours determine 80% of interview callbacks. Public portals inundate hiring managers with thousands of bot applications. Almond Jobs VIP gives you the direct, unfiltered gateway to corporate ATS systems the moment roles appear.
+                    <span class="font-extrabold text-amber-900">Founder's Note:</span> When companies open new requisitions, the first 48 hours determine 80% of interview callbacks. Public platforms inundate hiring managers with thousands of bot applications. Almond Jobs VIP gives you the direct, unfiltered gateway to corporate ATS systems the moment roles appear.
                 </div>
 
-                <!-- Multi-Currency Display (1-Month VIP Pass) -->
-                <div class="p-4 rounded-2xl bg-slate-950 text-white space-y-3 shadow-md">
-                    <div class="flex items-center justify-between gap-2 flex-wrap">
-                        <span class="text-[10px] font-black uppercase tracking-wider text-amber-300">Standard 1-Month VIP Pass</span>
-                        <div class="flex items-center gap-1 bg-slate-800 p-1 rounded-xl text-[11px] font-bold">
-                            <button type="button" onclick="selectVipCurrency('INR')" id="vipCurrBtn_INR" class="vip-curr-tab px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer">₹ INR</button>
-                            <button type="button" onclick="selectVipCurrency('USD')" id="vipCurrBtn_USD" class="vip-curr-tab px-2.5 py-1 rounded-lg text-slate-300 hover:text-white cursor-pointer">$ USD</button>
-                            <button type="button" onclick="selectVipCurrency('EUR')" id="vipCurrBtn_EUR" class="vip-curr-tab px-2.5 py-1 rounded-lg text-slate-300 hover:text-white cursor-pointer">€ EUR</button>
-                            <button type="button" onclick="selectVipCurrency('GBP')" id="vipCurrBtn_GBP" class="vip-curr-tab px-2.5 py-1 rounded-lg text-slate-300 hover:text-white cursor-pointer">£ GBP</button>
-                        </div>
+                <!-- Currency Selector Header -->
+                <div class="flex items-center justify-between gap-2 flex-wrap px-1">
+                    <div>
+                        <span class="text-[10px] font-black uppercase tracking-wider text-amber-600 block">Select Membership Tier</span>
+                        <h4 class="text-sm font-extrabold text-slate-900">Choose Your Career Sprint Duration</h4>
                     </div>
-
-                    <div class="flex items-baseline justify-between gap-3">
-                        <div class="flex items-baseline gap-2.5">
-                            <span id="vipMainPriceDisplay" class="text-3xl sm:text-4xl font-black text-amber-400">₹699</span>
-                            <span id="vipPlannedParityPrice" class="text-sm font-bold text-slate-400"></span>
-                        </div>
-                        <span class="text-[11px] font-extrabold text-emerald-300 bg-emerald-950/80 border border-emerald-700/70 px-2.5 py-1 rounded-full">1 Month Access</span>
+                    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-[11px] font-bold border border-slate-200">
+                        <button type="button" onclick="selectVipCurrency('INR')" id="vipCurrBtn_INR" class="vip-curr-tab px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer">&#8377; INR</button>
+                        <button type="button" onclick="selectVipCurrency('USD')" id="vipCurrBtn_USD" class="vip-curr-tab px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-950 cursor-pointer">$ USD</button>
+                        <button type="button" onclick="selectVipCurrency('EUR')" id="vipCurrBtn_EUR" class="vip-curr-tab px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-950 cursor-pointer">&euro; EUR</button>
+                        <button type="button" onclick="selectVipCurrency('GBP')" id="vipCurrBtn_GBP" class="vip-curr-tab px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-950 cursor-pointer">&pound; GBP</button>
                     </div>
-                    <p id="vipCurrencyParityNote" class="text-[11px] text-slate-300 leading-relaxed">
-                        1-Month VIP Pass provides instant full access to first-wave corporate openings, direct ATS portals, and complete dossier exports.
-                    </p>
                 </div>
 
-                <!-- VIP Benefits (Founder Copy) -->
-                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2.5 text-xs">
+                <!-- 3-Tier Multi-Option Cards (Google / Anthropic Standard) -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="vipPurchaseCardsGrid">
+                    <!-- TIER 1: 1-Month Standard VIP -->
+                    <div id="vipPurchaseCard_1m" onclick="selectVipPurchaseTier('1m')" class="vip-tier-card p-4 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 cursor-pointer transition relative space-y-2 flex flex-col justify-between shadow-xs">
+                        <div>
+                            <div class="flex items-center justify-between gap-1 mb-1">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-500">1 Month</span>
+                                <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">Standard</span>
+                            </div>
+                            <div class="text-sm font-extrabold text-slate-900">VIP Pass</div>
+                            <div class="mt-2">
+                                <span id="vipCardPrice_1m" class="text-2xl font-black text-slate-900">&#8377;699</span>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-500 leading-tight pt-1 border-t border-slate-100">
+                            30 days full first-wave access to direct corporate ATS portals.
+                        </p>
+                    </div>
+
+                    <!-- TIER 2: 3-Month Career Sprint (30% OFF - Popular) -->
+                    <div id="vipPurchaseCard_3m" onclick="selectVipPurchaseTier('3m')" class="vip-tier-card p-4 rounded-2xl bg-slate-950 border-2 border-amber-400 cursor-pointer transition relative space-y-2 flex flex-col justify-between shadow-md">
+                        <div>
+                            <div class="flex items-center justify-between gap-1 mb-1">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">3 Months</span>
+                                <span id="vipBadge_3m" class="text-[10px] font-black bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full uppercase tracking-tight">30% OFF</span>
+                            </div>
+                            <div class="text-sm font-extrabold text-white">Career Sprint</div>
+                            <div class="mt-2 flex items-baseline gap-2 flex-wrap">
+                                <span id="vipCardOriginal_3m" class="text-xs sm:text-sm text-slate-400 line-through font-bold">&#8377;2,599</span>
+                                <span id="vipCardPrice_3m" class="text-2xl font-black text-amber-400">&#8377;1,799</span>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-300 leading-tight pt-1 border-t border-slate-800">
+                            90 days uninterrupted search cycle. Most popular candidate choice.
+                        </p>
+                    </div>
+
+                    <!-- TIER 3: 6-Month Career Dominance (35% OFF - Best Value) -->
+                    <div id="vipPurchaseCard_6m" onclick="selectVipPurchaseTier('6m')" class="vip-tier-card p-4 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 cursor-pointer transition relative space-y-2 flex flex-col justify-between shadow-xs">
+                        <div>
+                            <div class="flex items-center justify-between gap-1 mb-1">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-violet-600">6 Months</span>
+                                <span id="vipBadge_6m" class="text-[10px] font-black bg-violet-600 text-white px-2 py-0.5 rounded-full uppercase tracking-tight">35% OFF</span>
+                            </div>
+                            <div class="text-sm font-extrabold text-slate-900">Career Dominance</div>
+                            <div class="mt-2 flex items-baseline gap-2 flex-wrap">
+                                <span id="vipCardOriginal_6m" class="text-xs sm:text-sm text-slate-400 line-through font-bold">&#8377;4,299</span>
+                                <span id="vipCardPrice_6m" class="text-2xl font-black text-violet-700">&#8377;2,799</span>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-500 leading-tight pt-1 border-t border-slate-100">
+                            180 days complete dominance. Maximum savings for serious career transitions.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- VIP Unlocked Intelligence Pillars -->
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-2 text-xs">
                     <div class="flex items-start gap-2.5 text-slate-800">
-                        <span class="w-5 h-5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-black">✓</span>
+                        <span class="w-5 h-5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-black">&#10003;</span>
                         <span><strong>First-Wave Direct Openings:</strong> Immediate visibility into newly published corporate roles before public platforms trigger applicant saturation.</span>
                     </div>
                     <div class="flex items-start gap-2.5 text-slate-800">
-                        <span class="w-5 h-5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-black">✓</span>
+                        <span class="w-5 h-5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-black">&#10003;</span>
                         <span><strong>0% Recruiter Spread &amp; Direct Portals:</strong> Apply straight to hiring teams via official Greenhouse, Lever, Ashby &amp; Workday links with zero middleman interference.</span>
                     </div>
                     <div class="flex items-start gap-2.5 text-slate-800">
-                        <span class="w-5 h-5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-black">✓</span>
+                        <span class="w-5 h-5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-black">&#10003;</span>
                         <span><strong>Complete Dossier &amp; Tracker Exports:</strong> Download unredacted PDFs, Word dossiers, and application trackers with every direct career link fully enabled.</span>
-                    </div>
-                    <div class="flex items-start gap-2.5 text-slate-800">
-                        <span class="w-5 h-5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-black">✓</span>
-                        <span><strong>Continuous 1-Month VIP Pass:</strong> Full uninterrupted intelligence for one month from your date of activation across all curated roles, direct portals, and compensation filters.</span>
                     </div>
                 </div>
 
-                <button type="button" id="vipPassCheckoutBtn" onclick="executeVipPassCheckout()" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-700 hover:from-violet-500 hover:to-indigo-500 active:scale-98 text-white font-black text-sm sm:text-base tracking-wide shadow-lg shadow-violet-500/25 flex items-center justify-center gap-2 transition cursor-pointer">
-                    <span id="vipPassCheckoutBtnLabel">👑 Unlock 1-Month VIP Pass &mdash; ₹699</span>
+                <!-- Primary Checkout CTA Button -->
+                <button type="button" id="vipPassCheckoutBtn" onclick="executeVipPassCheckout()" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 active:scale-98 text-slate-950 font-black text-sm sm:text-base tracking-wide shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition cursor-pointer">
+                    <span id="vipPassCheckoutBtnLabel">&#9889; Unlock 3-Month Career Sprint &mdash; &#8377;1,799</span>
                 </button>
 
                 <div class="flex items-center justify-between text-[11px] text-slate-500 px-1">
@@ -2334,7 +2377,7 @@
                         <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1a9 9 0 100 18 9 9 0 000-18zm3.707 7.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
                         Verified Razorpay Live Checkout (UPI, Cards, NetBanking)
                     </span>
-                    <span class="font-bold text-slate-600">One-Time Pass</span>
+                    <span class="font-bold text-slate-600">Billed Once &bull; No Auto-Charge</span>
                 </div>
             </div>
 
