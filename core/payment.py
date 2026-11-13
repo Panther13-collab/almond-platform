@@ -5,7 +5,7 @@ import re
 import time
 import razorpay
 from core.config import Config
-from core.auth_db import record_contribution_payment, record_successful_payment
+from core.auth_db import record_contribution_payment, record_successful_payment, get_user_profile
 
 MIN_ORDER_AMOUNT_PAISE = 100
 VIP_LATEST_FEED_MAX_DAYS = 6
@@ -226,10 +226,14 @@ def verify_razorpay_signature(
                 "message": "Thank you for your generous coffee contribution!"
             }
         record_successful_payment(user_id, payment_id, order_id, amount_inr, plan_name or "Almond Jobs VIP Pass")
+        prof = get_user_profile(user_id) or {}
         return {
             "status": "success",
             "purchase_type": "vip_pass",
             "is_paid": True,
+            "plan_tier": prof.get("plan_tier", "1m"),
+            "remaining_str": prof.get("remaining_str", ""),
+            "paid_until_formatted": prof.get("paid_until_formatted", ""),
             "message": "VIP Pass verified and activated! Latest feed (0-6 days) is now unlocked."
         }
 

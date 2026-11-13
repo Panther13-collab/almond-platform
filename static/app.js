@@ -4268,9 +4268,184 @@ window.openContributeModal = function() {
     if (window.lucide) lucide.createIcons();
 };
 
+window.VIP_UPGRADE_TIERS = {
+    "3m": {
+        id: "3m",
+        title: "3-Month Sprint",
+        name: "3-Month Career Sprint Pass",
+        tag: "Career Sprint",
+        days: 90,
+        INR: { planned: "₹1,799", inr_amount: 1799 },
+        USD: { planned: "$24.99", inr_amount: 1799 },
+        EUR: { planned: "€24.99", inr_amount: 1799 },
+        GBP: { planned: "£24.99", inr_amount: 1799 }
+    },
+    "6m": {
+        id: "6m",
+        title: "6-Month Dominance",
+        name: "6-Month Career Dominance Pass",
+        tag: "Career Dominance",
+        days: 180,
+        INR: { planned: "₹2,999", inr_amount: 2999 },
+        USD: { planned: "$39.99", inr_amount: 2999 },
+        EUR: { planned: "€39.99", inr_amount: 2999 },
+        GBP: { planned: "£39.99", inr_amount: 2999 }
+    }
+};
+
+window.selectedVipUpgradeTierKey = "3m";
+window.selectedVipUpgradeCurrency = "INR";
+
+window.selectVipUpgradeTier = function(tierKey) {
+    window.selectedVipUpgradeTierKey = tierKey || "3m";
+    const card3m = document.getElementById("vipUpgradeCard_3m");
+    const card6m = document.getElementById("vipUpgradeCard_6m");
+
+    if (card3m && card6m) {
+        if (tierKey === "6m") {
+            card6m.className = "vip-up-card p-3.5 rounded-2xl bg-slate-800 hover:bg-slate-750 border-2 border-violet-400 cursor-pointer transition relative space-y-1.5 shadow-md shadow-violet-900/30";
+            card3m.className = "vip-up-card p-3.5 rounded-2xl bg-slate-800/40 hover:bg-slate-800 border-2 border-slate-700 cursor-pointer transition relative space-y-1.5 opacity-80 hover:opacity-100";
+        } else {
+            card3m.className = "vip-up-card p-3.5 rounded-2xl bg-slate-800 hover:bg-slate-750 border-2 border-amber-400 cursor-pointer transition relative space-y-1.5 shadow-md shadow-amber-900/30";
+            card6m.className = "vip-up-card p-3.5 rounded-2xl bg-slate-800/40 hover:bg-slate-800 border-2 border-slate-700 cursor-pointer transition relative space-y-1.5 opacity-80 hover:opacity-100";
+        }
+    }
+    if (typeof window.updateVipUpgradeLabels === "function") window.updateVipUpgradeLabels();
+};
+
+window.selectVipUpgradeCurrency = function(curr) {
+    window.selectedVipUpgradeCurrency = curr || "INR";
+    const tabs = document.querySelectorAll(".vip-up-curr-tab");
+    tabs.forEach(function(btn) {
+        const isSel = btn.id === ("vipUpCurrBtn_" + curr);
+        btn.className = isSel
+            ? "vip-up-curr-tab px-2 py-0.5 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer"
+            : "vip-up-curr-tab px-2 py-0.5 rounded-lg text-slate-300 hover:text-white cursor-pointer";
+    });
+    if (typeof window.updateVipUpgradeLabels === "function") window.updateVipUpgradeLabels();
+};
+
+window.updateVipUpgradeLabels = function() {
+    const curr = window.selectedVipUpgradeCurrency || "INR";
+    const tier3 = window.VIP_UPGRADE_TIERS["3m"][curr];
+    const tier6 = window.VIP_UPGRADE_TIERS["6m"][curr];
+
+    const price3mEl = document.getElementById("vipUpgradePrice_3m");
+    const price6mEl = document.getElementById("vipUpgradePrice_6m");
+    if (price3mEl) price3mEl.textContent = tier3.planned;
+    if (price6mEl) price6mEl.textContent = tier6.planned;
+
+    const selTier = window.selectedVipUpgradeTierKey || "3m";
+    const tierData = window.VIP_UPGRADE_TIERS[selTier];
+    const priceData = tierData[curr];
+
+    const btnLabel = document.getElementById("vipUpgradeCheckoutBtnLabel");
+    if (btnLabel) {
+        btnLabel.textContent = `🚀 Upgrade to ${tierData.title} — ${priceData.planned}`;
+    }
+};
+
+window.executeVipUpgradeCheckout = function() {
+    const tierKey = window.selectedVipUpgradeTierKey || "3m";
+    const curr = window.selectedVipUpgradeCurrency || "INR";
+    const tierData = window.VIP_UPGRADE_TIERS[tierKey];
+    const priceData = tierData[curr];
+
+    const planTitle = `Almond Jobs ${tierData.name} (${priceData.planned})`;
+    if (typeof triggerRazorpayCheckout === "function") {
+        triggerRazorpayCheckout(priceData.inr_amount, planTitle, {
+            purchaseType: "vip_upgrade",
+            plan_tier: tierKey,
+            currency: "INR"
+        });
+    } else {
+        alert("Payment gateway is initializing. Please try again in 2 seconds.");
+    }
+};
+
 window.openVipPassModal = function() {
     const modal = document.getElementById("vipPassModal");
     if (!modal) return;
+
+    const purchaseView = document.getElementById("vipModalPurchaseView");
+    const activeView = document.getElementById("vipModalActiveMemberView");
+    const headerTitle = document.getElementById("vipModalHeaderTitle");
+    const headerBadge = document.getElementById("vipModalHeaderBadge");
+    const headerSub = document.getElementById("vipModalHeaderSubtitle");
+
+    const paid = isUserPaid();
+
+    if (paid) {
+        if (purchaseView) purchaseView.classList.add("hidden");
+        if (activeView) activeView.classList.remove("hidden");
+
+        if (headerTitle) headerTitle.textContent = "Almond Jobs VIP Member Dashboard";
+        if (headerBadge) {
+            headerBadge.textContent = "Active VIP Member ✓";
+            headerBadge.className = "text-[10px] font-black uppercase tracking-wider text-emerald-900 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300";
+        }
+        if (headerSub) headerSub.textContent = "100% Unlocked Direct Portals • 0% Recruiter Spread";
+
+        const planTier = (localStorage.getItem("almond_plan_tier") || localStorage.getItem("almond_plan") || "").toLowerCase();
+        const remainingStr = localStorage.getItem("almond_remaining_str") || "";
+        const paidUntilFormatted = localStorage.getItem("almond_paid_until_formatted") || "";
+
+        let tierName = "1-Month VIP Pass Active";
+        let tierBadge = "Active VIP Member";
+        let defaultUpgradeTier = "3m";
+
+        if (planTier.includes("180") || planTier.includes("6m") || planTier.includes("6-month") || planTier.includes("dominance")) {
+            tierName = "6-Month Career Dominance Pass Active";
+            tierBadge = "Dominance Tier Unlocked";
+            defaultUpgradeTier = "6m";
+            const upTitle = document.getElementById("vipUpgradeSectionTitle");
+            if (upTitle) upTitle.textContent = "Extend Career Dominance Coverage";
+        } else if (planTier.includes("90") || planTier.includes("3m") || planTier.includes("3-month") || planTier.includes("sprint")) {
+            tierName = "3-Month Career Sprint Pass Active";
+            tierBadge = "Career Sprint Unlocked";
+            defaultUpgradeTier = "6m";
+            const upTitle = document.getElementById("vipUpgradeSectionTitle");
+            if (upTitle) upTitle.textContent = "Upgrade to 6-Month Dominance or Extend Sprint";
+        } else {
+            tierName = "1-Month VIP Pass Active";
+            tierBadge = "Standard VIP Active";
+            defaultUpgradeTier = "3m";
+            const upTitle = document.getElementById("vipUpgradeSectionTitle");
+            if (upTitle) upTitle.textContent = "Continuous Career Sprint Coverage";
+        }
+
+        const planBadgeEl = document.getElementById("vipActiveMemberPlanBadge");
+        if (planBadgeEl) planBadgeEl.textContent = tierBadge;
+
+        const planTitleEl = document.getElementById("vipActiveMemberPlanTitle");
+        if (planTitleEl) planTitleEl.textContent = tierName;
+
+        const expiryEl = document.getElementById("vipActiveMemberExpiryDetail");
+        if (expiryEl) {
+            let detail = "Direct Corporate Ingestion Active";
+            if (paidUntilFormatted && remainingStr) {
+                detail = `Valid until ${paidUntilFormatted} • ${remainingStr}`;
+            } else if (remainingStr) {
+                detail = `Valid • ${remainingStr}`;
+            } else if (paidUntilFormatted) {
+                detail = `Valid until ${paidUntilFormatted}`;
+            }
+            expiryEl.textContent = detail;
+        }
+
+        window.selectVipUpgradeTier(defaultUpgradeTier);
+    } else {
+        if (purchaseView) purchaseView.classList.remove("hidden");
+        if (activeView) activeView.classList.add("hidden");
+
+        if (headerTitle) headerTitle.textContent = "Almond Jobs VIP Pass";
+        if (headerBadge) {
+            headerBadge.textContent = "Priority Early Access";
+            headerBadge.className = "text-[10px] font-black uppercase tracking-wider text-violet-900 bg-violet-100 px-2 py-0.5 rounded-full border border-violet-200";
+        }
+        if (headerSub) headerSub.textContent = "Direct internal ATS ingestion • Apply before public platforms saturate the applicant pool";
+    }
+
     modal.classList.remove("hidden");
     modal.style.display = "flex";
     if (window.lucide) lucide.createIcons();
@@ -4414,9 +4589,32 @@ window.openProfileModal = function(contextReason = "") {
         }
 
         const upgradeSec = document.getElementById("profileUpgradeSection");
+        const activeSec = document.getElementById("profileActiveVipSection");
         if (upgradeSec) {
             if (paid) upgradeSec.classList.add("hidden");
             else upgradeSec.classList.remove("hidden");
+        }
+        if (activeSec) {
+            if (paid) {
+                activeSec.classList.remove("hidden");
+                const badgeLbl = document.getElementById("profileActiveVipBadgeLabel");
+                const detailEl = document.getElementById("profileActiveVipDetail");
+                const planTier = (localStorage.getItem("almond_plan_tier") || localStorage.getItem("almond_plan") || "").toLowerCase();
+                let tierText = "1-Month VIP Pass Active";
+                if (planTier.includes("6m") || planTier.includes("180") || planTier.includes("dominance")) tierText = "6-Month Career Dominance Pass";
+                else if (planTier.includes("3m") || planTier.includes("90") || planTier.includes("sprint")) tierText = "3-Month Career Sprint Pass";
+
+                if (badgeLbl) badgeLbl.textContent = `${tierText} ✓`;
+                const formatted = localStorage.getItem("almond_paid_until_formatted") || "";
+                const rem = localStorage.getItem("almond_remaining_str") || "";
+                if (detailEl) {
+                    if (formatted && rem) detailEl.textContent = `Valid until ${formatted} • ${rem} • 100% Direct Ingestion Unlocked`;
+                    else if (rem) detailEl.textContent = `Valid • ${rem} • 100% Direct Ingestion Unlocked`;
+                    else detailEl.textContent = `Active • 100% Unlocked Direct Portals`;
+                }
+            } else {
+                activeSec.classList.add("hidden");
+            }
         }
 
         const vectorCount = document.getElementById("profileVectorCount");
@@ -4909,6 +5107,9 @@ window.handleLogout = function() {
     localStorage.removeItem("almond_session_token");
     localStorage.removeItem("almond_auth_token");
     localStorage.removeItem("almond_remaining_str");
+    localStorage.removeItem("almond_plan_tier");
+    localStorage.removeItem("almond_paid_until_formatted");
+    localStorage.removeItem("almond_paid_until");
     localStorage.removeItem("almond_user_id");
     localStorage.removeItem("almond_user_email");
     localStorage.removeItem("almond_user_name");
@@ -5030,6 +5231,9 @@ window.initAuthSession = async function() {
                 if (data.email) localStorage.setItem("almond_user_email", data.email);
                 if (data.full_name) localStorage.setItem("almond_user_name", data.full_name);
                 if (data.remaining_str) localStorage.setItem("almond_remaining_str", data.remaining_str);
+                if (data.plan_tier) localStorage.setItem("almond_plan_tier", data.plan_tier);
+                if (data.paid_until_formatted) localStorage.setItem("almond_paid_until_formatted", data.paid_until_formatted);
+                if (data.paid_until) localStorage.setItem("almond_paid_until", String(data.paid_until));
                 localStorage.setItem("almond_is_paid", data.is_paid ? "true" : "false");
                 window.updateTopProfileBar();
                 if (typeof window.fetchKanbanFromCloud === "function") {

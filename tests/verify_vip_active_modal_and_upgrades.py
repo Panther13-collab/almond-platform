@@ -134,6 +134,19 @@ class TestVipActiveModalAndUpgrades(unittest.TestCase):
         self.assertIn('id="profileActiveVipSection"', html)
         self.assertIn('id="profileContributeSection"', html)
 
+    def test_08_app_js_has_upgrade_controllers(self):
+        """app.js provides VIP upgrade tier state, currency switcher and dynamic view toggle."""
+        app_js_path = os.path.join(os.path.dirname(__file__), "..", "static", "app.js")
+        with open(app_js_path, "r", encoding="utf-8") as f:
+            js = f.read()
+
+        self.assertIn("VIP_UPGRADE_TIERS", js)
+        self.assertIn("selectVipUpgradeTier", js)
+        self.assertIn("selectVipUpgradeCurrency", js)
+        self.assertIn("executeVipUpgradeCheckout", js)
+        self.assertIn("vipModalActiveMemberView", js)
+        self.assertIn("almond_plan_tier", js)
+
 
 if __name__ == "__main__":
     unittest.main()
