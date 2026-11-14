@@ -841,7 +841,7 @@ async def api_me(payload: dict = Body(...)):
     })
 
 @app.get("/api/contributions/recent")
-async def api_recent_contributions(limit: int = Query(20, ge=1, le=50)):
+async def api_recent_contributions(limit: int = Query(50, ge=1, le=100)):
     items = get_recent_contributions(limit=limit)
     return JSONResponse(content={"status": "success", "contributions": items})
 
@@ -897,8 +897,10 @@ async def api_create_order(payload: dict = Body(...)):
     if amount_paise < 100:
         raise HTTPException(status_code=400, detail="Minimum order amount is 100 paise (INR 1.00).")
 
+    amount_inr_param = int(payload.get("amount_inr", 0)) or (int(amount_paise / 100) if currency == "INR" else 485)
     res = create_razorpay_order(
         user_id=user_id,
+        amount_inr=amount_inr_param,
         amount_paise=amount_paise,
         currency=currency,
         receipt=receipt,
@@ -942,11 +944,13 @@ async def api_verify_payment(payload: dict = Body(...)):
 
     supporter_name = payload.get("supporter_name", "")
     supporter_message = payload.get("supporter_message", "")
+    currency = str(payload.get("currency", "INR") or "INR").upper()
     res = verify_razorpay_signature(
         user_id, order_id, payment_id, signature, amount_inr, plan_name,
         purchase_type=purchase_type,
         supporter_name=supporter_name,
-        supporter_message=supporter_message
+        supporter_message=supporter_message,
+        currency=currency
     )
     if res.get("status") == "error":
         raise HTTPException(status_code=res.get("http_status", 400), detail=res.get("message"))

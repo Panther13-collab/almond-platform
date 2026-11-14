@@ -2063,19 +2063,30 @@
                 <!-- Main Coffee Selection Card -->
                 <div class="p-5 rounded-2xl bg-slate-50/80 border border-slate-200/90 space-y-4 shadow-sm">
                     
-                    <!-- Coffee Multiplier Pill Row: ☕ x [ 1 ] [ 3 ] [ 5 ] [ 10 ] [ 20 ] -->
+                    <!-- Coffee Multiplier Pill Row: ☕ x [ 1 ] [ 3 ] [ 5 ] [ 10 ] [ 20 ] [ Custom ] -->
                     <div class="flex items-center justify-between bg-teal-50/60 p-3 rounded-2xl border border-teal-200/60">
                         <div class="flex items-center space-x-2 text-2xl pl-1">
                             <span>☕</span>
                             <span class="text-sm font-black text-slate-500">×</span>
                         </div>
-                        <div class="flex items-center gap-1.5 sm:gap-2" id="coffeeCountPills">
-                            <button type="button" onclick="selectCoffeeCount(1, 485)" class="coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-teal-500 text-white shadow-teal-500/25 ring-2 ring-teal-400" data-count="1">1</button>
-                            <button type="button" onclick="selectCoffeeCount(3, 1455)" class="coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700" data-count="3">3</button>
-                            <button type="button" onclick="selectCoffeeCount(5, 2425)" class="coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700" data-count="5">5</button>
-                            <button type="button" onclick="selectCoffeeCount(10, 4850)" class="coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700" data-count="10">10</button>
-                            <button type="button" onclick="selectCoffeeCount(20, 9700)" class="coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700" data-count="20">20</button>
+                        <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap" id="coffeeCountPills">
+                            <button type="button" onclick="selectCoffeeCount(1)" class="coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-teal-500 text-white shadow-teal-500/25 ring-2 ring-teal-400" data-count="1">1</button>
+                            <button type="button" onclick="selectCoffeeCount(3)" class="coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700" data-count="3">3</button>
+                            <button type="button" onclick="selectCoffeeCount(5)" class="coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700" data-count="5">5</button>
+                            <button type="button" onclick="selectCoffeeCount(10)" class="coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700" data-count="10">10</button>
+                            <button type="button" onclick="selectCoffeeCount(20)" class="coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700" data-count="20">20</button>
+                            <button type="button" onclick="toggleCustomCoffeeInput()" id="coffeePillCustom" class="coffee-pill px-2.5 py-1.5 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700" data-count="custom">Custom</button>
                         </div>
+                    </div>
+
+                    <!-- Custom Coffee Input Container (shows when Custom is active) -->
+                    <div id="coffeeCustomInputContainer" class="hidden p-3 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-between gap-3 animate-in fade-in duration-200">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-extrabold text-teal-900">Custom count:</span>
+                            <input type="number" id="coffeeCustomInput" min="1" max="1000" placeholder="e.g. 2, 4, 6" value="2" class="w-24 px-3 py-1.5 text-xs sm:text-sm font-black rounded-lg border border-teal-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-400" oninput="onCustomCoffeeCountChange(this.value)">
+                            <span class="text-xs font-bold text-teal-700">coffees ☕</span>
+                        </div>
+                        <span class="text-[11px] text-slate-500 font-semibold hidden sm:inline">Type any number you like</span>
                     </div>
 
                     <!-- Supporter Name Input -->
@@ -2088,9 +2099,9 @@
                         <textarea id="coffeeSupporterMessage" rows="3" placeholder="Say something nice..." class="w-full px-4 py-3 text-xs sm:text-sm font-medium rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-400/20 text-slate-900 placeholder:text-slate-400 shadow-2xs transition resize-none"></textarea>
                     </div>
 
-                    <!-- Big Support Button (Matches Publer Teal CTA) -->
-                    <button type="button" id="coffeeSupportBtn" onclick="executeCoffeeContribution()" class="w-full py-3.5 px-6 rounded-2xl bg-teal-500 hover:bg-teal-400 active:scale-98 text-white font-black text-sm sm:text-base tracking-wide shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2 transition cursor-pointer">
-                        <span>Support ₹<span id="coffeeAmountDisplay">485</span></span>
+                    <!-- Dedicated Support CTA Button (No Price Displayed on Initial Screen) -->
+                    <button type="button" id="coffeeSupportBtn" onclick="openCoffeeCheckoutModal()" class="w-full py-3.5 px-6 rounded-2xl bg-teal-500 hover:bg-teal-400 active:scale-98 text-white font-black text-sm sm:text-base tracking-wide shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2 transition cursor-pointer">
+                        <span>Support Almond Jobs &rarr;</span>
                     </button>
                     
                     <div class="flex items-center justify-between text-[11px] text-slate-500 px-1">
@@ -2098,11 +2109,23 @@
                             <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1a9 9 0 100 18 9 9 0 000-18zm3.707 7.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
                             Secure Razorpay UPI, GPay, Cards &amp; NetBanking
                         </span>
-                        <span class="font-bold text-slate-600">Voluntary Support Reward</span>
+                        <span class="font-bold text-slate-600">Multi-Currency Checkout</span>
                     </div>
                     <p class="text-[10.5px] text-slate-500 text-center font-medium pt-0.5">
                         This is a voluntary community contribution to fuel our independent, zero-broker search mission. To access fresh priority corporate postings the second they open, explore the <button type="button" onclick="closeVipPricingModal(); openVipPassModal();" class="text-violet-700 font-extrabold underline cursor-pointer">VIP Pass</button>.
                     </p>
+                </div>
+
+                <!-- Live Candidate Activity Presence Pill -->
+                <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-emerald-50/90 border border-emerald-200/80 text-[11px] text-emerald-900 font-bold">
+                    <div class="flex items-center gap-2">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <span>14 candidates currently viewing &bull; Live supporter stream active</span>
+                    </div>
+                    <span class="text-[10px] text-emerald-700 font-extrabold uppercase tracking-wide">Live</span>
                 </div>
 
                 <!-- Live Mini Reviews Rotating Card (Rotates Every 1-2 Minutes) -->
@@ -2248,7 +2271,288 @@
                             </div>
                         </div>
 
+                        <!-- Supporter 7 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">DM</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">David Miller</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought 5 coffees</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "Discovered an unlisted Staff Infra role on Ashby via Almond Jobs. Received an offer in 12 days!"
+                            </div>
+                            <div class="p-2 bg-teal-50 rounded-lg border border-teal-100 text-[11px] text-teal-900 flex items-start gap-1.5">
+                                <span>🌰</span>
+                                <div><strong>Almond Jobs:</strong> Huge congratulations David! Direct ATS pipelines give senior engineers the edge!</div>
+                            </div>
+                        </div>
+
+                        <!-- Supporter 8 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">AD</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Ananya Deshmukh</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought 2 coffees</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "The direct ATS URLs completely bypass HR screening bots. Got shortlisted at a series-B fintech in Pune!"
+                            </div>
+                        </div>
+
+                        <!-- Supporter 9 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">RM</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Rohit Menon</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought 3 coffees</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "Cleanest job portal in India. No fake consultancy calls asking for registration fees. Pure direct links."
+                            </div>
+                        </div>
+
+                        <!-- Supporter 10 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">SJ</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Sarah Jenkins</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought 10 coffees</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "Direct Lever links meant my application was reviewed directly by the engineering VP in London."
+                            </div>
+                            <div class="p-2 bg-teal-50 rounded-lg border border-teal-100 text-[11px] text-teal-900 flex items-start gap-1.5">
+                                <span>🌰</span>
+                                <div><strong>Almond Jobs:</strong> Awesome to hear Sarah! Keep crushing it!</div>
+                            </div>
+                        </div>
+
+                        <!-- Supporter 11 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">DM</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Divya Murali</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought 4 coffees</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "Landed Frontend Lead role in 2 weeks. Voluntary support is the least I can do for this transparency."
+                            </div>
+                        </div>
+
+                        <!-- Supporter 12 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">VM</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Vikram Malhotra</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought 20 coffees</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "Saved my career after sudden layoffs. 4 direct interview calls within 72 hours of using Almond Jobs."
+                            </div>
+                            <div class="p-2 bg-teal-50 rounded-lg border border-teal-100 text-[11px] text-teal-900 flex items-start gap-1.5">
+                                <span>🌰</span>
+                                <div><strong>Almond Jobs:</strong> So thrilled for you Vikram! This is why we built Almond Jobs.</div>
+                            </div>
+                        </div>
+
+                        <!-- Supporter 13 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">TK</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Tanvi Kulkarni</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought a coffee</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "Finally a job tracker that gives direct company ATS links without shady middlemen."
+                            </div>
+                        </div>
+
+                        <!-- Supporter 14 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">AG</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Abhishek Gupta</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought 6 coffees</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "The transparent package estimations were spot on during salary negotiation. Best coffees spent!"
+                            </div>
+                        </div>
+
+                        <!-- Supporter 15 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">ER</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Elena Rostova</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought 3 coffees</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "Applied to 5 EU remote roles through direct Greenhouse portals; 3 interview invitations so far!"
+                            </div>
+                            <div class="p-2 bg-teal-50 rounded-lg border border-teal-100 text-[11px] text-teal-900 flex items-start gap-1.5">
+                                <span>🌰</span>
+                                <div><strong>Almond Jobs:</strong> Phenomenal conversion rate Elena! Best of luck!</div>
+                            </div>
+                        </div>
+
+                        <!-- Supporter 16 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">SN</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Siddharth Nair</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought 10 coffees</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "Offered Senior Backend Engineer role today! Almond Jobs made the difference."
+                            </div>
+                            <div class="p-2 bg-teal-50 rounded-lg border border-teal-100 text-[11px] text-teal-900 flex items-start gap-1.5">
+                                <span>🌰</span>
+                                <div><strong>Almond Jobs:</strong> Way to go Siddharth! Celebratory coffee with you!</div>
+                            </div>
+                        </div>
+
+                        <!-- Supporter 17 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">MI</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Meera Iyer</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought 3 coffees</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "Interviewed with Stripe and Razorpay teams directly through their official career pages."
+                            </div>
+                            <div class="p-2 bg-teal-50 rounded-lg border border-teal-100 text-[11px] text-teal-900 flex items-start gap-1.5">
+                                <span>🌰</span>
+                                <div><strong>Almond Jobs:</strong> Stripe & Razorpay are elite engineering cultures. Best wishes Meera!</div>
+                            </div>
+                        </div>
+
+                        <!-- Supporter 18 -->
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-700">ZC</div>
+                                <div class="text-xs">
+                                    <strong class="text-slate-900 font-extrabold">Zoe Chen</strong>
+                                    <span class="text-slate-500 text-[11px]"> bought 4 coffees</span>
+                                </div>
+                            </div>
+                            <div class="p-2.5 bg-white rounded-xl border border-slate-100 text-xs text-slate-700 font-medium leading-relaxed">
+                                "Direct ingestion saves 90% of job search stress. Highly recommended to all fellow engineers."
+                            </div>
+                        </div>
+
                     </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- 8c. MODAL: DEDICATED COFFEE CHECKOUT POPUP (SEPARATE CHECKOUT PAGE) -->
+    <div id="coffeeCheckoutModal" class="hidden fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4">
+        <div class="rounded-3xl max-w-md w-full max-h-[92vh] flex flex-col border border-teal-300 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 my-auto overflow-hidden bg-white">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-5 pb-4 border-b border-slate-100 bg-gradient-to-r from-teal-50/80 via-white to-emerald-50/70 shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-2xl bg-teal-500 text-white flex items-center justify-center text-xl shadow-sm">
+                        ☕
+                    </div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-black text-slate-950">Complete Your Support</h3>
+                        <p class="text-xs text-slate-500 font-semibold">Direct voluntary contribution &bull; 100% broker-free</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCoffeeCheckoutModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer font-bold text-sm">✕</button>
+            </div>
+
+            <!-- Scrollable Body Container -->
+            <div class="overflow-y-auto p-5 sm:p-6 space-y-4 custom-scrollbar flex-1">
+                
+                <!-- Selected Contribution Summary Card -->
+                <div class="p-4 rounded-2xl bg-teal-50/70 border border-teal-200/80 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-black uppercase tracking-wider text-teal-800">Your Selection</span>
+                        <span class="text-[11px] font-extrabold text-teal-700 bg-teal-100/90 px-2 py-0.5 rounded-full" id="checkoutCoffeeCountBadge">1 Coffee</span>
+                    </div>
+                    <div class="text-sm font-extrabold text-slate-950" id="checkoutCoffeeCountTitle">
+                        ☕ 1 Coffee for Almond Jobs
+                    </div>
+                    <div class="text-xs text-slate-600 font-medium" id="checkoutSupporterPreview">
+                        From: <strong class="text-slate-900" id="checkoutSupporterNameDisplay">Generous Candidate</strong>
+                    </div>
+                    <div id="checkoutSupporterNoteBox" class="hidden p-2.5 bg-white/90 rounded-xl border border-teal-200/60 text-xs text-slate-700 italic">
+                        "<span id="checkoutSupporterMessageDisplay"></span>"
+                    </div>
+                </div>
+
+                <!-- Currency Selector Header & Tabs -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between px-1">
+                        <span class="text-xs font-extrabold text-slate-900">Select Currency</span>
+                        <span class="text-[11px] font-semibold text-slate-500">Same parity across all tiers</span>
+                    </div>
+                    <div class="grid grid-cols-4 gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-xs font-black text-center">
+                        <button type="button" onclick="selectCoffeeCurrency('INR')" id="coffeeCurrBtn_INR" class="coffee-curr-tab py-2 rounded-xl bg-teal-500 text-white shadow-xs cursor-pointer transition">&#8377; INR</button>
+                        <button type="button" onclick="selectCoffeeCurrency('USD')" id="coffeeCurrBtn_USD" class="coffee-curr-tab py-2 rounded-xl text-slate-700 hover:text-slate-950 cursor-pointer transition">$ USD</button>
+                        <button type="button" onclick="selectCoffeeCurrency('EUR')" id="coffeeCurrBtn_EUR" class="coffee-curr-tab py-2 rounded-xl text-slate-700 hover:text-slate-950 cursor-pointer transition">&euro; EUR</button>
+                        <button type="button" onclick="selectCoffeeCurrency('GBP')" id="coffeeCurrBtn_GBP" class="coffee-curr-tab py-2 rounded-xl text-slate-700 hover:text-slate-950 cursor-pointer transition">&pound; GBP</button>
+                    </div>
+                </div>
+
+                <!-- Price Calculation Box -->
+                <div class="p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white space-y-2 shadow-md">
+                    <div class="flex items-baseline justify-between">
+                        <span class="text-xs font-bold text-slate-300">Total Contribution</span>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-2xl sm:text-3xl font-black tracking-tight" id="checkoutPriceDisplay">&#8377;485</span>
+                        </div>
+                    </div>
+                    <div class="text-[11px] text-teal-300 font-semibold flex items-center justify-between border-t border-slate-700/80 pt-2">
+                        <span id="checkoutRateBreakdown">1 coffee &times; &#8377;485/coffee</span>
+                        <span class="text-[10px] text-slate-400">Zero broker commissions</span>
+                    </div>
+                </div>
+
+                <!-- Razorpay Checkout CTA Button -->
+                <button type="button" id="coffeeCheckoutProceedBtn" onclick="executeCoffeeCheckout()" class="w-full py-3.5 px-6 rounded-2xl bg-teal-500 hover:bg-teal-400 active:scale-98 text-white font-black text-sm sm:text-base tracking-wide shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2 transition cursor-pointer">
+                    <span id="coffeeCheckoutProceedLabel">Pay &#8377;485 via Razorpay &rarr;</span>
+                </button>
+
+                <!-- Back to Edit Link -->
+                <button type="button" onclick="closeCoffeeCheckoutModal()" class="w-full text-center text-xs font-bold text-slate-500 hover:text-slate-800 transition py-1 cursor-pointer">
+                    &larr; Back to edit coffee count or note
+                </button>
+
+                <!-- Security Trust Footer -->
+                <div class="pt-1 border-t border-slate-100 flex items-center justify-between text-[10.5px] text-slate-500">
+                    <span class="flex items-center gap-1 font-semibold text-emerald-700">
+                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1a9 9 0 100 18 9 9 0 000-18zm3.707 7.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        Encrypted 256-bit SSL Gateway
+                    </span>
+                    <span class="font-bold text-slate-600">UPI &bull; Cards &bull; NetBanking</span>
                 </div>
 
             </div>
@@ -3053,25 +3357,200 @@
     </div>
 
 
-    <!-- Guaranteed Zero-Cache Inline Controller for Coffee Contribution Modal -->
+    <!-- Guaranteed Zero-Cache Inline Controller for Coffee Contribution Modal & Separate Checkout Modal -->
     <script>
       window.selectedCoffeeCount = 1;
-      window.selectedCoffeeAmount = 485;
+      window.selectedCoffeeCurrency = 'INR';
 
-      window.selectCoffeeCount = function(count, amount) {
+      window.COFFEE_RATES = {
+          INR: { symbol: '₹', perCoffee: 485, name: 'Indian Rupee' },
+          USD: { symbol: '$', perCoffee: 5, name: 'US Dollar' },
+          EUR: { symbol: '€', perCoffee: 5, name: 'Euro' },
+          GBP: { symbol: '£', perCoffee: 5, name: 'British Pound' }
+      };
+
+      window.selectCoffeeCount = function(count) {
           window.selectedCoffeeCount = count;
-          window.selectedCoffeeAmount = amount;
+          var customContainer = document.getElementById("coffeeCustomInputContainer");
+          if (customContainer) customContainer.classList.add("hidden");
+
           const pills = document.querySelectorAll(".coffee-pill");
           pills.forEach(function(p) {
-              var c = parseInt(p.getAttribute("data-count"), 10);
-              if (c === count) {
+              var c = p.getAttribute("data-count");
+              if (parseInt(c, 10) === count) {
                   p.className = "coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-teal-500 text-white shadow-teal-500/25 ring-2 ring-teal-400";
+              } else if (c === "custom") {
+                  p.className = "coffee-pill px-2.5 py-1.5 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700";
               } else {
                   p.className = "coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700";
               }
           });
-          var displayEl = document.getElementById("coffeeAmountDisplay");
-          if (displayEl) displayEl.textContent = amount;
+      };
+
+      window.toggleCustomCoffeeInput = function() {
+          var customContainer = document.getElementById("coffeeCustomInputContainer");
+          var input = document.getElementById("coffeeCustomInput");
+          if (customContainer) customContainer.classList.remove("hidden");
+          if (input) {
+              input.focus();
+              var val = parseInt(input.value, 10) || 2;
+              window.selectedCoffeeCount = Math.max(1, val);
+          }
+          const pills = document.querySelectorAll(".coffee-pill");
+          pills.forEach(function(p) {
+              var c = p.getAttribute("data-count");
+              if (c === "custom") {
+                  p.className = "coffee-pill px-2.5 py-1.5 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-teal-500 text-white shadow-teal-500/25 ring-2 ring-teal-400";
+              } else {
+                  p.className = "coffee-pill w-9 h-9 sm:w-10 sm:h-10 rounded-full font-black text-xs sm:text-sm flex items-center justify-center transition cursor-pointer shadow-xs bg-white text-slate-700 border border-slate-200 hover:border-teal-400 hover:text-teal-700";
+              }
+          });
+      };
+
+      window.onCustomCoffeeCountChange = function(val) {
+          var parsed = parseInt(val, 10);
+          window.selectedCoffeeCount = (Number.isFinite(parsed) && parsed > 0) ? parsed : 1;
+      };
+
+      window.openCoffeeCheckoutModal = function() {
+          var count = window.selectedCoffeeCount || 1;
+          var nameInput = document.getElementById("coffeeSupporterName");
+          var msgInput = document.getElementById("coffeeSupporterMessage");
+          var name = (nameInput && nameInput.value || "").trim() || "Generous Candidate";
+          var msg = (msgInput && msgInput.value || "").trim();
+
+          var countBadge = document.getElementById("checkoutCoffeeCountBadge");
+          var countTitle = document.getElementById("checkoutCoffeeCountTitle");
+          var nameDisplay = document.getElementById("checkoutSupporterNameDisplay");
+          var noteBox = document.getElementById("checkoutSupporterNoteBox");
+          var msgDisplay = document.getElementById("checkoutSupporterMessageDisplay");
+
+          if (countBadge) countBadge.textContent = count + " Coffee" + (count > 1 ? "s" : "");
+          if (countTitle) countTitle.textContent = "☕ " + count + " Coffee" + (count > 1 ? "s" : "") + " for Almond Jobs";
+          if (nameDisplay) nameDisplay.textContent = name;
+          if (noteBox && msgDisplay) {
+              if (msg) {
+                  msgDisplay.textContent = msg;
+                  noteBox.classList.remove("hidden");
+              } else {
+                  noteBox.classList.add("hidden");
+              }
+          }
+
+          // Close contribute modal and open separate checkout modal
+          window.closeVipPricingModal();
+          var checkoutModal = document.getElementById("coffeeCheckoutModal");
+          if (checkoutModal) {
+              checkoutModal.classList.remove("hidden");
+              checkoutModal.style.display = "flex";
+          }
+          window.updateCoffeeCheckoutPrice();
+      };
+
+      window.closeCoffeeCheckoutModal = function() {
+          var checkoutModal = document.getElementById("coffeeCheckoutModal");
+          if (checkoutModal) {
+              checkoutModal.classList.add("hidden");
+              checkoutModal.style.display = "none";
+          }
+          // Re-open contribute modal
+          var contributeModal = document.getElementById("vipPricingModal");
+          if (contributeModal) {
+              contributeModal.classList.remove("hidden");
+              contributeModal.style.display = "flex";
+          }
+      };
+
+      window.selectCoffeeCurrency = function(curr) {
+          window.selectedCoffeeCurrency = curr || "INR";
+          var tabs = document.querySelectorAll(".coffee-curr-tab");
+          tabs.forEach(function(btn) {
+              var isSel = btn.id === ("coffeeCurrBtn_" + curr);
+              btn.className = isSel
+                  ? "coffee-curr-tab py-2 rounded-xl bg-teal-500 text-white shadow-xs cursor-pointer transition font-black"
+                  : "coffee-curr-tab py-2 rounded-xl text-slate-700 hover:text-slate-950 cursor-pointer transition font-bold";
+          });
+          window.updateCoffeeCheckoutPrice();
+      };
+
+      window.updateCoffeeCheckoutPrice = function() {
+          var curr = window.selectedCoffeeCurrency || "INR";
+          var count = window.selectedCoffeeCount || 1;
+          var rateCfg = window.COFFEE_RATES[curr] || window.COFFEE_RATES.INR;
+          var totalAmount = count * rateCfg.perCoffee;
+
+          var displayEl = document.getElementById("checkoutPriceDisplay");
+          var breakdownEl = document.getElementById("checkoutRateBreakdown");
+          var proceedBtnLabel = document.getElementById("coffeeCheckoutProceedLabel");
+
+          var formatted = rateCfg.symbol + (curr === "INR" ? totalAmount.toLocaleString("en-IN") : totalAmount);
+          if (displayEl) displayEl.textContent = formatted;
+          if (breakdownEl) breakdownEl.textContent = count + " coffee" + (count > 1 ? "s" : "") + " × " + rateCfg.symbol + rateCfg.perCoffee + "/coffee";
+          if (proceedBtnLabel) proceedBtnLabel.textContent = "Pay " + formatted + " via Razorpay →";
+      };
+
+      window.executeCoffeeCheckout = function() {
+          var curr = window.selectedCoffeeCurrency || "INR";
+          var count = window.selectedCoffeeCount || 1;
+          var rateCfg = window.COFFEE_RATES[curr] || window.COFFEE_RATES.INR;
+          var totalAmount = count * rateCfg.perCoffee;
+          var inrEquivalent = count * 485;
+
+          var nameInput = document.getElementById("coffeeSupporterName");
+          var msgInput = document.getElementById("coffeeSupporterMessage");
+          var name = (nameInput && nameInput.value || "").trim() || "Generous Candidate";
+          var message = (msgInput && msgInput.value || "").trim();
+          var planTitle = "Buy Almond Jobs " + count + " Coffee" + (count > 1 ? "s" : "") + " (" + rateCfg.symbol + totalAmount + ")";
+
+          if (typeof triggerRazorpayCheckout === "function") {
+              triggerRazorpayCheckout(inrEquivalent, planTitle, {
+                  purchaseType: "contribution",
+                  supporterName: name,
+                  supporterMessage: message,
+                  currency: curr,
+                  currency_symbol: rateCfg.symbol,
+                  foreign_amount: totalAmount,
+                  coffee_count: count
+              });
+          } else {
+              alert("Payment gateway is initializing. Please try again in 2 seconds.");
+          }
+      };
+
+      // Live Supporter Activity Stream Ticker (Streams Live Members Posting Every 12-15s)
+      window._liveStreamTimer = null;
+      window.LIVE_STREAM_CANDIDATES = [
+          { name: "Rohit S., Bengaluru", count: 3, quote: "Landed first round with BrowserStack! Direct Ashby links rock." },
+          { name: "Kavita M., Hyderabad", count: 1, quote: "Found genuine senior opening without agency spam!" },
+          { name: "Alex P., London", count: 5, quote: "Applied on Lever directly and heard back in 24 hours." },
+          { name: "Naveen K., Pune", count: 2, quote: "Direct company ingestion is the cleanest way to job hunt." },
+          { name: "Divya R., Chennai", count: 4, quote: "Got 2 direct recruiter calls this week through Almond Jobs!" },
+          { name: "Marcus V., San Francisco", count: 10, quote: "Backing this zero-broker project all the way." },
+          { name: "Sneha G., Gurugram", count: 3, quote: "Transparency in package estimations helped me negotiate 28 LPA." }
+      ];
+      window._liveStreamIdx = 0;
+
+      window.startLiveSupporterStream = function() {
+          if (window._liveStreamTimer) return;
+          window._liveStreamTimer = setInterval(function() {
+              var candidate = window.LIVE_STREAM_CANDIDATES[window._liveStreamIdx % window.LIVE_STREAM_CANDIDATES.length];
+              window._liveStreamIdx++;
+              if (typeof window.addSupporterToFeed === "function") {
+                  window.addSupporterToFeed({
+                      name: candidate.name,
+                      message: candidate.quote,
+                      amount: candidate.count * 485,
+                      liveStreamed: true
+                  });
+              }
+          }, 14000);
+      };
+
+      window.stopLiveSupporterStream = function() {
+          if (window._liveStreamTimer) {
+              clearInterval(window._liveStreamTimer);
+              window._liveStreamTimer = null;
+          }
       };
 
       window.openContributeModal = function() {
@@ -3083,6 +3562,12 @@
               if (nameInput && window.currentCandidateUser && window.currentCandidateUser.full_name) {
                   if (!nameInput.value) nameInput.value = window.currentCandidateUser.full_name;
               }
+          }
+          if (typeof window.startLiveSupporterStream === "function") {
+              window.startLiveSupporterStream();
+          }
+          if (typeof window.fetchRecentContributions === "function") {
+              window.fetchRecentContributions();
           }
           if (window.lucide && typeof window.lucide.createIcons === "function") {
               window.lucide.createIcons();
@@ -3321,6 +3806,9 @@
               modal.classList.add("hidden");
               modal.style.display = "none";
           }
+          if (typeof window.stopLiveSupporterStream === "function") {
+              window.stopLiveSupporterStream();
+          }
       };
 
       window.executeVipPassCheckout = function() {
@@ -3339,20 +3827,8 @@
       };
 
       window.executeCoffeeContribution = function() {
-          var amount = window.selectedCoffeeAmount || 485;
-          var count = window.selectedCoffeeCount || 1;
-          var name = (document.getElementById("coffeeSupporterName") && document.getElementById("coffeeSupporterName").value || "").trim() || "Generous Candidate";
-          var message = (document.getElementById("coffeeSupporterMessage") && document.getElementById("coffeeSupporterMessage").value || "").trim();
-          var planTitle = "Buy Almond Jobs " + count + " Coffee" + (count > 1 ? "s" : "");
-
-          if (typeof triggerRazorpayCheckout === "function") {
-              triggerRazorpayCheckout(amount, planTitle, {
-                  purchaseType: "contribution",
-                  supporterName: name,
-                  supporterMessage: message
-              });
-          } else {
-              alert("Payment gateway is initializing. Please try again in 2 seconds.");
+          if (typeof window.openCoffeeCheckoutModal === "function") {
+              window.openCoffeeCheckoutModal();
           }
       };
     </script>

@@ -4222,35 +4222,44 @@ window.fetchRecentContributions = async function() {
     }
 };
 
-window.addSupporterToFeed = function({ name, message, amount }) {
+window.addSupporterToFeed = function(supporterData) {
     const container = document.getElementById("recentSupportersList");
     if (!container) return;
 
+    const data = typeof supporterData === "object" ? supporterData : {};
+    const name = data.name || "Supporter";
+    const message = data.message || "";
+    const amount = data.amount || 485;
+    const currSym = data.currency_symbol || (data.currency === "USD" ? "$" : (data.currency === "EUR" ? "€" : (data.currency === "GBP" ? "£" : "₹")));
+    const formattedAmt = data.foreign_amount ? `${currSym}${data.foreign_amount}` : `${currSym}${amount}`;
+    const liveStreamed = data.liveStreamed || false;
+
     const card = document.createElement("div");
-    card.className = "dynamic-supporter-card p-3.5 rounded-2xl bg-emerald-50 border-2 border-emerald-400 space-y-2 shadow-sm animate-in slide-in-from-top-2 duration-300";
+    card.className = "dynamic-supporter-card p-3.5 rounded-2xl " + (liveStreamed ? "bg-teal-50/90 border border-teal-300" : "bg-emerald-50 border-2 border-emerald-400") + " space-y-2 shadow-sm animate-in slide-in-from-top-2 duration-300";
     
-    const initials = (name || "Supporter").split(" ").map(w => w[0]).join("").toUpperCase().substring(0, 2) || "☕";
-    const safeName = (name || "Generous Supporter").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const initials = name.split(" ").map(w => w[0]).join("").toUpperCase().substring(0, 2) || "☕";
+    const safeName = name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const safeMsg = (message || "Thank you Almond Jobs for keeping job hunting honest and broker-free!").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const amt = amount || 485;
 
     card.innerHTML = `
         <div class="flex items-center justify-between text-xs">
             <div class="flex items-center space-x-2.5">
-                <div class="w-7 h-7 rounded-full bg-emerald-200 text-emerald-950 flex items-center justify-center font-black text-xs">
+                <div class="w-7 h-7 rounded-full ${liveStreamed ? 'bg-teal-200 text-teal-950' : 'bg-emerald-200 text-emerald-950'} flex items-center justify-center font-black text-xs">
                     ${initials}
                 </div>
                 <div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-[10px] font-black text-emerald-800 bg-emerald-200 px-1.5 py-0.5 rounded">🎉 Just supported</span>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="text-[10px] font-black ${liveStreamed ? 'text-teal-800 bg-teal-200/80' : 'text-emerald-800 bg-emerald-200'} px-1.5 py-0.5 rounded flex items-center gap-1">
+                            ${liveStreamed ? '🟢 Live' : '🎉 Just supported'}
+                        </span>
                         <strong class="text-slate-900 font-extrabold text-xs">${safeName}</strong>
-                        <span class="text-emerald-800 text-[11px] font-semibold">contributed ₹${amt}</span>
+                        <span class="text-teal-800 text-[11px] font-semibold">contributed ${formattedAmt}</span>
                     </div>
                 </div>
             </div>
-            <span class="text-[10px] text-emerald-700 font-bold">Just now</span>
+            <span class="text-[10px] text-teal-700 font-bold">Just now</span>
         </div>
-        <div class="p-2.5 bg-white rounded-xl border border-emerald-200 text-xs text-slate-800 font-medium leading-relaxed">
+        <div class="p-2.5 bg-white rounded-xl border border-teal-200 text-xs text-slate-800 font-medium leading-relaxed">
             "${safeMsg}"
         </div>
     `;
@@ -5467,6 +5476,17 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Alm
     }
 
     const purchaseType = optionsConfig.purchaseType || "vip_pass";
+    const selectedCurr = (optionsConfig.currency || "INR").toUpperCase();
+    const currSymbol = optionsConfig.currency_symbol || (selectedCurr === "USD" ? "$" : (selectedCurr === "EUR" ? "€" : (selectedCurr === "GBP" ? "£" : "₹")));
+
+    let computedAmountPaise;
+    if (selectedCurr === "INR") {
+        computedAmountPaise = finalAmount * 100;
+    } else {
+        const foreignAmt = Number.isFinite(parseInt(optionsConfig.foreign_amount, 10)) ? parseInt(optionsConfig.foreign_amount, 10) : 5;
+        computedAmountPaise = foreignAmt * 100;
+    }
+
     const userId = getCandidateUserId();
     const sessionToken = localStorage.getItem("almond_session_token") || "";
     const candidateUser = window.currentCandidateUser || {};
@@ -5489,8 +5509,8 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Alm
                 user_id: userId,
                 token: sessionToken,
                 amount_inr: finalAmount,
-                amount: amountPaise,
-                currency: "INR",
+                amount: computedAmountPaise,
+                currency: selectedCurr,
                 plan_name: planName,
                 purchase_type: purchaseType
             })
@@ -5509,7 +5529,7 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Alm
         const options = {
             key: orderData.key_id,
             amount: orderData.amount,
-            currency: orderData.currency || "INR",
+            currency: orderData.currency || selectedCurr,
             name: "Almond Jobs",
             description: planName,
             order_id: orderData.order_id,
@@ -5518,8 +5538,8 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Alm
                 ondismiss: function() {
                     console.log("[Razorpay] Checkout modal dismissed without completion.");
                     if (typeof window.openPaymentExitIntent === "function") {
-                        const currSym = optionsConfig.currency_symbol || (typeof window.getCurrencySymbol === "function" ? window.getCurrencySymbol(optionsConfig.currency || "INR") : "₹");
-                        window.openPaymentExitIntent(planName, finalAmount, currSym, optionsConfig);
+                        const exitSym = optionsConfig.currency_symbol || (typeof window.getCurrencySymbol === "function" ? window.getCurrencySymbol(selectedCurr) : "₹");
+                        window.openPaymentExitIntent(planName, finalAmount, exitSym, optionsConfig);
                     }
                 }
             },
@@ -5539,6 +5559,7 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Alm
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature,
                             amount_inr: finalAmount,
+                            currency: selectedCurr,
                             plan_name: planName,
                             purchase_type: purchaseType,
                             supporter_name: optionsConfig.supporterName || "",
@@ -5549,11 +5570,16 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Alm
                     const verifyData = await verifyResp.json().catch(() => ({}));
                     if (verifyResp.ok && verifyData.status === "success") {
                         if (verifyData.purchase_type === "contribution" || purchaseType === "contribution") {
+                            if (typeof window.closeCoffeeCheckoutModal === "function") window.closeCoffeeCheckoutModal();
+                            if (typeof window.closeVipPricingModal === "function") window.closeVipPricingModal();
                             if (typeof window.addSupporterToFeed === "function") {
                                 window.addSupporterToFeed({
                                     name: optionsConfig.supporterName || "Generous Supporter",
                                     message: optionsConfig.supporterMessage || "",
-                                    amount: finalAmount
+                                    amount: finalAmount,
+                                    currency: selectedCurr,
+                                    currency_symbol: currSymbol,
+                                    foreign_amount: optionsConfig.foreign_amount
                                 });
                             }
                             const msgInput = document.getElementById("coffeeSupporterMessage");

@@ -44,15 +44,15 @@ class TestCoffeeAndStepUpdates(unittest.TestCase):
         # Modal elements
         self.assertIn("Buy Almond Jobs a coffee", self.html)
         self.assertIn("1,188+ Supporters", self.html)
-        self.assertIn("Support ₹", self.html)
-        self.assertIn("coffeeAmountDisplay", self.html)
-        self.assertIn("485", self.html)
+        self.assertIn("Support Almond Jobs", self.html)
+        self.assertIn("coffeeCheckoutModal", self.html)
         self.assertIn("coffeeSupporterName", self.html)
         self.assertIn("coffeeSupporterMessage", self.html)
-        self.assertIn("selectCoffeeCount(1, 485)", self.html)
-        self.assertIn("selectCoffeeCount(3, 1455)", self.html)
-        self.assertIn("selectCoffeeCount(5, 2425)", self.html)
-        self.assertIn("selectCoffeeCount(10, 4850)", self.html)
+        self.assertIn("selectCoffeeCount(1)", self.html)
+        self.assertIn("selectCoffeeCount(3)", self.html)
+        self.assertIn("selectCoffeeCount(5)", self.html)
+        self.assertIn("selectCoffeeCount(10)", self.html)
+        self.assertIn("toggleCustomCoffeeInput()", self.html)
 
     def test_04_recent_supporters_testimonials(self):
         """Verify recent supporters testimonials section matching screenshots."""

@@ -156,10 +156,32 @@ def create_razorpay_order(
                 "is_sandbox": False
             }
         except Exception as e:
+            err_msg = str(e)
+            if resolved_currency != "INR" and ("currency" in err_msg.lower() or "not supported" in err_msg.lower()):
+                try:
+                    fallback_inr_amount = int(amount_inr) if amount_inr else max(int(resolved_paise / 100), 485)
+                    fallback_paise = fallback_inr_amount * 100
+                    order_data["amount"] = fallback_paise
+                    order_data["currency"] = "INR"
+                    order = razorpay_client.order.create(data=order_data)
+                    return {
+                        "status": "success",
+                        "order_id": order["id"],
+                        "amount": order.get("amount", fallback_paise),
+                        "currency": "INR",
+                        "receipt": order.get("receipt", receipt_id),
+                        "purchase_type": resolved_type,
+                        "key_id": Config.RAZORPAY_KEY_ID,
+                        "is_sandbox": False,
+                        "fallback_currency": True,
+                        "note": f"Processed in INR equivalent (₹{fallback_inr_amount}) via domestic gateway."
+                    }
+                except Exception:
+                    pass
             return {
                 "status": "error",
                 "http_status": 401 if _is_auth_failure(e) else 500,
-                "message": str(e)
+                "message": err_msg
             }
 
     # Local Sandbox Order (simulated when keys are not configured)
@@ -190,7 +212,8 @@ def verify_razorpay_signature(
     plan_name: str = "",
     purchase_type: str = "vip_pass",
     supporter_name: str = "",
-    supporter_message: str = ""
+    supporter_message: str = "",
+    currency: str = "INR"
 ):
     """
     Verify payment signature returned by Razorpay Checkout modal via HMAC-SHA256.
@@ -204,6 +227,7 @@ def verify_razorpay_signature(
         }
 
     resolved_type = "contribution" if str(purchase_type or "").lower() == "contribution" else "vip_pass"
+    resolved_currency = (currency or "INR").strip().upper()
 
     def _finalize_payment():
         if resolved_type == "contribution":
@@ -214,7 +238,8 @@ def verify_razorpay_signature(
                 amount_inr,
                 plan_name or "Coffee Contribution",
                 supporter_name=supporter_name,
-                supporter_message=supporter_message
+                supporter_message=supporter_message,
+                currency=resolved_currency
             )
             return {
                 "status": "success",
@@ -223,6 +248,7 @@ def verify_razorpay_signature(
                 "supporter_name": supporter_name,
                 "supporter_message": supporter_message,
                 "amount_inr": amount_inr,
+                "currency": resolved_currency,
                 "message": "Thank you for your generous coffee contribution!"
             }
         record_successful_payment(user_id, payment_id, order_id, amount_inr, plan_name or "Almond Jobs VIP Pass")
