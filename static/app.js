@@ -2516,7 +2516,7 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
                 <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.6 1.6 0 0 0-1.6 1.6 1.6 1.6 0 0 0 1.6-1.6Z"/></svg>
                 <span>LINKEDIN</span>
                </span>`
-            : `<span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-950 border border-emerald-300 text-[11px] font-black uppercase" title="Direct Enterprise Applicant Tracking System">
+            : `<span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-950 border border-emerald-300 text-[11px] font-black uppercase" title="Direct Enterprise Career Feed">
                 <i data-lucide="shield-check" class="w-3 h-3 text-emerald-600"></i>
                 <span>DIRECT COMPANY &bull; ${rawSource}</span>
                </span>`;
@@ -4352,9 +4352,9 @@ window.VIP_DYNAMIC_TIERS = {
         title: "3-Month Career Sprint",
         duration_days: 90,
         inr_price: 1799, inr_original: 2599,
-        usd_price: 49.99, usd_original: 69.99,
-        eur_price: 46.99, eur_original: 64.99,
-        gbp_price: 39.99, gbp_original: 54.99,
+        usd_price: 49.99, usd_original: 71.99,
+        eur_price: 46.99, eur_original: 67.99,
+        gbp_price: 39.99, gbp_original: 57.99,
         discount_pct: 30,
         discount_label: "30% OFF Limited Offer",
         badge_text: "Career Sprint"
@@ -4364,9 +4364,9 @@ window.VIP_DYNAMIC_TIERS = {
         name: "6-Month Career Dominance Pass",
         title: "6-Month Career Dominance",
         duration_days: 180,
-        inr_price: 2799, inr_original: 4299,
-        usd_price: 79.99, usd_original: 119.99,
-        eur_price: 74.99, eur_original: 114.99,
+        inr_price: 2799, inr_original: 4399,
+        usd_price: 79.99, usd_original: 124.99,
+        eur_price: 74.99, eur_original: 116.99,
         gbp_price: 64.99, gbp_original: 99.99,
         discount_pct: 35,
         discount_label: "35% OFF Limited Offer",
@@ -5895,9 +5895,13 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Alm
             modal: {
                 ondismiss: function() {
                     console.log("[Razorpay] Checkout modal dismissed without completion.");
-                    if (typeof window.openPaymentExitIntent === "function") {
-                        const exitSym = optionsConfig.currency_symbol || (typeof window.getCurrencySymbol === "function" ? window.getCurrencySymbol(selectedCurr) : "₹");
-                        window.openPaymentExitIntent(planName, finalAmount, exitSym, optionsConfig);
+                    // Only display exit-intent for VIP passes, never for voluntary coffee donations
+                    if (purchaseType === "vip_pass" && typeof window.openPaymentExitIntent === "function") {
+                        const exitSym = currSymbol;
+                        const displayPrice = (selectedCurr === "INR")
+                            ? finalAmount
+                            : (optionsConfig.foreign_amount || (computedAmountPaise / 100));
+                        window.openPaymentExitIntent(planName, displayPrice, exitSym, optionsConfig, finalAmount);
                     }
                 }
             },
@@ -5910,6 +5914,7 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Alm
                         body: JSON.stringify({
                             user_id: userId,
                             token: sessionToken,
+                            email: currentProfile?.email || candidateUser.email || optionsConfig.supporterEmail || "",
                             order_id: response.razorpay_order_id,
                             payment_id: response.razorpay_payment_id,
                             signature: response.razorpay_signature,
@@ -6306,11 +6311,11 @@ if (typeof window.initAuthSession === 'function') {
 // =========================================================================
 window._lastExitIntentData = null;
 
-window.openPaymentExitIntent = function(planName = "Career Sprint", finalAmount = 1799, currencySymbol = "₹", optionsConfig = null) {
+window.openPaymentExitIntent = function(planName = "Career Sprint", displayPrice = 1799, currencySymbol = "₹", optionsConfig = null, inrAmount = 1799) {
     const modal = document.getElementById("paymentExitIntentModal");
     if (!modal) return;
 
-    window._lastExitIntentData = { planName, finalAmount, currencySymbol, optionsConfig };
+    window._lastExitIntentData = { planName, displayPrice, currencySymbol, optionsConfig, inrAmount };
 
     const emojiEl = document.getElementById("exitIntentEmoji");
     const badgeEl = document.getElementById("exitIntentBadge");
@@ -6322,30 +6327,40 @@ window.openPaymentExitIntent = function(planName = "Career Sprint", finalAmount 
     const discountEl = document.getElementById("exitIntentDiscountNote");
 
     const nameLower = (planName || "").toLowerCase();
-    const is1m = nameLower.includes("1-month") || nameLower.includes("30") || (finalAmount <= 700 && !nameLower.includes("3") && !nameLower.includes("6"));
     const is6m = nameLower.includes("6-month") || nameLower.includes("180") || nameLower.includes("dominance");
+    const is3m = !is6m && (nameLower.includes("3-month") || nameLower.includes("90") || nameLower.includes("sprint"));
+    const is1m = !is6m && !is3m;
 
     if (is1m) {
+        // 1-Month Plan: Movie ticket comparison
         if (emojiEl) emojiEl.textContent = "🎬";
-        if (badgeEl) badgeEl.textContent = "Standard 1-Month VIP Pass";
+        if (badgeEl) badgeEl.textContent = "1-Month VIP Career Pass";
         if (titleEl) titleEl.textContent = "A Career Upgrade Costs Less Than a Movie Ticket.";
-        if (msgEl) msgEl.textContent = `Your career transformation deserves at least the price of a movie ticket. For just ${currencySymbol}${finalAmount}, unlock 30 full days of direct corporate ATS applications, live founder feeds, and tailored STAR pitches.`;
+        if (msgEl) msgEl.textContent = `Your career leap deserves at least the price of a movie ticket. For just ${currencySymbol}${displayPrice}, unlock 30 full days of direct corporate career postings, live founder feeds, and tailored application pitches.`;
         if (planNameEl) planNameEl.textContent = "1-Month VIP Pass (30 Days)";
-        if (planSubEl) planSubEl.textContent = "30 Days of Unlimited Direct Job Applications & Zero Recruiter Ghosting";
-    } else {
-        // 3-Month or 6-Month: Weekend dinner comparison
+        if (planSubEl) planSubEl.textContent = "30 Days of Unlimited Direct Applications & Zero Recruiter Ghosting";
+        if (discountEl) discountEl.textContent = "Standard Pricing";
+    } else if (is3m) {
+        // 3-Month Plan: Casual dinner comparison
         if (emojiEl) emojiEl.textContent = "🍽️";
-        if (badgeEl) badgeEl.textContent = is6m ? "6-Month Career Dominance" : "3-Month Career Sprint";
+        if (badgeEl) badgeEl.textContent = "3-Month Career Sprint • 30% OFF";
         if (titleEl) titleEl.textContent = "Transform Your Career for the Price of Dinner.";
-        if (msgEl) msgEl.textContent = `Your career transformation deserves at least the price of a nice weekend dinner. For just ${currencySymbol}${finalAmount}, unlock continuous direct ATS access, the executive vault, and unredacted salary & hiring signals.`;
-        if (planNameEl) planNameEl.textContent = is6m ? "Career Dominance (180 Days)" : "Career Sprint (90 Days)";
-        if (planSubEl) planSubEl.textContent = is6m ? "Full 180 Days of Continuous High-Compensation Role Monitoring" : "Full 90 Days of Uninterrupted Job Hunt Acceleration";
+        if (msgEl) msgEl.textContent = `Your career transformation deserves at least the price of a nice weekend dinner. For just ${currencySymbol}${displayPrice}, unlock 90 continuous days of priority corporate openings, verified salary benchmarks, and direct hiring manager channels.`;
+        if (planNameEl) planNameEl.textContent = "Career Sprint (90 Days)";
+        if (planSubEl) planSubEl.textContent = "90 Days of Uninterrupted Search Dominance (Most Popular)";
+        if (discountEl) discountEl.textContent = "30% Off Limited Time Offer";
+    } else {
+        // 6-Month Plan: Smart shirt / sneakers investment comparison
+        if (emojiEl) emojiEl.textContent = "👔";
+        if (badgeEl) badgeEl.textContent = "6-Month Career Dominance • 35% OFF";
+        if (titleEl) titleEl.textContent = "Half a Year of High-Growth Roles for the Cost of a Shirt.";
+        if (msgEl) msgEl.textContent = `Invest what you'd spend on a single shirt to unlock 6 continuous months of early-bird corporate listings, the executive career vault, and unredacted hiring signals.`;
+        if (planNameEl) planNameEl.textContent = "Career Dominance (180 Days)";
+        if (planSubEl) planSubEl.textContent = "Full 180 Days of Continuous High-Compensation Role Monitoring";
+        if (discountEl) discountEl.textContent = "35% Off Limited Time Offer";
     }
 
-    if (priceEl) priceEl.textContent = `${currencySymbol}${finalAmount}`;
-    if (discountEl) {
-        discountEl.textContent = is1m ? "Standard Pricing" : "Limited Time Discount Applied";
-    }
+    if (priceEl) priceEl.textContent = `${currencySymbol}${displayPrice}`;
 
     modal.classList.remove("hidden");
     if (window.lucide) lucide.createIcons();
@@ -6360,8 +6375,8 @@ window.closeExitIntentModal = function() {
 window.resumePaymentFromExitIntent = function() {
     window.closeExitIntentModal();
     if (window._lastExitIntentData) {
-        const { planName, finalAmount, optionsConfig } = window._lastExitIntentData;
-        triggerRazorpayCheckout(finalAmount, planName, optionsConfig || {});
+        const { planName, inrAmount, optionsConfig } = window._lastExitIntentData;
+        triggerRazorpayCheckout(inrAmount, planName, optionsConfig || {});
     }
 };
 

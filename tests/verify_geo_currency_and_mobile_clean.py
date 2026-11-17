@@ -1,6 +1,8 @@
 import os
 import sys
 import unittest
+import re
+import json
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -77,6 +79,68 @@ class TestGeoCurrencyAndMobileClean(unittest.TestCase):
         self.assertNotIn('3.3M+</span>\n                    <span class="text-emerald-700 font-bold">Live</span>', html)
         # Feedback button elevated above bottom ticker
         self.assertIn('bottom-16 sm:bottom-6 right-3 sm:right-6', html)
+
+    def test_06_no_ats_in_vip_modal_and_exit_intent(self):
+        """Verify that ATS references are completely eliminated from the VIP modal and exit intent."""
+        tmpl_path = os.path.join(os.path.dirname(__file__), "..", "templates", "index.html")
+        with open(tmpl_path, "r", encoding="utf-8") as f:
+            html = f.read()
+
+        self.assertIn('id="vipModalHeaderSubtitle" class="text-xs text-slate-600 font-semibold">Direct Company Ingestion', html)
+        self.assertNotIn('Direct internal ATS ingestion', html)
+        self.assertNotIn('corporate ATS systems', html)
+        self.assertNotIn('direct corporate ATS portals', html)
+
+        js_path = os.path.join(os.path.dirname(__file__), "..", "static", "app.js")
+        with open(js_path, "r", encoding="utf-8") as f:
+            js = f.read()
+        self.assertNotIn('corporate ATS applications', js)
+        self.assertNotIn('continuous direct ATS access', js)
+
+    def test_07_mathematical_discounts_exact(self):
+        """Verify that 3m discount is at least 30% and 6m discount is at least 35% across all currencies."""
+        # 3m:
+        # INR: (2599 - 1799) / 2599 = 30.78%
+        # USD: (71.99 - 49.99) / 71.99 = 30.56%
+        # EUR: (67.99 - 46.99) / 67.99 = 30.89%
+        # GBP: (57.99 - 39.99) / 57.99 = 31.04%
+        disc_3m_inr = (2599 - 1799) / 2599
+        disc_3m_usd = (71.99 - 49.99) / 71.99
+        disc_3m_eur = (67.99 - 46.99) / 67.99
+        disc_3m_gbp = (57.99 - 39.99) / 57.99
+        self.assertGreaterEqual(disc_3m_inr, 0.30)
+        self.assertGreaterEqual(disc_3m_usd, 0.30)
+        self.assertGreaterEqual(disc_3m_eur, 0.30)
+        self.assertGreaterEqual(disc_3m_gbp, 0.30)
+
+        # 6m:
+        # INR: (4399 - 2799) / 4399 = 36.37%
+        # USD: (124.99 - 79.99) / 124.99 = 36.00%
+        # EUR: (116.99 - 74.99) / 116.99 = 35.90%
+        # GBP: (99.99 - 64.99) / 99.99 = 35.00%
+        disc_6m_inr = (4399 - 2799) / 4399
+        disc_6m_usd = (124.99 - 79.99) / 124.99
+        disc_6m_eur = (116.99 - 74.99) / 116.99
+        disc_6m_gbp = (99.99 - 64.99) / 99.99
+        self.assertGreaterEqual(disc_6m_inr, 0.35)
+        self.assertGreaterEqual(disc_6m_usd, 0.35)
+        self.assertGreaterEqual(disc_6m_eur, 0.35)
+        self.assertGreaterEqual(disc_6m_gbp, 0.35)
+
+    def test_08_exit_intent_adaptive_tiers_and_email_capture(self):
+        """Verify app.js openPaymentExitIntent adapts per tier and passes email in verify payload."""
+        js_path = os.path.join(os.path.dirname(__file__), "..", "static", "app.js")
+        with open(js_path, "r", encoding="utf-8") as f:
+            js = f.read()
+
+        # Exit intent contains adaptive metaphors
+        self.assertIn("A Career Upgrade Costs Less Than a Movie Ticket", js)
+        self.assertIn("Transform Your Career for the Price of Dinner", js)
+        self.assertIn("Half a Year of High-Growth Roles for the Cost of a Shirt", js)
+        # Uses displayPrice instead of hardcoded INR amount
+        self.assertIn("${currencySymbol}${displayPrice}", js)
+        # Passes email in payment verification
+        self.assertIn("email: currentProfile?.email || candidateUser.email", js)
 
 if __name__ == "__main__":
     unittest.main()

@@ -1090,12 +1090,14 @@ async def api_verify_payment(payload: dict = Body(...)):
     supporter_name = payload.get("supporter_name", "")
     supporter_message = payload.get("supporter_message", "")
     currency = str(payload.get("currency", "INR") or "INR").upper()
+    candidate_email = str(payload.get("email", "") or "").strip().lower()
     res = verify_razorpay_signature(
         user_id, order_id, payment_id, signature, amount_inr, plan_name,
         purchase_type=purchase_type,
         supporter_name=supporter_name,
         supporter_message=supporter_message,
-        currency=currency
+        currency=currency,
+        payer_email=candidate_email
     )
     if res.get("status") == "error":
         raise HTTPException(status_code=res.get("http_status", 400), detail=res.get("message"))

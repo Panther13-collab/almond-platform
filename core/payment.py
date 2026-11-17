@@ -213,7 +213,8 @@ def verify_razorpay_signature(
     purchase_type: str = "vip_pass",
     supporter_name: str = "",
     supporter_message: str = "",
-    currency: str = "INR"
+    currency: str = "INR",
+    payer_email: str = ""
 ):
     """
     Verify payment signature returned by Razorpay Checkout modal via HMAC-SHA256.
@@ -251,7 +252,26 @@ def verify_razorpay_signature(
                 "currency": resolved_currency,
                 "message": "Thank you for your generous coffee contribution!"
             }
+        # Fetch email from Razorpay API payment entity if not provided by client
+        effective_email = (payer_email or "").strip().lower()
+        if not effective_email and razorpay_client:
+            try:
+                rzp_pay = razorpay_client.payment.fetch(payment_id)
+                if rzp_pay and rzp_pay.get("email"):
+                    effective_email = str(rzp_pay.get("email")).strip().lower()
+            except Exception:
+                pass
+
         record_successful_payment(user_id, payment_id, order_id, amount_inr, plan_name or "Almond Jobs VIP Pass")
+        if effective_email:
+            try:
+                # Durably bind VIP grant to the payer email in both SQLite and Supabase
+                from core.auth_db import grant_vip_to_user, sync_supabase_vip_metadata
+                duration = 180 if amount_inr >= 2500 else (90 if amount_inr >= 1500 else 30)
+                grant_vip_to_user(effective_email, duration_days=duration)
+            except Exception as e:
+                print(f"[PAYMENT] Error binding VIP to payer email: {e}")
+
         prof = get_user_profile(user_id) or {}
         return {
             "status": "success",
