@@ -45,7 +45,8 @@ class TestRazorpayLegalCompliance(unittest.TestCase):
         self.assertIn("PantherClaws Enterprises", res.text)
         self.assertIn("UDYAM-TN-03-0224850", res.text)
         self.assertIn("153/1A, Kadai Veethi, Kalapatty", res.text)
-        self.assertIn("+91 9655439463", res.text)
+        self.assertNotIn("9655439463", res.text)
+        self.assertIn("Electronic Support Desk", res.text)
         self.assertIn("Operating Entity", res.text)
 
     def test_05_footer_contains_all_links(self):

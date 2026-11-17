@@ -120,7 +120,7 @@ def render_terms_page() -> str:
 
     <section class="space-y-3">
         <h2 class="text-base sm:text-lg font-black text-slate-900">8. Contact & Official Notices</h2>
-        <p>For any legal inquiries, terms clarification, or official notices, please contact our corporate and legal compliance desk at <strong>PantherClaws Enterprises</strong> (153/1A, Kadai Veethi, Kalapatty, Coimbatore, Tamil Nadu &ndash; 641048, India) via <a href="mailto:pantherclaws.enquiry@gmail.com" class="text-violet-600 underline font-semibold">pantherclaws.enquiry@gmail.com</a> or <a href="mailto:almondjobs.official@gmail.com" class="text-violet-600 underline font-semibold">almondjobs.official@gmail.com</a> (Tel: +91 9655439463).</p>
+        <p>For any legal inquiries, terms clarification, or official notices, please contact our corporate and legal compliance desk at <strong>PantherClaws Enterprises</strong> (153/1A, Kadai Veethi, Kalapatty, Coimbatore, Tamil Nadu &ndash; 641048, India) via <a href="mailto:pantherclaws.enquiry@gmail.com" class="text-violet-600 underline font-semibold">pantherclaws.enquiry@gmail.com</a> or <a href="mailto:almondjobs.official@gmail.com" class="text-violet-600 underline font-semibold">almondjobs.official@gmail.com</a>.</p>
     </section>
     """
     return _base_legal_layout(
@@ -225,8 +225,7 @@ def render_contact_page() -> str:
                 <a href="mailto:almondjobs.official@gmail.com" class="inline-flex items-center gap-2 font-bold text-violet-700 hover:text-violet-900 text-sm">
                     <span>✉ almondjobs.official@gmail.com</span>
                 </a>
-                <p class="text-xs font-bold text-slate-700">📞 +91 9655439463</p>
-                <p class="text-[11px] text-slate-500 mt-1">Average response time: 24–48 business hours</p>
+                <p class="text-[11px] text-slate-500 mt-1">Average response time: 24–48 business hours &bull; Mon–Fri (9:00 AM – 6:00 PM IST)</p>
             </div>
         </div>
 
@@ -258,8 +257,8 @@ def render_contact_page() -> str:
                 <p class="text-slate-600">153/1A, Kadai Veethi, Kalapatty, Coimbatore, Tamil Nadu &ndash; 641048, India</p>
             </div>
             <div>
-                <p class="font-bold text-slate-900">Contact Number &amp; Hours:</p>
-                <p class="text-slate-600">+91 9655439463 &bull; Mon–Fri, 9:00 AM – 6:00 PM IST</p>
+                <p class="font-bold text-slate-900">Support Desk Hours:</p>
+                <p class="text-slate-600">Mon–Fri, 9:00 AM – 6:00 PM IST &bull; Electronic Support Desk</p>
             </div>
             <div>
                 <p class="font-bold text-slate-900">Official SaaS Website:</p>
