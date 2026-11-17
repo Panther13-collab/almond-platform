@@ -38,6 +38,9 @@ class SlidingWindowRateLimiter:
             "/api/upload-resume": (6, 60),       # Max 6 uploads / min
             "/api/auth/signup": (5, 60),         # Max 5 signups / min (anti-bruteforce)
             "/api/auth/login": (10, 60),         # Max 10 login attempts / min
+            "/api/auth/send-otp": (3, 60),       # Max 3 OTP requests / min (anti-flooding)
+            "/api/auth/verify-otp": (10, 60),    # Max 10 OTP verifications / min (anti-bruteforce)
+            "/api/feedback/submit": (6, 60),     # Max 6 feedback submissions / min (anti-spam)
             "/api/payment/create-order": (10, 60),
             "/api/security/verify-human": (30, 60),
             "DEFAULT": (60, 60)                  # Max 60 general requests / min
@@ -163,6 +166,7 @@ class BotShieldMiddleware(BaseHTTPMiddleware):
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         response.headers["X-Almond-Shield"] = "Active-Protected"
 
         return response

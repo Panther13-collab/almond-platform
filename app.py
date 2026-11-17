@@ -13,7 +13,8 @@ from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from jinja2 import Environment, FileSystemLoader
+import hmac
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from core.parser import extract_text_from_file, parse_candidate_profile
 from core.job_engine import search_matching_jobs, fetch_linkedin_postings, _get_skills_fingerprint
@@ -33,7 +34,8 @@ from core.auth_db import (
     get_user_kanban, save_user_kanban_application, sync_full_kanban,
     send_signup_otp, verify_otp_and_signup, login_or_signup_google_user,
     record_page_visit, get_analytics_summary, get_all_users_admin,
-    parse_device_hardware, is_bot_or_scanner, get_dynamic_pricing, update_tier_pricing
+    parse_device_hardware, is_bot_or_scanner, get_dynamic_pricing, update_tier_pricing,
+    save_candidate_feedback, get_all_candidate_feedback, reply_to_candidate_feedback, get_revenue_analytics
 )
 from core.payment import apply_vip_latest_feed_lock, create_razorpay_order, verify_razorpay_signature
 from core.security import BotShieldMiddleware, validate_uploaded_file, acquire_search_slot, release_search_slot
@@ -324,6 +326,12 @@ async def serve_kage_preview():
 # Executive Telemetry, Traffic Analytics & Candidate Directory Endpoints
 # ============================================================================
 
+def _is_valid_admin_key(key: str) -> bool:
+    """Constant-time verification of admin secret key to eliminate timing attacks."""
+    if not key or not Config.ADMIN_SECRET_KEY:
+        return False
+    return hmac.compare_digest(key.strip(), Config.ADMIN_SECRET_KEY.strip())
+
 @app.get("/admin", response_class=HTMLResponse)
 async def serve_admin_dashboard(
     request: Request,
@@ -341,9 +349,9 @@ async def serve_admin_dashboard(
 
     cookie_key = request.cookies.get("almond_admin_key")
     provided_key = (key or cookie_key or "").strip()
-    is_authenticated = bool(provided_key and provided_key == Config.ADMIN_SECRET_KEY)
+    is_authenticated = _is_valid_admin_key(provided_key)
 
-    env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
+    env = Environment(loader=FileSystemLoader(TEMPLATES_DIR), autoescape=select_autoescape(['html', 'xml']))
     template = env.get_template("admin.html")
 
     if is_authenticated:
@@ -364,7 +372,9 @@ async def serve_admin_dashboard(
             new_count=new_count,
             vip_count=vip_count,
             pricing_tiers=get_dynamic_pricing(),
-            contributions=get_recent_contributions(limit=50)
+            contributions=get_recent_contributions(limit=50),
+            feedback_items=get_all_candidate_feedback(),
+            revenue_analytics=get_revenue_analytics()
         )
         response = HTMLResponse(content=rendered)
         # Store secure session cookie for convenience so user stays logged in
@@ -392,7 +402,7 @@ async def get_admin_metrics(request: Request, key: Optional[str] = Query(None)):
     cookie_key = request.cookies.get("almond_admin_key")
     header_key = request.headers.get("x-admin-key")
     provided_key = (key or cookie_key or header_key or "").strip()
-    if provided_key != Config.ADMIN_SECRET_KEY:
+    if not _is_valid_admin_key(provided_key):
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin secret key.")
     return {
         "status": "success",
@@ -405,8 +415,12 @@ async def export_candidates_csv(request: Request, key: Optional[str] = Query(Non
     """Export all registered candidates as a clean, downloadable CSV spreadsheet with account classification."""
     cookie_key = request.cookies.get("almond_admin_key")
     provided_key = (key or cookie_key or "").strip()
-    if provided_key != Config.ADMIN_SECRET_KEY:
+    if not _is_valid_admin_key(provided_key):
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin secret key.")
+
+    def _clean_csv(v):
+        s = str(v if v is not None else "")
+        return "'" + s if s.startswith(("=", "+", "-", "@", "\t", "\r")) else s
 
     candidates = get_all_users_admin()
     output = io.StringIO()
@@ -414,16 +428,16 @@ async def export_candidates_csv(request: Request, key: Optional[str] = Query(Non
     writer.writerow(["Candidate ID", "Full Name", "Email", "Account Classification", "Sign-in Provider", "Device / Hardware Model", "Plan", "VIP Status", "VIP Expiration", "Registration Date"])
     for c in candidates:
         writer.writerow([
-            c.get("id", ""),
-            c.get("full_name", ""),
-            c.get("email", ""),
+            _clean_csv(c.get("id", "")),
+            _clean_csv(c.get("full_name", "")),
+            _clean_csv(c.get("email", "")),
             "Test / Dummy" if c.get("is_dummy") else "Genuine Candidate",
-            c.get("auth_provider", "email"),
-            c.get("device_display", "Desktop / Web Browser"),
-            c.get("plan", "free"),
+            _clean_csv(c.get("auth_provider", "email")),
+            _clean_csv(c.get("device_display", "Desktop / Web Browser")),
+            _clean_csv(c.get("plan", "free")),
             "VIP ACTIVE" if c.get("is_paid") else "Standard Free",
-            c.get("paid_until_str", "N/A"),
-            c.get("created_at_str", "")
+            _clean_csv(c.get("paid_until_str", "N/A")),
+            _clean_csv(c.get("created_at_str", ""))
         ])
 
     csv_content = output.getvalue()
@@ -449,7 +463,7 @@ async def api_admin_update_pricing(request: Request, payload: dict = Body(...)):
     query_key = payload.get("key")
     provided_key = (query_key or cookie_key or header_key or "").strip()
 
-    if provided_key != Config.ADMIN_SECRET_KEY:
+    if not _is_valid_admin_key(provided_key):
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin secret key.")
 
     tier_id = str(payload.get("tier_id", "") or "").strip().lower()
@@ -470,7 +484,7 @@ async def api_admin_grant_vip(request: Request, payload: dict = Body(...)):
     query_key = payload.get("key")
     provided_key = (query_key or cookie_key or header_key or "").strip()
 
-    if provided_key != Config.ADMIN_SECRET_KEY:
+    if not _is_valid_admin_key(provided_key):
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin secret key.")
 
     email = (payload.get("email") or "").strip().lower()
@@ -495,7 +509,7 @@ async def api_admin_reply_contribution(request: Request, payload: dict = Body(..
     query_key = payload.get("key")
     provided_key = (query_key or cookie_key or header_key or "").strip()
 
-    if provided_key != Config.ADMIN_SECRET_KEY:
+    if not _is_valid_admin_key(provided_key):
         raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin secret key.")
 
     payment_id = (payload.get("payment_id") or "").strip()
@@ -508,6 +522,81 @@ async def api_admin_reply_contribution(request: Request, payload: dict = Body(..
         raise HTTPException(status_code=400, detail=res.get("message"))
 
     return JSONResponse(content=res)
+
+# --- CANDIDATE FEEDBACK & ADMIN REVENUE ANALYTICS ROUTES ---
+
+@app.post("/api/feedback/submit")
+async def api_submit_feedback(payload: dict = Body(...)):
+    """Submit candidate feedback, company crawl request, bug report, or hired celebration."""
+    category = payload.get("category", "feature_suggestion")
+    rating = int(payload.get("rating", 5) or 5)
+    message = str(payload.get("message", "") or "").strip()
+    hired_company = str(payload.get("hired_company", "") or "").strip()
+    page_url = str(payload.get("page_url", "") or "").strip()
+    user_id = str(payload.get("user_id", "") or "").strip()
+    user_email = str(payload.get("user_email", "") or "").strip()
+
+    if not message:
+        raise HTTPException(status_code=400, detail="Message cannot be empty.")
+
+    res = save_candidate_feedback(
+        user_id=user_id,
+        user_email=user_email,
+        category=category,
+        rating=rating,
+        message=message,
+        hired_company=hired_company,
+        page_url=page_url
+    )
+    return JSONResponse(content=res)
+
+@app.get("/api/admin/feedback")
+async def api_admin_get_feedback(
+    request: Request,
+    category: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    key: Optional[str] = Query(None)
+):
+    """Retrieve filtered candidate feedback items for Admin inbox."""
+    cookie_key = request.cookies.get("almond_admin_key")
+    header_key = request.headers.get("x-admin-key")
+    provided_key = (key or cookie_key or header_key or "").strip()
+    if not _is_valid_admin_key(provided_key):
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin secret key.")
+
+    items = get_all_candidate_feedback(category_filter=category, status_filter=status)
+    return JSONResponse(content={"status": "success", "feedback": items})
+
+@app.post("/api/admin/feedback/reply")
+async def api_admin_reply_feedback(request: Request, payload: dict = Body(...)):
+    """Executive admin endpoint to reply to candidate feedback submission."""
+    cookie_key = request.cookies.get("almond_admin_key")
+    header_key = request.headers.get("x-admin-key")
+    query_key = payload.get("key")
+    provided_key = (query_key or cookie_key or header_key or "").strip()
+    if not _is_valid_admin_key(provided_key):
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin secret key.")
+
+    feedback_id = payload.get("id")
+    reply_text = str(payload.get("reply", "") or "").strip()
+    if not feedback_id or not reply_text:
+        raise HTTPException(status_code=400, detail="Feedback ID and reply message are required.")
+
+    res = reply_to_candidate_feedback(int(feedback_id), reply_text)
+    return JSONResponse(content=res)
+
+@app.get("/api/admin/revenue-analytics")
+async def api_admin_get_revenue_analytics(request: Request, key: Optional[str] = Query(None)):
+    """Retrieve full revenue telemetry, daily trends (VIP vs Coffee), and verified transaction ledger."""
+    cookie_key = request.cookies.get("almond_admin_key")
+    header_key = request.headers.get("x-admin-key")
+    provided_key = (key or cookie_key or header_key or "").strip()
+    if not _is_valid_admin_key(provided_key):
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin secret key.")
+
+    analytics = get_revenue_analytics()
+    return JSONResponse(content={"status": "success", **analytics})
+
 
 @app.post("/api/upload-resume")
 async def upload_resume(file: UploadFile = File(...)):

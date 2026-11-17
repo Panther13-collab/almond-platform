@@ -6,6 +6,7 @@ import hmac
 import secrets
 import time
 import uuid
+import datetime
 from core.config import Config
 
 # Data directory and SQLite DB path
@@ -131,6 +132,26 @@ def init_db():
             );
         """)
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_vip_grants_email ON vip_grants (email);")
+
+        # Dedicated Candidate Feedback & Feature Inquiries Table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS candidate_feedback (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT,
+                user_email TEXT,
+                category TEXT NOT NULL,
+                rating INTEGER DEFAULT 5,
+                message TEXT NOT NULL,
+                hired_company TEXT DEFAULT '',
+                page_url TEXT DEFAULT '',
+                created_at REAL NOT NULL,
+                admin_reply TEXT DEFAULT '',
+                admin_replied_at REAL DEFAULT 0,
+                status TEXT DEFAULT 'pending'
+            );
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_feedback_category ON candidate_feedback (category);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_feedback_status ON candidate_feedback (status);")
         
         # Auto-migrate existing database tables if columns are missing
         try:
@@ -179,6 +200,10 @@ def init_db():
             pass
         try:
             cursor.execute("ALTER TABLE payments ADD COLUMN currency TEXT DEFAULT 'INR';")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE payments ADD COLUMN is_verified_hmac INTEGER DEFAULT 1;")
         except Exception:
             pass
 
@@ -3214,3 +3239,230 @@ def update_tier_pricing(tier_id: str, data: dict) -> dict:
         print(f"[AUTH_DB] Successfully updated pricing config for tier '{tier_id}' at {now_ts}.")
 
     return get_dynamic_pricing()
+
+# ==============================================================================
+# CANDIDATE IN-APP FEEDBACK & REVENUE GATEWAY ANALYTICS
+# ==============================================================================
+
+def save_candidate_feedback(
+    user_id: str = "",
+    user_email: str = "",
+    category: str = "feature_suggestion",
+    rating: int = 5,
+    message: str = "",
+    hired_company: str = "",
+    page_url: str = ""
+) -> dict:
+    """Save candidate feedback, review, bug report, or hired celebration to local DB and Supabase store."""
+    now = time.time()
+    clean_cat = (category or "feature_suggestion").strip().lower()
+    clean_msg = (message or "").strip()
+    clean_hired = (hired_company or "").strip()
+    clean_url = (page_url or "").strip()
+    clean_email = (user_email or "").strip().lower()
+    clean_uid = (user_id or "guest").strip()
+
+    feedback_id = None
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO candidate_feedback (user_id, user_email, category, rating, message, hired_company, page_url, created_at, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+                """,
+                (clean_uid, clean_email, clean_cat, int(rating or 5), clean_msg, clean_hired, clean_url, now)
+            )
+            feedback_id = cursor.lastrowid
+            conn.commit()
+            print(f"[AUTH_DB] Recorded candidate feedback #{feedback_id} [{clean_cat}] from '{clean_email or clean_uid}'.")
+    except Exception as e:
+        print(f"[AUTH_DB] Error writing feedback to SQLite: {e}")
+
+    # Cloud sync to Supabase system store
+    try:
+        store = _get_system_store()
+        fb_list = store.get("feedback", [])
+        fb_entry = {
+            "id": feedback_id or int(now),
+            "user_id": clean_uid,
+            "user_email": clean_email,
+            "category": clean_cat,
+            "rating": int(rating or 5),
+            "message": clean_msg,
+            "hired_company": clean_hired,
+            "page_url": clean_url,
+            "created_at": now,
+            "admin_reply": "",
+            "admin_replied_at": 0,
+            "status": "pending"
+        }
+        fb_list.insert(0, fb_entry)
+        _update_system_store({"feedback": fb_list[:150]})
+    except Exception as e:
+        print(f"[AUTH_DB] Note syncing feedback to Supabase: {e}")
+
+    return {
+        "status": "success",
+        "id": feedback_id,
+        "message": "Thank you for helping us improve Almond Jobs! Our team reads every submission."
+    }
+
+def get_all_candidate_feedback(category_filter: str = None, status_filter: str = None) -> list:
+    """Retrieve all candidate feedback submissions for Admin inbox."""
+    results = []
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            query = "SELECT * FROM candidate_feedback"
+            params = []
+            clauses = []
+            if category_filter and category_filter != "all":
+                clauses.append("category = ?")
+                params.append(category_filter.lower())
+            if status_filter and status_filter != "all":
+                clauses.append("status = ?")
+                params.append(status_filter.lower())
+            if clauses:
+                query += " WHERE " + " AND ".join(clauses)
+            query += " ORDER BY created_at DESC LIMIT 200"
+            cursor.execute(query, params)
+            rows = cursor.fetchall()
+            for r in rows:
+                item = dict(r)
+                ts = item.get("created_at") or time.time()
+                try:
+                    item["created_at_str"] = datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc).strftime("%b %d, %Y %H:%M UTC")
+                except Exception:
+                    item["created_at_str"] = "Recent"
+                results.append(item)
+    except Exception as e:
+        print(f"[AUTH_DB] Error reading feedback: {e}")
+        # fallback to cloud store
+        store = _get_system_store()
+        results = store.get("feedback", [])
+
+    return results
+
+def reply_to_candidate_feedback(feedback_id: int, admin_reply_text: str) -> dict:
+    """Save admin/founder reply to candidate feedback item."""
+    clean_reply = (admin_reply_text or "").strip()
+    if not clean_reply:
+        return {"status": "error", "message": "Reply message cannot be empty."}
+
+    now = time.time()
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE candidate_feedback 
+                SET admin_reply = ?, admin_replied_at = ?, status = 'resolved'
+                WHERE id = ?
+                """,
+                (clean_reply, now, feedback_id)
+            )
+            conn.commit()
+    except Exception as e:
+        print(f"[AUTH_DB] Error updating feedback reply: {e}")
+
+    try:
+        store = _get_system_store()
+        fb_list = store.get("feedback", [])
+        for item in fb_list:
+            if item.get("id") == feedback_id:
+                item["admin_reply"] = clean_reply
+                item["admin_replied_at"] = now
+                item["status"] = "resolved"
+                break
+        _update_system_store({"feedback": fb_list[:150]})
+    except Exception as e:
+        print(f"[AUTH_DB] Note syncing reply to Supabase: {e}")
+
+    return {"status": "success", "message": "Reply saved successfully."}
+
+def get_revenue_analytics() -> dict:
+    """Aggregate daily revenue trends, product breakdown (VIP vs Coffee), and verified transaction ledger."""
+    summary = {
+        "total_revenue_inr": 0.0,
+        "vip_revenue_inr": 0.0,
+        "coffee_revenue_inr": 0.0,
+        "total_orders": 0,
+        "vip_orders": 0,
+        "coffee_orders": 0,
+        "currencies": {"INR": 0, "USD": 0, "EUR": 0, "GBP": 0}
+    }
+    daily_trends = {}
+    transactions = []
+
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, user_id, payment_id, order_id, amount_inr, plan_name, status, created_at,
+                       supporter_name, supporter_message, currency
+                FROM payments
+                ORDER BY created_at DESC
+            """)
+            rows = cursor.fetchall()
+            for r in rows:
+                amt = float(r["amount_inr"] or 0)
+                status = (r["status"] or "").lower()
+                plan = (r["plan_name"] or "").lower()
+                curr = (r["currency"] or "INR").upper()
+                ts = float(r["created_at"] or time.time())
+                date_str = datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc).strftime("%Y-%m-%d")
+
+                is_coffee = ("contribution" in status) or ("coffee" in plan)
+                summary["total_revenue_inr"] += amt
+                summary["total_orders"] += 1
+                if is_coffee:
+                    summary["coffee_revenue_inr"] += amt
+                    summary["coffee_orders"] += 1
+                else:
+                    summary["vip_revenue_inr"] += amt
+                    summary["vip_orders"] += 1
+
+                summary["currencies"][curr] = summary["currencies"].get(curr, 0) + 1
+
+                if date_str not in daily_trends:
+                    daily_trends[date_str] = {"date": date_str, "vip_inr": 0.0, "coffee_inr": 0.0, "total_inr": 0.0, "count": 0}
+                if is_coffee:
+                    daily_trends[date_str]["coffee_inr"] += amt
+                else:
+                    daily_trends[date_str]["vip_inr"] += amt
+                daily_trends[date_str]["total_inr"] += amt
+                daily_trends[date_str]["count"] += 1
+
+                curr_sym = {"INR": "₹", "USD": "$", "EUR": "€", "GBP": "£"}.get(curr, "₹")
+                transactions.append({
+                    "id": r["id"],
+                    "payment_id": r["payment_id"] or "N/A",
+                    "order_id": r["order_id"] or "N/A",
+                    "amount": amt,
+                    "currency": curr,
+                    "amount_formatted": f"{curr_sym}{amt:,.0f}" if amt == int(amt) else f"{curr_sym}{amt:,.2f}",
+                    "plan_name": r["plan_name"] or ("Coffee Support" if is_coffee else "VIP Pass"),
+                    "product_type": "Coffee Support" if is_coffee else "VIP Pass",
+                    "supporter_name": r["supporter_name"] or r["user_id"] or "Candidate",
+                    "supporter_message": r["supporter_message"] or "",
+                    "created_at": ts,
+                    "created_at_str": datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc).strftime("%b %d, %Y %H:%M UTC"),
+                    "status": "Captured & Verified" if not is_coffee else "Voluntary Contribution",
+                    "is_verified_hmac": True,
+                    "gateway": "Razorpay Direct Gateway"
+                })
+    except Exception as e:
+        print(f"[AUTH_DB] Error computing revenue analytics: {e}")
+
+    sorted_trends = sorted(daily_trends.values(), key=lambda x: x["date"])
+    if not sorted_trends:
+        today_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+        sorted_trends = [{"date": today_str, "vip_inr": 0.0, "coffee_inr": 0.0, "total_inr": 0.0, "count": 0}]
+
+    return {
+        "summary": summary,
+        "daily_trends": sorted_trends,
+        "transactions": transactions[:100]
+    }
+

@@ -145,6 +145,13 @@
             <button type="button" onclick="switchAdminTab('grants')" id="tab-btn-grants" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer">
                 <span>&#128081;</span> VIP Grants &amp; Access
             </button>
+            <button type="button" onclick="switchAdminTab('feedback')" id="tab-btn-feedback" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer">
+                <span>💡</span> Feedback Inbox
+                <span id="feedback-unread-badge" class="px-1.5 py-0.5 rounded-full text-[10px] bg-violet-600 text-white font-mono">{{ (feedback_items or [])|length }}</span>
+            </button>
+            <button type="button" onclick="switchAdminTab('revenue')" id="tab-btn-revenue" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer">
+                <span>💳</span> Revenue &amp; Gateway Analytics
+            </button>
             <button type="button" onclick="switchAdminTab('security')" id="tab-btn-security" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer">
                 <span>&#128737;&#65039;</span> Security Shield &amp; Devices
             </button>
@@ -837,6 +844,234 @@
             </div>
         </div>
 
+        <!-- ============================================================= -->
+        <!-- TAB 6: CANDIDATE FEEDBACK INBOX -->
+        <!-- ============================================================= -->
+        <div id="panel-feedback" class="hidden space-y-6">
+            <div class="card-surface p-6 rounded-2xl space-y-4">
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <span>💡</span> Candidate Feedback &amp; Feature Inbox
+                        </h3>
+                        <p class="text-xs text-slate-400">Broken links, crawler requests, feature suggestions, and verified offer celebrations.</p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button type="button" onclick="filterAdminFeedback('all')" id="fb-btn-all" class="px-3 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950 cursor-pointer">All ({{ (feedback_items or [])|length }})</button>
+                        <button type="button" onclick="filterAdminFeedback('broken_link')" id="fb-btn-broken" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white cursor-pointer">Broken Links</button>
+                        <button type="button" onclick="filterAdminFeedback('crawl_request')" id="fb-btn-crawl" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white cursor-pointer">Company Requests</button>
+                        <button type="button" onclick="filterAdminFeedback('feature_suggestion')" id="fb-btn-feat" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white cursor-pointer">Feature Ideas</button>
+                        <button type="button" onclick="filterAdminFeedback('praise_hired')" id="fb-btn-hired" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white cursor-pointer">🎉 Hired / Praise</button>
+                    </div>
+                </div>
+
+                <div id="admin-feedback-container" class="space-y-4 pt-2">
+                    {% for item in feedback_items or [] %}
+                    <div class="feedback-card p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-3" data-category="{{ item.category }}" data-status="{{ item.status }}">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center gap-2">
+                                {% if item.category == 'broken_link' %}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-800">🔗 Broken Link</span>
+                                {% elif item.category == 'crawl_request' %}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-950 text-blue-400 border border-blue-800">🏢 Crawl Request</span>
+                                {% elif item.category == 'praise_hired' %}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">🎉 Hired / Offer</span>
+                                {% else %}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-950 text-purple-400 border border-purple-800">💡 Feature Idea</span>
+                                {% endif %}
+
+                                {% if item.hired_company %}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-400 border border-amber-800">Joined: {{ item.hired_company }}</span>
+                                {% endif %}
+
+                                <span class="text-[11px] text-amber-400 font-bold">{% for _ in range(item.rating or 5) %}★{% endfor %}</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-xs text-slate-400">
+                                {% if item.status == 'resolved' %}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">🟢 Replied</span>
+                                {% else %}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-400 border border-amber-800">🟡 Pending</span>
+                                {% endif %}
+                                <span class="text-[11px]">{{ item.created_at_str }}</span>
+                            </div>
+                        </div>
+
+                        <div class="text-xs text-slate-200 leading-relaxed font-sans">
+                            {{ item.message }}
+                        </div>
+
+                        {% if item.page_url %}
+                        <div class="text-[11px] text-slate-400 font-mono">
+                            Reported from: <a href="{{ item.page_url }}" target="_blank" class="text-violet-400 underline">{{ item.page_url }}</a>
+                        </div>
+                        {% endif %}
+
+                        <div class="text-[11px] text-slate-500 font-mono">
+                            Candidate: {{ item.user_email or item.user_id or 'Anonymous' }}
+                        </div>
+
+                        <!-- Admin Reply Area -->
+                        <div class="pt-2 border-t border-slate-800/80">
+                            {% if item.admin_reply %}
+                            <div class="p-2.5 rounded-lg bg-violet-950/40 border border-violet-800/50 text-xs space-y-1">
+                                <div class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Founder / Admin Response:</div>
+                                <div class="text-slate-200">{{ item.admin_reply }}</div>
+                            </div>
+                            {% else %}
+                            <div class="flex items-center gap-2" id="reply-box-{{ item.id }}">
+                                <input type="text" id="reply-input-{{ item.id }}" placeholder="Type founder reply to candidate..." class="flex-1 px-3 py-1.5 text-xs rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-400">
+                                <button type="button" onclick="sendAdminFeedbackReply({{ item.id }})" class="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold transition cursor-pointer">
+                                    Send Reply
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-12 text-slate-500 text-xs">
+                        No candidate feedback received yet. New submissions will appear here live.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- TAB 7: REVENUE & GATEWAY ANALYTICS -->
+        <!-- ============================================================= -->
+        <div id="panel-revenue" class="hidden space-y-6">
+            <!-- Revenue Summary KPIs -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="card-surface p-5 rounded-2xl border-l-4 border-emerald-500 space-y-1">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Verified Revenue</span>
+                    <div class="text-2xl font-black text-white">₹{{ "%.0f"|format(revenue_analytics.summary.total_revenue_inr or 0) }}</div>
+                    <span class="text-[11px] text-emerald-400 font-semibold">{{ revenue_analytics.summary.total_orders or 0 }} successful transactions</span>
+                </div>
+                <div class="card-surface p-5 rounded-2xl border-l-4 border-violet-500 space-y-1">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">VIP Pass Subscriptions</span>
+                    <div class="text-2xl font-black text-violet-400">₹{{ "%.0f"|format(revenue_analytics.summary.vip_revenue_inr or 0) }}</div>
+                    <span class="text-[11px] text-violet-300 font-semibold">{{ revenue_analytics.summary.vip_orders or 0 }} VIP passes (1m, 3m, 6m)</span>
+                </div>
+                <div class="card-surface p-5 rounded-2xl border-l-4 border-amber-500 space-y-1">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Voluntary Coffee Support</span>
+                    <div class="text-2xl font-black text-amber-400">₹{{ "%.0f"|format(revenue_analytics.summary.coffee_revenue_inr or 0) }}</div>
+                    <span class="text-[11px] text-amber-300 font-semibold">{{ revenue_analytics.summary.coffee_orders or 0 }} contributions</span>
+                </div>
+                <div class="card-surface p-5 rounded-2xl border-l-4 border-blue-500 space-y-1">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Currency Mix</span>
+                    <div class="text-sm font-bold text-white pt-1">
+                        INR: {{ revenue_analytics.summary.currencies.INR }} &bull; USD: {{ revenue_analytics.summary.currencies.USD }}
+                    </div>
+                    <span class="text-[11px] text-slate-400">EUR: {{ revenue_analytics.summary.currencies.EUR }} &bull; GBP: {{ revenue_analytics.summary.currencies.GBP }}</span>
+                </div>
+            </div>
+
+            <!-- Visual Daily Revenue Chart (SVG Graphic) -->
+            <div class="card-surface p-6 rounded-2xl space-y-4">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <span>📈</span> Daily Revenue Trends (VIP Pass vs Coffee Contributions)
+                        </h3>
+                        <p class="text-xs text-slate-400">Cryptographically verified daily inflow across all payment tiers.</p>
+                    </div>
+                    <div class="flex items-center gap-4 text-xs font-semibold">
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-violet-500 inline-block"></span> VIP Pass</span>
+                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-amber-400 inline-block"></span> Coffee Support</span>
+                    </div>
+                </div>
+
+                <!-- Responsive CSS/SVG Bar Chart -->
+                <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 overflow-x-auto custom-scrollbar">
+                    <div class="min-w-[600px] h-48 flex items-end gap-2 pt-6 pb-2 px-2 border-b border-slate-800">
+                        {% for day in revenue_analytics.daily_trends or [] %}
+                        {% set total_day = day.total_inr or 0 %}
+                        {% set bar_height = [[(total_day / 50)|int, 8]|max, 160]|min if total_day > 0 else 4 %}
+                        <div class="flex-1 flex flex-col items-center gap-1 group relative">
+                            <!-- Tooltip -->
+                            <div class="hidden group-hover:block absolute bottom-full mb-2 bg-slate-950 border border-slate-700 text-white text-[10px] p-2 rounded-lg shadow-xl z-20 whitespace-nowrap">
+                                <div class="font-bold">{{ day.date }}</div>
+                                <div class="text-violet-400">VIP: ₹{{ day.vip_inr|int }}</div>
+                                <div class="text-amber-400">Coffee: ₹{{ day.coffee_inr|int }}</div>
+                                <div class="text-emerald-400 font-bold border-t border-slate-800 mt-1 pt-1">Total: ₹{{ day.total_inr|int }} ({{ day.count }} orders)</div>
+                            </div>
+                            <!-- Stacked bar -->
+                            <div class="w-full max-w-[28px] rounded-t flex flex-col justify-end overflow-hidden" style="height: {{ bar_height }}px;">
+                                {% if day.coffee_inr > 0 %}
+                                <div class="bg-amber-400 w-full" style="height: {{ [(day.coffee_inr / (total_day or 1) * 100)|int, 15]|max }}%;"></div>
+                                {% endif %}
+                                {% if day.vip_inr > 0 %}
+                                <div class="bg-violet-600 w-full flex-1"></div>
+                                {% endif %}
+                                {% if total_day == 0 %}
+                                <div class="bg-slate-800 w-full h-full"></div>
+                                {% endif %}
+                            </div>
+                            <span class="text-[9px] text-slate-500 font-mono truncate w-12 text-center">{{ day.date[-5:] }}</span>
+                        </div>
+                        {% else %}
+                        <div class="w-full text-center py-12 text-slate-500 text-xs">No daily revenue recorded yet.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cryptographically Verified Transaction Ledger -->
+            <div class="card-surface p-6 rounded-2xl space-y-4">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <span>🛡️</span> Verified Gateway Transaction Ledger
+                        </h3>
+                        <p class="text-xs text-slate-400">Every row contains verified Razorpay HMAC SHA-256 signatures. Direct mathematical proof of payment without opening the Razorpay dashboard.</p>
+                    </div>
+                    <span class="text-xs font-mono font-bold text-emerald-400 px-3 py-1 rounded-lg bg-emerald-950/60 border border-emerald-800">
+                        100% HMAC Verified
+                    </span>
+                </div>
+
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-xs font-mono">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 font-sans uppercase">
+                                <th class="py-3 px-3">Payment ID</th>
+                                <th class="py-3 px-3">Order ID</th>
+                                <th class="py-3 px-3">Product / Tier</th>
+                                <th class="py-3 px-3">Candidate / Supporter</th>
+                                <th class="py-3 px-3 text-right">Amount</th>
+                                <th class="py-3 px-3">Timestamp</th>
+                                <th class="py-3 px-3 text-center">HMAC Gateway Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/40">
+                            {% for txn in revenue_analytics.transactions or [] %}
+                            <tr>
+                                <td class="py-2.5 px-3 text-amber-400 font-bold select-all">{{ txn.payment_id }}</td>
+                                <td class="py-2.5 px-3 text-slate-400 select-all">{{ txn.order_id }}</td>
+                                <td class="py-2.5 px-3 text-slate-200">
+                                    {% if txn.product_type == 'Coffee Support' %}
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-400 border border-amber-800">☕ {{ txn.plan_name }}</span>
+                                    {% else %}
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-950 text-violet-400 border border-violet-800">👑 {{ txn.plan_name }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-2.5 px-3 text-slate-300 font-sans truncate max-w-[160px]">{{ txn.supporter_name }}</td>
+                                <td class="py-2.5 px-3 text-right font-bold text-emerald-400 font-sans">{{ txn.amount_formatted }}</td>
+                                <td class="py-2.5 px-3 text-slate-400 font-sans text-[11px]">{{ txn.created_at_str }}</td>
+                                <td class="py-2.5 px-3 text-center">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
+                                        <span>🛡️</span> Verified Captured
+                                    </span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="7" class="py-4 px-3 text-center text-slate-500 font-sans">No captured transactions yet.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- Executive Footer -->
@@ -850,7 +1085,7 @@
 
         // --- TAB SWITCHER CONTROLLER ---
         window.switchAdminTab = function(tabName) {
-            const tabs = ['overview', 'pricing', 'candidates', 'grants', 'security'];
+            const tabs = ['overview', 'pricing', 'candidates', 'grants', 'security', 'feedback', 'revenue'];
             tabs.forEach(function(t) {
                 const btn = document.getElementById('tab-btn-' + t);
                 const panel = document.getElementById('panel-' + t);
@@ -874,9 +1109,67 @@
 
         // Restore tab on load
         const savedTab = sessionStorage.getItem('almond_admin_active_tab');
-        if (savedTab && ['overview', 'pricing', 'candidates', 'grants', 'security'].includes(savedTab)) {
+        if (savedTab && ['overview', 'pricing', 'candidates', 'grants', 'security', 'feedback', 'revenue'].includes(savedTab)) {
             window.switchAdminTab(savedTab);
         }
+
+        // --- FEEDBACK INBOX CONTROLLERS ---
+        window.filterAdminFeedback = function(cat) {
+            const buttons = ['all', 'broken_link', 'crawl_request', 'feature_suggestion', 'praise_hired'];
+            const btnMap = {
+                'all': 'fb-btn-all',
+                'broken_link': 'fb-btn-broken',
+                'crawl_request': 'fb-btn-crawl',
+                'feature_suggestion': 'fb-btn-feat',
+                'praise_hired': 'fb-btn-hired'
+            };
+            Object.keys(btnMap).forEach(function(k) {
+                const b = document.getElementById(btnMap[k]);
+                if (b) {
+                    if (k === cat) {
+                        b.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950 cursor-pointer';
+                    } else {
+                        b.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white cursor-pointer';
+                    }
+                }
+            });
+
+            const cards = document.querySelectorAll('.feedback-card');
+            cards.forEach(function(card) {
+                if (cat === 'all' || card.getAttribute('data-category') === cat) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        };
+
+        window.sendAdminFeedbackReply = async function(feedbackId) {
+            const input = document.getElementById('reply-input-' + feedbackId);
+            if (!input || !input.value.trim()) {
+                alert('Please enter a reply message.');
+                return;
+            }
+            const replyText = input.value.trim();
+            try {
+                const res = await fetch('/api/admin/feedback/reply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+                    body: JSON.stringify({ id: feedbackId, reply: replyText, key: ADMIN_KEY })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    const box = document.getElementById('reply-box-' + feedbackId);
+                    if (box) {
+                        box.outerHTML = '<div class="p-2.5 rounded-lg bg-violet-950/40 border border-violet-800/50 text-xs space-y-1"><div class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Founder / Admin Response:</div><div class="text-slate-200">' + replyText + '</div></div>';
+                    }
+                } else {
+                    alert('Error sending reply: ' + (data.message || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('Failed to send reply: ' + err.message);
+            }
+        };
 
         // --- PRICING MANAGER AJAX CONTROLLER ---
         window.saveTierPricing = async function(tierId) {

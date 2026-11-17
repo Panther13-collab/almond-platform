@@ -128,7 +128,8 @@ def export_to_docx(candidate_profile, jobs, output_path, is_paid: bool = False):
         p_job.add_run("Company: ").bold = True
         p_job.add_run(f"{j.get('company')} | ")
         p_job.add_run("Direct Portal: ").bold = True
-        p_job.add_run(f"{j.get('source')} | ")
+        portal_name = "Enterprise Career Portal" if is_locked else (j.get('source') or "Direct Corporate Portal")
+        p_job.add_run(f"{portal_name} | ")
         p_job.add_run("Match Score: ").bold = True
         p_job.add_run(f"{j.get('cvmatch_score', 0)}%\n")
 
@@ -142,11 +143,11 @@ def export_to_docx(candidate_profile, jobs, output_path, is_paid: bool = False):
 
         if is_locked:
             p_job.add_run("Direct Corporate Portal: ").bold = True
-            add_hyperlink(p_job, VIP_PORTAL_URL, "[LOCKED] Unlock Direct Portal (VIP Access Required) ->", color="7C3AED")
+            add_hyperlink(p_job, VIP_PORTAL_URL, "[VIP LOCKED] Unlock Direct Portal (VIP Pass Required) ->", color="7C3AED")
         else:
             p_job.add_run("Direct Corporate Portal: ").bold = True
             apply_url = j.get("url") or j.get("apply_url") or "#"
-            add_hyperlink(p_job, apply_url, f"Open {j.get('company')} {j.get('source')} Portal")
+            add_hyperlink(p_job, apply_url, f"Open {j.get('company')} {portal_name} Portal")
 
         doc.add_paragraph("." * 40)
 
@@ -203,7 +204,6 @@ async def export_to_pdf_async(candidate_profile, jobs, output_path, is_paid: boo
         raw_title = "Confidential Role (VIP Pass Required)" if is_locked else (j.get('title') or 'Direct Role')
         j_title_esc = htmllib.escape(str(raw_title))
         j_comp_esc = htmllib.escape(str(j.get('company', '')))
-        j_src_esc = htmllib.escape(str(j.get('source', 'Corporate Feed')))
         j_loc_esc = htmllib.escape(str(j.get('location_tag', j.get('location', 'Remote'))))
         j_mode_esc = htmllib.escape(str(j.get('work_mode', 'N/A')))
         j_comp_disp_esc = htmllib.escape(str(j.get('comp_display', 'Market Competitive')))
@@ -211,8 +211,10 @@ async def export_to_pdf_async(candidate_profile, jobs, output_path, is_paid: boo
         j_score = int(j.get('cvmatch_score', 0))
 
         if is_locked:
-            btn_html = f'<a href="{VIP_PORTAL_URL}" class="apply-btn-locked" target="_blank">[LOCKED] Unlock Direct Portal (VIP Access Required) &rarr;</a>'
+            j_src_esc = "Enterprise Career Portal"
+            btn_html = f'<a href="{VIP_PORTAL_URL}" class="apply-btn-locked" target="_blank">[VIP LOCKED] Unlock Direct Portal (VIP Pass Required) &rarr;</a>'
         else:
+            j_src_esc = htmllib.escape(str(j.get('source', 'Corporate Feed')))
             btn_html = f'<a href="{j_url_esc}" class="apply-btn" target="_blank">Direct Application Portal &rarr;</a>'
 
         html += f"""
@@ -310,7 +312,7 @@ def _export_pdf_pure_python(candidate_profile, jobs, output_path, is_paid: bool 
 
         pdf.set_font('Helvetica', '', 8)
         pdf.set_text_color(71, 85, 105)
-        portal = latin_safe((j.get('source') or 'Corporate Feed').upper())
+        portal = "ENTERPRISE CAREER PORTAL" if is_locked else latin_safe((j.get('source') or 'Corporate Feed').upper())
         loc = latin_safe(j.get('location_tag', j.get('location', 'Remote')))
         mode = latin_safe(j.get('work_mode', 'Remote'))
         comp = latin_safe(j.get('comp_display', 'Market Competitive'))
@@ -319,7 +321,7 @@ def _export_pdf_pure_python(candidate_profile, jobs, output_path, is_paid: bool 
         if is_locked:
             pdf.set_font('Helvetica', 'B', 8)
             pdf.set_text_color(124, 58, 237)
-            pdf.cell(0, 4.5, '[LOCKED] Upgrade to VIP to Unlock Direct Portal -> Click to Open', link=VIP_PORTAL_URL, new_x='LMARGIN', new_y='NEXT')
+            pdf.cell(0, 4.5, '[VIP LOCKED] Upgrade to VIP to Unlock Direct Portal -> Click to Open', link=VIP_PORTAL_URL, new_x='LMARGIN', new_y='NEXT')
         else:
             url = j.get('url', '')
             if url and url.startswith('http'):
@@ -336,6 +338,13 @@ def _export_pdf_pure_python(candidate_profile, jobs, output_path, is_paid: bool 
 def export_to_pdf(candidate_profile, jobs, output_path, is_paid: bool = False):
     return asyncio.run(export_to_pdf_async(candidate_profile, jobs, output_path, is_paid=is_paid))
 
+def _sanitize_csv_cell(val) -> str:
+    """Neutralize spreadsheet formula injection (CWE-1236) in CSV exports."""
+    s = str(val if val is not None else "")
+    if s.startswith(("=", "+", "-", "@", "\t", "\r")):
+        return "'" + s
+    return s
+
 def export_to_csv(jobs, output_path, is_paid: bool = False):
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
     with open(output_path, "w", newline="", encoding="utf-8") as f:
@@ -344,25 +353,27 @@ def export_to_csv(jobs, output_path, is_paid: bool = False):
         for idx, j in enumerate(jobs):
             is_locked = is_export_job_locked(j, is_paid=is_paid)
             if is_locked:
-                apply_url = f"LOCKED (VIP Required: {VIP_PORTAL_URL})"
+                apply_url = f"[VIP LOCKED] LOCKED (VIP Required: {VIP_PORTAL_URL})"
                 status_str = "VIP Locked Portal (0-6d)"
-                role_str = "Confidential Role (VIP Required)"
+                role_str = "Confidential Role (VIP Pass Required)"
+                source_str = "Enterprise Career Portal"
             else:
                 apply_url = j.get("url", "")
                 status_str = "Ready to Apply"
                 role_str = j.get("title", "")
+                source_str = j.get("source", "")
 
             writer.writerow([
-                j.get("company", ""),
-                role_str,
-                j.get("source", ""),
-                j.get("location_tag", j.get("location", "")),
-                j.get("work_mode", ""),
-                j.get("comp_display", ""),
-                f"{j.get('cvmatch_score', 0)}%",
-                apply_url,
-                status_str,
-                f"Matched skills: {', '.join(j.get('matched_skills', []))}"
+                _sanitize_csv_cell(j.get("company", "")),
+                _sanitize_csv_cell(role_str),
+                _sanitize_csv_cell(source_str),
+                _sanitize_csv_cell(j.get("location_tag", j.get("location", ""))),
+                _sanitize_csv_cell(j.get("work_mode", "")),
+                _sanitize_csv_cell(j.get("comp_display", "")),
+                _sanitize_csv_cell(f"{j.get('cvmatch_score', 0)}%"),
+                _sanitize_csv_cell(apply_url),
+                _sanitize_csv_cell(status_str),
+                _sanitize_csv_cell(f"Matched skills: {', '.join(j.get('matched_skills', []))}")
             ])
     return output_path
 

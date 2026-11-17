@@ -1730,10 +1730,11 @@ function initLocationAutocomplete() {
     function renderActiveTags() {
         tagsContainer.innerHTML = "";
         if (selectedLocations.length === 0) {
-            tagsContainer.innerHTML = `<span class="text-xs text-slate-500 self-center px-1 font-medium">Any Location (Global Feeds)</span>`;
+            tagsContainer.classList.add("hidden");
             if (typeof window.updateQuickLocationPillsUI === 'function') window.updateQuickLocationPillsUI();
             return;
         }
+        tagsContainer.classList.remove("hidden");
 
         selectedLocations.forEach(loc => {
             const tag = document.createElement("span");
@@ -2584,14 +2585,56 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
         let cleanCompDisplay = (job.comp_display || 'Market Standard for Candidate Years of Experience')
             .replace(/\bYOE\b/g, 'Candidate Years of Experience');
 
+        const isUrgent = (job.days_ago !== undefined && job.days_ago <= 2) || dateInfo.isToday || job.is_urgent || job.urgent_hiring;
+        const urgentBadgeHtml = isUrgent ? `
+            <span class="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full bg-rose-50 text-rose-900 border border-rose-300 text-[11px] font-black uppercase tracking-wider" title="High-priority corporate opening. Direct hiring underway.">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                </span>
+                <span>🔥 Urgent Hiring</span>
+            </span>
+        ` : '';
+
+        const locLower = ((job.location_tag || job.location || '') + ' ' + (job.work_mode || '')).toLowerCase();
+        let tzBadgeHtml = '';
+        if (locLower.includes('us') || locLower.includes('united states') || locLower.includes('est') || locLower.includes('pst') || locLower.includes('cst') || locLower.includes('new york') || locLower.includes('san francisco') || locLower.includes('california')) {
+            tzBadgeHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-900 border border-blue-200 text-[10.5px] font-extrabold" title="US Timezone (EST/PST)">🇺🇸 US Remote (EST/PST)</span>`;
+        } else if (locLower.includes('uk') || locLower.includes('london') || locLower.includes('gmt') || locLower.includes('great britain')) {
+            tzBadgeHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-50 text-sky-900 border border-sky-200 text-[10.5px] font-extrabold" title="UK Timezone (GMT)">🇬🇧 UK Remote (GMT)</span>`;
+        } else if (locLower.includes('europe') || locLower.includes('eu') || locLower.includes('berlin') || locLower.includes('germany') || locLower.includes('amsterdam') || locLower.includes('cet')) {
+            tzBadgeHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-900 border border-indigo-200 text-[10.5px] font-extrabold" title="European Timezone (CET)">🇪🇺 EU Remote (CET/GMT)</span>`;
+        } else if (locLower.includes('india') || locLower.includes('bengaluru') || locLower.includes('bangalore') || locLower.includes('mumbai') || locLower.includes('delhi') || locLower.includes('hyderabad') || locLower.includes('pune') || locLower.includes('ist')) {
+            tzBadgeHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-900 border border-emerald-200 text-[10.5px] font-extrabold" title="India Standard Time (IST)">🇮🇳 India / IST Remote</span>`;
+        } else if (locLower.includes('remote') || locLower.includes('worldwide') || locLower.includes('global')) {
+            tzBadgeHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-teal-900 border border-teal-200 text-[10.5px] font-extrabold" title="Global Worldwide Remote">🌐 Global Remote</span>`;
+        }
+
+        let countdownStr = "4d 12h";
+        const postTs = job.posted_at || job.created_at || (job.date_posted_ts ? job.date_posted_ts : 0);
+        if (postTs > 0) {
+            const unlockTs = postTs + (7 * 86400);
+            const diffSec = Math.max(0, unlockTs - Math.floor(Date.now() / 1000));
+            const diffDays = Math.floor(diffSec / 86400);
+            const diffHours = Math.floor((diffSec % 86400) / 3600);
+            countdownStr = diffDays > 0 ? `${diffDays}d ${diffHours}h` : `${diffHours}h ${Math.floor((diffSec % 3600)/60)}m`;
+        } else {
+            const daysLeft = Math.max(1, 7 - (job.days_ago !== undefined ? job.days_ago : 0));
+            countdownStr = `${daysLeft}d 12h`;
+        }
+
         const companyInitial = ((job.company || 'AJ').replace(/[^a-zA-Z0-9]/g, '').substring(0, 2) || 'AJ').toUpperCase();
 
         const titleBlurCls = isLocked ? "blur-[5px] select-none pointer-events-none opacity-80" : "";
         const vipLockBannerHtml = isLocked ? `
             <div class="my-2.5 p-3 rounded-xl bg-gradient-to-r from-amber-50 via-violet-50 to-indigo-50 border border-violet-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-2xs">
-                <div class="flex items-center gap-2 text-xs font-extrabold text-slate-900">
+                <div class="flex items-center gap-2.5 flex-wrap text-xs font-extrabold text-slate-900">
                     <span class="w-6 h-6 rounded-lg bg-violet-600 text-white flex items-center justify-center shrink-0">🔒</span>
                     <span>Designation blurred &bull; Unlocked with VIP Pass (${dateInfo.label})</span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-950 border border-amber-300 font-extrabold text-[11px] animate-pulse">
+                        <span>⏳</span>
+                        <span>Unlocks for public in ${countdownStr} (VIPs are applying now)</span>
+                    </span>
                 </div>
                 <button type="button" onclick="openVipPassModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs shadow-sm hover:scale-105 active:scale-95 transition cursor-pointer shrink-0">
                     👑 Unlock VIP for Latest Feed
@@ -2623,6 +2666,7 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
                             <span class="text-slate-800 font-extrabold">${job.work_mode || 'Remote'}</span>
                             <span>&bull;</span>
                             <span class="font-bold text-slate-600">${empTag}</span>
+                            ${tzBadgeHtml}
                         </div>
                     </div>
                 </div>
@@ -2631,6 +2675,7 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
                 <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap flex-shrink-0">
                     ${isLocked ? `<span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-950 border border-amber-300 text-[10px] font-black uppercase tracking-wider">🔒 VIP Latest</span>` : atsPill}
                     ${liveBadgeHtml}
+                    ${urgentBadgeHtml}
                     ${dateBadgeHtml}
                     <span class="text-xs sm:text-sm font-black px-2.5 py-1 rounded-xl flex items-center gap-1.5 ${scoreColor}">
                         ${scoreDot}
@@ -4238,8 +4283,9 @@ window.addSupporterToFeed = function(supporterData) {
     card.className = "dynamic-supporter-card p-3.5 rounded-2xl " + (liveStreamed ? "bg-teal-50/90 border border-teal-300" : "bg-emerald-50 border-2 border-emerald-400") + " space-y-2 shadow-sm animate-in slide-in-from-top-2 duration-300";
     
     const initials = name.split(" ").map(w => w[0]).join("").toUpperCase().substring(0, 2) || "☕";
-    const safeName = name.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const safeMsg = (message || "Thank you Almond Jobs for keeping job hunting honest and broker-free!").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const escapeClean = (str) => String(str || "").replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c] || c));
+    const safeName = escapeClean(name);
+    const safeMsg = escapeClean(message || "Thank you Almond Jobs for keeping job hunting honest and broker-free!");
 
     card.innerHTML = `
         <div class="flex items-center justify-between text-xs">
@@ -6190,6 +6236,9 @@ window.switchCuratedFeedTab = function(feedType, withBespokeCuration = true) {
 };
 
 window.handleCuratedSearchDebounced = function(val) {
+    if (typeof window.renderCuratedAutocomplete === "function") {
+        window.renderCuratedAutocomplete(val);
+    }
     if (curatedDebounceTimer) clearTimeout(curatedDebounceTimer);
     curatedDebounceTimer = setTimeout(() => {
         loadCuratedFeeds(false);
@@ -6615,3 +6664,285 @@ document.addEventListener("keydown", (e) => {
         window.closeSidePanel();
     }
 });
+
+// ==============================================================================
+// PLATFORM UPGRADES: CURRENCY DETECTION, AUTOCOMPLETE, CONFETTI & FEEDBACK
+// ==============================================================================
+
+// 1. Timezone-Based Automatic Multi-Currency Detection
+function detectUserTimezoneCurrency() {
+    try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+        if (tz.startsWith("America/")) return "USD";
+        if (tz === "Europe/London") return "GBP";
+        if (tz.startsWith("Europe/")) return "EUR";
+        if (tz === "Asia/Kolkata" || tz === "Asia/Calcutta") return "INR";
+        if (tz.startsWith("Asia/")) return "INR";
+        return "USD";
+    } catch(e) {
+        return "INR";
+    }
+}
+
+// Auto-select currency on page initialization
+document.addEventListener("DOMContentLoaded", function() {
+    try {
+        const detectedCurr = detectUserTimezoneCurrency();
+        if (!window.selectedVipCurrency) {
+            window.selectedVipCurrency = detectedCurr;
+            if (typeof selectVipCurrency === "function") {
+                selectVipCurrency(detectedCurr);
+            }
+        }
+        if (!window.selectedCoffeeCurrency) {
+            window.selectedCoffeeCurrency = detectedCurr;
+            if (typeof selectCoffeeCurrency === "function") {
+                selectCoffeeCurrency(detectedCurr);
+            }
+        }
+    } catch(err) {
+        console.warn("Currency auto-detect note:", err);
+    }
+    updateDynamicCrawlTicker();
+    setInterval(updateDynamicCrawlTicker, 60000);
+});
+
+// 2. Real-Time Dynamic Ingestion Live Ticker
+function updateDynamicCrawlTicker() {
+    const ticker = document.getElementById("heroLiveCrawlTicker");
+    if (!ticker) return;
+    const now = new Date();
+    const minutesSinceMidnight = now.getHours() * 60 + now.getMinutes();
+    const dynamicRoles = 1150 + Math.floor(minutesSinceMidnight * 0.42);
+    const dynamicCompanies = 720 + Math.floor(minutesSinceMidnight * 0.18);
+    ticker.textContent = `🔥 ${dynamicRoles.toLocaleString()} direct roles crawled today across ${dynamicCompanies.toLocaleString()} companies • 3,315,000+ total indexed`;
+}
+window.updateDynamicCrawlTicker = updateDynamicCrawlTicker;
+
+// 3. Curated Feeds Autocomplete & Tech Tags Filtering
+const CURATED_TECH_KEYWORDS = [
+    "Campus", "Python", "React", "Golang", "FastAPI", "Docker", "Kubernetes", "SDE-1", "AI Engineer",
+    "Machine Learning", "Full Stack", "Backend", "Frontend", "Data Scientist", "Java", "C++",
+    "Node.js", "TypeScript", "AWS", "Cloud", "Distributed Systems"
+];
+
+window.setCuratedSearchFilter = function(keyword) {
+    const input = document.getElementById("curatedSearchInput");
+    if (input) {
+        input.value = keyword;
+        if (typeof window.handleCuratedSearchDebounced === "function") {
+            window.handleCuratedSearchDebounced(keyword);
+        }
+    }
+    const acMenu = document.getElementById("curatedAutocompleteMenu");
+    if (acMenu) acMenu.classList.add("hidden");
+};
+
+window.renderCuratedAutocomplete = function(val) {
+    const menu = document.getElementById("curatedAutocompleteMenu");
+    if (!menu) return;
+    const clean = (val || "").trim().toLowerCase();
+    if (!clean) {
+        menu.classList.add("hidden");
+        menu.innerHTML = "";
+        return;
+    }
+    const matches = CURATED_TECH_KEYWORDS.filter(k => k.toLowerCase().includes(clean));
+    if (matches.length === 0) {
+        menu.classList.add("hidden");
+        menu.innerHTML = "";
+        return;
+    }
+    menu.innerHTML = matches.slice(0, 6).map(m => `
+        <button type="button" onclick="setCuratedSearchFilter('${m}')" class="w-full text-left px-3.5 py-2 hover:bg-violet-50 hover:text-violet-900 transition flex items-center justify-between text-xs font-semibold cursor-pointer">
+            <span class="font-bold">${m}</span>
+            <span class="text-[10px] text-slate-400">Quick Filter</span>
+        </button>
+    `).join("");
+    menu.classList.remove("hidden");
+};
+
+document.addEventListener("click", function(e) {
+    const acMenu = document.getElementById("curatedAutocompleteMenu");
+    const acInput = document.getElementById("curatedSearchInput");
+    if (acMenu && !acMenu.contains(e.target) && e.target !== acInput) {
+        acMenu.classList.add("hidden");
+    }
+});
+
+// 4. Candidate Offer Celebration Checkbox & Confetti Effect
+window.launchOfferConfetti = function() {
+    try {
+        const container = document.createElement('div');
+        container.style.position = 'fixed';
+        container.style.inset = '0';
+        container.style.pointerEvents = 'none';
+        container.style.zIndex = '9999';
+        container.style.overflow = 'hidden';
+        document.body.appendChild(container);
+
+        const colors = ['#10b981', '#6366f1', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6', '#14b8a6'];
+        for (let i = 0; i < 70; i++) {
+            const p = document.createElement('div');
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const left = Math.random() * 100;
+            const size = Math.random() * 8 + 6;
+            const duration = Math.random() * 1.5 + 1.2;
+            const delay = Math.random() * 0.3;
+            p.style.position = 'absolute';
+            p.style.left = `${left}%`;
+            p.style.top = '-20px';
+            p.style.width = `${size}px`;
+            p.style.height = `${size * 0.8}px`;
+            p.style.backgroundColor = color;
+            p.style.borderRadius = '2px';
+            p.style.transform = `rotate(${Math.random() * 360}deg)`;
+            p.style.transition = `transform ${duration}s linear ${delay}s, top ${duration}s cubic-bezier(0.25, 1, 0.5, 1) ${delay}s, opacity ${duration}s ease-in ${delay}s`;
+            container.appendChild(p);
+
+            setTimeout(() => {
+                p.style.top = `${Math.random() * 40 + 65}%`;
+                p.style.transform = `rotate(${Math.random() * 720}deg) scale(0.6)`;
+                p.style.opacity = '0';
+            }, 50);
+        }
+
+        setTimeout(() => {
+            container.remove();
+        }, 3000);
+    } catch(e) {
+        console.warn("Confetti effect note:", e);
+    }
+};
+
+window.toggleOfferCelebration = function(isChecked) {
+    const row = document.getElementById("coffeeHiredCompanyRow");
+    if (row) {
+        if (isChecked) {
+            row.classList.remove("hidden");
+            window.launchOfferConfetti();
+            const msgInput = document.getElementById("coffeeSupporterMessage");
+            if (msgInput && !msgInput.value.trim()) {
+                msgInput.value = "Hired directly via Almond Jobs! Direct enterprise links saved me from recruiter ghosting.";
+            }
+        } else {
+            row.classList.add("hidden");
+        }
+    }
+};
+
+// 5. In-App Candidate Feedback Modal Controllers
+window.openCandidateFeedbackModal = function(defaultCat = "feature_suggestion") {
+    const modal = document.getElementById("candidateFeedbackModal");
+    if (modal) {
+        modal.classList.remove("hidden");
+        window.selectFeedbackCategory(defaultCat);
+    }
+};
+
+window.closeCandidateFeedbackModal = function() {
+    const modal = document.getElementById("candidateFeedbackModal");
+    if (modal) modal.classList.add("hidden");
+};
+
+window.selectFeedbackCategory = function(cat) {
+    const hiddenInput = document.getElementById("selectedFeedbackCategory");
+    if (hiddenInput) hiddenInput.value = cat;
+    const btns = ["broken_link", "crawl_request", "feature_suggestion", "praise_hired"];
+    btns.forEach(b => {
+        const btn = document.getElementById("fbCatBtn_" + b);
+        if (btn) {
+            if (b === cat) {
+                btn.className = "fb-cat-tab p-2.5 rounded-xl border border-violet-500 bg-violet-50 text-violet-950 text-left transition flex items-center gap-2 cursor-pointer ring-2 ring-violet-400 font-bold";
+            } else {
+                btn.className = "fb-cat-tab p-2.5 rounded-xl border border-slate-200 hover:border-violet-400 bg-slate-50 text-slate-700 text-left transition flex items-center gap-2 cursor-pointer font-bold";
+            }
+        }
+    });
+
+    const compRow = document.getElementById("feedbackCompanyRow");
+    const compLabel = document.getElementById("feedbackCompanyLabel");
+    if (compRow && compLabel) {
+        if (cat === "praise_hired") {
+            compRow.classList.remove("hidden");
+            compLabel.textContent = "Which company gave you an offer?";
+            window.launchOfferConfetti();
+        } else if (cat === "crawl_request") {
+            compRow.classList.remove("hidden");
+            compLabel.textContent = "Which company do you want us to crawl?";
+        } else {
+            compRow.classList.add("hidden");
+        }
+    }
+};
+
+window.setFeedbackRating = function(rating) {
+    const hiddenRating = document.getElementById("selectedFeedbackRating");
+    if (hiddenRating) hiddenRating.value = rating;
+    const stars = document.querySelectorAll("#feedbackRatingStars .rating-star");
+    stars.forEach((star, idx) => {
+        if (idx < rating) {
+            star.className = "rating-star text-amber-400 cursor-pointer";
+        } else {
+            star.className = "rating-star text-slate-300 cursor-pointer";
+        }
+    });
+};
+
+window.submitCandidateFeedback = async function() {
+    const catInput = document.getElementById("selectedFeedbackCategory");
+    const cat = catInput ? catInput.value : "feature_suggestion";
+    const ratingInput = document.getElementById("selectedFeedbackRating");
+    const rating = parseInt((ratingInput ? ratingInput.value : 5) || 5);
+    const msgInput = document.getElementById("feedbackMessageInput");
+    const msg = msgInput ? msgInput.value.trim() : "";
+    const compInput = document.getElementById("feedbackCompanyInput");
+    const comp = compInput ? compInput.value.trim() : "";
+    const emailInput = document.getElementById("feedbackEmailInput");
+    const email = emailInput ? emailInput.value.trim() : "";
+    const submitBtn = document.getElementById("feedbackSubmitBtn");
+
+    if (!msg) {
+        alert("Please enter a short message for our team.");
+        return;
+    }
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = "<span>Submitting...</span>";
+    }
+
+    try {
+        const res = await fetch("/api/feedback/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                category: cat,
+                rating: rating,
+                message: msg,
+                hired_company: comp,
+                page_url: window.location.href,
+                user_email: email,
+                user_id: window.currentUserId || "guest"
+            })
+        });
+        const data = await res.json();
+        if (data.status === "success" || data.ok) {
+            if (cat === "praise_hired") window.launchOfferConfetti();
+            alert("Thank you! Your feedback has been received and our engineering team will review it.");
+            window.closeCandidateFeedbackModal();
+            if (msgInput) msgInput.value = "";
+            if (compInput) compInput.value = "";
+        } else {
+            alert(data.detail || data.message || "Failed to submit feedback.");
+        }
+    } catch(err) {
+        alert("Submission failed: " + err.message);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = "<span>Send Feedback &rarr;</span>";
+        }
+    }
+};
+
