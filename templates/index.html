@@ -633,23 +633,15 @@
                 </button>
             </div>
 
-            <!-- CENTER: Live Details Telemetry Ticker (Full View on Desktop/Tablet & Sleek Pill on Mobile) -->
-            <div class="flex items-center justify-center flex-1 min-w-0 max-w-xl mx-auto">
-                <!-- Desktop / Tablet Live Details Telemetry Ticker (Full View) -->
-                <div id="liveTelemetryTicker" class="hidden md:flex items-center gap-2 text-xs font-mono text-emerald-800 bg-emerald-50/90 border border-emerald-300/80 px-3.5 py-1.5 rounded-full shadow-2xs shrink-0">
+            <!-- CENTER: Live Details Telemetry Ticker (Full View on Desktop/Tablet; hidden on mobile to keep navbar spacious and uncrowded) -->
+            <div class="hidden md:flex items-center justify-center flex-1 min-w-0 max-w-xl mx-auto">
+                <div id="liveTelemetryTicker" class="flex items-center gap-2 text-xs font-mono text-emerald-800 bg-emerald-50/90 border border-emerald-300/80 px-3.5 py-1.5 rounded-full shadow-2xs shrink-0">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
                     <span id="livePostingsCount" class="font-black text-slate-950">3,315,258</span>
                     <span class="text-emerald-800 font-bold hidden lg:inline">Live Feeds</span>
                     <span class="text-slate-300 hidden lg:inline">|</span>
                     <span id="tickerFeedItem" class="text-emerald-900 font-semibold truncate max-w-[160px] lg:max-w-[260px] transition-opacity duration-300">Stripe (Dublin) &bull; 4 new roles</span>
                     <span id="livePostingDelta" class="text-[10px] text-emerald-600 font-bold opacity-0 transition-opacity duration-300">+12</span>
-                </div>
-
-                <!-- Phone / Mobile Adapted Live Details Pill (Clean, Sleek, Zero Overlap) -->
-                <div class="flex md:hidden items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50/95 border border-emerald-300/80 text-[11px] font-mono text-emerald-800 shadow-2xs shrink-0">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span class="font-black text-slate-950">3.3M+</span>
-                    <span class="text-emerald-700 font-bold">Live</span>
                 </div>
             </div>
 
@@ -664,7 +656,7 @@
                     <span id="topVipPassLabel">VIP Pass</span>
                 </button>
                 <!-- Dedicated Contribute Button Near Profile with Coffee Logo -->
-                <button type="button" id="topContributeBtn" onclick="openContributeModal()" class="flex px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold text-amber-950 bg-amber-50 hover:bg-amber-100 border border-amber-300 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer items-center gap-1.5" title="Support Almond Jobs (Buy Us a Coffee)">
+                <button type="button" id="topContributeBtn" onclick="openContributeModal()" class="hidden sm:flex px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold text-amber-950 bg-amber-50 hover:bg-amber-100 border border-amber-300 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer items-center gap-1.5" title="Support Almond Jobs (Buy Us a Coffee)">
                     <span class="text-sm">☕</span>
                     <span class="hidden md:inline font-black">Contribute</span>
                 </button>
@@ -848,11 +840,12 @@
                 <div class="max-w-7xl mx-auto w-full relative z-10 flex flex-col justify-start items-center text-center px-4 sm:px-6 lg:px-8 pt-28 sm:pt-36 lg:pt-40 pb-12 sm:pb-16">
 
                     <!-- High-Trust Unified Brand & Ingestion Master Pill -->
-                    <div class="inline-flex items-center gap-2 sm:gap-3 px-4 py-1.5 sm:py-2 rounded-full bg-white/95 border border-slate-200/90 shadow-2xs backdrop-blur-md mb-4">
-                        <img src="/static/logo.png" alt="Almond Logo" class="w-4 h-4 object-contain">
-                        <span class="text-xs sm:text-sm font-black text-slate-900 tracking-tight">Almond Jobs &bull; Direct Corporate Feeds &bull; 3.3M+ Verified Jobs &amp; Internships</span>
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span class="text-[10px] sm:text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">0% Agency Spread</span>
+                    <div class="inline-flex items-center gap-1.5 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/95 border border-slate-200/90 shadow-2xs backdrop-blur-md mb-4 max-w-full">
+                        <img src="/static/logo.png" alt="Almond Logo" class="w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain shrink-0">
+                        <span class="text-xs sm:text-sm font-black text-slate-900 tracking-tight hidden sm:inline">Almond Jobs &bull; Direct Corporate Feeds &bull; 3.3M+ Verified Jobs &amp; Internships</span>
+                        <span class="text-[11px] font-black text-slate-900 tracking-tight sm:hidden inline">3.3M+ Direct Corporate Feeds</span>
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                        <span class="text-[9px] sm:text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-1.5 sm:px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">0% Agency Spread</span>
                     </div>
 
                     <!-- Value Proposition Interactive Micro-Pills -->
@@ -3708,7 +3701,7 @@
     </script>
 
     <!-- Floating Candidate Feedback Trigger -->
-    <button type="button" id="floatingFeedbackBtn" onclick="openCandidateFeedbackModal()" class="fixed bottom-6 right-6 z-40 px-4 py-2.5 rounded-full bg-slate-950/90 hover:bg-slate-900 text-white font-extrabold text-xs shadow-2xl border border-slate-700/80 backdrop-blur-md flex items-center gap-2 hover:scale-105 active:scale-95 transition cursor-pointer" title="Share feedback, report a broken link, or request a company to crawl">
+    <button type="button" id="floatingFeedbackBtn" onclick="openCandidateFeedbackModal()" class="fixed bottom-16 sm:bottom-6 right-3 sm:right-6 z-40 px-4 py-2.5 rounded-full bg-slate-950/90 hover:bg-slate-900 text-white font-extrabold text-xs shadow-2xl border border-slate-700/80 backdrop-blur-md flex items-center gap-2 hover:scale-105 active:scale-95 transition cursor-pointer" title="Share feedback, report a broken link, or request a company to crawl">
         <span class="text-amber-400">💡</span>
         <span>Feedback</span>
     </button>

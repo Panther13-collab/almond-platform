@@ -285,16 +285,67 @@ async def health_check():
         }
     )
 
+EUROZONE_COUNTRIES = {
+    "NL", "DE", "FR", "IT", "ES", "PT", "BE", "AT", "IE", "FI",
+    "GR", "SK", "EE", "LV", "LT", "SI", "LU", "MT", "CY"
+}
+
+def resolve_currency_for_country(country_code: str) -> tuple[str, str]:
+    cc = (country_code or "").strip().upper()
+    if cc == "IN":
+        return cc, "INR"
+    elif cc == "GB":
+        return cc, "GBP"
+    elif cc in EUROZONE_COUNTRIES:
+        return cc, "EUR"
+    elif cc:
+        return cc, "USD"
+    return "UNKNOWN", "INR"
+
+@app.get("/api/geo-currency")
+async def get_geo_currency(request: Request):
+    """
+    Real-time network IP geolocation currency resolution.
+    Reads Cloudflare CF-IPCountry header, X-Country-Code, or GeoIP indicators
+    to provide instant zero-permission currency matching for VPNs and global candidates.
+    """
+    cf_country = (
+        request.headers.get("cf-ipcountry")
+        or request.headers.get("x-country-code")
+        or request.headers.get("x-geo-country")
+        or ""
+    ).strip().upper()
+    
+    country, currency = resolve_currency_for_country(cf_country)
+    return {
+        "status": "success",
+        "country": country,
+        "currency": currency,
+        "source": "cf-ipcountry" if cf_country else "fallback"
+    }
+
 @app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
-async def serve_index():
+async def serve_index(request: Request):
     index_file = os.path.join(TEMPLATES_DIR, "index.html")
     if os.path.exists(index_file):
         with open(index_file, "r", encoding="utf-8") as f:
             content = f.read()
             if Config.GA_MEASUREMENT_ID:
                 content = content.replace('window.__ALMOND_GA_ID__ || ""', f'"{Config.GA_MEASUREMENT_ID}"')
-            return content
-    return "<h1>Almond Jobs Platform is starting up...</h1>"
+            
+            # Resolve real IP geolocation from Cloudflare CF-IPCountry header
+            cf_country = (
+                request.headers.get("cf-ipcountry")
+                or request.headers.get("x-country-code")
+                or request.headers.get("x-geo-country")
+                or ""
+            ).strip().upper()
+            country, currency = resolve_currency_for_country(cf_country)
+            if country != "UNKNOWN":
+                meta_tags = f'<meta name="server-geo-country" content="{country}">\n    <meta name="server-geo-currency" content="{currency}">'
+                content = content.replace("<head>", f"<head>\n    {meta_tags}", 1)
+            return HTMLResponse(content=content)
+    return HTMLResponse("<h1>Almond Jobs Platform is starting up...</h1>")
 
 @app.get("/template/{template_id}", response_class=HTMLResponse)
 async def serve_template(template_id: int):

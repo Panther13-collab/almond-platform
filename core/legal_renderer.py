@@ -33,9 +33,6 @@ def _base_legal_layout(title: str, subtitle: str, content_html: str, canonical_p
                 <a href="/" class="px-4 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
                     &larr; Back to Platform
                 </a>
-                <a href="/#contribute" onclick="if(window.opener){{window.close();}}else{{window.location.href='/';}}" class="px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-xs shadow-xs hover:scale-105 transition">
-                    ☕ Support Almond
-                </a>
             </div>
         </div>
     </header>

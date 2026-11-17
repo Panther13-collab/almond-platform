@@ -4384,11 +4384,19 @@ window.selectedCoffeeCurrency = "INR";
 
 window.getUserLocationCurrency = function() {
     try {
-        const saved = localStorage.getItem("almond_user_preferred_currency");
-        if (saved && ["INR", "USD", "EUR", "GBP"].includes(saved.toUpperCase())) {
-            return saved.toUpperCase();
+        // 1. Check server-side injected Cloudflare CF-IPCountry meta tag (real network IP)
+        const serverMeta = document.querySelector('meta[name="server-geo-currency"]');
+        if (serverMeta && serverMeta.content && ["INR", "USD", "EUR", "GBP"].includes(serverMeta.content.toUpperCase())) {
+            return serverMeta.content.toUpperCase();
         }
 
+        // 2. Explicit manual user override in current session
+        const manualOverride = sessionStorage.getItem("almond_user_manual_currency");
+        if (manualOverride && ["INR", "USD", "EUR", "GBP"].includes(manualOverride.toUpperCase())) {
+            return manualOverride.toUpperCase();
+        }
+
+        // 3. Fallback to client environment heuristics
         let tz = "";
         try {
             tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || "").toLowerCase();
@@ -4397,7 +4405,23 @@ window.getUserLocationCurrency = function() {
         const languages = navigator.languages || [navigator.language || ""];
         const primaryLang = (languages[0] || "").toLowerCase();
 
-        // 1. India detection
+        // United Kingdom detection
+        if (tz.includes("london") || tz.includes("belfast") || primaryLang === "en-gb") {
+            return "GBP";
+        }
+
+        // European Union / Netherlands detection
+        if (
+            tz.startsWith("europe/") ||
+            tz.includes("amsterdam") ||
+            tz.includes("berlin") ||
+            tz.includes("paris") ||
+            ["de-", "fr-", "es-", "it-", "nl-", "pt-", "pl-", "el-", "sv-", "da-", "fi-", "nb-", "nn-"].some(code => primaryLang.startsWith(code))
+        ) {
+            return "EUR";
+        }
+
+        // India detection
         if (
             tz.includes("kolkata") ||
             tz.includes("calcutta") ||
@@ -4411,28 +4435,49 @@ window.getUserLocationCurrency = function() {
             return "INR";
         }
 
-        // 2. United Kingdom detection
-        if (
-            tz.includes("london") ||
-            tz.includes("belfast") ||
-            primaryLang === "en-gb"
-        ) {
-            return "GBP";
-        }
-
-        // 3. European Union detection
-        if (
-            tz.startsWith("europe/") ||
-            ["de-", "fr-", "es-", "it-", "nl-", "pt-", "pl-", "el-", "sv-", "da-", "fi-", "nb-", "nn-"].some(code => primaryLang.startsWith(code))
-        ) {
-            return "EUR";
-        }
-
-        // 4. Default to USD for USA, Canada, Australia, Singapore & Global Candidates
         return "USD";
     } catch (err) {
-        return "USD";
+        return "INR";
     }
+};
+
+window.fetchNetworkGeoCurrency = async function() {
+    try {
+        // Step 1: Call internal API (powered by Cloudflare CF-IPCountry header)
+        const res = await fetch("/api/geo-currency").catch(() => null);
+        if (res && res.ok) {
+            const data = await res.json().catch(() => null);
+            if (data && data.currency && ["INR", "USD", "EUR", "GBP"].includes(data.currency.toUpperCase())) {
+                const detected = data.currency.toUpperCase();
+                // If user hasn't explicitly selected another currency in session, apply network IP currency
+                if (!sessionStorage.getItem("almond_user_manual_currency")) {
+                    window.detectAndApplyUserCurrency(detected);
+                    return detected;
+                }
+            }
+        }
+
+        // Step 2: Zero-permission client-side IP-to-Country fallback (country.is)
+        const ipRes = await fetch("https://api.country.is").catch(() => null);
+        if (ipRes && ipRes.ok) {
+            const ipData = await ipRes.json().catch(() => null);
+            const cc = (ipData && ipData.country ? ipData.country : "").toUpperCase();
+            const eurozone = ["NL", "DE", "FR", "IT", "ES", "PT", "BE", "AT", "IE", "FI", "GR", "SK", "EE", "LV", "LT", "SI", "LU", "MT", "CY"];
+            let detected = "USD";
+            if (cc === "IN") detected = "INR";
+            else if (cc === "GB") detected = "GBP";
+            else if (eurozone.includes(cc)) detected = "EUR";
+            else if (cc) detected = "USD";
+
+            if (!sessionStorage.getItem("almond_user_manual_currency")) {
+                window.detectAndApplyUserCurrency(detected);
+                return detected;
+            }
+        }
+    } catch (e) {
+        // Fail silently to existing heuristics
+    }
+    return null;
 };
 
 window.detectAndApplyUserCurrency = function(forceCurr = null) {
@@ -4715,6 +4760,9 @@ window.openVipPassModal = function() {
 
     if (typeof window.detectAndApplyUserCurrency === "function") {
         window.detectAndApplyUserCurrency();
+        if (typeof window.fetchNetworkGeoCurrency === "function") {
+            window.fetchNetworkGeoCurrency();
+        }
     }
     if (typeof window.fetchLivePricing === "function") window.fetchLivePricing();
 
@@ -5919,8 +5967,8 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Alm
                 }
             },
             prefill: {
-                name: currentProfile?.name || candidateUser.full_name || "Candidate",
-                email: currentProfile?.email || candidateUser.email || "candidate@almondjobs.com",
+                name: currentProfile?.name || candidateUser.full_name || "",
+                email: currentProfile?.email || candidateUser.email || (optionsConfig?.supporterEmail || ""),
                 contact: currentProfile?.phone || ""
             },
             notes: {
