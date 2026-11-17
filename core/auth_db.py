@@ -1808,7 +1808,7 @@ CURATED_SUPPORTER_SEEDS = [
         "plan_name": "Buy Almond Jobs 10 Coffees",
         "message": "Thanks Almond Jobs, I got my job! SDE-2 at top tech firm directly through Ashby without any recruiter cuts.",
         "supporter_message": "Thanks Almond Jobs, I got my job! SDE-2 at top tech firm directly through Ashby without any recruiter cuts.",
-        "admin_reply": "Congratulations Arun! Direct ATS ingestion for the win!",
+        "admin_reply": "Congratulations Arun! Direct company ingestion for the win!",
         "admin_replied_at": 1794510000,
         "created_at": 1794508000
     },
@@ -1886,7 +1886,7 @@ CURATED_SUPPORTER_SEEDS = [
         "plan_name": "Buy Almond Jobs 5 Coffees",
         "message": "Discovered an unlisted Staff Infra role on Ashby via Almond Jobs. Received an offer in 12 days!",
         "supporter_message": "Discovered an unlisted Staff Infra role on Ashby via Almond Jobs. Received an offer in 12 days!",
-        "admin_reply": "Huge congratulations David! Direct ATS pipelines give senior engineers the edge.",
+        "admin_reply": "Huge congratulations David! Direct enterprise pipelines give senior engineers the edge.",
         "admin_replied_at": 1794536000,
         "created_at": 1794534000
     },
@@ -1897,8 +1897,8 @@ CURATED_SUPPORTER_SEEDS = [
         "amount_inr": 970,
         "currency": "INR",
         "plan_name": "Buy Almond Jobs 2 Coffees",
-        "message": "The direct ATS URLs completely bypass HR screening bots. Got shortlisted at a series-B fintech in Pune!",
-        "supporter_message": "The direct ATS URLs completely bypass HR screening bots. Got shortlisted at a series-B fintech in Pune!",
+        "message": "The direct company URLs completely bypass third-party broker filters. Got shortlisted at a series-B fintech in Pune!",
+        "supporter_message": "The direct company URLs completely bypass third-party broker filters. Got shortlisted at a series-B fintech in Pune!",
         "admin_reply": "",
         "admin_replied_at": 0,
         "created_at": 1794540000
@@ -1962,8 +1962,8 @@ CURATED_SUPPORTER_SEEDS = [
         "amount_inr": 485,
         "currency": "INR",
         "plan_name": "Buy Almond Jobs 1 Coffee",
-        "message": "Finally a job tracker that gives direct company ATS links without shady middlemen.",
-        "supporter_message": "Finally a job tracker that gives direct company ATS links without shady middlemen.",
+        "message": "Finally a job tracker that gives direct company career links without shady middlemen.",
+        "supporter_message": "Finally a job tracker that gives direct company career links without shady middlemen.",
         "admin_reply": "",
         "admin_replied_at": 0,
         "created_at": 1794566000
@@ -2079,8 +2079,8 @@ CURATED_SUPPORTER_SEEDS = [
         "amount_inr": 2425,
         "currency": "USD",
         "plan_name": "Buy Almond Jobs 5 Coffees",
-        "message": "The ATS direct crawlers are unmatched. Zero ghost jobs, pure high-signal matches.",
-        "supporter_message": "The ATS direct crawlers are unmatched. Zero ghost jobs, pure high-signal matches.",
+        "message": "The direct corporate crawlers are unmatched. Zero ghost jobs, pure high-signal matches.",
+        "supporter_message": "The direct corporate crawlers are unmatched. Zero ghost jobs, pure high-signal matches.",
         "admin_reply": "",
         "admin_replied_at": 0,
         "created_at": 1794608000
@@ -2131,9 +2131,9 @@ CURATED_SUPPORTER_SEEDS = [
         "amount_inr": 4850,
         "currency": "USD",
         "plan_name": "Buy Almond Jobs 10 Coffees",
-        "message": "Applied directly to Snowflake and Databricks ATS postings. Phenomenal tool.",
-        "supporter_message": "Applied directly to Snowflake and Databricks ATS postings. Phenomenal tool.",
-        "admin_reply": "Direct enterprise ATS ingestion is unbeatable!",
+        "message": "Applied directly to Snowflake and Databricks enterprise postings. Phenomenal tool.",
+        "supporter_message": "Applied directly to Snowflake and Databricks enterprise postings. Phenomenal tool.",
+        "admin_reply": "Direct enterprise company ingestion is unbeatable!",
         "admin_replied_at": 1794628000,
         "created_at": 1794625000
     },

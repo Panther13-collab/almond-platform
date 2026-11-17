@@ -2643,7 +2643,7 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
         ` : "";
 
         card.innerHTML = `
-            <!-- Line 1: Identity, Title, Direct ATS Verification & Live Badges -->
+            <!-- Line 1: Identity, Title, Direct Company Verification & Live Badges -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
                 <div class="flex items-center gap-3 min-w-0">
                     <!-- Unblurred Company Initial -->

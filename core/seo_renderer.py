@@ -14,7 +14,7 @@ CATEGORY_DETAILS = {
     "it-jobs": {
         "title": "IT Jobs 2026 — 3.3M+ Direct Enterprise Portals (0% Recruiter Spread)",
         "h1": "Direct IT & Information Technology Openings",
-        "description": "Bypass recruiter gatekeepers. Ingesting live IT, software development, cloud, and systems engineering roles directly from enterprise ATS servers with zero agency spread.",
+        "description": "Bypass recruiter gatekeepers. Ingesting live IT, software development, cloud, and systems engineering roles directly from enterprise career servers with zero agency spread.",
         "keywords": "IT jobs, information technology jobs, software jobs 2026, tech jobs direct company, IT career openings",
         "feed_fallback": "entrylevel"
     },
@@ -56,14 +56,14 @@ CATEGORY_DETAILS = {
     "no-mediator-jobs": {
         "title": "No-Mediator Jobs — Direct Company Ingestion (0% Recruiter Spread)",
         "h1": "Direct Corporate Jobs Without Mediators or Agents",
-        "description": "Say goodbye to placement agencies and middlemen. Apply directly to employer internal ATS pipelines (Ashby, Greenhouse, Lever, Workday) with zero commission deductions.",
+        "description": "Say goodbye to placement agencies and middlemen. Apply directly to employer internal corporate career portals (Ashby, Greenhouse, Lever, Workday) with zero commission deductions.",
         "keywords": "no-mediator jobs, no consultancy jobs, jobs without consultancy, zero broker jobs, direct company hiring without consultants, genuine job vacancies without middleman",
         "feed_fallback": "entrylevel"
     },
     "no-consultancy-jobs": {
         "title": "Jobs Without Consultancy 2026 — 100% Direct Company Hiring",
         "h1": "Direct Company Hiring (Zero Consultancy Spread)",
-        "description": "Stop dealing with consultancy registration fees and commission cuts. Ingest verified corporate openings directly from hiring managers and internal ATS servers.",
+        "description": "Stop dealing with consultancy registration fees and commission cuts. Ingest verified corporate openings directly from hiring managers and internal career servers.",
         "keywords": "jobs without consultancy, no consultancy jobs, zero consultancy job portal, direct company application portals, direct HR email jobs, direct corporate hiring",
         "feed_fallback": "entrylevel"
     },
@@ -89,16 +89,16 @@ CATEGORY_DETAILS = {
         "feed_fallback": "entrylevel"
     },
     "naukri-alternative": {
-        "title": "Naukri Alternative — Direct Corporate ATS Feeds (Zero Recruiter Spam)",
+        "title": "Naukri Alternative — Direct Corporate Feeds (Zero Recruiter Spam)",
         "h1": "The Modern Alternative to Naukri for Direct Enterprise Careers",
-        "description": "Frustrated with recruiter spam, expired reposts, and consultancy calls on Naukri? Almond Jobs queries company ATS servers the exact second roles open.",
+        "description": "Frustrated with recruiter spam, expired reposts, and consultancy calls on Naukri? Almond Jobs queries company career servers the exact second roles open.",
         "keywords": "Naukri alternative, Naukri jobs without consultancy, best site like Naukri without fake calls, bypass Naukri consultancies, direct company hiring alternative",
         "feed_fallback": "entrylevel"
     },
     "linkedin-jobs-alternative": {
         "title": "LinkedIn Jobs Alternative — Apply Before the 800-Applicant Swarm",
         "h1": "The Direct Corporate Alternative to LinkedIn Jobs",
-        "description": "By the time a job appears on LinkedIn, 800+ people have already applied. Almond Jobs gives you unadvertised direct ATS access so you move first.",
+        "description": "By the time a job appears on LinkedIn, 800+ people have already applied. Almond Jobs gives you unadvertised direct career access so you move first.",
         "keywords": "LinkedIn jobs alternative, apply to jobs before 800 applicants on LinkedIn, unadvertised jobs hidden from LinkedIn, best alternative to LinkedIn jobs",
         "feed_fallback": "entrylevel"
     },
@@ -119,7 +119,7 @@ CATEGORY_DETAILS = {
     "lever-direct-jobs": {
         "title": "Lever Direct Jobs — Search jobs.lever.co Corporate Career Portals",
         "h1": "Direct Lever Corporate Career Openings",
-        "description": "Verified direct corporate pipelines across top Silicon Valley and global tech companies using Lever ATS.",
+        "description": "Verified direct corporate pipelines across top Silicon Valley and global tech companies using Lever enterprise portals.",
         "keywords": "Lever direct company jobs, jobs.lever.co enterprise directory, lever tech jobs, lever direct application",
         "feed_fallback": "entrylevel"
     },
@@ -133,15 +133,15 @@ CATEGORY_DETAILS = {
     "ashby-direct-jobs": {
         "title": "Ashby Direct Jobs — Search jobs.ashbyhq.com High-Growth Tech Roles",
         "h1": "Direct Ashby HQ Startup & Enterprise Career Openings",
-        "description": "Direct links to top Y Combinator and tier-1 venture-backed startups hiring on Ashby HQ ATS.",
+        "description": "Direct links to top Y Combinator and tier-1 venture-backed startups hiring on Ashby HQ enterprise portals.",
         "keywords": "Ashby direct jobs, jobs.ashbyhq.com live openings, ashby tech jobs, YC startup hiring ashby",
         "feed_fallback": "aiml"
     },
     "almond-jobs": {
         "title": "Almond Jobs — 3,315,000+ Verified Direct Enterprise Job Openings (0% Recruiter Spread)",
         "h1": "Almond Jobs Official Enterprise Career Directory",
-        "description": "Explore all verified Almond Jobs across IT, software engineering, AI/ML, core engineering, and corporate leadership with 0% recruiter spread and direct corporate ATS links.",
-        "keywords": "almond jobs, Almond Jobs, almond job, Almond job, almondjobs, almondjob, find almond job, official almond jobs, direct ATS feeds, enterprise jobs",
+        "description": "Explore all verified Almond Jobs across IT, software engineering, AI/ML, core engineering, and corporate leadership with 0% recruiter spread and direct corporate company links.",
+        "keywords": "almond jobs, Almond Jobs, almond job, Almond job, almondjobs, almondjob, find almond job, official almond jobs, direct company feeds, enterprise jobs",
         "feed_fallback": "entrylevel"
     },
     "almond-job": {
@@ -168,7 +168,7 @@ CATEGORY_DETAILS = {
     "direct-internships-2026": {
         "title": "Direct Corporate Internships 2026 — 5,100+ Live Verified Student Portals",
         "h1": "Direct Corporate Internships (Zero Middlemen)",
-        "description": "5,100+ direct corporate summer, winter, and off-cycle internships at top tech and enterprise firms. Apply straight to company ATS portals with 0% agency spam.",
+        "description": "5,100+ direct corporate summer, winter, and off-cycle internships at top tech and enterprise firms. Apply straight to company career portals with 0% agency spam.",
         "keywords": "direct internships 2026, tech internships, summer internships, software engineering internships, paid internships, freshers hiring, college campus internships",
         "feed_fallback": "internships"
     },
@@ -246,7 +246,7 @@ def render_category_page(slug: str) -> str:
         loc_esc = html.escape(str(j.get("location") or "Remote / Hybrid"))
         url_esc = html.escape(str(j.get("url") or f"{BASE_URL}/"))
         date_str = html.escape(str(j.get("date_posted_str") or "Today"))
-        provider = html.escape(str(j.get("provider") or "Direct ATS").upper())
+        provider = html.escape(str(j.get("provider") or "Direct Company").upper())
 
         job_cards_html.append(f"""
         <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-violet-300 hover:shadow-md transition flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -257,7 +257,7 @@ def render_category_page(slug: str) -> str:
                     <span class="text-slate-400 text-[10px]">{date_str}</span>
                 </div>
                 <h3 class="text-base font-extrabold text-slate-950">{role_esc}</h3>
-                <p class="text-xs text-slate-500 font-medium">📍 {loc_esc} &bull; 0% Recruiter Spread &bull; Instant ATS Application</p>
+                <p class="text-xs text-slate-500 font-medium">📍 {loc_esc} &bull; 0% Recruiter Spread &bull; Instant Direct Application</p>
             </div>
             <a href="{url_esc}" target="_blank" rel="noopener noreferrer" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-xs hover:scale-105 active:scale-95 transition flex items-center justify-center gap-1.5 shrink-0">
                 <span>Direct Application Portal &rarr;</span>
@@ -295,7 +295,7 @@ def render_category_page(slug: str) -> str:
                 "@id": f"{BASE_URL}/#website",
                 "url": BASE_URL,
                 "name": "Almond Jobs",
-                "disambiguatingDescription": "Almond Jobs (almondjobs.com) is an active enterprise direct ATS job search platform indexing 3,315,000+ live openings with zero recruiter spread, completely separate from agricultural almond farming.",
+                "disambiguatingDescription": "Almond Jobs (almondjobs.com) is an active enterprise direct corporate job search platform indexing 3,315,000+ live openings with zero recruiter spread, completely separate from agricultural almond farming.",
             },
             {
                 "@type": "Organization",
@@ -309,7 +309,7 @@ def render_category_page(slug: str) -> str:
                     "https://twitter.com/almondjobs",
                     "https://www.linkedin.com/company/almond-jobs"
                 ],
-                "description": "Almond Jobs is an active AI career discovery engine connecting job seekers directly to corporate applicant tracking systems with 0% recruiter spread."
+                "description": "Almond Jobs is an active AI career discovery engine connecting job seekers directly to corporate career servers with 0% recruiter spread."
             },
             {
                 "@type": "BreadcrumbList",
@@ -418,7 +418,7 @@ def render_category_page(slug: str) -> str:
             <div>
                 <span class="text-2xl font-black text-emerald-600 block mb-1">Seconds</span>
                 <span class="text-xs font-black uppercase text-slate-900 block">From Opening</span>
-                <span class="text-xs text-slate-500">Ingested from internal ATS pipelines the moment they open, days before LinkedIn.</span>
+                <span class="text-xs text-slate-500">Ingested from internal company servers the moment they open, days before LinkedIn.</span>
             </div>
             <div>
                 <span class="text-2xl font-black text-indigo-600 block mb-1">100% Free</span>
@@ -474,7 +474,7 @@ def render_category_page(slug: str) -> str:
                     </ul>
                 </div>
                 <div class="space-y-1.5">
-                    <h4 class="font-black text-slate-900 uppercase text-[11px] pb-1 border-b border-slate-200">Direct ATS Portals</h4>
+                    <h4 class="font-black text-slate-900 uppercase text-[11px] pb-1 border-b border-slate-200">Direct Company Portals</h4>
                     <ul class="space-y-1 text-slate-600">
                         <li><a href="/jobs/greenhouse-direct-jobs" class="hover:text-violet-600 transition">Greenhouse Direct Jobs</a></li>
                         <li><a href="/jobs/lever-direct-jobs" class="hover:text-violet-600 transition">Lever Direct Jobs</a></li>
@@ -494,7 +494,7 @@ def render_category_page(slug: str) -> str:
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="text-left">
                 <p class="font-bold text-slate-700">&copy; 2026 Almond Jobs &mdash; Operated by PantherClaws Enterprises (UDYAM-TN-03-0224850). Direct Enterprise Job Ingestion Network.</p>
-                <p class="text-[11px] text-slate-400 mt-0.5">Almond Jobs (almondjobs.com) connects candidates directly to enterprise ATS portals with 0% recruiter markup. Not affiliated with agricultural farming.</p>
+                <p class="text-[11px] text-slate-400 mt-0.5">Almond Jobs (almondjobs.com) connects candidates directly to enterprise career portals with 0% recruiter markup. Not affiliated with agricultural farming.</p>
             </div>
             <div class="flex items-center gap-4 shrink-0">
                 <a href="/" class="hover:text-violet-600 transition font-bold">Home</a>

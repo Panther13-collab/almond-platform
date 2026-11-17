@@ -180,7 +180,7 @@ Hiring Team / Engineering Leadership
 {company}
 {job_loc}
 
-RE: Application for {job_title} (Verified Direct ATS Position)
+RE: Application for {job_title} (Direct Company Application)
 
 Dear Hiring Team,
 

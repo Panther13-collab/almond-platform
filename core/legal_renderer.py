@@ -85,7 +85,7 @@ def render_terms_page() -> str:
 
     <section class="space-y-3">
         <h2 class="text-base sm:text-lg font-black text-slate-900">2. Description of Service</h2>
-        <p>Almond Jobs provides an AI-powered corporate applicant tracking system (ATS) ingestion and direct career discovery engine. We index public enterprise hiring portals (including Ashby, Greenhouse, Lever, Workday, and SmartRecruiters) and offer candidate dossier generation, keyword optimization, and direct employer application links without intermediary agency markups.</p>
+        <p>Almond Jobs provides an AI-powered enterprise corporate career ingestion and direct hiring discovery engine. We index public enterprise hiring portals (including Ashby, Greenhouse, Lever, Workday, and SmartRecruiters) and offer candidate dossier generation, keyword optimization, and direct employer application links without intermediary agency markups.</p>
     </section>
 
     <section class="space-y-3">
@@ -137,7 +137,7 @@ def render_privacy_page() -> str:
         <p><strong>PantherClaws Enterprises</strong> (operating <strong>Almond Jobs</strong> at https://almondjobs.com) respects your privacy and collects only the minimum information necessary to deliver high-quality SaaS career intelligence services:</p>
         <ul class="list-disc pl-5 space-y-1">
             <li><strong>Account Information:</strong> Name, verified email address, and profile picture (when authenticating via Google OAuth).</li>
-            <li><strong>Resume & Career Data:</strong> Text extracted from candidate resumes uploaded to synthesize STAR pitches and match direct ATS vacancies.</li>
+            <li><strong>Resume & Career Data:</strong> Text extracted from candidate resumes uploaded to synthesize STAR pitches and match direct corporate vacancies.</li>
             <li><strong>Transaction Records:</strong> Razorpay order ID, payment ID, amount, and timestamp. <em>We never store credit card numbers, CVVs, or UPI PINs; all sensitive payment credentials are securely handled by Razorpay in compliance with PCI-DSS.</em></li>
         </ul>
     </section>
@@ -175,7 +175,7 @@ def render_refund_page() -> str:
     content = """
     <section class="space-y-3">
         <h2 class="text-base sm:text-lg font-black text-slate-900">1. Overview of Digital Services & Voluntary Contributions</h2>
-        <p><strong>PantherClaws Enterprises</strong> operates <strong>Almond Jobs</strong> (https://almondjobs.com), providing instant SaaS career intelligence tools, digital candidate technical dossiers, profile optimization software, and candidate supporter/access plans ("Buy Almond Jobs a Coffee" / Pro Access). Because digital SaaS features and application dossiers are provisioned instantaneously upon access, please review our refund and cancellation terms below.</p>
+        <p><strong>PantherClaws Enterprises</strong> operates <strong>Almond Jobs</strong> (https://almondjobs.com), providing instant SaaS career intelligence tools, digital candidate technical dossiers, profile optimization software, Almond Jobs VIP Pass plans (1-Month Sprint, 3-Month Sprint, and 6-Month Dominance Passes), and voluntary platform supporter tiers ("Voluntary Supporter Contribution / Buy Us a Coffee"). Because digital SaaS features and application dossiers are provisioned instantaneously upon access, please review our refund and cancellation terms below.</p>
     </section>
 
     <section class="space-y-3">
