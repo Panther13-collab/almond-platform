@@ -4500,6 +4500,10 @@ window.detectAndApplyUserCurrency = function(forceCurr = null) {
     const coffeeBadge = document.getElementById("coffeeLocationCurrencyBadge");
     if (coffeeBadge) coffeeBadge.textContent = `${info.flag} ${info.label}`;
 
+    const vipUpBadge = document.getElementById("vipUpgradeLocationBadge");
+    if (vipUpBadge) vipUpBadge.textContent = `${info.flag} Billing in ${info.label}`;
+    if (typeof window.updateVipUpgradeLabels === "function") window.updateVipUpgradeLabels();
+
     ["INR", "USD", "EUR", "GBP"].forEach(c => {
         const vipBtn = document.getElementById("vipCurrBtn_" + c);
         if (vipBtn) {
@@ -4704,28 +4708,71 @@ window.selectVipUpgradeCurrency = function(curr) {
     if (typeof window.updateVipUpgradeLabels === "function") window.updateVipUpgradeLabels();
 };
 
+window.toggleVipUpgradeCurrencySelector = function() {
+    const dropdown = document.getElementById("vipUpgradeCurrencyDropdown");
+    if (dropdown) {
+        dropdown.classList.toggle("hidden");
+    }
+};
+
 window.updateVipUpgradeLabels = function() {
-    const curr = window.selectedVipUpgradeCurrency || "INR";
+    const curr = (window.selectedVipUpgradeCurrency || window.selectedVipCurrency || window.getUserLocationCurrency() || "INR").toUpperCase();
+    window.selectedVipUpgradeCurrency = curr;
     const sym = window.getCurrencySymbol(curr);
     const tiers = window.VIP_DYNAMIC_TIERS || {};
     const t3 = tiers["3m"] || {};
     const t6 = tiers["6m"] || {};
 
-    const p3 = curr === "INR" ? (t3.inr_price || 1799) : (t3[`${curr.toLowerCase()}_price`] || t3.usd_price || 24.99);
-    const p6 = curr === "INR" ? (t6.inr_price || 2799) : (t6[`${curr.toLowerCase()}_price`] || t6.usd_price || 38.99);
+    // 1. Update location badge
+    const locNames = {
+        INR: { flag: "🇮🇳", label: "INR (India)" },
+        USD: { flag: "🇺🇸", label: "USD (United States / Global)" },
+        EUR: { flag: "🇪🇺", label: "EUR (Europe)" },
+        GBP: { flag: "🇬🇧", label: "GBP (United Kingdom)" }
+    };
+    const info = locNames[curr] || locNames.USD;
+    const vipUpBadge = document.getElementById("vipUpgradeLocationBadge");
+    if (vipUpBadge) vipUpBadge.textContent = `${info.flag} Billing in ${info.label}`;
+
+    // 2. Active Tab styling
+    ["INR", "USD", "EUR", "GBP"].forEach(function(c) {
+        const btn = document.getElementById("vipUpCurrBtn_" + c);
+        if (btn) {
+            btn.className = (c === curr)
+                ? "vip-up-curr-tab px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer shadow-xs"
+                : "vip-up-curr-tab px-2.5 py-1 rounded-lg text-slate-300 hover:text-white cursor-pointer";
+        }
+    });
+
+    // 3. Prices and Original MRPs
+    const p3 = curr === "INR" ? (t3.inr_price || 1799) : (t3[`${curr.toLowerCase()}_price`] || t3.usd_price || 49.99);
+    const orig3 = curr === "INR" ? (t3.inr_original || 2599) : (t3[`${curr.toLowerCase()}_original`] || t3.usd_original || 71.99);
+
+    const p6 = curr === "INR" ? (t6.inr_price || 2799) : (t6[`${curr.toLowerCase()}_price`] || t6.usd_price || 79.99);
+    const orig6 = curr === "INR" ? (t6.inr_original || 4399) : (t6[`${curr.toLowerCase()}_original`] || t6.usd_original || 124.99);
 
     const price3mEl = document.getElementById("vipUpgradePrice_3m");
-    const price6mEl = document.getElementById("vipUpgradePrice_6m");
+    const orig3mEl = document.getElementById("vipUpgradeOriginalPrice_3m");
+    const badge3mEl = document.getElementById("vipUpgradeDiscountBadge_3m");
     if (price3mEl) price3mEl.textContent = `${sym}${p3}`;
-    if (price6mEl) price6mEl.textContent = `${sym}${p6}`;
+    if (orig3mEl) orig3mEl.textContent = `${sym}${orig3}`;
+    if (badge3mEl) badge3mEl.textContent = "30% OFF";
 
+    const price6mEl = document.getElementById("vipUpgradePrice_6m");
+    const orig6mEl = document.getElementById("vipUpgradeOriginalPrice_6m");
+    const badge6mEl = document.getElementById("vipUpgradeDiscountBadge_6m");
+    if (price6mEl) price6mEl.textContent = `${sym}${p6}`;
+    if (orig6mEl) orig6mEl.textContent = `${sym}${orig6}`;
+    if (badge6mEl) badge6mEl.textContent = "35% OFF";
+
+    // 4. CTA button dynamic label
     const selTier = window.selectedVipUpgradeTierKey || "3m";
     const tierData = tiers[selTier] || t3;
-    const selPrice = curr === "INR" ? (tierData.inr_price || 1799) : (tierData[`${curr.toLowerCase()}_price`] || tierData.usd_price || 24.99);
+    const selPrice = curr === "INR" ? (tierData.inr_price || 1799) : (tierData[`${curr.toLowerCase()}_price`] || tierData.usd_price || 49.99);
 
     const btnLabel = document.getElementById("vipUpgradeCheckoutBtnLabel");
     if (btnLabel) {
-        btnLabel.textContent = `⚡ Upgrade to ${tierData.name || "Career Sprint"} — ${sym}${selPrice}`;
+        btnLabel.textContent = `🚀 Upgrade to ${tierData.name || "Career Sprint"} — ${sym}${selPrice}`;
     }
 };
 
@@ -4851,7 +4898,7 @@ window.openVipPassModal = function() {
             headerBadge.textContent = "Priority Early Access";
             headerBadge.className = "text-[10px] font-black uppercase tracking-wider text-violet-900 bg-violet-100 px-2 py-0.5 rounded-full border border-violet-200";
         }
-        if (headerSub) headerSub.textContent = "Direct internal ATS ingestion • Apply before public platforms saturate the applicant pool";
+        if (headerSub) headerSub.textContent = "Direct Company Ingestion • Apply before public platforms saturate the applicant pool";
 
         window.selectVipPurchaseTier(window.selectedVipPurchaseTierKey || "3m");
         if (typeof window.updateVipPurchaseCardsUI === "function") window.updateVipPurchaseCardsUI();

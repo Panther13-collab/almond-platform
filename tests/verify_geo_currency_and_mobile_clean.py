@@ -142,5 +142,29 @@ class TestGeoCurrencyAndMobileClean(unittest.TestCase):
         # Passes email in payment verification
         self.assertIn("email: currentProfile?.email || candidateUser.email", js)
 
+    def test_09_active_vip_dashboard_location_currency_and_badges(self):
+        """Verify active VIP dashboard includes location-detected currency badge, strikethrough MRP, and discount tags."""
+        tmpl_path = os.path.join(os.path.dirname(__file__), "..", "templates", "index.html")
+        with open(tmpl_path, "r", encoding="utf-8") as f:
+            html = f.read()
+
+        self.assertIn('id="vipUpgradeLocationBadge"', html)
+        self.assertIn('id="vipUpgradeCurrencyDropdown"', html)
+        self.assertIn('id="vipUpgradeOriginalPrice_3m"', html)
+        self.assertIn('id="vipUpgradeOriginalPrice_6m"', html)
+        self.assertIn('id="vipUpgradeDiscountBadge_3m"', html)
+        self.assertIn('id="vipUpgradeDiscountBadge_6m"', html)
+        self.assertIn('30% OFF', html)
+        self.assertIn('35% OFF', html)
+
+    def test_10_app_js_vip_modal_header_no_ats(self):
+        """Verify static/app.js line 4854 and openVipPassModal sets Direct Company Ingestion without ATS."""
+        js_path = os.path.join(os.path.dirname(__file__), "..", "static", "app.js")
+        with open(js_path, "r", encoding="utf-8") as f:
+            js = f.read()
+
+        self.assertNotIn("Direct internal ATS ingestion", js)
+        self.assertIn("Direct Company Ingestion • Apply before public platforms saturate", js)
+
 if __name__ == "__main__":
     unittest.main()

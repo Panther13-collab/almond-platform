@@ -2809,20 +2809,26 @@
                     </div>
                 </div>
 
-                <!-- Tier Extension & Upgrade Section -->
+                <!-- Tier Extension & Upgrade Section (Clean Location-Detected Currency, Strikethrough Original Price & Offer Badges) -->
                 <div id="vipUpgradeSection" class="p-4 rounded-2xl bg-slate-900 text-white space-y-3.5 border border-slate-800">
                     <div class="flex items-center justify-between gap-2 flex-wrap">
                         <div>
                             <span class="text-[10px] font-black uppercase tracking-wider text-amber-300">Upgrade or Extend Coverage</span>
                             <h4 id="vipUpgradeSectionTitle" class="text-sm font-black text-white">Continuous Career Sprint Coverage</h4>
                         </div>
-                        <!-- Multi-Currency Switcher for Upgrade -->
-                        <div class="flex items-center gap-1 bg-slate-800 p-1 rounded-xl text-[11px] font-bold">
-                            <button type="button" onclick="selectVipUpgradeCurrency('INR')" id="vipUpCurrBtn_INR" class="vip-up-curr-tab px-2 py-0.5 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer">₹ INR</button>
-                            <button type="button" onclick="selectVipUpgradeCurrency('USD')" id="vipUpCurrBtn_USD" class="vip-up-curr-tab px-2 py-0.5 rounded-lg text-slate-300 hover:text-white cursor-pointer">$ USD</button>
-                            <button type="button" onclick="selectVipUpgradeCurrency('EUR')" id="vipUpCurrBtn_EUR" class="vip-up-curr-tab px-2 py-0.5 rounded-lg text-slate-300 hover:text-white cursor-pointer">€ EUR</button>
-                            <button type="button" onclick="selectVipUpgradeCurrency('GBP')" id="vipUpCurrBtn_GBP" class="vip-up-curr-tab px-2 py-0.5 rounded-lg text-slate-300 hover:text-white cursor-pointer">£ GBP</button>
+                        <!-- Sleek Location-Detected Currency Badge for Active VIPs -->
+                        <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/90 border border-slate-700 text-xs font-bold text-amber-300 shadow-2xs">
+                            <span id="vipUpgradeLocationBadge">🇮🇳 Billing in INR (India)</span>
+                            <button type="button" onclick="toggleVipUpgradeCurrencySelector()" class="text-[10px] text-slate-400 hover:text-white underline ml-1 cursor-pointer">Change</button>
                         </div>
+                    </div>
+
+                    <!-- Expandable Manual Currency Selector for Active VIPs (Hidden by Default) -->
+                    <div id="vipUpgradeCurrencyDropdown" class="hidden flex items-center justify-end gap-1.5 bg-slate-800/90 p-1.5 rounded-xl text-[11px] font-bold border border-slate-700">
+                        <button type="button" onclick="selectVipUpgradeCurrency('INR')" id="vipUpCurrBtn_INR" class="vip-up-curr-tab px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer shadow-xs">₹ INR</button>
+                        <button type="button" onclick="selectVipUpgradeCurrency('USD')" id="vipUpCurrBtn_USD" class="vip-up-curr-tab px-2.5 py-1 rounded-lg text-slate-300 hover:text-white cursor-pointer">$ USD</button>
+                        <button type="button" onclick="selectVipUpgradeCurrency('EUR')" id="vipUpCurrBtn_EUR" class="vip-up-curr-tab px-2.5 py-1 rounded-lg text-slate-300 hover:text-white cursor-pointer">€ EUR</button>
+                        <button type="button" onclick="selectVipUpgradeCurrency('GBP')" id="vipUpCurrBtn_GBP" class="vip-up-curr-tab px-2.5 py-1 rounded-lg text-slate-300 hover:text-white cursor-pointer">£ GBP</button>
                     </div>
 
                     <!-- Upgrade Cards Grid (3m and 6m, or 6m extension) -->
@@ -2831,10 +2837,16 @@
                         <div id="vipUpgradeCard_3m" onclick="selectVipUpgradeTier('3m')" class="vip-up-card p-3.5 rounded-2xl bg-slate-800/80 hover:bg-slate-800 border-2 border-amber-400/90 cursor-pointer transition relative space-y-1.5">
                             <div class="flex items-center justify-between">
                                 <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">Career Sprint</span>
-                                <span class="text-[10px] font-black bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full">Popular</span>
+                                <div class="flex items-center gap-1.5">
+                                    <span id="vipUpgradeDiscountBadge_3m" class="text-[10px] font-black bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full shadow-2xs">30% OFF</span>
+                                    <span class="text-[10px] font-bold bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded-full">Popular</span>
+                                </div>
                             </div>
-                            <div class="text-base font-black text-white" id="vipUpgradeTitle_3m">3-Month Pass</div>
-                            <div class="text-xl font-black text-amber-300" id="vipUpgradePrice_3m">₹1,799</div>
+                            <div class="text-base font-black text-white" id="vipUpgradeTitle_3m">3-Month Sprint</div>
+                            <div class="flex items-baseline gap-2 pt-0.5">
+                                <span class="text-xs font-bold text-slate-400 line-through" id="vipUpgradeOriginalPrice_3m">₹2,599</span>
+                                <span class="text-xl font-black text-amber-300" id="vipUpgradePrice_3m">₹1,799</span>
+                            </div>
                             <p class="text-[10px] text-slate-300 leading-tight">+90 days stacked onto current pass. Complete job hunt cycle coverage.</p>
                         </div>
 
@@ -2842,10 +2854,16 @@
                         <div id="vipUpgradeCard_6m" onclick="selectVipUpgradeTier('6m')" class="vip-up-card p-3.5 rounded-2xl bg-slate-800/40 hover:bg-slate-800 border-2 border-slate-700 cursor-pointer transition relative space-y-1.5">
                             <div class="flex items-center justify-between">
                                 <span class="text-[10px] font-black uppercase tracking-wider text-violet-400">Career Dominance</span>
-                                <span class="text-[10px] font-black bg-violet-500 text-white px-2 py-0.5 rounded-full">Best Value</span>
+                                <div class="flex items-center gap-1.5">
+                                    <span id="vipUpgradeDiscountBadge_6m" class="text-[10px] font-black bg-violet-400 text-slate-950 px-2 py-0.5 rounded-full shadow-2xs">35% OFF</span>
+                                    <span class="text-[10px] font-bold bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded-full">Best Value</span>
+                                </div>
                             </div>
-                            <div class="text-base font-black text-white" id="vipUpgradeTitle_6m">6-Month Pass</div>
-                            <div class="text-xl font-black text-violet-300" id="vipUpgradePrice_6m">₹2,999</div>
+                            <div class="text-base font-black text-white" id="vipUpgradeTitle_6m">6-Month Dominance</div>
+                            <div class="flex items-baseline gap-2 pt-0.5">
+                                <span class="text-xs font-bold text-slate-400 line-through" id="vipUpgradeOriginalPrice_6m">₹4,399</span>
+                                <span class="text-xl font-black text-violet-300" id="vipUpgradePrice_6m">₹2,799</span>
+                            </div>
                             <p class="text-[10px] text-slate-300 leading-tight">+180 days stacked. Uninterrupted high-compensation role monitoring.</p>
                         </div>
                     </div>
