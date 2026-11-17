@@ -29,7 +29,7 @@ class TestDynamicPricingApi(unittest.TestCase):
         # Verify 1m tier
         t1m = tiers["1m"]
         self.assertEqual(t1m["inr_price"], 699)
-        self.assertEqual(t1m["usd_price"], 9.99)
+        self.assertEqual(t1m["usd_price"], 19.99)
         self.assertEqual(t1m["duration_days"], 30)
 
         # Verify 3m tier: 30% discount
@@ -106,12 +106,12 @@ class TestDynamicPricingApi(unittest.TestCase):
             "tier_id": "3m",
             "inr_price": 1799,
             "inr_original": 2599,
-            "usd_price": 24.99,
-            "usd_original": 34.99,
-            "eur_price": 24.99,
-            "eur_original": 34.99,
-            "gbp_price": 24.99,
-            "gbp_original": 34.99,
+            "usd_price": 49.99,
+            "usd_original": 69.99,
+            "eur_price": 46.99,
+            "eur_original": 64.99,
+            "gbp_price": 39.99,
+            "gbp_original": 54.99,
             "discount_pct": 30,
             "discount_label": "30% OFF Limited Offer",
             "badge_text": "Career Sprint"

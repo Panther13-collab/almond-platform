@@ -636,6 +636,11 @@ async def api_send_otp(payload: dict = Body(...)):
         raise HTTPException(status_code=400, detail="Please enter your personal email address.")
     res = send_signup_otp(email)
     if res.get("status") == "error":
+        # If email delivery service is unavailable (e.g. SMTP unconfigured on host),
+        # return HTTP 200 with fallback_available: True so frontend automatically proceeds with direct instant signup
+        # and never blocks candidates from onboarding!
+        if res.get("fallback_available"):
+            return JSONResponse(status_code=200, content=res)
         raise HTTPException(status_code=400, detail=res.get("message"))
     return JSONResponse(content=res)
 

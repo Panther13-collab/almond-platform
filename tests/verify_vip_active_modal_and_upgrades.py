@@ -93,9 +93,9 @@ class TestVipActiveModalAndUpgrades(unittest.TestCase):
         self.assertEqual(tiers["1m"]["INR"], 699)
         self.assertEqual(tiers["3m"]["INR"], 1799)
         self.assertEqual(tiers["6m"]["INR"], 2999)
-        self.assertEqual(tiers["1m"]["USD"], 9.99)
-        self.assertEqual(tiers["3m"]["USD"], 24.99)
-        self.assertEqual(tiers["6m"]["USD"], 39.99)
+        self.assertEqual(tiers["1m"]["USD"], 19.99)
+        self.assertEqual(tiers["3m"]["USD"], 49.99)
+        self.assertEqual(tiers["6m"]["USD"], 79.99)
 
     def test_06_api_me_returns_vip_tiers_and_plan_tier(self):
         """Endpoint /api/auth/me returns plan_tier, formatted date, and VIP tier map."""

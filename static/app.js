@@ -5001,7 +5001,7 @@ window.handleAuthSubmit = async function(e) {
         }
     }
 
-    // SIGN UP: Request OTP verification first
+    // SIGN UP: Request OTP verification first (with instant self-healing direct signup fallback)
     if (window.activeAuthTab === "signup") {
         if (submitBtn) {
             submitBtn.disabled = true;
@@ -5015,7 +5015,15 @@ window.handleAuthSubmit = async function(e) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: email })
             });
-            const data = await resp.json();
+            const data = await resp.json().catch(() => ({}));
+
+            // Self-healing fallback: If outbound SMTP is unconfigured on host or delivery is unavailable,
+            // never block the candidate! Seamlessly activate their account instantly.
+            if (data.fallback_available || (!resp.ok && (data.detail || "").includes("SMTP credentials"))) {
+                console.info("[Auth] Outbound email delivery unavailable on host. Seamlessly executing instant direct registration...");
+                await window.executeDirectSignupFallback(email, password, fullName);
+                return;
+            }
 
             if (!resp.ok || data.status === "error") {
                 throw new Error(data.detail || data.message || "Failed to send verification code.");
@@ -5039,6 +5047,21 @@ window.handleAuthSubmit = async function(e) {
                 window.startResendOtpTimer(120);
             }
         } catch (err) {
+            // If the error mentions SMTP credentials or delivery failure, fallback automatically!
+            const errMsg = String(err && (err.message || err.detail || ""));
+            if (errMsg.includes("SMTP credentials") || errMsg.includes("verification email") || errMsg.includes("Failed to dispatch")) {
+                console.warn("[Auth] Caught email delivery error. Executing instant direct registration fallback...");
+                try {
+                    await window.executeDirectSignupFallback(email, password, fullName);
+                    return;
+                } catch (fallbackErr) {
+                    if (errBox && errText) {
+                        errText.textContent = fallbackErr.message || "Account creation failed.";
+                        errBox.classList.remove("hidden");
+                    }
+                    return;
+                }
+            }
             if (errBox && errText) {
                 errText.textContent = err.message || "Failed to dispatch verification code.";
                 errBox.classList.remove("hidden");
@@ -5218,7 +5241,13 @@ window.handleResendOtp = async function() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email })
         });
-        const data = await resp.json();
+        const data = await resp.json().catch(() => ({}));
+
+        if (data.fallback_available || (!resp.ok && (data.detail || "").includes("SMTP credentials"))) {
+            await window.handleInstantSignupBypass();
+            return;
+        }
+
         if (!resp.ok || data.status === "error") throw new Error(data.detail || data.message);
 
         // Restart 120-second timer
@@ -5231,10 +5260,130 @@ window.handleResendOtp = async function() {
             spamText.innerHTML = `<span class="text-emerald-800 font-bold">&#10003; Fresh 6-digit verification code sent to ${email}!</span> Please check your inbox or spam folder.`;
         }
     } catch (err) {
+        const errMsg = String(err && (err.message || err.detail || ""));
+        if (errMsg.includes("SMTP credentials") || errMsg.includes("verification email")) {
+            await window.handleInstantSignupBypass();
+            return;
+        }
         if (errBox && errText) {
             errText.textContent = err.message || "Failed to resend code.";
             errBox.classList.remove("hidden");
         }
+    }
+};
+
+window.handleInstantSignupBypass = async function() {
+    const emailInput = document.getElementById("authEmailInput");
+    const passInput = document.getElementById("authPasswordInput");
+    const nameInput = document.getElementById("authFullNameInput");
+
+    const email = (emailInput?.value || "").trim().toLowerCase();
+    const password = passInput?.value || "";
+    const fullName = (nameInput?.value || "").trim();
+
+    if (!email || !password) {
+        window.cancelOtpVerification();
+        return;
+    }
+    await window.executeDirectSignupFallback(email, password, fullName);
+};
+
+window.executeDirectSignupFallback = async function(email, password, fullName) {
+    const errBox = document.getElementById("authErrorMessage");
+    const errText = document.getElementById("authErrorText");
+    const submitBtn = document.getElementById("authSubmitBtn");
+    const verifyBtn = document.getElementById("authVerifyOtpBtn");
+
+    if (errBox) errBox.classList.add("hidden");
+
+    const activeBtn = (verifyBtn && verifyBtn.closest("#authOtpStep") && !verifyBtn.closest("#authOtpStep").classList.contains("hidden")) ? verifyBtn : submitBtn;
+    if (activeBtn) {
+        activeBtn.disabled = true;
+        activeBtn.classList.add("opacity-70");
+        activeBtn.innerHTML = `<span class="animate-spin mr-1">⌛</span> Activating Candidate Account...`;
+    }
+
+    try {
+        const signupResp = await fetch("/api/auth/signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: email,
+                password: password,
+                full_name: fullName,
+                device_model: window.getClientDeviceModel()
+            })
+        });
+        const data = await signupResp.json().catch(() => ({}));
+
+        if (!signupResp.ok || data.status === "error") {
+            throw new Error(data.detail || data.message || "Failed to activate candidate account.");
+        }
+
+        // Store session tokens in localStorage
+        if (data.token) {
+            localStorage.setItem("almond_session_token", data.token);
+            localStorage.setItem("almond_auth_token", data.token);
+        }
+        if (data.user_id) localStorage.setItem("almond_user_id", data.user_id);
+        if (data.email) localStorage.setItem("almond_user_email", data.email);
+        if (data.full_name) localStorage.setItem("almond_user_name", data.full_name);
+        localStorage.setItem("almond_is_paid", data.is_paid ? "true" : "false");
+
+        if (window._resendOtpInterval) {
+            clearInterval(window._resendOtpInterval);
+            window._resendOtpInterval = null;
+        }
+
+        // Update brand bar indicators immediately
+        window.updateTopProfileBar();
+
+        // Show celebratory in-app Welcome View
+        const authFormView = document.getElementById("authFormView");
+        const authOtpStep = document.getElementById("authOtpStep");
+        const authWelcomeView = document.getElementById("authWelcomeView");
+        const welcomeUserName = document.getElementById("welcomeUserName");
+        const modalTitleText = document.getElementById("modalTitleText");
+        const modalSubtitleText = document.getElementById("modalSubtitleText");
+
+        if (authFormView) authFormView.classList.add("hidden");
+        if (authOtpStep) authOtpStep.classList.add("hidden");
+        if (modalTitleText) modalTitleText.textContent = "Welcome to Almond Jobs";
+        if (modalSubtitleText) modalSubtitleText.textContent = "Account Active & Ready";
+        if (welcomeUserName) welcomeUserName.textContent = data.full_name || "Candidate";
+        if (authWelcomeView) authWelcomeView.classList.remove("hidden");
+        if (window.lucide) lucide.createIcons();
+
+        // If candidate was intercepted while clicking search, immediately resume search!
+        if (window._pendingJobSearch) {
+            window._pendingJobSearch = false;
+            setTimeout(() => {
+                window.closeProfileModal();
+                if (typeof executeSearch === "function") {
+                    executeSearch();
+                    window.goToSlide(3);
+                }
+            }, 1200);
+        }
+        return data;
+    } catch (err) {
+        if (errBox && errText) {
+            errText.textContent = err.message || "Direct account activation failed.";
+            errBox.classList.remove("hidden");
+        }
+        throw err;
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove("opacity-70");
+            submitBtn.innerHTML = `<span id="authSubmitBtnText">Send Verification OTP &rarr;</span><i data-lucide="arrow-right" class="w-4 h-4 text-white"></i>`;
+        }
+        if (verifyBtn) {
+            verifyBtn.disabled = false;
+            verifyBtn.classList.remove("opacity-70");
+            verifyBtn.innerHTML = `<span>Verify OTP & Create Account</span><i data-lucide="check-circle-2" class="w-4 h-4 text-white"></i>`;
+        }
+        if (window.lucide) lucide.createIcons();
     }
 };
 

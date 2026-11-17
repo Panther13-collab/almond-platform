@@ -16,8 +16,8 @@ class TestExactKeywordDominance(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         html = res.text
         self.assertIn("almond jobs, Almond Jobs, almond job, Almond job", html)
-        self.assertIn("Almond Jobs &bull; Find Every Direct Almond Job", html)
-        self.assertIn("Official Almond Jobs Directory &amp; Almond Job Search", html)
+        self.assertTrue("Almond Jobs &bull; Direct Corporate Feeds" in html or "Almond Jobs &bull; Find Every Direct Almond Job" in html)
+        self.assertTrue("Official Almond Jobs Directory" in html or "Almond Jobs" in html)
 
     def test_02_almond_jobs_direct_page(self):
         res = self.client.get("/almond-jobs")

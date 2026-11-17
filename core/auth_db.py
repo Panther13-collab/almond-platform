@@ -269,10 +269,25 @@ def init_db():
                     discount_pct, discount_label, badge_text,
                     is_active, updated_at
                 ) VALUES 
-                ('1m', 'vip_pass_30d', '1-Month VIP Pass', 30, 699, 699, 9.99, 9.99, 9.99, 9.99, 9.99, 9.99, 0, '', 'Standard VIP', 1, ?),
-                ('3m', 'vip_pass_90d', '3-Month Career Sprint Pass', 90, 1799, 2599, 24.99, 34.99, 24.99, 34.99, 24.99, 34.99, 30, '30% OFF Limited Offer', 'Career Sprint', 1, ?),
-                ('6m', 'vip_pass_180d', '6-Month Career Dominance Pass', 180, 2799, 4299, 38.99, 59.99, 38.99, 59.99, 38.99, 59.99, 35, '35% OFF Limited Offer', 'Best Value', 1, ?);
+                ('1m', 'vip_pass_30d', '1-Month VIP Pass', 30, 699, 699, 19.99, 19.99, 18.99, 18.99, 15.99, 15.99, 0, '', 'Standard VIP', 1, ?),
+                ('3m', 'vip_pass_90d', '3-Month Career Sprint Pass', 90, 1799, 2599, 49.99, 69.99, 46.99, 64.99, 39.99, 54.99, 30, '30% OFF Limited Offer', 'Career Sprint', 1, ?),
+                ('6m', 'vip_pass_180d', '6-Month Career Dominance Pass', 180, 2799, 4299, 79.99, 119.99, 74.99, 114.99, 64.99, 99.99, 35, '35% OFF Limited Offer', 'Best Value', 1, ?);
             ''', (now_ts, now_ts, now_ts))
+        else:
+            # Upgrade existing rows with foreign purchasing power parity pricing if previously lower
+            cursor.execute("SELECT usd_price FROM pricing_config WHERE tier_id = '1m';")
+            r1m = cursor.fetchone()
+            if r1m and float(r1m["usd_price"]) < 15.0:
+                cursor.execute("""
+                    UPDATE pricing_config SET usd_price = 19.99, usd_original = 19.99, eur_price = 18.99, eur_original = 18.99, gbp_price = 15.99, gbp_original = 15.99 WHERE tier_id = '1m';
+                """)
+                cursor.execute("""
+                    UPDATE pricing_config SET usd_price = 49.99, usd_original = 69.99, eur_price = 46.99, eur_original = 64.99, gbp_price = 39.99, gbp_original = 54.99 WHERE tier_id = '3m';
+                """)
+                cursor.execute("""
+                    UPDATE pricing_config SET usd_price = 79.99, usd_original = 119.99, eur_price = 74.99, eur_original = 114.99, gbp_price = 64.99, gbp_original = 99.99 WHERE tier_id = '6m';
+                """)
+                print("[AUTH_DB] Auto-migrated foreign pricing tiers to premium purchasing power rates.")
 
         conn.commit()
 
@@ -857,10 +872,12 @@ def send_signup_otp(email: str) -> dict:
             conn.commit()
             
         delivery_err = email_delivery.get("error", "")
-        print(f"[AUTH_OTP] FAILED TO DISPATCH EMAIL TO {clean_email}: {delivery_err}")
+        print(f"[AUTH_OTP] FAILED TO DISPATCH EMAIL TO {clean_email}: {delivery_err}. Enabling instant direct signup fallback.")
         return {
             "status": "error",
-            "message": "We could not deliver a verification email to this address. Please ensure your email is active and typed correctly, or configure SMTP credentials on your host."
+            "fallback_available": True,
+            "error_code": "EMAIL_DELIVERY_UNAVAILABLE",
+            "message": "We could not deliver a verification email to this address. Instant direct registration has been activated for your account."
         }
 
     return {
@@ -3151,9 +3168,9 @@ def get_dynamic_pricing() -> dict:
     if not tiers:
         for t_id, cfg in Config.VIP_TIERS.items():
             inr = cfg.get("INR", 699)
-            usd = cfg.get("USD", 9.99)
+            usd = cfg.get("USD", 19.99)
             orig_inr = 2599 if t_id == "3m" else (4299 if t_id == "6m" else inr)
-            orig_usd = 34.99 if t_id == "3m" else (59.99 if t_id == "6m" else usd)
+            orig_usd = 69.99 if t_id == "3m" else (119.99 if t_id == "6m" else usd)
             disc = 30 if t_id == "3m" else (35 if t_id == "6m" else 0)
             tiers[t_id] = {
                 "id": t_id,

@@ -12,13 +12,13 @@ class Config:
 
     # Pricing
     PRICE_INR = int(os.getenv("ALMOND_PRICE_INR", 699))
-    PRICE_USD = float(os.getenv("ALMOND_PRICE_USD", 9.99))
-    PRICE_EUR = float(os.getenv("ALMOND_PRICE_EUR", 9.99))
-    PRICE_GBP = float(os.getenv("ALMOND_PRICE_GBP", 9.99))
+    PRICE_USD = float(os.getenv("ALMOND_PRICE_USD", 19.99))
+    PRICE_EUR = float(os.getenv("ALMOND_PRICE_EUR", 18.99))
+    PRICE_GBP = float(os.getenv("ALMOND_PRICE_GBP", 15.99))
     VIP_PRICE_INR = int(os.getenv("ALMOND_VIP_PRICE_INR", 699))
-    VIP_PRICE_USD = float(os.getenv("ALMOND_VIP_PRICE_USD", 9.99))
-    VIP_PRICE_EUR = float(os.getenv("ALMOND_VIP_PRICE_EUR", 9.99))
-    VIP_PRICE_GBP = float(os.getenv("ALMOND_VIP_PRICE_GBP", 9.99))
+    VIP_PRICE_USD = float(os.getenv("ALMOND_VIP_PRICE_USD", 19.99))
+    VIP_PRICE_EUR = float(os.getenv("ALMOND_VIP_PRICE_EUR", 18.99))
+    VIP_PRICE_GBP = float(os.getenv("ALMOND_VIP_PRICE_GBP", 15.99))
     VIP_TEST_PRICE_INR = VIP_PRICE_INR
 
     VIP_TIERS = {
@@ -30,9 +30,9 @@ class Config:
             "duration_seconds": 30 * 86400,
             "plan_code": "vip_pass_30d",
             "INR": 699,
-            "USD": 9.99,
-            "EUR": 9.99,
-            "GBP": 9.99,
+            "USD": 19.99,
+            "EUR": 18.99,
+            "GBP": 15.99,
         },
         "3m": {
             "id": "3m",
@@ -42,9 +42,9 @@ class Config:
             "duration_seconds": 90 * 86400,
             "plan_code": "vip_pass_90d",
             "INR": 1799,
-            "USD": 24.99,
-            "EUR": 24.99,
-            "GBP": 24.99,
+            "USD": 49.99,
+            "EUR": 46.99,
+            "GBP": 39.99,
         },
         "6m": {
             "id": "6m",
@@ -54,9 +54,9 @@ class Config:
             "duration_seconds": 180 * 86400,
             "plan_code": "vip_pass_180d",
             "INR": 2999,
-            "USD": 39.99,
-            "EUR": 39.99,
-            "GBP": 39.99,
+            "USD": 79.99,
+            "EUR": 74.99,
+            "GBP": 64.99,
         }
     }
 

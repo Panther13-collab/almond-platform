@@ -7,7 +7,7 @@
     <!-- Primary High-Intent Title & Metadata -->
     <title>Almond Jobs — Direct Corporate Jobs &amp; Internships | 0% Recruiter Spread</title>
     <meta name="description" content="Almond Jobs (almondjobs.com) connects freshers and experienced candidates directly to hiring teams at top companies and startups. Zero recruiter spread, zero consultancy cuts. Apply straight to 3,315,000+ verified corporate tech jobs, remote roles, and corporate internships.">
-    <meta name="keywords" content="almond jobs, Almond Jobs, direct company jobs, software engineer jobs, fresher jobs 2026, tech internships, apply directly to company, bypass recruiters, 0% recruiter spread, greenhouse jobs, lever jobs, workday jobs, ashby jobs, remote jobs, developer jobs, AI ML specialist jobs, startup jobs, IT jobs, non-IT jobs, campus placements alternative">
+    <meta name="keywords" content="almond jobs, Almond Jobs, almond job, Almond job, direct company jobs, software engineer jobs, fresher jobs 2026, tech internships, apply directly to company, bypass recruiters, 0% recruiter spread, greenhouse jobs, lever jobs, workday jobs, ashby jobs, remote jobs, developer jobs, AI ML specialist jobs, startup jobs, IT jobs, non-IT jobs, campus placements alternative">
     <meta name="author" content="PantherClaws Enterprises (Almond Jobs)">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <link rel="canonical" href="https://almondjobs.com/">
@@ -2872,15 +2872,6 @@
     <div id="profileModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="rounded-3xl max-w-md w-full p-6 sm:p-7 border border-slate-200/90 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 bg-white/95 backdrop-blur-2xl my-auto">
             
-            <!-- Contextual Banner: Displays when intercepted from clicking Search on Page 2 -->
-            <div id="authContextNotice" class="hidden mb-4 p-3.5 rounded-2xl bg-violet-50/90 border border-violet-200/80 text-violet-950 flex items-start gap-2.5 shadow-2xs">
-                <i data-lucide="sparkles" class="w-5 h-5 text-violet-600 shrink-0 mt-0.5"></i>
-                <div>
-                    <p class="text-xs font-black text-violet-900">Sign in to Unlock Your Direct Application Pipeline</p>
-                    <p class="text-[11px] text-violet-700 font-medium leading-relaxed mt-0.5">Your parsed skills vector and compensation bounds are preserved and will be securely tied to your candidate profile.</p>
-                </div>
-            </div>
-
             <!-- Header -->
             <div class="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
                 <div class="flex items-center space-x-3">
@@ -3029,6 +3020,14 @@
                                 Please check your <strong>Spam / Junk</strong> folder. If it arrived there, tap <em>"Report Not Spam"</em> so future job alerts and direct portals reach you instantly.
                             </p>
                         </div>
+                    </div>
+
+                    <!-- Instant Direct Activation Fallback Option -->
+                    <div class="text-center pt-1">
+                        <button type="button" onclick="handleInstantSignupBypass()" class="text-[11px] text-violet-700 font-bold hover:underline cursor-pointer inline-flex items-center gap-1.5 py-1">
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-violet-600"></i>
+                            <span>Email not arriving? Activate Account Directly &rarr;</span>
+                        </button>
                     </div>
                 </div>
 
