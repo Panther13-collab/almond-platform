@@ -4339,9 +4339,9 @@ window.VIP_DYNAMIC_TIERS = {
         title: "1-Month VIP Pass",
         duration_days: 30,
         inr_price: 699, inr_original: 699,
-        usd_price: 9.99, usd_original: 9.99,
-        eur_price: 9.99, eur_original: 9.99,
-        gbp_price: 9.99, gbp_original: 9.99,
+        usd_price: 19.99, usd_original: 19.99,
+        eur_price: 18.99, eur_original: 18.99,
+        gbp_price: 15.99, gbp_original: 15.99,
         discount_pct: 0,
         discount_label: "",
         badge_text: "Standard VIP"
@@ -4352,9 +4352,9 @@ window.VIP_DYNAMIC_TIERS = {
         title: "3-Month Career Sprint",
         duration_days: 90,
         inr_price: 1799, inr_original: 2599,
-        usd_price: 24.99, usd_original: 34.99,
-        eur_price: 24.99, eur_original: 34.99,
-        gbp_price: 24.99, gbp_original: 34.99,
+        usd_price: 49.99, usd_original: 69.99,
+        eur_price: 46.99, eur_original: 64.99,
+        gbp_price: 39.99, gbp_original: 54.99,
         discount_pct: 30,
         discount_label: "30% OFF Limited Offer",
         badge_text: "Career Sprint"
@@ -4365,9 +4365,9 @@ window.VIP_DYNAMIC_TIERS = {
         title: "6-Month Career Dominance",
         duration_days: 180,
         inr_price: 2799, inr_original: 4299,
-        usd_price: 38.99, usd_original: 59.99,
-        eur_price: 38.99, eur_original: 59.99,
-        gbp_price: 38.99, gbp_original: 59.99,
+        usd_price: 79.99, usd_original: 119.99,
+        eur_price: 74.99, eur_original: 114.99,
+        gbp_price: 64.99, gbp_original: 99.99,
         discount_pct: 35,
         discount_label: "35% OFF Limited Offer",
         badge_text: "Best Value"
@@ -4380,6 +4380,118 @@ window.selectedVipPurchaseTierKey = "3m";
 window.selectedVipCurrency = "INR";
 window.selectedVipUpgradeTierKey = "3m";
 window.selectedVipUpgradeCurrency = "INR";
+window.selectedCoffeeCurrency = "INR";
+
+window.getUserLocationCurrency = function() {
+    try {
+        const saved = localStorage.getItem("almond_user_preferred_currency");
+        if (saved && ["INR", "USD", "EUR", "GBP"].includes(saved.toUpperCase())) {
+            return saved.toUpperCase();
+        }
+
+        let tz = "";
+        try {
+            tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || "").toLowerCase();
+        } catch (e) {}
+
+        const languages = navigator.languages || [navigator.language || ""];
+        const primaryLang = (languages[0] || "").toLowerCase();
+
+        // 1. India detection
+        if (
+            tz.includes("kolkata") ||
+            tz.includes("calcutta") ||
+            primaryLang.endsWith("-in") ||
+            primaryLang === "en-in" ||
+            primaryLang.startsWith("hi") ||
+            primaryLang.startsWith("ta") ||
+            primaryLang.startsWith("te") ||
+            primaryLang.startsWith("kn")
+        ) {
+            return "INR";
+        }
+
+        // 2. United Kingdom detection
+        if (
+            tz.includes("london") ||
+            tz.includes("belfast") ||
+            primaryLang === "en-gb"
+        ) {
+            return "GBP";
+        }
+
+        // 3. European Union detection
+        if (
+            tz.startsWith("europe/") ||
+            ["de-", "fr-", "es-", "it-", "nl-", "pt-", "pl-", "el-", "sv-", "da-", "fi-", "nb-", "nn-"].some(code => primaryLang.startsWith(code))
+        ) {
+            return "EUR";
+        }
+
+        // 4. Default to USD for USA, Canada, Australia, Singapore & Global Candidates
+        return "USD";
+    } catch (err) {
+        return "USD";
+    }
+};
+
+window.detectAndApplyUserCurrency = function(forceCurr = null) {
+    const curr = (forceCurr || window.getUserLocationCurrency() || "INR").toUpperCase();
+    window.selectedVipCurrency = curr;
+    window.selectedVipUpgradeCurrency = curr;
+    window.selectedCoffeeCurrency = curr;
+
+    const locNames = {
+        INR: { flag: "🇮🇳", label: "INR (India)", sym: "₹" },
+        USD: { flag: "🇺🇸", label: "USD (United States / Global)", sym: "$" },
+        EUR: { flag: "🇪🇺", label: "EUR (Europe)", sym: "€" },
+        GBP: { flag: "🇬🇧", label: "GBP (United Kingdom)", sym: "£" }
+    };
+    const info = locNames[curr] || locNames.USD;
+
+    const vipBadge = document.getElementById("vipLocationCurrencyBadge");
+    if (vipBadge) vipBadge.textContent = `${info.flag} Billing in ${info.label}`;
+
+    const coffeeBadge = document.getElementById("coffeeLocationCurrencyBadge");
+    if (coffeeBadge) coffeeBadge.textContent = `${info.flag} ${info.label}`;
+
+    ["INR", "USD", "EUR", "GBP"].forEach(c => {
+        const vipBtn = document.getElementById("vipCurrBtn_" + c);
+        if (vipBtn) {
+            vipBtn.className = (c === curr)
+                ? "vip-curr-tab px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer shadow-xs"
+                : "vip-curr-tab px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-950 cursor-pointer";
+        }
+        const upBtn = document.getElementById("vipUpCurrBtn_" + c);
+        if (upBtn) {
+            upBtn.className = (c === curr)
+                ? "vip-up-curr-tab px-2 py-0.5 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer"
+                : "vip-up-curr-tab px-2 py-0.5 rounded-lg text-slate-300 hover:text-white cursor-pointer";
+        }
+        const coffeeBtn = document.getElementById("coffeeCurrBtn_" + c);
+        if (coffeeBtn) {
+            coffeeBtn.className = (c === curr)
+                ? "coffee-curr-tab py-2 rounded-xl bg-teal-500 text-white shadow-xs cursor-pointer transition font-black"
+                : "coffee-curr-tab py-2 rounded-xl text-slate-700 hover:text-slate-950 cursor-pointer transition font-bold";
+        }
+    });
+
+    if (typeof window.updateVipPurchaseCardsUI === "function") window.updateVipPurchaseCardsUI();
+    if (typeof window.updateVipUpgradeLabels === "function") window.updateVipUpgradeLabels();
+    if (typeof window.updateCoffeeCheckoutPrice === "function") window.updateCoffeeCheckoutPrice();
+};
+
+window.toggleVipCurrencyRow = function() {
+    const row = document.getElementById("vipCurrencySelectorRow");
+    if (!row) return;
+    row.classList.toggle("hidden");
+};
+
+window.toggleCoffeeCurrencyRow = function() {
+    const row = document.getElementById("coffeeCurrencySelectorRow");
+    if (!row) return;
+    row.classList.toggle("hidden");
+};
 
 window.getCurrencySymbol = function(curr) {
     if (curr === "USD") return "$";
@@ -4437,15 +4549,9 @@ window.selectVipPurchaseTier = function(tierKey) {
 };
 
 window.selectVipCurrency = function(curr) {
-    window.selectedVipCurrency = curr || "INR";
-    const tabs = document.querySelectorAll(".vip-curr-tab");
-    tabs.forEach(function(btn) {
-        const isSel = btn.id === ("vipCurrBtn_" + curr);
-        btn.className = isSel
-            ? "vip-curr-tab px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer"
-            : "vip-curr-tab px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-950 cursor-pointer";
-    });
-    if (typeof window.updateVipPurchaseCardsUI === "function") window.updateVipPurchaseCardsUI();
+    curr = (curr || "INR").toUpperCase();
+    localStorage.setItem("almond_user_preferred_currency", curr);
+    window.detectAndApplyUserCurrency(curr);
 };
 
 window.updateVipPurchaseCardsUI = function() {
@@ -4458,13 +4564,13 @@ window.updateVipPurchaseCardsUI = function() {
     const t6 = tiers["6m"] || {};
 
     // 1m
-    const p1 = curr === "INR" ? (t1.inr_price || 699) : (t1[`${curr.toLowerCase()}_price`] || t1.usd_price || 9.99);
+    const p1 = curr === "INR" ? (t1.inr_price || 699) : (t1[`${curr.toLowerCase()}_price`] || t1.usd_price || 19.99);
     const price1El = document.getElementById("vipCardPrice_1m");
     if (price1El) price1El.textContent = `${sym}${p1}`;
 
     // 3m
-    const p3 = curr === "INR" ? (t3.inr_price || 1799) : (t3[`${curr.toLowerCase()}_price`] || t3.usd_price || 24.99);
-    const o3 = curr === "INR" ? (t3.inr_original || 2599) : (t3[`${curr.toLowerCase()}_original`] || t3.usd_original || 34.99);
+    const p3 = curr === "INR" ? (t3.inr_price || 1799) : (t3[`${curr.toLowerCase()}_price`] || t3.usd_price || 49.99);
+    const o3 = curr === "INR" ? (t3.inr_original || 2599) : (t3[`${curr.toLowerCase()}_original`] || t3.usd_original || 69.99);
     const price3El = document.getElementById("vipCardPrice_3m");
     const orig3El = document.getElementById("vipCardOriginal_3m");
     const badge3El = document.getElementById("vipBadge_3m");
@@ -4473,8 +4579,8 @@ window.updateVipPurchaseCardsUI = function() {
     if (badge3El && t3.discount_pct) badge3El.textContent = `${t3.discount_pct}% OFF`;
 
     // 6m
-    const p6 = curr === "INR" ? (t6.inr_price || 2799) : (t6[`${curr.toLowerCase()}_price`] || t6.usd_price || 38.99);
-    const o6 = curr === "INR" ? (t6.inr_original || 4299) : (t6[`${curr.toLowerCase()}_original`] || t6.usd_original || 59.99);
+    const p6 = curr === "INR" ? (t6.inr_price || 2799) : (t6[`${curr.toLowerCase()}_price`] || t6.usd_price || 79.99);
+    const o6 = curr === "INR" ? (t6.inr_original || 4299) : (t6[`${curr.toLowerCase()}_original`] || t6.usd_original || 119.99);
     const price6El = document.getElementById("vipCardPrice_6m");
     const orig6El = document.getElementById("vipCardOriginal_6m");
     const badge6El = document.getElementById("vipBadge_6m");
@@ -4485,8 +4591,8 @@ window.updateVipPurchaseCardsUI = function() {
     // Primary CTA Button
     const selTierKey = window.selectedVipPurchaseTierKey || "3m";
     const selData = tiers[selTierKey] || t3;
-    const selPrice = curr === "INR" ? (selData.inr_price || 1799) : (selData[`${curr.toLowerCase()}_price`] || selData.usd_price || 24.99);
-    const selOrig = curr === "INR" ? (selData.inr_original || 2599) : (selData[`${curr.toLowerCase()}_original`] || selData.usd_original || 34.99);
+    const selPrice = curr === "INR" ? (selData.inr_price || 1799) : (selData[`${curr.toLowerCase()}_price`] || selData.usd_price || 49.99);
+    const selOrig = curr === "INR" ? (selData.inr_original || 2599) : (selData[`${curr.toLowerCase()}_original`] || selData.usd_original || 69.99);
 
     const btnLabel = document.getElementById("vipPassCheckoutBtnLabel");
     if (btnLabel) {
@@ -4506,7 +4612,7 @@ window.executeVipPassCheckout = function() {
     const tierData = tiers[selTierKey] || {};
     const sym = window.getCurrencySymbol(curr);
 
-    const price = curr === "INR" ? (tierData.inr_price || 1799) : (tierData[`${curr.toLowerCase()}_price`] || tierData.usd_price || 24.99);
+    const price = curr === "INR" ? (tierData.inr_price || 1799) : (tierData[`${curr.toLowerCase()}_price`] || tierData.usd_price || 49.99);
     const inrAmount = tierData.inr_price || (selTierKey === "1m" ? 699 : (selTierKey === "6m" ? 2799 : 1799));
     const planTitle = `Almond Jobs ${tierData.name || "VIP Pass"} (${sym}${price})`;
 
@@ -4516,6 +4622,7 @@ window.executeVipPassCheckout = function() {
             plan_tier: selTierKey,
             currency: curr,
             currency_symbol: sym,
+            foreign_amount: price,
             display_price: `${sym}${price}`
         });
     } else {
@@ -4594,6 +4701,7 @@ window.executeVipUpgradeCheckout = function() {
             plan_tier: tierKey,
             currency: curr,
             currency_symbol: sym,
+            foreign_amount: price,
             display_price: `${sym}${price}`
         });
     } else {
@@ -4605,6 +4713,9 @@ window.openVipPassModal = function() {
     const modal = document.getElementById("vipPassModal");
     if (!modal) return;
 
+    if (typeof window.detectAndApplyUserCurrency === "function") {
+        window.detectAndApplyUserCurrency();
+    }
     if (typeof window.fetchLivePricing === "function") window.fetchLivePricing();
 
     const purchaseView = document.getElementById("vipModalPurchaseView");
@@ -4695,6 +4806,7 @@ window.openVipPassModal = function() {
         if (headerSub) headerSub.textContent = "Direct internal ATS ingestion • Apply before public platforms saturate the applicant pool";
 
         window.selectVipPurchaseTier(window.selectedVipPurchaseTierKey || "3m");
+        if (typeof window.updateVipPurchaseCardsUI === "function") window.updateVipPurchaseCardsUI();
     }
 
     modal.classList.remove("hidden");
@@ -5676,10 +5788,13 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Alm
 
     let computedAmountPaise;
     if (selectedCurr === "INR") {
-        computedAmountPaise = finalAmount * 100;
+        computedAmountPaise = Math.round(finalAmount * 100);
     } else {
-        const foreignAmt = Number.isFinite(parseInt(optionsConfig.foreign_amount, 10)) ? parseInt(optionsConfig.foreign_amount, 10) : 5;
-        computedAmountPaise = foreignAmt * 100;
+        const parsedForeign = parseFloat(optionsConfig.foreign_amount);
+        const foreignAmt = Number.isFinite(parsedForeign) && parsedForeign > 0
+            ? parsedForeign
+            : (optionsConfig.display_price ? parseFloat(optionsConfig.display_price.replace(/[^0-9.]/g, '')) : 19.99);
+        computedAmountPaise = Math.round(foreignAmt * 100);
     }
 
     const userId = getCandidateUserId();

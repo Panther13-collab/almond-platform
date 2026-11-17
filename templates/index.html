@@ -2556,17 +2556,20 @@
                     </div>
                 </div>
 
-                <!-- Currency Selector Header & Tabs -->
+                <!-- Location-Detected Currency Header & Expandable Selector -->
                 <div class="space-y-2">
                     <div class="flex items-center justify-between px-1">
-                        <span class="text-xs font-extrabold text-slate-900">Select Currency</span>
-                        <span class="text-[11px] font-semibold text-slate-500">Same parity across all tiers</span>
+                        <span class="text-xs font-extrabold text-slate-900">Your Currency</span>
+                        <div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
+                            <span id="coffeeLocationCurrencyBadge">🇮🇳 INR (India)</span>
+                            <button type="button" onclick="toggleCoffeeCurrencyRow()" class="text-[11px] text-teal-700 font-extrabold hover:underline cursor-pointer">Change</button>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-4 gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-xs font-black text-center">
-                        <button type="button" onclick="selectCoffeeCurrency('INR')" id="coffeeCurrBtn_INR" class="coffee-curr-tab py-2 rounded-xl bg-teal-500 text-white shadow-xs cursor-pointer transition">&#8377; INR</button>
-                        <button type="button" onclick="selectCoffeeCurrency('USD')" id="coffeeCurrBtn_USD" class="coffee-curr-tab py-2 rounded-xl text-slate-700 hover:text-slate-950 cursor-pointer transition">$ USD</button>
-                        <button type="button" onclick="selectCoffeeCurrency('EUR')" id="coffeeCurrBtn_EUR" class="coffee-curr-tab py-2 rounded-xl text-slate-700 hover:text-slate-950 cursor-pointer transition">&euro; EUR</button>
-                        <button type="button" onclick="selectCoffeeCurrency('GBP')" id="coffeeCurrBtn_GBP" class="coffee-curr-tab py-2 rounded-xl text-slate-700 hover:text-slate-950 cursor-pointer transition">&pound; GBP</button>
+                    <div id="coffeeCurrencySelectorRow" class="hidden grid grid-cols-4 gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-xs font-black text-center">
+                        <button type="button" onclick="selectCoffeeCurrency('INR')" id="coffeeCurrBtn_INR" class="coffee-curr-tab py-2 rounded-xl bg-teal-500 text-white shadow-xs cursor-pointer transition font-black">&#8377; INR</button>
+                        <button type="button" onclick="selectCoffeeCurrency('USD')" id="coffeeCurrBtn_USD" class="coffee-curr-tab py-2 rounded-xl text-slate-700 hover:text-slate-950 cursor-pointer transition font-bold">$ USD</button>
+                        <button type="button" onclick="selectCoffeeCurrency('EUR')" id="coffeeCurrBtn_EUR" class="coffee-curr-tab py-2 rounded-xl text-slate-700 hover:text-slate-950 cursor-pointer transition font-bold">&euro; EUR</button>
+                        <button type="button" onclick="selectCoffeeCurrency('GBP')" id="coffeeCurrBtn_GBP" class="coffee-curr-tab py-2 rounded-xl text-slate-700 hover:text-slate-950 cursor-pointer transition font-bold">&pound; GBP</button>
                     </div>
                 </div>
 
@@ -2638,17 +2641,27 @@
                     <span class="font-extrabold text-amber-900">Founder's Note:</span> When companies open new requisitions, the first 48 hours determine 80% of interview callbacks. Public platforms inundate hiring managers with thousands of bot applications. Almond Jobs VIP gives you the direct, unfiltered gateway to corporate ATS systems the moment roles appear.
                 </div>
 
-                <!-- Currency Selector Header -->
-                <div class="flex items-center justify-between gap-2 flex-wrap px-1">
-                    <div>
-                        <span class="text-[10px] font-black uppercase tracking-wider text-amber-600 block">Select Membership Tier</span>
-                        <h4 class="text-sm font-extrabold text-slate-900">Choose Your Career Sprint Duration</h4>
+                <!-- Location-Detected Currency Header & Expandable Selector -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between gap-2 flex-wrap px-1">
+                        <div>
+                            <span class="text-[10px] font-black uppercase tracking-wider text-amber-600 block">Select Membership Tier</span>
+                            <h4 class="text-sm font-extrabold text-slate-900">Choose Your Career Sprint Duration</h4>
+                        </div>
+                        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
+                            <span id="vipLocationCurrencyBadge">🇮🇳 Billing in INR (India)</span>
+                            <button type="button" id="vipCurrencyChangeBtn" onclick="toggleVipCurrencyRow()" class="text-[11px] text-amber-700 font-extrabold hover:underline cursor-pointer">Change</button>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-[11px] font-bold border border-slate-200">
-                        <button type="button" onclick="selectVipCurrency('INR')" id="vipCurrBtn_INR" class="vip-curr-tab px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer">&#8377; INR</button>
-                        <button type="button" onclick="selectVipCurrency('USD')" id="vipCurrBtn_USD" class="vip-curr-tab px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-950 cursor-pointer">$ USD</button>
-                        <button type="button" onclick="selectVipCurrency('EUR')" id="vipCurrBtn_EUR" class="vip-curr-tab px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-950 cursor-pointer">&euro; EUR</button>
-                        <button type="button" onclick="selectVipCurrency('GBP')" id="vipCurrBtn_GBP" class="vip-curr-tab px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-950 cursor-pointer">&pound; GBP</button>
+                    <!-- Expandable Currency Row (Subtle, for Expats / Travelers) -->
+                    <div id="vipCurrencySelectorRow" class="hidden p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-2 text-[11px] font-bold">
+                        <span class="text-slate-500 font-semibold text-[10px]">Currency:</span>
+                        <div class="flex items-center gap-1">
+                            <button type="button" onclick="selectVipCurrency('INR')" id="vipCurrBtn_INR" class="vip-curr-tab px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer shadow-xs">&#8377; INR</button>
+                            <button type="button" onclick="selectVipCurrency('USD')" id="vipCurrBtn_USD" class="vip-curr-tab px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-950 cursor-pointer">$ USD</button>
+                            <button type="button" onclick="selectVipCurrency('EUR')" id="vipCurrBtn_EUR" class="vip-curr-tab px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-950 cursor-pointer">&euro; EUR</button>
+                            <button type="button" onclick="selectVipCurrency('GBP')" id="vipCurrBtn_GBP" class="vip-curr-tab px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-950 cursor-pointer">&pound; GBP</button>
+                        </div>
                     </div>
                 </div>
 
@@ -3217,7 +3230,7 @@
 
         <!-- Scripts with Cache Busting Parameter -->
     <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
-    <script src="/static/app.js?v=20261113_v13_vip_1month_admin"></script>
+    <script src="/static/app.js?v=20261117_v14_vip_multicurrency_location"></script>
     <script>
         lucide.createIcons();
     </script>
@@ -3443,7 +3456,7 @@
           INR: { symbol: '₹', perCoffee: 485, name: 'Indian Rupee' },
           USD: { symbol: '$', perCoffee: 5, name: 'US Dollar' },
           EUR: { symbol: '€', perCoffee: 5, name: 'Euro' },
-          GBP: { symbol: '£', perCoffee: 5, name: 'British Pound' }
+          GBP: { symbol: '£', perCoffee: 4, name: 'British Pound' }
       };
 
       window.selectCoffeeCount = function(count) {
@@ -3490,6 +3503,9 @@
       };
 
       window.openCoffeeCheckoutModal = function() {
+          if (typeof window.detectAndApplyUserCurrency === "function") {
+              window.detectAndApplyUserCurrency();
+          }
           var count = window.selectedCoffeeCount || 1;
           var nameInput = document.getElementById("coffeeSupporterName");
           var msgInput = document.getElementById("coffeeSupporterMessage");
@@ -3651,6 +3667,8 @@
           }
       };
 
+
+
       window.VIP_PLANNED_PARITY = {
           INR: { symbol: "₹", planned: "₹699", inr_amount: 699, note: "Standard 1-Month VIP Pass rate: ₹699 INR." },
           USD: { symbol: "$", planned: "$9.99", inr_amount: 699, note: "Standard 1-Month VIP Pass rate: $9.99 USD." },
@@ -3658,223 +3676,10 @@
           GBP: { symbol: "£", planned: "£9.99", inr_amount: 699, note: "Standard 1-Month VIP Pass rate: £9.99 GBP." }
       };
 
-      window.selectedVipCurrency = "INR";
-
-      window.selectVipCurrency = function(curr) {
-          window.selectedVipCurrency = curr || "INR";
-          var tabs = document.querySelectorAll(".vip-curr-tab");
-          tabs.forEach(function(btn) {
-              var isSel = btn.id === ("vipCurrBtn_" + curr);
-              btn.className = isSel
-                  ? "vip-curr-tab px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer"
-                  : "vip-curr-tab px-2.5 py-1 rounded-lg text-slate-300 hover:text-white cursor-pointer";
-          });
-          var cfg = window.VIP_PLANNED_PARITY[curr] || window.VIP_PLANNED_PARITY.INR;
-          var mainEl = document.getElementById("vipMainPriceDisplay");
-          var priceEl = document.getElementById("vipPlannedParityPrice");
-          var noteEl = document.getElementById("vipCurrencyParityNote");
-          var btnLabel = document.getElementById("vipPassCheckoutBtnLabel");
-          if (mainEl) mainEl.textContent = cfg.planned;
-          if (priceEl) priceEl.textContent = "";
-          if (noteEl) noteEl.textContent = cfg.note;
-          if (btnLabel) btnLabel.textContent = "👑 Unlock 1-Month VIP Pass — " + cfg.planned;
-      };
-
-      window.VIP_UPGRADE_TIERS = {
-          "3m": {
-              id: "3m",
-              title: "3-Month Sprint",
-              name: "3-Month Career Sprint Pass",
-              tag: "Career Sprint",
-              days: 90,
-              INR: { planned: "₹1,799", inr_amount: 1799 },
-              USD: { planned: "$24.99", inr_amount: 1799 },
-              EUR: { planned: "€24.99", inr_amount: 1799 },
-              GBP: { planned: "£24.99", inr_amount: 1799 }
-          },
-          "6m": {
-              id: "6m",
-              title: "6-Month Dominance",
-              name: "6-Month Career Dominance Pass",
-              tag: "Career Dominance",
-              days: 180,
-              INR: { planned: "₹2,999", inr_amount: 2999 },
-              USD: { planned: "$39.99", inr_amount: 2999 },
-              EUR: { planned: "€39.99", inr_amount: 2999 },
-              GBP: { planned: "£39.99", inr_amount: 2999 }
-          }
-      };
-
-      window.selectedVipUpgradeTierKey = "3m";
-      window.selectedVipUpgradeCurrency = "INR";
-
-      window.selectVipUpgradeTier = function(tierKey) {
-          window.selectedVipUpgradeTierKey = tierKey || "3m";
-          var card3m = document.getElementById("vipUpgradeCard_3m");
-          var card6m = document.getElementById("vipUpgradeCard_6m");
-
-          if (card3m && card6m) {
-              if (tierKey === "6m") {
-                  card6m.className = "vip-up-card p-3.5 rounded-2xl bg-slate-800 hover:bg-slate-750 border-2 border-violet-400 cursor-pointer transition relative space-y-1.5 shadow-md shadow-violet-900/30";
-                  card3m.className = "vip-up-card p-3.5 rounded-2xl bg-slate-800/40 hover:bg-slate-800 border-2 border-slate-700 cursor-pointer transition relative space-y-1.5 opacity-80 hover:opacity-100";
-              } else {
-                  card3m.className = "vip-up-card p-3.5 rounded-2xl bg-slate-800 hover:bg-slate-750 border-2 border-amber-400 cursor-pointer transition relative space-y-1.5 shadow-md shadow-amber-900/30";
-                  card6m.className = "vip-up-card p-3.5 rounded-2xl bg-slate-800/40 hover:bg-slate-800 border-2 border-slate-700 cursor-pointer transition relative space-y-1.5 opacity-80 hover:opacity-100";
-              }
-          }
-          if (typeof window.updateVipUpgradeLabels === "function") window.updateVipUpgradeLabels();
-      };
-
-      window.selectVipUpgradeCurrency = function(curr) {
-          window.selectedVipUpgradeCurrency = curr || "INR";
-          var tabs = document.querySelectorAll(".vip-up-curr-tab");
-          tabs.forEach(function(btn) {
-              var isSel = btn.id === ("vipUpCurrBtn_" + curr);
-              btn.className = isSel
-                  ? "vip-up-curr-tab px-2 py-0.5 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer"
-                  : "vip-up-curr-tab px-2 py-0.5 rounded-lg text-slate-300 hover:text-white cursor-pointer";
-          });
-          if (typeof window.updateVipUpgradeLabels === "function") window.updateVipUpgradeLabels();
-      };
-
-      window.updateVipUpgradeLabels = function() {
-          var curr = window.selectedVipUpgradeCurrency || "INR";
-          var tier3 = window.VIP_UPGRADE_TIERS["3m"][curr];
-          var tier6 = window.VIP_UPGRADE_TIERS["6m"][curr];
-
-          var price3mEl = document.getElementById("vipUpgradePrice_3m");
-          var price6mEl = document.getElementById("vipUpgradePrice_6m");
-          if (price3mEl) price3mEl.textContent = tier3.planned;
-          if (price6mEl) price6mEl.textContent = tier6.planned;
-
-          var selTier = window.selectedVipUpgradeTierKey || "3m";
-          var tierData = window.VIP_UPGRADE_TIERS[selTier];
-          var priceData = tierData[curr];
-
-          var btnLabel = document.getElementById("vipUpgradeCheckoutBtnLabel");
-          if (btnLabel) {
-              btnLabel.textContent = "🚀 Upgrade to " + tierData.title + " — " + priceData.planned;
-          }
-      };
-
-      window.executeVipUpgradeCheckout = function() {
-          var tierKey = window.selectedVipUpgradeTierKey || "3m";
-          var curr = window.selectedVipUpgradeCurrency || "INR";
-          var tierData = window.VIP_UPGRADE_TIERS[tierKey];
-          var priceData = tierData[curr];
-
-          var planTitle = "Almond Jobs " + tierData.name + " (" + priceData.planned + ")";
-          if (typeof triggerRazorpayCheckout === "function") {
-              triggerRazorpayCheckout(priceData.inr_amount, planTitle, {
-                  purchaseType: "vip_upgrade",
-                  plan_tier: tierKey,
-                  currency: "INR"
-              });
-          } else {
-              alert("Payment gateway is initializing. Please try again in 2 seconds.");
-          }
-      };
-
-      window.openVipPassModal = function() {
-          var modal = document.getElementById("vipPassModal");
-          if (!modal) return;
-
-          var purchaseView = document.getElementById("vipModalPurchaseView");
-          var activeView = document.getElementById("vipModalActiveMemberView");
-          var headerTitle = document.getElementById("vipModalHeaderTitle");
-          var headerBadge = document.getElementById("vipModalHeaderBadge");
-          var headerSub = document.getElementById("vipModalHeaderSubtitle");
-
-          var paid = typeof isUserPaid === "function" ? isUserPaid() : ((localStorage.getItem("almond_is_paid") === "true") || (localStorage.getItem("almond_user_paid") === "true"));
-
-          if (paid) {
-              if (purchaseView) purchaseView.classList.add("hidden");
-              if (activeView) activeView.classList.remove("hidden");
-
-              if (headerTitle) headerTitle.textContent = "Almond Jobs VIP Member Dashboard";
-              if (headerBadge) {
-                  headerBadge.textContent = "Active VIP Member ✓";
-                  headerBadge.className = "text-[10px] font-black uppercase tracking-wider text-emerald-900 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300";
-              }
-              if (headerSub) headerSub.textContent = "100% Unlocked Direct Portals • 0% Recruiter Spread";
-
-              var planTier = (localStorage.getItem("almond_plan_tier") || localStorage.getItem("almond_plan") || "").toLowerCase();
-              var remainingStr = localStorage.getItem("almond_remaining_str") || "";
-              var paidUntilFormatted = localStorage.getItem("almond_paid_until_formatted") || "";
-
-              var tierName = "1-Month VIP Pass Active";
-              var tierBadge = "Active VIP Member";
-              var defaultUpgradeTier = "3m";
-
-              if (planTier.includes("180") || planTier.includes("6m") || planTier.includes("6-month") || planTier.includes("dominance")) {
-                  tierName = "6-Month Career Dominance Pass Active";
-                  tierBadge = "Dominance Tier Unlocked";
-                  defaultUpgradeTier = "6m";
-                  var upTitle = document.getElementById("vipUpgradeSectionTitle");
-                  if (upTitle) upTitle.textContent = "Extend Career Dominance Coverage";
-              } else if (planTier.includes("90") || planTier.includes("3m") || planTier.includes("3-month") || planTier.includes("sprint")) {
-                  tierName = "3-Month Career Sprint Pass Active";
-                  tierBadge = "Career Sprint Unlocked";
-                  defaultUpgradeTier = "6m";
-                  var upTitle = document.getElementById("vipUpgradeSectionTitle");
-                  if (upTitle) upTitle.textContent = "Upgrade to 6-Month Dominance or Extend Sprint";
-              } else {
-                  tierName = "1-Month VIP Pass Active";
-                  tierBadge = "Standard VIP Active";
-                  defaultUpgradeTier = "3m";
-                  var upTitle = document.getElementById("vipUpgradeSectionTitle");
-                  if (upTitle) upTitle.textContent = "Continuous Career Sprint Coverage";
-              }
-
-              var planBadgeEl = document.getElementById("vipActiveMemberPlanBadge");
-              if (planBadgeEl) planBadgeEl.textContent = tierBadge;
-
-              var planTitleEl = document.getElementById("vipActiveMemberPlanTitle");
-              if (planTitleEl) planTitleEl.textContent = tierName;
-
-              var expiryEl = document.getElementById("vipActiveMemberExpiryDetail");
-              if (expiryEl) {
-                  var detail = "Direct Corporate Ingestion Active";
-                  if (paidUntilFormatted && remainingStr) {
-                      detail = "Valid until " + paidUntilFormatted + " • " + remainingStr;
-                  } else if (remainingStr) {
-                      detail = "Valid • " + remainingStr;
-                  } else if (paidUntilFormatted) {
-                      detail = "Valid until " + paidUntilFormatted;
-                  }
-                  expiryEl.textContent = detail;
-              }
-
-              window.selectVipUpgradeTier(defaultUpgradeTier);
-          } else {
-              if (purchaseView) purchaseView.classList.remove("hidden");
-              if (activeView) activeView.classList.add("hidden");
-
-              if (headerTitle) headerTitle.textContent = "Almond Jobs VIP Pass";
-              if (headerBadge) {
-                  headerBadge.textContent = "Priority Early Access";
-                  headerBadge.className = "text-[10px] font-black uppercase tracking-wider text-violet-900 bg-violet-100 px-2 py-0.5 rounded-full border border-violet-200";
-              }
-              if (headerSub) headerSub.textContent = "Direct internal ATS ingestion • Apply before public platforms saturate the applicant pool";
-          }
-
-          modal.classList.remove("hidden");
-          modal.style.display = "flex";
-          if (window.lucide && typeof window.lucide.createIcons === "function") {
-              window.lucide.createIcons();
-          }
-      };
-
-      window.closeVipPassModal = function() {
-          var modal = document.getElementById("vipPassModal");
-          if (modal) {
-              modal.classList.add("hidden");
-              modal.style.display = "none";
-          }
-      };
-
       window.openVipPricingModal = function() {
-          window.openVipPassModal();
+          if (typeof window.openVipPassModal === "function") {
+              window.openVipPassModal();
+          }
       };
 
       window.closeVipPricingModal = function() {
@@ -3888,26 +3693,18 @@
           }
       };
 
-      window.executeVipPassCheckout = function() {
-          var curr = window.selectedVipCurrency || "INR";
-          var parity = (window.VIP_PLANNED_PARITY && window.VIP_PLANNED_PARITY[curr]) || { planned: "₹699", inr_amount: 699 };
-          var amountInr = parity.inr_amount || 699;
-          var planTitle = "Almond Jobs 1-Month VIP Pass (" + parity.planned + ")";
-          if (typeof triggerRazorpayCheckout === "function") {
-              triggerRazorpayCheckout(amountInr, planTitle, {
-                  purchaseType: "vip_pass",
-                  currency: "INR"
-              });
-          } else {
-              alert("Payment gateway is initializing. Please try again in 2 seconds.");
-          }
-      };
-
       window.executeCoffeeContribution = function() {
           if (typeof window.openCoffeeCheckoutModal === "function") {
               window.openCoffeeCheckoutModal();
           }
       };
+
+      // Auto-detect and sync candidate currency upon page load
+      document.addEventListener("DOMContentLoaded", function() {
+          if (typeof window.detectAndApplyUserCurrency === "function") {
+              window.detectAndApplyUserCurrency();
+          }
+      });
     </script>
 
     <!-- Floating Candidate Feedback Trigger -->

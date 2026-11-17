@@ -271,8 +271,8 @@ async def serve_refund_policy():
 async def serve_contact():
     return HTMLResponse(content=render_contact_page())
 
-@app.get("/health")
-@app.get("/ping")
+@app.api_route("/health", methods=["GET", "HEAD"])
+@app.api_route("/ping", methods=["GET", "HEAD"])
 async def health_check():
     return JSONResponse(
         status_code=200,
@@ -285,7 +285,7 @@ async def health_check():
         }
     )
 
-@app.get("/", response_class=HTMLResponse)
+@app.api_route("/", methods=["GET", "HEAD"], response_class=HTMLResponse)
 async def serve_index():
     index_file = os.path.join(TEMPLATES_DIR, "index.html")
     if os.path.exists(index_file):
