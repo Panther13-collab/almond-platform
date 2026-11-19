@@ -5709,6 +5709,8 @@ window.handleLogout = function() {
     localStorage.removeItem("almond_user_name");
     localStorage.removeItem("almond_is_paid");
     localStorage.removeItem("almond_user_paid");
+    window.currentAuthUser = null;
+    window.candidateUser = null;
 
     window.updateTopProfileBar();
     window.closeProfileModal();

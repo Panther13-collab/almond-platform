@@ -698,7 +698,7 @@ async def api_send_otp(payload: dict = Body(...)):
 @app.post("/api/auth/verify-otp-and-signup")
 async def api_verify_otp_and_signup(request: Request, payload: dict = Body(...)):
     email = payload.get("email", "")
-    otp = payload.get("otp", "")
+    otp = str(payload.get("otp") or payload.get("otp_code") or "").strip()
     password = payload.get("password", "")
     full_name = payload.get("full_name", "")
     device_model = _resolve_request_device(request, payload.get("device_model", ""))
@@ -1061,10 +1061,13 @@ async def api_create_order(payload: dict = Body(...)):
 async def api_verify_payment(payload: dict = Body(...)):
     token = str(payload.get("token", "") or "")
     user_id = str(payload.get("user_id", "") or "")
+    candidate_email = str(payload.get("email", "") or "").strip().lower()
     if token:
         user_data = verify_session_token(token)
         if user_data:
             user_id = user_data.get("id") or user_data.get("user_id") or user_id
+            if not candidate_email and user_data.get("email"):
+                candidate_email = user_data.get("email").strip().lower()
     order_id = str(payload.get("order_id") or payload.get("razorpay_order_id") or "").strip()
     payment_id = str(payload.get("payment_id") or payload.get("razorpay_payment_id") or "").strip()
     signature = str(payload.get("signature") or payload.get("razorpay_signature") or "").strip()
@@ -1090,7 +1093,6 @@ async def api_verify_payment(payload: dict = Body(...)):
     supporter_name = payload.get("supporter_name", "")
     supporter_message = payload.get("supporter_message", "")
     currency = str(payload.get("currency", "INR") or "INR").upper()
-    candidate_email = str(payload.get("email", "") or "").strip().lower()
     res = verify_razorpay_signature(
         user_id, order_id, payment_id, signature, amount_inr, plan_name,
         purchase_type=purchase_type,

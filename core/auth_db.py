@@ -727,6 +727,13 @@ def verify_session_token(token: str, email: str = "", full_name: str = "") -> di
                 now = time.time()
                 paid_until = row["paid_until"] or 0
                 is_paid = bool(row["is_paid"]) and (paid_until == 0 or paid_until > now)
+                if row["is_paid"] == 1 and paid_until > 0 and paid_until <= now:
+                    try:
+                        cursor.execute("UPDATE users SET is_paid = 0, plan = 'free' WHERE id = ?", (user_id,))
+                        conn.commit()
+                    except Exception:
+                        pass
+                    is_paid = False
 
                 return {
                     "id": row["id"],
@@ -1317,7 +1324,9 @@ def login_or_signup_google_user(email: str, full_name: str = "", google_id: str 
                         "user_metadata": {
                             "full_name": name_val,
                             "google_id": google_id,
-                            "is_paid": False,
+                            "is_paid": bool(initial_paid),
+                            "plan": initial_plan,
+                            "paid_until": initial_until,
                             "local_user_id": user_id,
                             "device_model": clean_device
                         }
@@ -1447,7 +1456,21 @@ def grant_vip_to_email(email: str, duration_days: int = 30, granted_by: str = "a
         return {"status": "error", "message": "Invalid email address format."}
 
     now = time.time()
-    valid_until = now + (duration_days * 86400)
+    base_time = now
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, paid_until FROM users WHERE LOWER(email) = ?", (clean_email,))
+        user_row = cursor.fetchone()
+        user_id = user_row["id"] if user_row else None
+        if user_row and user_row["paid_until"] and user_row["paid_until"] > now:
+            base_time = float(user_row["paid_until"])
+        else:
+            cursor.execute("SELECT valid_until FROM vip_grants WHERE LOWER(email) = ? AND status = 'active'", (clean_email,))
+            g_row = cursor.fetchone()
+            if g_row and g_row["valid_until"] and g_row["valid_until"] > now:
+                base_time = float(g_row["valid_until"])
+
+    valid_until = base_time + (duration_days * 86400)
     valid_until_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(valid_until))
 
     if duration_days >= 150:
@@ -1512,6 +1535,8 @@ def grant_vip_to_email(email: str, duration_days: int = 30, granted_by: str = "a
         "days_remaining": duration_days
     }
 
+grant_vip_to_user = grant_vip_to_email
+
 
 def revoke_vip_from_email(email: str) -> dict:
     """Revoke VIP Pass from an email address, reverting account to free tier."""
@@ -1566,16 +1591,26 @@ def check_and_apply_vip_grant(email: str, user_id: str = "") -> tuple:
         row = cursor.fetchone()
         if row and row["valid_until"] > now:
             valid_until = row["valid_until"]
+            diff = valid_until - now
+            if diff >= 120 * 86400:
+                grant_plan = "vip_pass_180d"
+            elif diff >= 50 * 86400:
+                grant_plan = "vip_pass_90d"
+            elif diff <= 2 * 86400:
+                grant_plan = "day_sprint_24h"
+            else:
+                grant_plan = "vip_pass_30d"
+
             if user_id:
                 cursor.execute(
                     """
-                    UPDATE users SET is_paid = 1, plan = 'vip_pass_30d', paid_until = ?, updated_at = ?
+                    UPDATE users SET is_paid = 1, plan = ?, paid_until = ?, updated_at = ?
                     WHERE id = ?
                     """,
-                    (valid_until, now, user_id)
+                    (grant_plan, valid_until, now, user_id)
                 )
                 conn.commit()
-            return (True, valid_until, "vip_pass_30d")
+            return (True, valid_until, grant_plan)
         elif row and row["valid_until"] <= now:
             cursor.execute("UPDATE vip_grants SET status = 'expired' WHERE email = ?", (clean_email,))
             conn.commit()
@@ -2325,9 +2360,9 @@ def record_successful_payment(user_id: str, payment_id: str, order_id: str, amou
             cursor.execute(
                 """
                 UPDATE users SET is_paid = 1, plan = ?, paid_until = ?, updated_at = ?
-                WHERE id = ?
+                WHERE id = ? OR LOWER(email) = ?
                 """,
-                (plan_code, paid_until, now, user_id)
+                (plan_code, paid_until, now, user_id, str(user_id).lower())
             )
             pay_id = f"txn_{secrets.token_hex(6)}"
             cursor.execute(

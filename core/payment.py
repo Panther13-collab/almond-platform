@@ -254,6 +254,8 @@ def verify_razorpay_signature(
             }
         # Fetch email from Razorpay API payment entity if not provided by client
         effective_email = (payer_email or "").strip().lower()
+        if not effective_email and "@" in str(user_id):
+            effective_email = str(user_id).strip().lower()
         if not effective_email and razorpay_client:
             try:
                 rzp_pay = razorpay_client.payment.fetch(payment_id)
@@ -262,15 +264,75 @@ def verify_razorpay_signature(
             except Exception:
                 pass
 
-        record_successful_payment(user_id, payment_id, order_id, amount_inr, plan_name or "Almond Jobs VIP Pass")
-        if effective_email:
+        # Look up email from SQLite users table if user_id is a registered UUID
+        if not effective_email and user_id:
             try:
-                # Durably bind VIP grant to the payer email in both SQLite and Supabase
-                from core.auth_db import grant_vip_to_user, sync_supabase_vip_metadata
-                duration = 180 if amount_inr >= 2500 else (90 if amount_inr >= 1500 else 30)
-                grant_vip_to_user(effective_email, duration_days=duration)
-            except Exception as e:
-                print(f"[PAYMENT] Error binding VIP to payer email: {e}")
+                from core.auth_db import get_db
+                with get_db() as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT email FROM users WHERE id = ?", (user_id,))
+                    u_row = cursor.fetchone()
+                    if u_row and u_row["email"]:
+                        effective_email = u_row["email"].strip().lower()
+            except Exception:
+                pass
+
+        pl_lower = (plan_name or "").lower()
+        if "180" in pl_lower or "6-month" in pl_lower or "6 month" in pl_lower or "dominance" in pl_lower or "6m" in pl_lower or amount_inr >= 2500:
+            duration = 180
+        elif "90" in pl_lower or "mastery" in pl_lower or "3-month" in pl_lower or "3 month" in pl_lower or "sprint" in pl_lower or "3m" in pl_lower or (amount_inr >= 1500 and amount_inr < 2500):
+            duration = 90
+        elif "day" in pl_lower or "24" in pl_lower:
+            duration = 1
+        else:
+            duration = 30
+
+        # Determine if user_id corresponds to an existing registered candidate
+        registered_user = None
+        if user_id and not str(user_id).startswith("guest") and not str(user_id).startswith("anon"):
+            try:
+                from core.auth_db import get_db
+                with get_db() as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT id, email, paid_until, plan FROM users WHERE id = ? OR LOWER(email) = ?", (user_id, str(user_id).lower()))
+                    registered_user = cursor.fetchone()
+            except Exception:
+                pass
+
+        if registered_user:
+            reg_uid = registered_user["id"]
+            if not effective_email and registered_user["email"]:
+                effective_email = registered_user["email"].strip().lower()
+            record_successful_payment(reg_uid, payment_id, order_id, amount_inr, plan_name or "Almond Jobs VIP Pass")
+            if effective_email:
+                try:
+                    from core.auth_db import get_db, sync_supabase_vip_metadata
+                    with get_db() as conn:
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT paid_until, plan FROM users WHERE id = ?", (reg_uid,))
+                        u_now = cursor.fetchone()
+                        if u_now and u_now["paid_until"]:
+                            cursor.execute(
+                                """
+                                INSERT OR REPLACE INTO vip_grants (email, granted_by, granted_at, valid_until, status, notes)
+                                VALUES (?, 'razorpay_checkout', ?, ?, 'active', ?)
+                                """,
+                                (effective_email, time.time(), u_now["paid_until"], f"Paid via order {order_id} ({plan_name})")
+                            )
+                            conn.commit()
+                            sync_supabase_vip_metadata(effective_email, True, u_now["plan"], u_now["paid_until"], reg_uid)
+                except Exception as e:
+                    print(f"[PAYMENT] Error syncing registered candidate VIP grant: {e}")
+        else:
+            # Guest or unauthenticated candidate checkout
+            target = effective_email or user_id or "guest"
+            record_successful_payment(target, payment_id, order_id, amount_inr, plan_name or "Almond Jobs VIP Pass")
+            if effective_email:
+                try:
+                    from core.auth_db import grant_vip_to_email
+                    grant_vip_to_email(effective_email, duration_days=duration, granted_by="razorpay_checkout", notes=f"Paid via order {order_id} ({plan_name})")
+                except Exception as e:
+                    print(f"[PAYMENT] Error binding VIP to guest email: {e}")
 
         prof = get_user_profile(user_id) or {}
         return {
