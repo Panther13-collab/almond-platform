@@ -3,6 +3,7 @@ import hashlib
 import os
 import sys
 import unittest
+from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 
@@ -26,12 +27,21 @@ class TestVipPassAndLatestFeedGating(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         init_db()
+        cls.patcher_admin = patch("core.auth_db.supabase_admin", None)
+        cls.patcher_client = patch("core.auth_db.supabase_client", None)
+        cls.patcher_admin.start()
+        cls.patcher_client.start()
         cls.client = TestClient(app_module.app)
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         with open(os.path.join(base_dir, "templates", "index.html"), "r", encoding="utf-8") as f:
             cls.html = f.read()
         with open(os.path.join(base_dir, "static", "app.js"), "r", encoding="utf-8") as f:
             cls.js = f.read()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.patcher_admin.stop()
+        cls.patcher_client.stop()
 
     def test_01_ui_separation_vip_pass_vs_contribute(self):
         # Dedicated VIP Pass modal & ₹699 planned price + INR/USD/EUR/GBP planned parity
@@ -74,8 +84,8 @@ class TestVipPassAndLatestFeedGating(unittest.TestCase):
         self.assertNotIn("0&ndash;6", vip_pass_html)
         self.assertNotIn("0-6", vip_pass_html)
 
-        # Contribute button near profile with coffee logo
-        self.assertIn('id="topContributeBtn"', self.html)
+        # Top contribute button removed from navbar to streamline header (available in profile & side menu)
+        self.assertNotIn('id="topContributeBtn"', self.html)
         self.assertIn("openContributeModal()", self.html)
         self.assertIn("☕", self.html)
 

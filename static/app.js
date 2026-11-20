@@ -4678,17 +4678,24 @@ window.executeVipPassCheckout = function() {
 
 window.selectVipUpgradeTier = function(tierKey) {
     window.selectedVipUpgradeTierKey = tierKey || "3m";
+    const card1m = document.getElementById("vipUpgradeCard_1m");
     const card3m = document.getElementById("vipUpgradeCard_3m");
     const card6m = document.getElementById("vipUpgradeCard_6m");
 
-    if (card3m && card6m) {
-        if (tierKey === "6m") {
-            card6m.className = "vip-up-card p-3.5 rounded-2xl bg-slate-800 hover:bg-slate-750 border-2 border-violet-400 cursor-pointer transition relative space-y-1.5 shadow-md shadow-violet-900/30";
-            card3m.className = "vip-up-card p-3.5 rounded-2xl bg-slate-800/40 hover:bg-slate-800 border-2 border-slate-700 cursor-pointer transition relative space-y-1.5 opacity-80 hover:opacity-100";
-        } else {
-            card3m.className = "vip-up-card p-3.5 rounded-2xl bg-slate-800 hover:bg-slate-750 border-2 border-amber-400 cursor-pointer transition relative space-y-1.5 shadow-md shadow-amber-900/30";
-            card6m.className = "vip-up-card p-3.5 rounded-2xl bg-slate-800/40 hover:bg-slate-800 border-2 border-slate-700 cursor-pointer transition relative space-y-1.5 opacity-80 hover:opacity-100";
-        }
+    if (card1m) {
+        card1m.className = (tierKey === "1m")
+            ? "vip-up-card p-3 rounded-2xl bg-slate-800 hover:bg-slate-750 border-2 border-emerald-400 cursor-pointer transition relative space-y-1.5 shadow-md shadow-emerald-900/30"
+            : "vip-up-card p-3 rounded-2xl bg-slate-800/40 hover:bg-slate-800 border-2 border-slate-700 cursor-pointer transition relative space-y-1.5 opacity-80 hover:opacity-100";
+    }
+    if (card3m) {
+        card3m.className = (tierKey === "3m")
+            ? "vip-up-card p-3 rounded-2xl bg-slate-800 hover:bg-slate-750 border-2 border-amber-400 cursor-pointer transition relative space-y-1.5 shadow-md shadow-amber-900/30"
+            : "vip-up-card p-3 rounded-2xl bg-slate-800/40 hover:bg-slate-800 border-2 border-slate-700 cursor-pointer transition relative space-y-1.5 opacity-80 hover:opacity-100";
+    }
+    if (card6m) {
+        card6m.className = (tierKey === "6m")
+            ? "vip-up-card p-3 rounded-2xl bg-slate-800 hover:bg-slate-750 border-2 border-violet-400 cursor-pointer transition relative space-y-1.5 shadow-md shadow-violet-900/30"
+            : "vip-up-card p-3 rounded-2xl bg-slate-800/40 hover:bg-slate-800 border-2 border-slate-700 cursor-pointer transition relative space-y-1.5 opacity-80 hover:opacity-100";
     }
     if (typeof window.updateVipUpgradeLabels === "function") window.updateVipUpgradeLabels();
 };
@@ -4717,6 +4724,7 @@ window.updateVipUpgradeLabels = function() {
     window.selectedVipUpgradeCurrency = curr;
     const sym = window.getCurrencySymbol(curr);
     const tiers = window.VIP_DYNAMIC_TIERS || {};
+    const t1 = tiers["1m"] || {};
     const t3 = tiers["3m"] || {};
     const t6 = tiers["6m"] || {};
 
@@ -4742,11 +4750,16 @@ window.updateVipUpgradeLabels = function() {
     });
 
     // 3. Prices and Original MRPs
+    const p1 = curr === "INR" ? (t1.inr_price || 699) : (t1[`${curr.toLowerCase()}_price`] || t1.usd_price || 19.99);
+
     const p3 = curr === "INR" ? (t3.inr_price || 1799) : (t3[`${curr.toLowerCase()}_price`] || t3.usd_price || 49.99);
     const orig3 = curr === "INR" ? (t3.inr_original || 2599) : (t3[`${curr.toLowerCase()}_original`] || t3.usd_original || 71.99);
 
     const p6 = curr === "INR" ? (t6.inr_price || 2799) : (t6[`${curr.toLowerCase()}_price`] || t6.usd_price || 79.99);
     const orig6 = curr === "INR" ? (t6.inr_original || 4399) : (t6[`${curr.toLowerCase()}_original`] || t6.usd_original || 124.99);
+
+    const price1mEl = document.getElementById("vipUpgradePrice_1m");
+    if (price1mEl) price1mEl.textContent = `${sym}${p1}`;
 
     const price3mEl = document.getElementById("vipUpgradePrice_3m");
     const orig3mEl = document.getElementById("vipUpgradeOriginalPrice_3m");
@@ -4764,12 +4777,15 @@ window.updateVipUpgradeLabels = function() {
 
     // 4. CTA button dynamic label
     const selTier = window.selectedVipUpgradeTierKey || "3m";
-    const tierData = tiers[selTier] || t3;
-    const selPrice = curr === "INR" ? (tierData.inr_price || 1799) : (tierData[`${curr.toLowerCase()}_price`] || tierData.usd_price || 49.99);
+    const tierData = tiers[selTier] || (selTier === "1m" ? t1 : (selTier === "6m" ? t6 : t3));
+    const selPrice = curr === "INR" ? (tierData.inr_price || (selTier === "1m" ? 699 : (selTier === "6m" ? 2799 : 1799))) : (tierData[`${curr.toLowerCase()}_price`] || tierData.usd_price || (selTier === "1m" ? 19.99 : (selTier === "6m" ? 79.99 : 49.99)));
 
     const btnLabel = document.getElementById("vipUpgradeCheckoutBtnLabel");
     if (btnLabel) {
-        btnLabel.textContent = `🚀 Upgrade to ${tierData.name || "Career Sprint"} — ${sym}${selPrice}`;
+        let actionLabel = "3-Month Sprint";
+        if (selTier === "1m") actionLabel = "1-Month Pass";
+        if (selTier === "6m") actionLabel = "6-Month Dominance";
+        btnLabel.textContent = `🚀 Upgrade or Extend: ${actionLabel} — ${sym}${selPrice}`;
     }
 };
 
@@ -4780,9 +4796,24 @@ window.executeVipUpgradeCheckout = function() {
     const tierData = tiers[tierKey] || {};
     const sym = window.getCurrencySymbol(curr);
 
-    const price = curr === "INR" ? (tierData.inr_price || 1799) : (tierData[`${curr.toLowerCase()}_price`] || tierData.usd_price || 24.99);
-    const inrAmount = tierData.inr_price || (tierKey === "6m" ? 2799 : 1799);
-    const planTitle = `Almond Jobs ${tierData.name || "VIP Pass"} (${sym}${price})`;
+    const price = curr === "INR" ? (tierData.inr_price || (tierKey === "1m" ? 699 : (tierKey === "6m" ? 2799 : 1799))) : (tierData[`${curr.toLowerCase()}_price`] || tierData.usd_price || (tierKey === "1m" ? 19.99 : (tierKey === "6m" ? 79.99 : 49.99)));
+    const inrAmount = tierData.inr_price || (tierKey === "1m" ? 699 : (tierKey === "6m" ? 2799 : 1799));
+    const planName = tierData.name || (tierKey === "1m" ? "1-Month VIP Pass" : (tierKey === "6m" ? "6-Month Dominance" : "3-Month Career Sprint"));
+    const planTitle = `Almond Jobs ${planName} (${sym}${price})`;
+
+    if (typeof triggerRazorpayCheckout === "function") {
+        triggerRazorpayCheckout(inrAmount, planTitle, {
+            purchaseType: "vip_upgrade",
+            plan_tier: tierKey,
+            currency: curr,
+            currency_symbol: sym,
+            foreign_amount: price,
+            display_price: `${sym}${price}`
+        });
+    } else {
+        alert("Payment gateway is initializing. Please try again in 2 seconds.");
+    }
+};
 
     if (typeof triggerRazorpayCheckout === "function") {
         triggerRazorpayCheckout(inrAmount, planTitle, {
@@ -4837,8 +4868,12 @@ window.openVipPassModal = function() {
         let tierBadge = "Active VIP Member";
         let defaultUpgradeTier = "3m";
 
+        const card1m = document.getElementById("vipUpgradeCard_1m");
         const card3m = document.getElementById("vipUpgradeCard_3m");
         const card6m = document.getElementById("vipUpgradeCard_6m");
+        if (card1m) card1m.classList.remove("hidden");
+        if (card3m) card3m.classList.remove("hidden");
+        if (card6m) card6m.classList.remove("hidden");
 
         if (planTier.includes("180") || planTier.includes("6m") || planTier.includes("6-month") || planTier.includes("dominance")) {
             tierName = "6-Month Career Dominance Pass Active";
@@ -4846,24 +4881,18 @@ window.openVipPassModal = function() {
             defaultUpgradeTier = "6m";
             const upTitle = document.getElementById("vipUpgradeSectionTitle");
             if (upTitle) upTitle.textContent = "Extend Career Dominance Coverage";
-            if (card3m) card3m.classList.add("hidden");
-            if (card6m) card6m.classList.remove("hidden");
         } else if (planTier.includes("90") || planTier.includes("3m") || planTier.includes("3-month") || planTier.includes("sprint")) {
             tierName = "3-Month Career Sprint Pass Active";
             tierBadge = "Career Sprint Unlocked";
             defaultUpgradeTier = "6m";
             const upTitle = document.getElementById("vipUpgradeSectionTitle");
             if (upTitle) upTitle.textContent = "Upgrade to 6-Month Dominance or Extend Sprint";
-            if (card3m) card3m.classList.add("hidden");
-            if (card6m) card6m.classList.remove("hidden");
         } else {
             tierName = "1-Month VIP Pass Active";
             tierBadge = "Standard VIP Active";
             defaultUpgradeTier = "3m";
             const upTitle = document.getElementById("vipUpgradeSectionTitle");
-            if (upTitle) upTitle.textContent = "Upgrade to Career Sprint (3m) or Dominance (6m)";
-            if (card3m) card3m.classList.remove("hidden");
-            if (card6m) card6m.classList.remove("hidden");
+            if (upTitle) upTitle.textContent = "Continuous Career Coverage (1m, 3m, or 6m)";
         }
 
         const planBadgeEl = document.getElementById("vipActiveMemberPlanBadge");

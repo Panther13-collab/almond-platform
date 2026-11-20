@@ -661,11 +661,6 @@
                     <span>👑</span>
                     <span id="topVipPassLabel">VIP Pass</span>
                 </button>
-                <!-- Dedicated Contribute Button Near Profile with Coffee Logo -->
-                <button type="button" id="topContributeBtn" onclick="openContributeModal()" class="hidden sm:flex px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full text-[11px] sm:text-xs font-bold text-amber-950 bg-amber-50 hover:bg-amber-100 border border-amber-300 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer items-center gap-1.5" title="Support Almond Jobs (Buy Us a Coffee)">
-                    <span class="text-sm">☕</span>
-                    <span class="hidden md:inline font-black">Contribute</span>
-                </button>
                 <button type="button" id="topProfileBtn" onclick="openProfileModal()" class="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 hover:bg-violet-50 border border-slate-300 hover:border-violet-300 text-slate-700 hover:text-violet-700 flex items-center justify-center transition shadow-2xs cursor-pointer group shrink-0" title="Candidate Profile & Settings" aria-label="Candidate Profile">
                     <i id="topProfileIcon" data-lucide="user" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
                     <span id="topProfileInitials" class="hidden text-[10px] font-black text-violet-800 uppercase">CA</span>
@@ -2837,40 +2832,53 @@
                         <button type="button" onclick="selectVipUpgradeCurrency('GBP')" id="vipUpCurrBtn_GBP" class="vip-up-curr-tab px-2.5 py-1 rounded-lg text-slate-300 hover:text-white cursor-pointer">£ GBP</button>
                     </div>
 
-                    <!-- Upgrade Cards Grid (3m and 6m, or 6m extension) -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="vipUpgradeCardsContainer">
+                    <!-- Upgrade Cards Grid: 1-Month, 3-Month, and 6-Month Coverage -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3" id="vipUpgradeCardsContainer">
+                        <!-- 1-Month Option -->
+                        <div id="vipUpgradeCard_1m" onclick="selectVipUpgradeTier('1m')" class="vip-up-card p-3 rounded-2xl bg-slate-800/40 hover:bg-slate-800 border-2 border-slate-700 cursor-pointer transition relative space-y-1.5 opacity-80 hover:opacity-100">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">1 Month</span>
+                                <span class="text-[9px] font-bold bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded-full">Standard</span>
+                            </div>
+                            <div class="text-sm font-black text-white" id="vipUpgradeTitle_1m">1-Month Pass</div>
+                            <div class="flex items-baseline gap-2 pt-0.5">
+                                <span class="text-lg font-black text-emerald-400" id="vipUpgradePrice_1m">₹699</span>
+                            </div>
+                            <p class="text-[10px] text-slate-300 leading-tight">+30 days stacked onto pass. Flexible monthly coverage.</p>
+                        </div>
+
                         <!-- 3-Month Option -->
-                        <div id="vipUpgradeCard_3m" onclick="selectVipUpgradeTier('3m')" class="vip-up-card p-3.5 rounded-2xl bg-slate-800/80 hover:bg-slate-800 border-2 border-amber-400/90 cursor-pointer transition relative space-y-1.5">
+                        <div id="vipUpgradeCard_3m" onclick="selectVipUpgradeTier('3m')" class="vip-up-card p-3 rounded-2xl bg-slate-800 hover:bg-slate-750 border-2 border-amber-400/90 cursor-pointer transition relative space-y-1.5 shadow-md shadow-amber-900/30">
                             <div class="flex items-center justify-between">
                                 <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">Career Sprint</span>
-                                <div class="flex items-center gap-1.5">
-                                    <span id="vipUpgradeDiscountBadge_3m" class="text-[10px] font-black bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full shadow-2xs">30% OFF</span>
-                                    <span class="text-[10px] font-bold bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded-full">Popular</span>
+                                <div class="flex items-center gap-1">
+                                    <span id="vipUpgradeDiscountBadge_3m" class="text-[9px] font-black bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded-full shadow-2xs">30% OFF</span>
+                                    <span class="text-[9px] font-bold bg-slate-700 text-slate-300 px-1 py-0.5 rounded-full">Popular</span>
                                 </div>
                             </div>
-                            <div class="text-base font-black text-white" id="vipUpgradeTitle_3m">3-Month Sprint</div>
-                            <div class="flex items-baseline gap-2 pt-0.5">
-                                <span class="text-xs font-bold text-slate-400 line-through" id="vipUpgradeOriginalPrice_3m">₹2,599</span>
-                                <span class="text-xl font-black text-amber-300" id="vipUpgradePrice_3m">₹1,799</span>
+                            <div class="text-sm font-black text-white" id="vipUpgradeTitle_3m">3-Month Sprint</div>
+                            <div class="flex items-baseline gap-1.5 pt-0.5">
+                                <span class="text-[11px] font-bold text-slate-400 line-through" id="vipUpgradeOriginalPrice_3m">₹2,599</span>
+                                <span class="text-lg font-black text-amber-300" id="vipUpgradePrice_3m">₹1,799</span>
                             </div>
-                            <p class="text-[10px] text-slate-300 leading-tight">+90 days stacked onto current pass. Complete job hunt cycle coverage.</p>
+                            <p class="text-[10px] text-slate-300 leading-tight">+90 days stacked. Complete job hunt cycle coverage.</p>
                         </div>
 
                         <!-- 6-Month Option -->
-                        <div id="vipUpgradeCard_6m" onclick="selectVipUpgradeTier('6m')" class="vip-up-card p-3.5 rounded-2xl bg-slate-800/40 hover:bg-slate-800 border-2 border-slate-700 cursor-pointer transition relative space-y-1.5">
+                        <div id="vipUpgradeCard_6m" onclick="selectVipUpgradeTier('6m')" class="vip-up-card p-3 rounded-2xl bg-slate-800/40 hover:bg-slate-800 border-2 border-slate-700 cursor-pointer transition relative space-y-1.5 opacity-80 hover:opacity-100">
                             <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-black uppercase tracking-wider text-violet-400">Career Dominance</span>
-                                <div class="flex items-center gap-1.5">
-                                    <span id="vipUpgradeDiscountBadge_6m" class="text-[10px] font-black bg-violet-400 text-slate-950 px-2 py-0.5 rounded-full shadow-2xs">35% OFF</span>
-                                    <span class="text-[10px] font-bold bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded-full">Best Value</span>
+                                <span class="text-[10px] font-black uppercase tracking-wider text-violet-400">Dominance</span>
+                                <div class="flex items-center gap-1">
+                                    <span id="vipUpgradeDiscountBadge_6m" class="text-[9px] font-black bg-violet-400 text-slate-950 px-1.5 py-0.5 rounded-full shadow-2xs">35% OFF</span>
+                                    <span class="text-[9px] font-bold bg-slate-700 text-slate-300 px-1 py-0.5 rounded-full">Best</span>
                                 </div>
                             </div>
-                            <div class="text-base font-black text-white" id="vipUpgradeTitle_6m">6-Month Dominance</div>
-                            <div class="flex items-baseline gap-2 pt-0.5">
-                                <span class="text-xs font-bold text-slate-400 line-through" id="vipUpgradeOriginalPrice_6m">₹4,399</span>
-                                <span class="text-xl font-black text-violet-300" id="vipUpgradePrice_6m">₹2,799</span>
+                            <div class="text-sm font-black text-white" id="vipUpgradeTitle_6m">6-Month Dominance</div>
+                            <div class="flex items-baseline gap-1.5 pt-0.5">
+                                <span class="text-[11px] font-bold text-slate-400 line-through" id="vipUpgradeOriginalPrice_6m">₹4,399</span>
+                                <span class="text-lg font-black text-violet-300" id="vipUpgradePrice_6m">₹2,799</span>
                             </div>
-                            <p class="text-[10px] text-slate-300 leading-tight">+180 days stacked. Uninterrupted high-compensation role monitoring.</p>
+                            <p class="text-[10px] text-slate-300 leading-tight">+180 days stacked. High-comp role monitoring.</p>
                         </div>
                     </div>
 
@@ -2879,20 +2887,6 @@
                         <span id="vipUpgradeCheckoutBtnLabel">🚀 Upgrade to 3-Month Sprint &mdash; ₹1,799</span>
                     </button>
                     <p class="text-[10px] text-slate-400 text-center">New duration is seamlessly stacked onto your existing VIP expiration date.</p>
-                </div>
-
-                <!-- Bottom Voluntary Contribute Section -->
-                <div class="p-4 rounded-2xl bg-amber-50/80 border border-amber-300 text-center space-y-2">
-                    <div class="flex items-center justify-center gap-1.5 text-xs font-black text-amber-950">
-                        <span>☕</span>
-                        <span>Landed Direct Interviews on Almond Jobs?</span>
-                    </div>
-                    <p class="text-xs text-amber-900 leading-relaxed font-medium">
-                        If our platform helped you skip recruiter ghosting and land offers, you can support our mission with a voluntary coffee contribution.
-                    </p>
-                    <button type="button" onclick="closeVipPassModal(); openContributeModal();" class="mt-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-extrabold text-xs shadow-sm hover:scale-105 active:scale-95 transition cursor-pointer">
-                        <span>☕ Support Our Mission / Buy Us a Coffee</span>
-                    </button>
                 </div>
             </div>
         </div>

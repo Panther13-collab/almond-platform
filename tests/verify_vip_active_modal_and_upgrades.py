@@ -25,7 +25,16 @@ class TestVipActiveModalAndUpgrades(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         init_db()
+        cls.patcher_admin = patch("core.auth_db.supabase_admin", None)
+        cls.patcher_client = patch("core.auth_db.supabase_client", None)
+        cls.patcher_admin.start()
+        cls.patcher_client.start()
         cls.client = TestClient(app)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.patcher_admin.stop()
+        cls.patcher_client.stop()
 
     def setUp(self):
         self.test_email = f"vip_test_{int(time.time()*1000)}@example.com"
@@ -123,16 +132,23 @@ class TestVipActiveModalAndUpgrades(unittest.TestCase):
         self.assertIn('id="vipActiveMemberPlanBadge"', html)
         self.assertIn('id="vipActiveMemberPlanTitle"', html)
         self.assertIn('id="vipUpgradeSection"', html)
+        self.assertIn('id="vipUpgradeCard_1m"', html)
         self.assertIn('id="vipUpgradeCard_3m"', html)
         self.assertIn('id="vipUpgradeCard_6m"', html)
         self.assertIn('id="vipUpgradeCheckoutBtn"', html)
 
-        # Active member contribute CTA
-        self.assertIn('openContributeModal()', html)
+        # VIP active dashboard has NO voluntary coffee contribute box (user requirement)
+        active_view_html = html.split('id="vipModalActiveMemberView"')[1].split('id="profileModal"')[0]
+        self.assertNotIn("Support Our Mission / Buy Us a Coffee", active_view_html)
+        self.assertNotIn("Landed Direct Interviews on Almond Jobs?", active_view_html)
 
-        # Candidate profile active VIP section & contribute section
+        # Top title bar has NO contribute button (user requirement)
+        self.assertNotIn('id="topContributeBtn"', html)
+
+        # Candidate profile active VIP section & contribute section remain intact
         self.assertIn('id="profileActiveVipSection"', html)
         self.assertIn('id="profileContributeSection"', html)
+        self.assertIn('openContributeModal()', html)
 
     def test_08_app_js_has_upgrade_controllers(self):
         """app.js provides VIP upgrade tier state, currency switcher and dynamic view toggle."""
@@ -165,7 +181,6 @@ class TestVipActiveModalAndUpgrades(unittest.TestCase):
         self.assertIn("0% Recruiter Spread", html)
         self.assertIn("First-Wave Direct Openings", html)
         self.assertIn("Bypass Stale Boards. Apply at the Source.", html)
-        self.assertIn("Landed Direct Interviews on Almond Jobs?", html)
 
 
 if __name__ == "__main__":

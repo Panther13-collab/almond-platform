@@ -73,8 +73,8 @@ class TestGeoCurrencyAndMobileClean(unittest.TestCase):
         with open(tmpl_path, "r", encoding="utf-8") as f:
             html = f.read()
 
-        # Top contribute button is hidden on mobile screens
-        self.assertIn('id="topContributeBtn" onclick="openContributeModal()" class="hidden sm:flex', html)
+        # Top contribute button removed from navbar to streamline header (available inside profile)
+        self.assertNotIn('id="topContributeBtn"', html)
         # Mobile live pill removed from center navbar
         self.assertNotIn('3.3M+</span>\n                    <span class="text-emerald-700 font-bold">Live</span>', html)
         # Feedback button elevated above bottom ticker
