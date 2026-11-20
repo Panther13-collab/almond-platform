@@ -5798,6 +5798,8 @@ window.updateTopProfileBar = function() {
     const loggedIn = isUserLoggedIn();
 
     if (vipLbl) vipLbl.textContent = paid ? "VIP Active ✓" : "VIP Pass";
+    const upgradeLbl = document.getElementById("topUpgradeLabel");
+    if (upgradeLbl) upgradeLbl.textContent = paid ? "Pro Active ✓" : "Upgrade";
 
     if (topBtn) {
         if (paid) {
@@ -6065,6 +6067,8 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Alm
                             if (typeof window.closeVipPassModal === "function") window.closeVipPassModal();
                             const vipLbl = document.getElementById("topVipPassLabel");
                             if (vipLbl) vipLbl.textContent = "VIP Active ✓";
+                            const topUpgLbl = document.getElementById("topUpgradeLabel");
+                            if (topUpgLbl) topUpgLbl.textContent = "Pro Active ✓";
                             alert("1-Month VIP Pass Activated! All priority corporate postings and direct application portals are now fully unlocked for 30 days.");
                             const searchBtn = document.getElementById("searchJobsBtn");
                             if (searchBtn && currentProfile) {
@@ -7391,9 +7395,20 @@ window.submitCandidateFeedback = async function() {
    UNIFIED OMNI-SEARCH & INSTANT RESUME DISCOVERY ENGINE (2026-11-20)
    ========================================================================== */
 
+window.escapeClean = function(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+};
+
 window.omniSearchAbortController = null;
 window.omniSearchDebounceTimer = null;
 window.omniActiveCategory = "All";
+window.omniActiveLocation = "all";
 window.omniCurrentOffset = 0;
 window.omniCurrentQuery = "";
 window.omniCurrentProfile = null;
@@ -7465,6 +7480,7 @@ window.executeOmniSearch = async function(query = "", append = false) {
         const params = new URLSearchParams({
             q: query,
             category: window.omniActiveCategory || "All",
+            location: window.omniActiveLocation || "all",
             limit: "21",
             offset: String(window.omniCurrentOffset || 0)
         });
@@ -7544,15 +7560,17 @@ window.renderOmniResults = function(result, query, append) {
         const card = document.createElement("div");
         card.className = "p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-violet-300 transition-all duration-200 flex flex-col justify-between group";
 
-        const compName = job.company || "Direct Corporate";
-        const roleName = job.role || "Software Engineering Opening";
-        const locName = job.location || "Remote / Hybrid";
-        const pkgDisplay = job.package_display || (job.package_inr_lpa ? `₹${job.package_inr_lpa} LPA Benchmark` : "Disclosed Corporate Band");
+        const compName = window.escapeClean(job.company || "Direct Corporate");
+        const roleName = window.escapeClean(job.role || "Software Engineering Opening");
+        const locName = window.escapeClean(job.location || "Remote / Hybrid");
+        const pkgDisplay = window.escapeClean(job.package_display || (job.package_inr_lpa ? `₹${job.package_inr_lpa} LPA Benchmark` : "Disclosed Corporate Band"));
         const isLocked = Boolean(job.is_locked);
-        const atsProvider = job.ats_provider || (job.url && job.url.includes("greenhouse") ? "Greenhouse" : (job.url && job.url.includes("lever") ? "Lever" : (job.url && job.url.includes("ashby") ? "Ashby" : "Direct Portal")));
-        const dateStr = job.date_posted_str || "Today";
+        const rawAts = job.ats_provider || (job.url && job.url.includes("greenhouse") ? "Greenhouse" : (job.url && job.url.includes("lever") ? "Lever" : (job.url && job.url.includes("ashby") ? "Ashby" : "Direct Portal")));
+        const atsProvider = window.escapeClean(rawAts);
+        const dateStr = window.escapeClean(job.date_posted_str || "Today");
 
-        const letter = compName.charAt(0).toUpperCase();
+        const letter = window.escapeClean(compName.charAt(0).toUpperCase());
+        const safeUrl = (job.url && /^(https?:\/\/)/i.test(job.url)) ? encodeURI(job.url) : "#";
 
         let actionBtnHtml = "";
         if (isLocked) {
@@ -7561,7 +7579,7 @@ window.renderOmniResults = function(result, query, append) {
                 <span>Unlock with Pro</span>
             </button>`;
         } else {
-            actionBtnHtml = `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-violet-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 transition text-center group-hover:bg-violet-600">
+            actionBtnHtml = `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-violet-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 transition text-center group-hover:bg-violet-600">
                 <span>Apply Direct</span>
                 <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
             </a>`;
@@ -7686,6 +7704,7 @@ window.submitOmniCriteria = async function() {
     const pkg = document.getElementById("omniCriteriaExpectedPackage")?.value || "";
     const loc = document.getElementById("omniCriteriaLocation")?.value || "";
 
+    window.omniActiveLocation = loc;
     const combinedQuery = `${role} ${pkg}`.trim();
     const input = document.getElementById("omniSearchInput");
     if (input) input.value = combinedQuery;
@@ -7705,13 +7724,42 @@ window.submitOmniCriteria = async function() {
     }
 };
 
+window.initOmniSearch = function() {
+    const searchContainer = document.getElementById("omniSearchBarContainer");
+    if (searchContainer) {
+        ["dragenter", "dragover"].forEach(evtName => {
+            searchContainer.addEventListener(evtName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                searchContainer.classList.add("ring-2", "ring-violet-500", "bg-violet-50/50");
+            });
+        });
+        ["dragleave", "drop"].forEach(evtName => {
+            searchContainer.addEventListener(evtName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                searchContainer.classList.remove("ring-2", "ring-violet-500", "bg-violet-50/50");
+            });
+        });
+        searchContainer.addEventListener("drop", (e) => {
+            e.preventDefault();
+            const files = e.dataTransfer && e.dataTransfer.files;
+            if (files && files.length > 0) {
+                window.handleOmniResumeSelected({ target: { files: files } });
+            }
+        });
+    }
+};
+
 // Initial auto-population of live corporate postings on homepage load
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
+        window.initOmniSearch();
         window.executeOmniSearch("", false);
     });
 } else {
     setTimeout(() => {
+        window.initOmniSearch();
         window.executeOmniSearch("", false);
     }, 100);
 }
