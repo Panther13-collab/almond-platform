@@ -845,7 +845,7 @@ function displayParsedProfile(profile) {
 
     }
 
-    skillsCloud.innerHTML = "";
+    skillsCloud.replaceChildren();
 
     if (skills.length === 0) {
 
@@ -952,15 +952,11 @@ function initAddSkillControls() {
     addBtn.addEventListener("click", handleAdd);
 
     addInput.addEventListener("keydown", (e) => {
-
         if (e.key === "Enter") {
-
             e.preventDefault();
-
+            if (e.isComposing || e.keyCode === 229) return;
             handleAdd();
-
         }
-
     });
 
 }
@@ -1580,7 +1576,7 @@ function initCompensationControls() {
     }
 
     function renderPresets(presets) {
-        presetsContainer.innerHTML = "";
+        presetsContainer.replaceChildren();
         presets.forEach(p => {
             const btn = document.createElement("button");
             btn.type = "button";
@@ -1728,7 +1724,7 @@ function initLocationAutocomplete() {
     if (!searchInput || !dropdown || !tagsContainer) return;
 
     function renderActiveTags() {
-        tagsContainer.innerHTML = "";
+        tagsContainer.replaceChildren();
         if (selectedLocations.length === 0) {
             tagsContainer.classList.add("hidden");
             if (typeof window.updateQuickLocationPillsUI === 'function') window.updateQuickLocationPillsUI();
@@ -1775,7 +1771,7 @@ function initLocationAutocomplete() {
     // Typeahead Search & Dropdown Filter
     searchInput.addEventListener("input", (e) => {
         const query = e.target.value.trim().toLowerCase();
-        dropdown.innerHTML = "";
+        dropdown.replaceChildren();
 
         if (!query) {
             dropdown.classList.add("hidden");
@@ -1823,6 +1819,7 @@ function initLocationAutocomplete() {
     searchInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter" && searchInput.value.trim()) {
             e.preventDefault();
+            if (e.isComposing || e.keyCode === 229) return;
             addLocation(searchInput.value.trim());
         } else if (e.key === "Escape") {
             dropdown.classList.add("hidden");
@@ -1983,7 +1980,7 @@ function initJobSearch() {
 
         if (emptyState) emptyState.classList.add("hidden");
 
-        if (jobListContainer) jobListContainer.innerHTML = "";
+        if (jobListContainer) jobListContainer.replaceChildren();
 
         startSearchLoader();
 
@@ -1998,7 +1995,7 @@ function initJobSearch() {
 
         if (linkedinSectionContainer) linkedinSectionContainer.classList.add("hidden");
 
-        if (linkedinCardsContainer) linkedinCardsContainer.innerHTML = "";
+        if (linkedinCardsContainer) linkedinCardsContainer.replaceChildren();
 
         if (bottomLinkedinToggleCard) bottomLinkedinToggleCard.classList.add("hidden");
 
@@ -2304,7 +2301,7 @@ function initLinkedinToggle() {
 
             if (loadingEl) loadingEl.classList.remove("hidden");
 
-            if (cardsContainer) cardsContainer.innerHTML = "";
+            if (cardsContainer) cardsContainer.replaceChildren();
 
             if (loadMoreContainer) loadMoreContainer.classList.add("hidden");
 
@@ -2462,7 +2459,7 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    if (!append) container.innerHTML = "";
+    if (!append) container.replaceChildren();
 
     jobs.forEach((job, idx) => {
         const globalIdx = startIdx + idx;
@@ -3117,7 +3114,7 @@ function renderFounderCards(founderJobs) {
 
     if (!wrapper) return;
 
-    wrapper.innerHTML = "";
+    wrapper.replaceChildren();
 
     if (!founderJobs || founderJobs.length === 0) {
 
@@ -3615,7 +3612,7 @@ function renderKanbanBoard() {
 
         if (!container) return;
 
-        container.innerHTML = "";
+        container.replaceChildren();
 
         const items = data[col.key] || [];
 
@@ -4958,7 +4955,9 @@ window.switchAuthTab = function(tab) {
     if (window.cancelOtpVerification) window.cancelOtpVerification();
 
     const confirmPassField = document.getElementById("signupConfirmPasswordField");
+    const passInput = document.getElementById("authPasswordInput");
     if (tab === 'signup') {
+        if (passInput) passInput.setAttribute("autocomplete", "new-password");
         if (tabLogin) tabLogin.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-950 cursor-pointer";
         if (tabSignup) tabSignup.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer";
         if (nameField) nameField.classList.remove("hidden");
@@ -4966,6 +4965,7 @@ window.switchAuthTab = function(tab) {
         if (submitBtnText) submitBtnText.textContent = "Create Account & Send Verification Code →";
         if (toggleHint) toggleHint.innerHTML = `Already have an account? <button type="button" onclick="switchAuthTab('login')" class="text-violet-700 font-bold hover:underline cursor-pointer">Log in with Email</button>`;
     } else {
+        if (passInput) passInput.setAttribute("autocomplete", "current-password");
         if (tabLogin) tabLogin.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer";
         if (tabSignup) tabSignup.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-950 cursor-pointer";
         if (nameField) nameField.classList.add("hidden");
@@ -7120,13 +7120,13 @@ window.renderCuratedAutocomplete = function(val) {
     const clean = (val || "").trim().toLowerCase();
     if (!clean) {
         menu.classList.add("hidden");
-        menu.innerHTML = "";
+        menu.replaceChildren();
         return;
     }
     const matches = CURATED_TECH_KEYWORDS.filter(k => k.toLowerCase().includes(clean));
     if (matches.length === 0) {
         menu.classList.add("hidden");
-        menu.innerHTML = "";
+        menu.replaceChildren();
         return;
     }
     menu.innerHTML = matches.slice(0, 6).map(m => `
