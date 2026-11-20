@@ -834,86 +834,98 @@
 
         <div id="story-track" class="w-full relative z-10 flex flex-col">
 
-            <!-- 3. PAGE 1: HERO (DECONGESTED TOP & EXPANSIVE BALANCED VERTICAL RHYTHM) -->
+                        <!-- 3. PAGE 1: HERO (MINIMALIST OMNI-SEARCH & INSTANT RESUME DISCOVERY) -->
             <section id="hero" class="story-page w-full min-h-[92vh] sm:min-h-screen relative overflow-visible bg-transparent flex flex-col justify-start items-center">
                 
-                <!-- Centered Hero Content with generous top breathing room and no top congestion -->
-                <div class="max-w-7xl mx-auto w-full relative z-10 flex flex-col justify-start items-center text-center px-4 sm:px-6 lg:px-8 pt-28 sm:pt-36 lg:pt-40 pb-12 sm:pb-16">
+                <!-- Centered Hero Content with generous top breathing room and zero clutter -->
+                <div class="max-w-6xl mx-auto w-full relative z-10 flex flex-col justify-start items-center text-center px-4 sm:px-6 lg:px-8 pt-24 sm:pt-32 pb-12 sm:pb-16">
 
-                    <!-- High-Trust Unified Brand & Ingestion Master Pill -->
-                    <div class="inline-flex items-center gap-1.5 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/95 border border-slate-200/90 shadow-2xs backdrop-blur-md mb-4 max-w-full">
-                        <img src="/static/logo.png" alt="Almond Logo" class="w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain shrink-0">
-                        <span class="text-xs sm:text-sm font-black text-slate-900 tracking-tight hidden sm:inline">Almond Jobs &bull; Direct Corporate Feeds &bull; 3.3M+ Verified Jobs &amp; Internships</span>
-                        <span class="text-[11px] font-black text-slate-900 tracking-tight sm:hidden inline">3.3M+ Direct Corporate Feeds</span>
+                    <!-- High-Trust Minimalist Subtitle Tag -->
+                    <div class="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-white/95 border border-slate-200/90 shadow-2xs backdrop-blur-md mb-3">
+                        <img src="/static/logo.png" alt="Almond Logo" class="w-3.5 h-3.5 object-contain shrink-0">
+                        <span class="text-xs sm:text-sm font-black text-slate-900 tracking-tight">Direct Corporate Career Engine</span>
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                        <span class="text-[9px] sm:text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-1.5 sm:px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">0% Agency Spread</span>
-                    </div>
-
-                    <!-- Value Proposition Interactive Micro-Pills -->
-                    <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-6 sm:mb-8 mx-auto w-full text-center">
-                        <button type="button" onclick="openHeroInfoModal('brokers')" class="px-3.5 py-1.5 rounded-full text-[11px] font-extrabold tracking-wider uppercase bg-white/90 hover:bg-red-50 text-red-600 border border-slate-200/90 hover:border-red-300 shadow-2xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Click to view broker breakdown">
-                            <i data-lucide="x" class="w-3.5 h-3.5 text-red-500 stroke-[3]"></i>
-                            <span>NO BROKERS</span>
-                        </button>
-                        <button type="button" onclick="openHeroInfoModal('middlemen')" class="px-3.5 py-1.5 rounded-full text-[11px] font-extrabold tracking-wider uppercase bg-white/90 hover:bg-red-50 text-red-600 border border-slate-200/90 hover:border-red-300 shadow-2xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Click to view middlemen breakdown">
-                            <i data-lucide="x" class="w-3.5 h-3.5 text-red-500 stroke-[3]"></i>
-                            <span>NO MIDDLEMEN</span>
-                        </button>
-                        <button type="button" onclick="openHeroInfoModal('deadposts')" class="px-3.5 py-1.5 rounded-full text-[11px] font-extrabold tracking-wider uppercase bg-white/90 hover:bg-red-50 text-red-600 border border-slate-200/90 hover:border-red-300 shadow-2xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5" title="Click to view ghost jobs breakdown">
-                            <i data-lucide="x" class="w-3.5 h-3.5 text-red-500 stroke-[3]"></i>
-                            <span>NO DEAD POSTS</span>
-                        </button>
+                        <span class="text-[10px] sm:text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">0% Agency Spread</span>
                     </div>
 
                     <!-- Perfectly Centered Dual Headline -->
-                    <h1 class="tracking-tight max-w-5xl mx-auto mb-6 text-center select-none flex flex-col items-center justify-center">
-                        <span class="block text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-slate-950 tracking-tight leading-[1.05] whitespace-nowrap">Move first.</span>
-                        <span class="block text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-violet-600 tracking-tight leading-[1.05] mt-1 sm:mt-2 whitespace-nowrap">Apply unseen!</span>
+                    <h1 class="tracking-tight max-w-5xl mx-auto mb-4 text-center select-none flex flex-col items-center justify-center">
+                        <span class="block text-4xl sm:text-6xl md:text-7xl font-black text-slate-950 tracking-tight leading-[1.05] whitespace-nowrap">Move first.</span>
+                        <span class="block text-4xl sm:text-6xl md:text-7xl font-black text-violet-600 tracking-tight leading-[1.05] mt-1 whitespace-nowrap">Apply unseen!</span>
                     </h1>
 
                     <!-- Narrative Subheadline: Anti-Oversaturation Ingestion Hook -->
-                    <p class="text-base sm:text-lg md:text-xl text-slate-600 font-medium max-w-3xl mx-auto leading-relaxed mb-4 sm:mb-6">
+                    <p class="text-sm sm:text-base md:text-lg text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed mb-6">
                         &ldquo;The job market isn't oversaturated &mdash; you're just applying after the door has already closed. We ingest jobs straight from company internal servers the second they open.&rdquo;
                     </p>
 
-                    <!-- Supporting Clarification for Freshers & Students: Zero Recruiter Spread -->
-                    <div class="inline-flex items-center gap-2 sm:gap-3 px-4 py-2.5 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 shadow-2xs max-w-2xl mx-auto mb-8 sm:mb-10 text-left sm:text-center">
-                        <span class="text-base sm:text-lg shrink-0">🎯</span>
-                        <p class="text-xs sm:text-[13px] font-bold text-emerald-950 leading-snug">
-                            <span class="font-black text-emerald-800">Freshers &amp; Campus Notice:</span> Apply directly to company HR &amp; hiring teams with <span class="underline decoration-emerald-500 font-black">0% recruiter spread</span> &mdash; zero consultancy middlemen taking 15%&ndash;25% cuts from your fresher salary package or ghosting applications.
-                        </p>
+                    <!-- UNIFIED OMNI-SEARCH & RESUME BAR -->
+                    <div id="omniSearchBarContainer" class="w-full max-w-4xl mx-auto mb-8">
+                        <div class="rounded-3xl p-2 sm:p-2.5 bg-white/95 border-2 border-slate-200/90 shadow-xl shadow-slate-200/50 backdrop-blur-md flex flex-col sm:flex-row items-stretch sm:items-center gap-2 transition-all duration-200 focus-within:border-violet-500 focus-within:ring-4 focus-within:ring-violet-500/10">
+                            <!-- Left: Search input for letters, skills, roles, packages -->
+                            <div class="flex items-center flex-1 min-w-0 px-2">
+                                <i data-lucide="search" class="w-5 h-5 text-slate-400 shrink-0"></i>
+                                <input type="text" id="omniSearchInput" oninput="handleOmniSearchInput(event)" placeholder="Search any role, skill, package (e.g. Software Engineer, 7 LPA, Python, Bangalore)..." class="w-full bg-transparent px-3 py-2.5 text-sm sm:text-base text-slate-900 placeholder-slate-400 font-medium focus:outline-hidden" autocomplete="off" spellcheck="false">
+                                <button type="button" id="omniClearBtn" onclick="clearOmniSearch()" class="hidden p-1.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition cursor-pointer" aria-label="Clear search">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+
+                            <!-- Right: Upload Resume Action Chip / Button -->
+                            <div class="shrink-0 flex items-center justify-end">
+                                <button type="button" id="omniResumeUploadBtn" onclick="triggerOmniResumeUpload()" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-violet-500/20 hover:scale-[1.02] active:scale-98 transition cursor-pointer whitespace-nowrap">
+                                    <i data-lucide="paperclip" class="w-4 h-4 text-violet-200"></i>
+                                    <span id="omniResumeUploadLabel">Upload your resume to find your dream job</span>
+                                </button>
+                                <input type="file" id="omniResumeFileInput" accept=".pdf,.docx,.txt" class="hidden" onchange="handleOmniResumeSelected(event)">
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Action CTA Buttons -->
-                    <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-10 sm:mb-14">
-                        <button type="button" onclick="goToSlide(2)" class="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-sm sm:text-base px-9 py-4 rounded-full shadow-xl shadow-violet-500/30 hover:shadow-violet-500/40 hover:scale-105 active:scale-95 transition-all flex items-center gap-2.5 cursor-pointer">
-                            <span>Match My Resume with Live Jobs</span>
-                            <i data-lucide="arrow-down" class="w-4 h-4 text-white stroke-[2.5]"></i>
-                        </button>
-                        <button type="button" onclick="goToSlide(1)" class="bg-white/95 hover:bg-slate-50 text-slate-800 hover:text-violet-700 font-extrabold text-sm sm:text-base px-7 py-4 rounded-full border border-slate-200 shadow-xs hover:border-violet-300 hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
-                            <i data-lucide="compass" class="w-4 h-4 text-violet-600"></i>
-                            <span>Explore 3.3M+ Feeds</span>
-                        </button>
-                    </div>
+                    <!-- DIRECT INLINE RESULTS STREAM (Directly below the search bar) -->
+                    <div id="omniSearchResultsContainer" class="w-full max-w-5xl mx-auto mb-10">
+                        <!-- Feed Header & Category Filters -->
+                        <div class="flex items-center justify-between gap-3 mb-4 flex-wrap px-1">
+                            <div class="flex items-center gap-2">
+                                <span class="relative flex h-2.5 w-2.5 shrink-0">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                </span>
+                                <span id="omniResultsHeaderTitle" class="text-xs sm:text-sm font-black text-slate-900">Direct Corporate Openings</span>
+                                <span id="omniResultsCountBadge" class="text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">Streaming live</span>
+                            </div>
 
-                    <!-- Direct Curated Feeds Explorer Badges: Guaranteed Single Row Across All Desktops, Laptops & Mobile -->
-                    <div class="w-full max-w-full overflow-x-auto no-scrollbar py-2 mb-6">
-                        <div class="flex items-center justify-center gap-2 sm:gap-2.5 lg:gap-3 flex-nowrap w-max mx-auto px-4">
-                            <span class="text-xs sm:text-sm font-black uppercase text-slate-600 tracking-wider flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap">
-                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                Live Free Directories:
-                            </span>
-                            <button type="button" id="heroBadge_internships" onclick="openCuratedFeedsModal('internships')" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold bg-white/95 hover:bg-emerald-50 text-slate-800 hover:text-emerald-950 border border-slate-200 hover:border-emerald-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap" title="Explore 5,100+ direct corporate internships">
-                                <span>🎓 Direct Internships</span>
-                                <span class="bg-emerald-100 text-emerald-800 text-xs sm:text-sm font-black px-1.5 sm:px-2 py-0.5 rounded-full">5,100+</span>
-                            </button>
-                            <button type="button" id="heroBadge_aiml" onclick="openCuratedFeedsModal('aiml')" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold bg-white/95 hover:bg-violet-50 text-slate-800 hover:text-violet-950 border border-slate-200 hover:border-violet-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap" title="Explore 530+ verified AI, Machine Learning & LLM engineering portals">
-                                <span>🤖 AI/ML Specialist</span>
-                                <span class="bg-violet-100 text-violet-800 text-xs sm:text-sm font-black px-1.5 sm:px-2 py-0.5 rounded-full">530+</span>
-                            </button>
-                            <button type="button" id="heroBadge_entrylevel" onclick="openCuratedFeedsModal('entrylevel')" class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold bg-white/95 hover:bg-indigo-50 text-slate-800 hover:text-indigo-950 border border-slate-200 hover:border-indigo-300 shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5 sm:gap-2 shrink-0 whitespace-nowrap" title="Explore 3,100+ verified entry-level & new grad engineering portals">
-                                <span>🚀 Entry-Level &amp; New Grad</span>
-                                <span class="bg-indigo-100 text-indigo-800 text-xs sm:text-sm font-black px-1.5 sm:px-2 py-0.5 rounded-full">3,100+</span>
+                            <!-- Fast Category Filter Chips -->
+                            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+                                <button type="button" onclick="setOmniCategoryFilter('All')" id="omniCat_All" class="omni-cat-chip px-3 py-1 rounded-full text-xs font-bold bg-slate-950 text-white cursor-pointer shadow-xs transition">All</button>
+                                <button type="button" onclick="setOmniCategoryFilter('internships')" id="omniCat_internships" class="omni-cat-chip px-3 py-1 rounded-full text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer shadow-2xs transition">🎓 Internships</button>
+                                <button type="button" onclick="setOmniCategoryFilter('entrylevel')" id="omniCat_entrylevel" class="omni-cat-chip px-3 py-1 rounded-full text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer shadow-2xs transition">🚀 Entry-Level</button>
+                                <button type="button" onclick="setOmniCategoryFilter('aiml')" id="omniCat_aiml" class="omni-cat-chip px-3 py-1 rounded-full text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer shadow-2xs transition">🤖 AI/ML</button>
+                            </div>
+                        </div>
+
+                        <!-- Live Loading Spinner -->
+                        <div id="omniResultsLoading" class="hidden py-12 flex flex-col items-center justify-center gap-2">
+                            <div class="w-8 h-8 border-3 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+                            <span class="text-xs font-bold text-slate-500">Searching 3.3M+ direct corporate feeds...</span>
+                        </div>
+
+                        <!-- Cards Grid Container -->
+                        <div id="omniResultsCardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 text-left">
+                            <!-- Populated dynamically via app.js -->
+                        </div>
+
+                        <!-- Empty State Notice -->
+                        <div id="omniResultsEmptyState" class="hidden p-8 rounded-2xl bg-white/80 border border-slate-200 text-center">
+                            <span class="text-3xl block mb-2">🔍</span>
+                            <h3 class="text-sm font-extrabold text-slate-900 mb-1" id="omniEmptyTitle">No matching direct postings found</h3>
+                            <p class="text-xs text-slate-500 max-w-sm mx-auto" id="omniEmptySubtitle">Try searching by generic role (e.g. "Software Engineer"), skill ("Python"), or clear filters.</p>
+                        </div>
+
+                        <!-- Load More Action -->
+                        <div id="omniLoadMoreContainer" class="hidden mt-6 text-center">
+                            <button type="button" id="omniLoadMoreBtn" onclick="loadMoreOmniResults()" class="px-5 py-2.5 rounded-full bg-white hover:bg-slate-50 text-slate-800 hover:text-violet-700 font-bold text-xs border border-slate-200 shadow-2xs hover:shadow-xs transition cursor-pointer">
+                                <span>Load more corporate openings</span>
                             </button>
                         </div>
                     </div>
@@ -930,7 +942,7 @@
                         <span class="text-[10px] uppercase font-mono font-bold text-emerald-400 bg-emerald-950 px-2.5 py-0.5 rounded-full border border-emerald-800 shrink-0 hidden sm:inline">LIVE INGESTION ACTIVE</span>
                     </div>
 
-                    <!-- Live Ingestion Infrastructure & Proof Metrics Strip (Fills unused lower hero void) -->
+                    <!-- Live Ingestion Infrastructure & Proof Metrics Strip -->
                     <div class="w-full max-w-5xl mx-auto bg-white/90 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-sm backdrop-blur-md">
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-center divide-y md:divide-y-0 md:divide-x divide-slate-100">
                             <div class="pt-2 md:pt-0">
@@ -3801,6 +3813,42 @@
                 <!-- Submit Button -->
                 <button type="button" id="feedbackSubmitBtn" onclick="submitCandidateFeedback()" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm shadow-lg shadow-violet-500/25 flex items-center justify-center gap-2 cursor-pointer transition">
                     <span>Send Feedback &rarr;</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- OMNI-RESUME CRITERIA INTAKE MODAL -->
+    <div id="omniCriteriaModal" class="hidden fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4">
+        <div class="rounded-3xl max-w-md w-full bg-white border border-slate-200 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 my-auto overflow-hidden">
+            <div class="flex items-center justify-between p-5 border-b border-slate-100 bg-gradient-to-r from-violet-50/70 via-white to-amber-50/50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center text-lg font-black shadow-2xs">
+                        🎯
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-slate-950">Target Preferences</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Configure criteria for ranked direct matches</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeOmniCriteriaModal()" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold cursor-pointer">✕</button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1">Target Role / Specialization</label>
+                    <input type="text" id="omniCriteriaTargetRole" placeholder="e.g. Software Engineer, AI/ML Specialist" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1">Expected Package / CTC</label>
+                    <input type="text" id="omniCriteriaExpectedPackage" placeholder="e.g. 7 LPA, 15 LPA, or $90,000" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1">Preferred Location</label>
+                    <input type="text" id="omniCriteriaLocation" placeholder="e.g. Bangalore, Remote, India, Worldwide" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden">
+                </div>
+                <button type="button" id="omniCriteriaSubmitBtn" onclick="submitOmniCriteria()" class="w-full py-3 px-5 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm tracking-wide shadow-md shadow-violet-500/20 flex items-center justify-center gap-2 cursor-pointer transition">
+                    <span>Show Matching Direct Jobs</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>
             </div>
         </div>
