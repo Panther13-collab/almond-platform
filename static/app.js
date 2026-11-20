@@ -4815,20 +4815,6 @@ window.executeVipUpgradeCheckout = function() {
     }
 };
 
-    if (typeof triggerRazorpayCheckout === "function") {
-        triggerRazorpayCheckout(inrAmount, planTitle, {
-            purchaseType: "vip_upgrade",
-            plan_tier: tierKey,
-            currency: curr,
-            currency_symbol: sym,
-            foreign_amount: price,
-            display_price: `${sym}${price}`
-        });
-    } else {
-        alert("Payment gateway is initializing. Please try again in 2 seconds.");
-    }
-};
-
 window.openVipPassModal = function() {
     const modal = document.getElementById("vipPassModal");
     if (!modal) return;
