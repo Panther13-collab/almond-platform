@@ -4649,6 +4649,54 @@ window.updateVipPurchaseCardsUI = function() {
         }
         btnLabel.textContent = text;
     }
+
+    // Sync 2-Column SaaS Matrix elements
+    const pills = {
+        "1m": document.getElementById("proTierPill_1m"),
+        "3m": document.getElementById("proTierPill_3m"),
+        "6m": document.getElementById("proTierPill_6m")
+    };
+    Object.keys(pills).forEach(k => {
+        const pill = pills[k];
+        if (!pill) return;
+        if (k === selTierKey) {
+            pill.className = "pro-tier-pill py-1.5 px-2 rounded-lg text-center font-bold text-xs cursor-pointer transition bg-slate-950 text-white shadow-xs";
+        } else {
+            pill.className = "pro-tier-pill py-1.5 px-2 rounded-lg text-center font-bold text-xs cursor-pointer transition text-slate-600 hover:text-slate-950";
+        }
+    });
+
+    const proPriceDisplay = document.getElementById("proCheckoutPriceDisplay");
+    if (proPriceDisplay) proPriceDisplay.textContent = `${sym}${selPrice}`;
+
+    const proPriceLabel = document.getElementById("proCheckoutPriceLabel");
+    if (proPriceLabel) proPriceLabel.textContent = `${sym}${selPrice}`;
+
+    const proOrigPrice = document.getElementById("vipCardOriginalPrice");
+    if (proOrigPrice) {
+        if (selOrig > selPrice) {
+            proOrigPrice.textContent = `${sym}${selOrig}`;
+            proOrigPrice.classList.remove("hidden");
+        } else {
+            proOrigPrice.classList.add("hidden");
+        }
+    }
+
+    const proDurationLabel = document.getElementById("proCheckoutDurationLabel");
+    if (proDurationLabel) {
+        proDurationLabel.textContent = selTierKey === "1m" ? "for 30 days" : (selTierKey === "6m" ? "for 180 days" : "for 90 days");
+    }
+
+    const pillPrice1m = document.getElementById("vipPillPrice_1m");
+    if (pillPrice1m) pillPrice1m.textContent = `${sym}${p1}`;
+};
+
+window.openUpgradeModal = function() {
+    window.openVipPassModal();
+};
+
+window.closeUpgradeModal = function() {
+    window.closeVipPassModal();
 };
 
 window.executeVipPassCheckout = function() {
