@@ -7337,3 +7337,333 @@ window.submitCandidateFeedback = async function() {
     }
 };
 
+
+
+/* ==========================================================================
+   UNIFIED OMNI-SEARCH & INSTANT RESUME DISCOVERY ENGINE (2026-11-20)
+   ========================================================================== */
+
+window.omniSearchAbortController = null;
+window.omniSearchDebounceTimer = null;
+window.omniActiveCategory = "All";
+window.omniCurrentOffset = 0;
+window.omniCurrentQuery = "";
+window.omniCurrentProfile = null;
+
+window.handleOmniSearchInput = function(e) {
+    const rawVal = e && e.target ? e.target.value : (document.getElementById("omniSearchInput")?.value || "");
+    const clearBtn = document.getElementById("omniClearBtn");
+    if (clearBtn) {
+        if (rawVal.trim().length > 0) {
+            clearBtn.classList.remove("hidden");
+        } else {
+            clearBtn.classList.add("hidden");
+        }
+    }
+
+    clearTimeout(window.omniSearchDebounceTimer);
+    window.omniSearchDebounceTimer = setTimeout(() => {
+        window.omniCurrentOffset = 0;
+        window.omniCurrentQuery = rawVal.trim();
+        window.executeOmniSearch(window.omniCurrentQuery, false);
+    }, 120);
+};
+
+window.clearOmniSearch = function() {
+    const input = document.getElementById("omniSearchInput");
+    if (input) input.value = "";
+    const clearBtn = document.getElementById("omniClearBtn");
+    if (clearBtn) clearBtn.classList.add("hidden");
+    window.omniCurrentQuery = "";
+    window.omniCurrentOffset = 0;
+    window.executeOmniSearch("", false);
+};
+
+window.setOmniCategoryFilter = function(category) {
+    window.omniActiveCategory = category;
+    const cats = ["All", "internships", "entrylevel", "aiml"];
+    cats.forEach(c => {
+        const btn = document.getElementById("omniCat_" + c);
+        if (btn) {
+            if (c === category) {
+                btn.className = "omni-cat-chip px-3 py-1 rounded-full text-xs font-bold bg-slate-950 text-white cursor-pointer shadow-xs transition";
+            } else {
+                btn.className = "omni-cat-chip px-3 py-1 rounded-full text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer shadow-2xs transition";
+            }
+        }
+    });
+    window.omniCurrentOffset = 0;
+    window.executeOmniSearch(window.omniCurrentQuery, false);
+};
+
+window.executeOmniSearch = async function(query = "", append = false) {
+    if (!append && window.omniSearchAbortController) {
+        try { window.omniSearchAbortController.abort(); } catch (_) {}
+    }
+    window.omniSearchAbortController = new AbortController();
+
+    const loadingEl = document.getElementById("omniResultsLoading");
+    const gridEl = document.getElementById("omniResultsCardsGrid");
+    const emptyEl = document.getElementById("omniResultsEmptyState");
+    const loadMoreContainer = document.getElementById("omniLoadMoreContainer");
+
+    if (!append) {
+        if (loadingEl) loadingEl.classList.remove("hidden");
+        if (emptyEl) emptyEl.classList.add("hidden");
+        if (loadMoreContainer) loadMoreContainer.classList.add("hidden");
+    }
+
+    try {
+        const params = new URLSearchParams({
+            q: query,
+            category: window.omniActiveCategory || "All",
+            limit: "21",
+            offset: String(window.omniCurrentOffset || 0)
+        });
+        const currentUserId = window.currentUserId || localStorage.getItem("almond_user_id");
+        if (currentUserId) {
+            params.append("user_id", currentUserId);
+        }
+
+        const res = await fetch(`/api/omni-search?${params.toString()}`, {
+            signal: window.omniSearchAbortController.signal
+        });
+        if (!res.ok) throw new Error("Search API responded with status " + res.status);
+        const data = await res.json();
+        window.renderOmniResults(data.result, query, append);
+    } catch (err) {
+        if (err.name === "AbortError") return; // Handled silently
+        console.warn("[OMNI-SEARCH] Query error:", err);
+        if (loadingEl) loadingEl.classList.add("hidden");
+    }
+};
+
+window.renderOmniResults = function(result, query, append) {
+    const loadingEl = document.getElementById("omniResultsLoading");
+    const gridEl = document.getElementById("omniResultsCardsGrid");
+    const emptyEl = document.getElementById("omniResultsEmptyState");
+    const loadMoreContainer = document.getElementById("omniLoadMoreContainer");
+    const countBadge = document.getElementById("omniResultsCountBadge");
+    const headerTitle = document.getElementById("omniResultsHeaderTitle");
+
+    if (loadingEl) loadingEl.classList.add("hidden");
+    if (!gridEl) return;
+
+    if (!result || !result.items) {
+        if (!append) gridEl.replaceChildren();
+        if (emptyEl) emptyEl.classList.remove("hidden");
+        return;
+    }
+
+    const items = result.items || [];
+    const total = result.total || 0;
+
+    if (countBadge) {
+        if (query) {
+            countBadge.textContent = `${total} matching "${query}"`;
+            countBadge.className = "text-[11px] font-bold bg-violet-100 text-violet-800 px-2.5 py-0.5 rounded-full";
+        } else {
+            countBadge.textContent = `${total}+ live corporate feeds`;
+            countBadge.className = "text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full";
+        }
+    }
+
+    if (headerTitle) {
+        if (query) {
+            headerTitle.textContent = `Matching Corporate Openings`;
+        } else {
+            headerTitle.textContent = `Direct Corporate Openings`;
+        }
+    }
+
+    if (!append) {
+        gridEl.replaceChildren();
+    }
+
+    if (items.length === 0 && !append) {
+        if (emptyEl) {
+            emptyEl.classList.remove("hidden");
+            const emptyTitle = document.getElementById("omniEmptyTitle");
+            if (emptyTitle) emptyTitle.textContent = query ? `No matching direct postings for "${query}"` : "No direct corporate openings found";
+        }
+        if (loadMoreContainer) loadMoreContainer.classList.add("hidden");
+        return;
+    }
+
+    if (emptyEl) emptyEl.classList.add("hidden");
+
+    items.forEach(job => {
+        const card = document.createElement("div");
+        card.className = "p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-violet-300 transition-all duration-200 flex flex-col justify-between group";
+
+        const compName = job.company || "Direct Corporate";
+        const roleName = job.role || "Software Engineering Opening";
+        const locName = job.location || "Remote / Hybrid";
+        const pkgDisplay = job.package_display || (job.package_inr_lpa ? `₹${job.package_inr_lpa} LPA Benchmark` : "Disclosed Corporate Band");
+        const isLocked = Boolean(job.is_locked);
+        const atsProvider = job.ats_provider || (job.url && job.url.includes("greenhouse") ? "Greenhouse" : (job.url && job.url.includes("lever") ? "Lever" : (job.url && job.url.includes("ashby") ? "Ashby" : "Direct Portal")));
+        const dateStr = job.date_posted_str || "Today";
+
+        const letter = compName.charAt(0).toUpperCase();
+
+        let actionBtnHtml = "";
+        if (isLocked) {
+            actionBtnHtml = `<button type="button" onclick="openUpgradeModal()" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition">
+                <span>👑</span>
+                <span>Unlock with Pro</span>
+            </button>`;
+        } else {
+            actionBtnHtml = `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-violet-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 transition text-center group-hover:bg-violet-600">
+                <span>Apply Direct</span>
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            </a>`;
+        }
+
+        card.innerHTML = `
+            <div>
+                <div class="flex items-start justify-between gap-2 mb-2.5">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 text-violet-800 font-black text-xs flex items-center justify-center shrink-0 border border-violet-200/80">
+                            ${letter}
+                        </div>
+                        <div class="min-w-0">
+                            <span class="block text-xs font-extrabold text-slate-950 truncate">${compName}</span>
+                            <span class="block text-[10px] text-slate-500 font-medium truncate">${atsProvider} &bull; ${dateStr}</span>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 shrink-0">
+                        ${job.feed_type === "internships" ? "🎓 Intern" : (job.feed_type === "aiml" ? "🤖 AI/ML" : "🚀 Full-Time")}
+                    </span>
+                </div>
+                <h4 class="text-sm font-black text-slate-900 group-hover:text-violet-700 transition leading-snug line-clamp-2 mb-3">
+                    ${roleName}
+                </h4>
+                <div class="flex flex-wrap items-center gap-1.5 text-[11px] mb-4">
+                    <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-extrabold border border-emerald-200/80">
+                        💰 ${pkgDisplay}
+                    </span>
+                    <span class="px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 font-medium border border-slate-200/70 truncate max-w-[160px]">
+                        📍 ${locName}
+                    </span>
+                </div>
+            </div>
+            <div class="pt-2 border-t border-slate-100 mt-auto">
+                ${actionBtnHtml}
+            </div>
+        `;
+        gridEl.appendChild(card);
+    });
+
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+    }
+
+    if (loadMoreContainer) {
+        if (total > (window.omniCurrentOffset + items.length)) {
+            loadMoreContainer.classList.remove("hidden");
+        } else {
+            loadMoreContainer.classList.add("hidden");
+        }
+    }
+};
+
+window.loadMoreOmniResults = function() {
+    window.omniCurrentOffset += 21;
+    window.executeOmniSearch(window.omniCurrentQuery, true);
+};
+
+window.triggerOmniResumeUpload = function() {
+    const fileInput = document.getElementById("omniResumeFileInput");
+    if (fileInput) fileInput.click();
+};
+
+window.handleOmniResumeSelected = async function(event) {
+    const file = event && event.target && event.target.files ? event.target.files[0] : null;
+    if (!file) return;
+
+    const uploadLabel = document.getElementById("omniResumeUploadLabel");
+    const originalLabel = uploadLabel ? uploadLabel.textContent : "Upload your resume to find your dream job";
+    if (uploadLabel) uploadLabel.textContent = "Parsing resume...";
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const resp = await fetch("/api/upload-resume", {
+            method: "POST",
+            body: formData
+        });
+        if (!resp.ok) {
+            const errData = await resp.json().catch(() => ({}));
+            throw new Error(errData.detail || "Failed to parse resume.");
+        }
+        const data = await resp.json();
+        window.omniCurrentProfile = data.profile;
+
+        // Prepopulate criteria modal fields
+        const roleField = document.getElementById("omniCriteriaTargetRole");
+        if (roleField) {
+            roleField.value = data.profile?.current_role || (data.profile?.skills && data.profile.skills[0]) || "";
+        }
+        const locField = document.getElementById("omniCriteriaLocation");
+        if (locField) {
+            locField.value = "Remote / Bangalore";
+        }
+        const pkgField = document.getElementById("omniCriteriaExpectedPackage");
+        if (pkgField) {
+            pkgField.value = "7 LPA";
+        }
+
+        window.openOmniCriteriaModal(data.profile);
+    } catch (err) {
+        alert("Resume intake failed: " + err.message);
+    } finally {
+        if (uploadLabel) uploadLabel.textContent = originalLabel;
+        if (event && event.target) event.target.value = "";
+    }
+};
+
+window.openOmniCriteriaModal = function(profile) {
+    const modal = document.getElementById("omniCriteriaModal");
+    if (modal) modal.classList.remove("hidden");
+};
+
+window.closeOmniCriteriaModal = function() {
+    const modal = document.getElementById("omniCriteriaModal");
+    if (modal) modal.classList.add("hidden");
+};
+
+window.submitOmniCriteria = async function() {
+    const role = document.getElementById("omniCriteriaTargetRole")?.value || "";
+    const pkg = document.getElementById("omniCriteriaExpectedPackage")?.value || "";
+    const loc = document.getElementById("omniCriteriaLocation")?.value || "";
+
+    const combinedQuery = `${role} ${pkg}`.trim();
+    const input = document.getElementById("omniSearchInput");
+    if (input) input.value = combinedQuery;
+
+    const clearBtn = document.getElementById("omniClearBtn");
+    if (clearBtn && combinedQuery) clearBtn.classList.remove("hidden");
+
+    window.closeOmniCriteriaModal();
+
+    window.omniCurrentQuery = combinedQuery;
+    window.omniCurrentOffset = 0;
+    await window.executeOmniSearch(combinedQuery, false);
+
+    const streamContainer = document.getElementById("omniSearchResultsContainer");
+    if (streamContainer) {
+        streamContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+};
+
+// Initial auto-population of live corporate postings on homepage load
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+        window.executeOmniSearch("", false);
+    });
+} else {
+    setTimeout(() => {
+        window.executeOmniSearch("", false);
+    }, 100);
+}
