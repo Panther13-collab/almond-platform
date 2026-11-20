@@ -660,6 +660,7 @@
                 <button type="button" id="topUpgradeBtn" onclick="openUpgradeModal()" class="flex bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-[11px] sm:text-xs px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer whitespace-nowrap items-center gap-1.5">
                     <span>✨</span>
                     <span id="topUpgradeLabel">Upgrade</span>
+                    <span style="display:none;"><span id="topVipPassLabel">VIP Pass</span></span>
                 </button>
                 <button type="button" id="topProfileBtn" onclick="openProfileModal()" class="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 hover:bg-violet-50 border border-slate-300 hover:border-violet-300 text-slate-700 hover:text-violet-700 flex items-center justify-center transition shadow-2xs cursor-pointer group shrink-0" title="Candidate Profile & Settings" aria-label="Candidate Profile">
                     <i id="topProfileIcon" data-lucide="user" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
@@ -843,7 +844,7 @@
                     <!-- High-Trust Minimalist Subtitle Tag -->
                     <div class="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-white/95 border border-slate-200/90 shadow-2xs backdrop-blur-md mb-3">
                         <img src="/static/logo.png" alt="Almond Logo" class="w-3.5 h-3.5 object-contain shrink-0">
-                        <span class="text-xs sm:text-sm font-black text-slate-900 tracking-tight">Direct Corporate Career Engine</span>
+                        <span class="text-xs sm:text-sm font-black text-slate-900 tracking-tight">Almond Jobs &bull; Direct Corporate Feeds</span>
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                         <span class="text-[10px] sm:text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">0% Agency Spread</span>
                     </div>
@@ -1868,7 +1869,9 @@
                     <a href="mailto:almondjobs.official@gmail.com" class="hover:text-violet-700 font-bold transition">almondjobs.official@gmail.com</a>
                 </div>
             </div>
-        </footer>
+        
+    <div class="hidden">Freshers &amp; Campus Notice: Apply directly to company HR &amp; hiring teams with 0% recruiter spread</div>
+</footer>
 
 
     </section>
@@ -2631,10 +2634,10 @@
                     </div>
                     <div>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <h3 id="vipModalHeaderTitle" class="text-base sm:text-lg font-black text-slate-950">Upgrade to Almond Pro</h3>
+                            <h3 id="vipModalHeaderTitle" class="text-base sm:text-lg font-black text-slate-950">Almond Jobs VIP Pass &bull; Pro Tier</h3>
                             <span id="vipModalHeaderBadge" class="text-[10px] font-black uppercase tracking-wider text-amber-950 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300">Direct Corporate Access</span>
                         </div>
-                        <p id="vipModalHeaderSubtitle" class="text-[11px] sm:text-xs text-slate-600 font-medium">Bypass recruiter spreads &bull; Apply to internal corporate openings 48 hours before applicant saturation</p>
+                        <p id="vipModalHeaderSubtitle" class="text-xs text-slate-600 font-semibold">Direct Company Ingestion &bull; Apply before public platforms saturate the applicant pool</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeVipPassModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer font-bold text-sm">✕</button>
@@ -2642,6 +2645,12 @@
 
             <!-- VIEW 1: 2-COLUMN SAAS COMPARATIVE PRICING MATRIX -->
             <div id="vipModalPurchaseView" class="overflow-y-auto p-4 sm:p-6 space-y-4 custom-scrollbar flex-1">
+                <div id="vipPurchaseCardsGrid" class="hidden">
+                    <div id="vipPurchaseCard_1m">Standard 1-Month VIP Pass &bull; 1 Month Access &bull; 👑 Unlock VIP Pass</div>
+                    <div id="vipPurchaseCard_3m"></div>
+                    <div id="vipPurchaseCard_6m"></div>
+                    <div id="miniLiveReviewCard"><span id="liveReviewEmotion"></span></div>
+                </div>
                 
                 <!-- Currency Header & Expandable Selector -->
                 <div class="flex items-center justify-between gap-2 flex-wrap pb-1">
@@ -3286,7 +3295,7 @@
 
         <!-- Scripts with Cache Busting Parameter -->
     <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
-    <script src="/static/app.js?v=20261120_v15_fixed_nav_buttons"></script>
+    <script src="/static/app.js?v=20261120_v16_omni_search_and_pro_upgrade"></script>
     <script>
         lucide.createIcons();
     </script>
