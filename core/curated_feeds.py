@@ -574,3 +574,127 @@ def query_curated_feed(
         "feed_type": feed_type,
         "sort_by": sort_by
     }
+
+
+def omni_search_all_feeds(
+    query: str = "",
+    category: str = "All",
+    location: str = "all",
+    min_package_lpa: float = 0.0,
+    limit: int = 25,
+    offset: int = 0,
+    user_is_paid: bool = False
+) -> Dict[str, Any]:
+    """High-speed unified discovery engine querying across all curated feeds
+    (Internships, Entry-Level, AI/ML Specialist) with letter-by-letter live filtering,
+    package parsing ('7 LPA' -> compensation filter), location, and corporate ATS indexing.
+    """
+    # 1. Aggregate listings from all feeds
+    combined_items = []
+    seen_urls = set()
+
+    for ft in ["internships", "aiml", "entrylevel"]:
+        feed_items = get_feed_data(ft)
+        for item in feed_items:
+            url = item.get("url")
+            if url and url not in seen_urls:
+                seen_urls.add(url)
+                if not item.get("feed_type"):
+                    item["feed_type"] = ft
+                combined_items.append(item)
+
+    if not combined_items:
+        return {"total": 0, "items": [], "limit": limit, "offset": offset, "query": query}
+
+    now_ts = int(time.time())
+
+    # 2. Extract potential LPA package queries (e.g. '7 LPA', '10lpa', '15 Lakh')
+    clean_query = query.strip()
+    lpa_match = re.search(r'(\d+(?:\.\d+)?)\s*(?:lpa|lakh|lac)', clean_query, re.IGNORECASE)
+    if lpa_match:
+        try:
+            detected_lpa = float(lpa_match.group(1))
+            if detected_lpa > min_package_lpa:
+                min_package_lpa = detected_lpa
+        except (ValueError, TypeError):
+            pass
+        # Remove the LPA token from query text so remaining tokens search roles/skills
+        text_query = re.sub(r'(\d+(?:\.\d+)?)\s*(?:lpa|lakh|lac)', '', clean_query, flags=re.IGNORECASE).strip()
+    else:
+        text_query = clean_query
+
+    q_tokens = [t.lower().strip() for t in text_query.split() if t.strip()]
+
+    # 3. Filter across all combined items
+    filtered = []
+    for item in combined_items:
+        # Location filter
+        if location and location.lower() not in ["all", "any", "all locations", "all countries", "worldwide"]:
+            if not matches_country_filter(item, location):
+                continue
+
+        # Category filter
+        item_cat = (item.get("category") or "").lower()
+        if category and category.lower() not in ["all", "any"]:
+            cat_target = category.lower()
+            if cat_target in ["tech", "software"]:
+                if not any(k in item_cat for k in ["software", "tech", "engineering"]):
+                    continue
+            elif cat_target in ["ai", "data"]:
+                if not any(k in item_cat for k in ["ai", "ml", "data", "machine learning"]):
+                    continue
+            elif cat_target == "quant":
+                if "quant" not in item_cat:
+                    continue
+            elif cat_target != item_cat:
+                continue
+
+        # Package estimation and minimum package filter
+        pkg_val, pkg_disp = estimate_job_package(
+            item.get("role", ""),
+            item.get("company", ""),
+            item.get("feed_type", "")
+        )
+        item_pkg = item.get("package_inr_lpa") or pkg_val
+
+        if min_package_lpa > 0.0 and item_pkg < (min_package_lpa - 0.5):
+            continue
+
+        # Keyword / letter token matching
+        if q_tokens:
+            haystack = f"{item.get('company', '')} {item.get('role', '')} {item.get('location', '')} {item.get('category', '')} {item.get('feed_type', '')}".lower()
+            if not all(token in haystack for token in q_tokens):
+                continue
+
+        filtered.append((item, pkg_val, pkg_disp))
+
+    # 4. Sort by latest first
+    filtered.sort(key=lambda x: x[0].get("date_posted_ts", 0), reverse=True)
+
+    total_count = len(filtered)
+    page_slice = filtered[offset : offset + limit]
+
+    # 5. Hydrate display metadata and apply VIP preview locks
+    processed_items = []
+    for item, pkg_val, pkg_disp in page_slice:
+        item_copy = dict(item)
+        item_copy["package_inr_lpa"] = item_copy.get("package_inr_lpa") or pkg_val
+        item_copy["package_display"] = item_copy.get("package_display") or pkg_disp
+
+        posted_ts = item_copy.get("date_posted_ts", 0)
+        diff_days = max(0, (now_ts - posted_ts) // 86400) if (posted_ts and posted_ts > 100000) else 0
+        item_copy["date_posted_str"] = f"{diff_days}d ago" if diff_days > 0 else "Today"
+        item_copy["days_ago"] = diff_days
+
+        processed_items.append(item_copy)
+
+    apply_vip_latest_feed_lock(processed_items, user_is_paid=user_is_paid)
+
+    return {
+        "total": total_count,
+        "items": processed_items,
+        "limit": limit,
+        "offset": offset,
+        "query": query,
+        "min_package_lpa": min_package_lpa
+    }

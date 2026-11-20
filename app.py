@@ -20,7 +20,7 @@ from core.parser import extract_text_from_file, parse_candidate_profile
 from core.job_engine import search_matching_jobs, fetch_linkedin_postings, _get_skills_fingerprint
 from core.pitch_generator import generate_star_pitch, generate_tailored_cover_letter
 from core.founder_engine import fetch_hn_founder_jobs
-from core.curated_feeds import query_curated_feed, start_curated_feed_scheduler
+from core.curated_feeds import query_curated_feed, start_curated_feed_scheduler, omni_search_all_feeds
 from core.doc_exporter import (
     export_to_docx, export_to_pdf_async, export_to_csv,
     export_tech_dossier_pdf_async, export_tech_dossier_pdf,
@@ -1139,6 +1139,30 @@ async def api_add_kanban(payload: dict = Body(...)):
     application = payload.get("application", {})
     res = save_user_kanban_application(user_id, application)
     return JSONResponse(content={"status": "success", "result": res})
+
+@app.get("/api/omni-search")
+async def api_omni_search(
+    q: str = Query(""),
+    location: str = Query("all"),
+    category: str = Query("All"),
+    min_lpa: float = Query(0.0),
+    limit: int = Query(25),
+    offset: int = Query(0),
+    user_id: Optional[str] = Query(None)
+):
+    """Unified instant discovery query across internships, entry-level and AI/ML feeds."""
+    user_paid = is_user_paid(user_id) if user_id else False
+    res = omni_search_all_feeds(
+        query=q,
+        category=category,
+        location=location,
+        min_package_lpa=min_lpa,
+        limit=min(limit, 100),
+        offset=offset,
+        user_is_paid=user_paid
+    )
+    return JSONResponse(content={"status": "success", "result": res})
+
 
 @app.post("/api/find-jobs")
 async def find_jobs(payload: dict = Body(...)):
