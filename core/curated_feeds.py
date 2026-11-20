@@ -345,6 +345,11 @@ def matches_country_filter(item: Dict[str, Any], target_country: str) -> bool:
     if not target_country or target_country.lower() in ["all", "any", "all locations", "all countries", "worldwide"]:
         return True
 
+    # Support composite locations like "Remote / Bangalore", "India, Remote", "USA | Remote"
+    parts = [p.strip() for p in re.split(r'[/,|;]|or', target_country, flags=re.IGNORECASE) if p.strip()]
+    if len(parts) > 1:
+        return any(matches_country_filter(item, p) for p in parts)
+
     t = target_country.strip().lower()
     loc = (item.get("location") or "").lower()
     locs_list = [l.lower() for l in (item.get("locations_list") or [])]
@@ -355,8 +360,13 @@ def matches_country_filter(item: Dict[str, Any], target_country: str) -> bool:
     if t in ["remote", "worldwide", "remote / worldwide", "remote only"]:
         return any(k in full_loc_text for k in ["remote", "worldwide", "anywhere", "global"])
 
-    # India target
-    if t in ["india", "in", "ind", "bharat"]:
+    # India target & major Indian hubs
+    if t in ["india", "in", "ind", "bharat"] or any(c == t for c in [
+        "bengaluru", "bangalore", "chennai", "hyderabad", "pune", "mumbai",
+        "delhi", "new delhi", "noida", "gurgaon", "gurugram", "kolkata",
+        "ahmedabad", "coimbatore", "kochi", "ernakulam", "trivandrum",
+        "thiruvananthapuram", "mysore", "chandigarh", "jaipur"
+    ]):
         if re.search(r'\bindia\b', full_loc_text):
             return True
         if any(c in full_loc_text for c in [
@@ -581,6 +591,8 @@ def omni_search_all_feeds(
     category: str = "All",
     location: str = "all",
     min_package_lpa: float = 0.0,
+    work_mode: str = "all",
+    contract_type: str = "all",
     limit: int = 25,
     offset: int = 0,
     user_is_paid: bool = False
@@ -651,10 +663,12 @@ def omni_search_all_feeds(
     # 3. Filter across combined items with fast rejection pipeline
     filtered = []
     for item in combined_items:
-        # Fast Token matching first (eliminates 90%+ immediately)
+        # Fast Token matching with multi-word query relaxation
         if q_tokens:
             haystack = f"{item.get('company', '')} {item.get('role', '')} {item.get('location', '')}".lower()
-            if not all(token in haystack for token in q_tokens):
+            matched_count = sum(1 for token in q_tokens if token in haystack)
+            min_required = len(q_tokens) if len(q_tokens) <= 2 else max(2, int(len(q_tokens) * 0.6))
+            if matched_count < min_required:
                 continue
 
         # Location filter
@@ -678,6 +692,31 @@ def omni_search_all_feeds(
             elif cat_target != item_cat:
                 continue
 
+        # Work mode filter (remote, hybrid, onsite)
+        if work_mode and work_mode.lower() not in ["all", "any"]:
+            wm = work_mode.lower()
+            loc_lower = (item.get("location") or "").lower()
+            is_remote = "remote" in loc_lower or "anywhere" in loc_lower or "worldwide" in loc_lower
+            if wm == "remote" and not is_remote:
+                continue
+            elif wm == "hybrid" and "hybrid" not in loc_lower:
+                continue
+            elif wm == "onsite" and is_remote:
+                continue
+
+        # Contract type filter (full-time, internship, contract)
+        if contract_type and contract_type.lower() not in ["all", "any"]:
+            ct = contract_type.lower()
+            role_lower = (item.get("role") or "").lower()
+            is_intern = item.get("feed_type") == "internships" or any(k in role_lower for k in ["intern", "co-op", "trainee", "fellowship"])
+            is_contract = "contract" in role_lower or "freelance" in role_lower
+            if ct in ["intern", "internship"] and not is_intern:
+                continue
+            elif ct in ["contract", "temporary"] and not is_contract:
+                continue
+            elif ct in ["full-time", "fulltime"] and is_intern:
+                continue
+
         # Minimum package check: evaluate only when package filter was explicitly requested
         if min_package_lpa > 0.0:
             item_pkg = item.get("package_inr_lpa")
@@ -692,7 +731,19 @@ def omni_search_all_feeds(
 
         filtered.append(item)
 
-    # 4. Sort by latest first
+    # 4. Multi-tier fallback pipeline: ensure candidates always get relevant corporate postings
+    if not filtered:
+        # Tier 1: Try matching any token across all locations & packages
+        if q_tokens:
+            for item in combined_items:
+                haystack = f"{item.get('company', '')} {item.get('role', '')} {item.get('location', '')}".lower()
+                if any(token in haystack for token in q_tokens):
+                    filtered.append(item)
+        # Tier 2: If still empty, return top curated corporate openings
+        if not filtered:
+            filtered = list(combined_items[:50])
+
+    # 5. Sort by latest first
     filtered.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=True)
 
     total_count = len(filtered)

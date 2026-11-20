@@ -7481,6 +7481,9 @@ window.executeOmniSearch = async function(query = "", append = false) {
             q: query,
             category: window.omniActiveCategory || "All",
             location: window.omniActiveLocation || "all",
+            min_lpa: String(window.omniActiveMinPackage || 0),
+            work_mode: window.omniActiveWorkMode || "all",
+            contract_type: window.omniActiveContractType || "all",
             limit: "21",
             offset: String(window.omniCurrentOffset || 0)
         });
@@ -7523,7 +7526,10 @@ window.renderOmniResults = function(result, query, append) {
     const total = result.total || 0;
 
     if (countBadge) {
-        if (query) {
+        if (window.omniCurrentProfile && window.omniCurrentProfile.name) {
+            countBadge.textContent = `${total} Matched to your Resume`;
+            countBadge.className = "text-[11px] font-bold bg-violet-100 text-violet-800 px-2.5 py-0.5 rounded-full";
+        } else if (query) {
             countBadge.textContent = `${total} matching "${query}"`;
             countBadge.className = "text-[11px] font-bold bg-violet-100 text-violet-800 px-2.5 py-0.5 rounded-full";
         } else {
@@ -7533,7 +7539,9 @@ window.renderOmniResults = function(result, query, append) {
     }
 
     if (headerTitle) {
-        if (query) {
+        if (window.omniCurrentProfile && window.omniCurrentProfile.name) {
+            headerTitle.textContent = `Matching Corporate Openings for ${window.omniCurrentProfile.name}`;
+        } else if (query) {
             headerTitle.textContent = `Matching Corporate Openings`;
         } else {
             headerTitle.textContent = `Direct Corporate Openings`;
@@ -7638,6 +7646,163 @@ window.loadMoreOmniResults = function() {
     window.executeOmniSearch(window.omniCurrentQuery, true);
 };
 
+// --- OMNI RESUME & CANDIDATE INTELLIGENCE CONTROLLERS ---
+
+window.omniDerivedSkills = [];
+
+function escapeOmniHtml(str) {
+    if (!str) return "";
+    return String(str).replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+}
+
+window.renderOmniSkillBadges = function() {
+    const container = document.getElementById("omniSkillsBadgesContainer");
+    const countBadge = document.getElementById("omniSkillsCountBadge");
+    if (!container) return;
+
+    if (!window.omniDerivedSkills || window.omniDerivedSkills.length === 0) {
+        container.innerHTML = '<span class="text-xs text-slate-400 font-medium">No skills detected. Type a skill and click "+ Add" below.</span>';
+        if (countBadge) countBadge.textContent = "0 Extracted";
+        return;
+    }
+
+    if (countBadge) {
+        countBadge.textContent = `${window.omniDerivedSkills.length} Extracted`;
+    }
+
+    container.replaceChildren();
+    window.omniDerivedSkills.forEach((skill) => {
+        const badge = document.createElement("span");
+        badge.className = "inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg bg-violet-50 text-violet-900 border border-violet-200 animate-in fade-in duration-150";
+        
+        const label = document.createElement("span");
+        label.textContent = skill;
+        badge.appendChild(label);
+
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "text-violet-400 hover:text-rose-600 hover:bg-rose-50 rounded-full w-4 h-4 flex items-center justify-center transition cursor-pointer text-xs leading-none font-bold";
+        removeBtn.title = "Remove skill";
+        removeBtn.textContent = "×";
+        removeBtn.onclick = () => window.removeOmniSkill(skill);
+        badge.appendChild(removeBtn);
+
+        container.appendChild(badge);
+    });
+};
+
+window.addOmniSkill = function(skill) {
+    if (!skill) return;
+    const clean = String(skill).trim();
+    if (!clean) return;
+    if (!window.omniDerivedSkills) window.omniDerivedSkills = [];
+    const lower = clean.toLowerCase();
+    if (!window.omniDerivedSkills.some(s => s.toLowerCase() === lower)) {
+        window.omniDerivedSkills.push(clean);
+        window.renderOmniSkillBadges();
+    }
+};
+
+window.removeOmniSkill = function(skillToRemove) {
+    if (!window.omniDerivedSkills) return;
+    const lower = (skillToRemove || "").toLowerCase();
+    window.omniDerivedSkills = window.omniDerivedSkills.filter(s => s.toLowerCase() !== lower);
+    window.renderOmniSkillBadges();
+};
+
+window.addOmniSkillFromInput = function() {
+    const input = document.getElementById("omniAddSkillInput");
+    if (!input) return;
+    const val = input.value.trim();
+    if (val) {
+        window.addOmniSkill(val);
+        input.value = "";
+    }
+};
+
+const OMNI_POPULAR_LOCATIONS = [
+    { name: "Remote / Worldwide", flag: "🌐", code: "Remote" },
+    { name: "India (All Cities)", flag: "🇮🇳", code: "India" },
+    { name: "Bengaluru / Bangalore", flag: "📍", code: "Bengaluru" },
+    { name: "Chennai", flag: "📍", code: "Chennai" },
+    { name: "Hyderabad", flag: "📍", code: "Hyderabad" },
+    { name: "Pune", flag: "📍", code: "Pune" },
+    { name: "Mumbai", flag: "📍", code: "Mumbai" },
+    { name: "Delhi NCR / Noida / Gurgaon", flag: "📍", code: "Delhi" },
+    { name: "United States (USA)", flag: "🇺🇸", code: "United States" },
+    { name: "San Francisco / Bay Area", flag: "📍", code: "San Francisco" },
+    { name: "New York", flag: "📍", code: "New York" },
+    { name: "United Kingdom (London)", flag: "🇬🇧", code: "United Kingdom" },
+    { name: "Europe (Germany, France, Netherlands)", flag: "🇪🇺", code: "Europe" },
+    { name: "Canada (Toronto, Vancouver)", flag: "🇨🇦", code: "Canada" },
+    { name: "Singapore", flag: "🇸🇬", code: "Singapore" },
+    { name: "United Arab Emirates (Dubai)", flag: "🇦🇪", code: "United Arab Emirates" },
+    { name: "Australia (Sydney, Melbourne)", flag: "🇦🇺", code: "Australia" }
+];
+
+window.filterOmniLocationList = function(q) {
+    const dropdown = document.getElementById("omniCriteriaLocationDropdown");
+    if (!dropdown) return;
+    const query = (q || "").trim().toLowerCase();
+    const filtered = OMNI_POPULAR_LOCATIONS.filter(loc => 
+        !query || loc.name.toLowerCase().includes(query) || loc.code.toLowerCase().includes(query)
+    );
+    if (filtered.length === 0) {
+        dropdown.innerHTML = `<div class="p-3 text-xs text-slate-400">No preset match. Using "${escapeOmniHtml(q)}".</div>`;
+        dropdown.classList.remove("hidden");
+        return;
+    }
+    dropdown.replaceChildren();
+    filtered.forEach(loc => {
+        const item = document.createElement("div");
+        item.className = "px-3.5 py-2.5 text-xs font-bold text-slate-800 hover:bg-violet-50 hover:text-violet-900 cursor-pointer flex items-center justify-between transition";
+        item.innerHTML = `<span class="flex items-center gap-2"><span>${loc.flag}</span><span>${escapeOmniHtml(loc.name)}</span></span><span class="text-[10px] text-slate-400 font-semibold uppercase">${escapeOmniHtml(loc.code)}</span>`;
+        item.onclick = () => window.selectOmniLocation(loc.code, loc.name);
+        dropdown.appendChild(item);
+    });
+    dropdown.classList.remove("hidden");
+};
+
+window.selectOmniLocation = function(code, name) {
+    const input = document.getElementById("omniCriteriaLocationInput");
+    const hidden = document.getElementById("omniCriteriaLocation");
+    const dropdown = document.getElementById("omniCriteriaLocationDropdown");
+    if (input) input.value = name;
+    if (hidden) hidden.value = code;
+    if (dropdown) dropdown.classList.add("hidden");
+};
+
+window.setOmniLocationPreset = function(loc) {
+    const input = document.getElementById("omniCriteriaLocationInput");
+    const hidden = document.getElementById("omniCriteriaLocation");
+    const dropdown = document.getElementById("omniCriteriaLocationDropdown");
+    if (input) input.value = loc;
+    if (hidden) hidden.value = loc;
+    if (dropdown) dropdown.classList.add("hidden");
+};
+
+window.updateOmniPillStyles = function() {
+    document.querySelectorAll(".omni-work-pill").forEach(label => {
+        const radio = label.querySelector("input[name='omni_work_mode']");
+        if (radio && radio.checked) {
+            label.className = "omni-work-pill border border-slate-900 bg-slate-950 text-white rounded-xl py-1.5 text-center cursor-pointer flex items-center justify-center transition shadow-2xs font-bold";
+        } else {
+            label.className = "omni-work-pill border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition font-bold";
+        }
+    });
+
+    document.querySelectorAll(".omni-emp-pill").forEach(label => {
+        const radio = label.querySelector("input[name='omni_contract_type']");
+        if (radio && radio.checked) {
+            label.className = "omni-emp-pill border border-slate-900 bg-slate-950 text-white rounded-xl py-1.5 text-center cursor-pointer flex items-center justify-center transition shadow-2xs font-bold";
+        } else {
+            label.className = "omni-emp-pill border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition font-bold";
+        }
+    });
+};
+
 window.triggerOmniResumeUpload = function() {
     const fileInput = document.getElementById("omniResumeFileInput");
     if (fileInput) fileInput.click();
@@ -7649,7 +7814,7 @@ window.handleOmniResumeSelected = async function(event) {
 
     const uploadLabel = document.getElementById("omniResumeUploadLabel");
     const originalLabel = uploadLabel ? uploadLabel.textContent : "Upload your resume to find your dream job";
-    if (uploadLabel) uploadLabel.textContent = "Parsing resume...";
+    if (uploadLabel) uploadLabel.textContent = "Parsing resume intelligence...";
 
     const formData = new FormData();
     formData.append("file", file);
@@ -7664,23 +7829,58 @@ window.handleOmniResumeSelected = async function(event) {
             throw new Error(errData.detail || "Failed to parse resume.");
         }
         const data = await resp.json();
-        window.omniCurrentProfile = data.profile;
+        const profile = data.profile || {};
+        window.omniCurrentProfile = profile;
 
-        // Prepopulate criteria modal fields
+        // 1. Identified Candidate Name & Avatar
+        const nameEl = document.getElementById("omniProfileName");
+        if (nameEl) {
+            nameEl.textContent = profile.name || "Identified Candidate";
+        }
+        const avatarEl = document.getElementById("omniProfileAvatar");
+        if (avatarEl) {
+            avatarEl.textContent = profile.name ? profile.name.trim().charAt(0).toUpperCase() : "👤";
+        }
+
+        // 2. Verified Experience
+        const yoeEl = document.getElementById("omniProfileYoe");
+        if (yoeEl) {
+            const yoe = profile.years_experience;
+            if (yoe !== undefined && yoe !== null && yoe > 0) {
+                yoeEl.textContent = `${yoe} Years Experience`;
+            } else {
+                yoeEl.textContent = "Fresher / Direct Entry";
+            }
+        }
+
+        // 3. Derived Skills
+        window.omniDerivedSkills = Array.isArray(profile.skills) ? [...profile.skills] : [];
+        window.renderOmniSkillBadges();
+
+        // 4. Target Role / Specialization
         const roleField = document.getElementById("omniCriteriaTargetRole");
         if (roleField) {
-            roleField.value = data.profile?.current_role || (data.profile?.skills && data.profile.skills[0]) || "";
+            roleField.value = profile.current_role || (profile.skills && profile.skills[0]) || "Software Engineer";
         }
-        const locField = document.getElementById("omniCriteriaLocation");
-        if (locField) {
-            locField.value = "Remote / Bangalore";
+
+        // 5. Minimum Expected Package Dropdown
+        const pkgSelect = document.getElementById("omniCriteriaPackageSelect");
+        if (pkgSelect) {
+            pkgSelect.value = "7";
         }
         const pkgField = document.getElementById("omniCriteriaExpectedPackage");
         if (pkgField) {
             pkgField.value = "7 LPA";
         }
 
-        window.openOmniCriteriaModal(data.profile);
+        // 6. Preferred Location
+        const locInput = document.getElementById("omniCriteriaLocationInput");
+        const locHidden = document.getElementById("omniCriteriaLocation");
+        let initialLoc = profile.location && profile.location !== "Worldwide / Open to Relocation" ? profile.location : "Bengaluru";
+        if (locInput) locInput.value = initialLoc;
+        if (locHidden) locHidden.value = initialLoc;
+
+        window.openOmniCriteriaModal(profile);
     } catch (err) {
         alert("Resume intake failed: " + err.message);
     } finally {
@@ -7691,32 +7891,55 @@ window.handleOmniResumeSelected = async function(event) {
 
 window.openOmniCriteriaModal = function(profile) {
     const modal = document.getElementById("omniCriteriaModal");
-    if (modal) modal.classList.remove("hidden");
+    if (modal) {
+        modal.classList.remove("hidden");
+        window.updateOmniPillStyles();
+    }
 };
 
 window.closeOmniCriteriaModal = function() {
     const modal = document.getElementById("omniCriteriaModal");
     if (modal) modal.classList.add("hidden");
+    const dropdown = document.getElementById("omniCriteriaLocationDropdown");
+    if (dropdown) dropdown.classList.add("hidden");
 };
 
 window.submitOmniCriteria = async function() {
-    const role = document.getElementById("omniCriteriaTargetRole")?.value || "";
-    const pkg = document.getElementById("omniCriteriaExpectedPackage")?.value || "";
-    const loc = document.getElementById("omniCriteriaLocation")?.value || "";
+    const role = (document.getElementById("omniCriteriaTargetRole")?.value || "").trim();
+    const pkgSelect = document.getElementById("omniCriteriaPackageSelect");
+    const pkgVal = pkgSelect ? parseFloat(pkgSelect.value) || 0 : 7;
+    const locInput = (document.getElementById("omniCriteriaLocationInput")?.value || "").trim();
+    const locHidden = (document.getElementById("omniCriteriaLocation")?.value || "").trim();
+    const loc = locInput || locHidden || "all";
+
+    const workMode = document.querySelector('input[name="omni_work_mode"]:checked')?.value || "all";
+    const contractType = document.querySelector('input[name="omni_contract_type"]:checked')?.value || "all";
 
     window.omniActiveLocation = loc;
-    const combinedQuery = `${role} ${pkg}`.trim();
+    window.omniActiveMinPackage = pkgVal;
+    window.omniActiveWorkMode = workMode;
+    window.omniActiveContractType = contractType;
+
+    // Use role title for text query. If blank, use top skill.
+    let searchQuery = role;
+    if (!searchQuery && window.omniDerivedSkills && window.omniDerivedSkills.length > 0) {
+        searchQuery = window.omniDerivedSkills[0];
+    }
+
     const input = document.getElementById("omniSearchInput");
-    if (input) input.value = combinedQuery;
+    if (input) input.value = searchQuery;
 
     const clearBtn = document.getElementById("omniClearBtn");
-    if (clearBtn && combinedQuery) clearBtn.classList.remove("hidden");
+    if (clearBtn) {
+        if (searchQuery) clearBtn.classList.remove("hidden");
+        else clearBtn.classList.add("hidden");
+    }
 
     window.closeOmniCriteriaModal();
 
-    window.omniCurrentQuery = combinedQuery;
+    window.omniCurrentQuery = searchQuery;
     window.omniCurrentOffset = 0;
-    await window.executeOmniSearch(combinedQuery, false);
+    await window.executeOmniSearch(searchQuery, false);
 
     const streamContainer = document.getElementById("omniSearchResultsContainer");
     if (streamContainer) {
@@ -7749,6 +7972,15 @@ window.initOmniSearch = function() {
             }
         });
     }
+
+    // Auto-close location dropdown on outside click
+    document.addEventListener("click", (e) => {
+        const dropdown = document.getElementById("omniCriteriaLocationDropdown");
+        const input = document.getElementById("omniCriteriaLocationInput");
+        if (dropdown && !dropdown.contains(e.target) && e.target !== input) {
+            dropdown.classList.add("hidden");
+        }
+    });
 };
 
 // Initial auto-population of live corporate postings on homepage load

@@ -3861,38 +3861,180 @@
     </div>
 
     <!-- OMNI-RESUME CRITERIA INTAKE MODAL -->
-    <div id="omniCriteriaModal" class="hidden fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4">
-        <div class="rounded-3xl max-w-md w-full bg-white border border-slate-200 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 my-auto overflow-hidden">
-            <div class="flex items-center justify-between p-5 border-b border-slate-100 bg-gradient-to-r from-violet-50/70 via-white to-amber-50/50">
+    <div id="omniCriteriaModal" class="hidden fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="rounded-3xl max-w-2xl w-full bg-white border border-slate-200 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 my-auto overflow-hidden flex flex-col max-h-[92vh]">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 bg-gradient-to-r from-violet-50/70 via-white to-amber-50/50 shrink-0">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center text-lg font-black shadow-2xs">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center text-lg font-black shadow-md shadow-violet-500/20">
                         🎯
                     </div>
                     <div>
-                        <h3 class="text-base font-black text-slate-950">Target Preferences</h3>
-                        <p class="text-[11px] text-slate-500 font-medium">Configure criteria for ranked direct matches</p>
+                        <h3 class="text-base sm:text-lg font-black text-slate-950 tracking-tight">Target Preferences &amp; Profile Vector</h3>
+                        <p class="text-[11px] text-slate-500 font-medium">Verified intelligence from your resume &bull; 0% Recruiter Spread</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeOmniCriteriaModal()" class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold cursor-pointer">✕</button>
+                <button type="button" onclick="closeOmniCriteriaModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-sm font-bold cursor-pointer transition">✕</button>
             </div>
-            <div class="p-5 space-y-4">
-                <div>
-                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1">Target Role / Specialization</label>
-                    <input type="text" id="omniCriteriaTargetRole" placeholder="e.g. Software Engineer, AI/ML Specialist" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden">
+
+            <!-- Scrollable Modal Body -->
+            <div class="p-4 sm:p-6 overflow-y-auto space-y-4">
+                
+                <!-- 1. Identified Candidate Profile & Experience Card -->
+                <div class="rounded-2xl p-3.5 sm:p-4 bg-gradient-to-br from-violet-50/60 via-purple-50/30 to-slate-50 border border-violet-100 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-xl bg-violet-600 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs">
+                            <span id="omniProfileAvatar">👤</span>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Identified Candidate:</span>
+                                <span id="omniProfileName" class="font-black text-xs sm:text-sm text-slate-950 truncate">Identified Candidate</span>
+                            </div>
+                            <div class="flex items-center gap-2 mt-0.5">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Verified Experience:</span>
+                                <span id="omniProfileYoe" class="font-extrabold text-[11px] text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">4 Years Experience</span>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 flex items-center gap-1.5 shrink-0">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>ATS Verified</span>
+                    </span>
                 </div>
+
+                <!-- 2. Derived Skills Section -->
                 <div>
-                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1">Expected Package / CTC</label>
-                    <input type="text" id="omniCriteriaExpectedPackage" placeholder="e.g. 7 LPA, 15 LPA, or $90,000" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-[11px] font-black uppercase tracking-wider text-slate-700 block">Derived Skills (Verified Vector)</label>
+                        <span id="omniSkillsCountBadge" class="text-[10px] font-black text-violet-800 bg-violet-100 px-2 py-0.5 rounded-full">0 Extracted</span>
+                    </div>
+                    <div id="omniSkillsBadgesContainer" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-2.5 bg-slate-50 border border-slate-200 rounded-xl mb-2">
+                        <span class="text-xs text-slate-400 font-medium">Extracting skills from resume...</span>
+                    </div>
+                    <!-- Inline Add Missing Skill -->
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="omniAddSkillInput" placeholder="Add missing skill (Flutter, PyTorch, SolidWorks)..." class="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-900 bg-white focus:border-violet-500 focus:outline-hidden" onkeydown="if(event.key==='Enter'){event.preventDefault();addOmniSkillFromInput();}">
+                        <button type="button" id="omniAddSkillBtn" onclick="addOmniSkillFromInput()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-violet-700 text-white font-bold text-xs shadow-2xs transition cursor-pointer shrink-0">
+                            + Add
+                        </button>
+                    </div>
                 </div>
+
+                <!-- 3. Target Role / Specialization -->
                 <div>
-                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-500 mb-1">Preferred Location</label>
-                    <input type="text" id="omniCriteriaLocation" placeholder="e.g. Bangalore, Remote, India, Worldwide" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden">
+                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Target Role / Specialization</label>
+                    <input type="text" id="omniCriteriaTargetRole" placeholder="Target role or specialization" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden">
                 </div>
-                <button type="button" id="omniCriteriaSubmitBtn" onclick="submitOmniCriteria()" class="w-full py-3 px-5 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm tracking-wide shadow-md shadow-violet-500/20 flex items-center justify-center gap-2 cursor-pointer transition">
+
+                <!-- 4. Minimum Expected Package / CTC (Standardized Dropdown) -->
+                <div>
+                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Minimum Expected Package / CTC</label>
+                    <div class="relative">
+                        <select id="omniCriteriaPackageSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden cursor-pointer appearance-none pr-8">
+                            <option value="0">No Minimum (Open to all verified bands)</option>
+                            <option value="1">₹1 LPA (Entry / Intern)</option>
+                            <option value="3">₹3 LPA</option>
+                            <option value="5">₹5 LPA</option>
+                            <option value="7" selected>₹7 LPA (Benchmark Default)</option>
+                            <option value="10">₹10 LPA</option>
+                            <option value="12">₹12 LPA</option>
+                            <option value="15">₹15 LPA</option>
+                            <option value="18">₹18 LPA</option>
+                            <option value="20">₹20 LPA</option>
+                            <option value="25">₹25 LPA</option>
+                            <option value="30">₹30 LPA</option>
+                            <option value="35">₹35+ LPA</option>
+                            <option value="50">₹50+ LPA</option>
+                        </select>
+                        <span class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">▼</span>
+                    </div>
+                    <!-- Hidden alias for backward compatibility -->
+                    <input type="hidden" id="omniCriteriaExpectedPackage" value="7 LPA">
+                </div>
+
+                <!-- 5. Preferred Location (Searchable Typeahead + Quick Preset Pills) -->
+                <div>
+                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Preferred Location (Global Cities &amp; Remote)</label>
+                    <div class="relative mb-2">
+                        <input type="text" id="omniCriteriaLocationInput" autocomplete="off" oninput="filterOmniLocationList(this.value)" onfocus="filterOmniLocationList(this.value)" placeholder="Type city or country (Bengaluru, Remote, USA, London)..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden">
+                        <div id="omniCriteriaLocationDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-44 overflow-y-auto z-50 text-slate-900 divide-y divide-slate-100"></div>
+                        <input type="hidden" id="omniCriteriaLocation" value="all">
+                    </div>
+                    <!-- Quick Preset Location Pills -->
+                    <div class="flex flex-wrap gap-1.5">
+                        <button type="button" onclick="setOmniLocationPreset('Remote')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">🌐 Remote</button>
+                        <button type="button" onclick="setOmniLocationPreset('India')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">🇮🇳 India</button>
+                        <button type="button" onclick="setOmniLocationPreset('Bengaluru')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">Bengaluru</button>
+                        <button type="button" onclick="setOmniLocationPreset('Chennai')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">Chennai</button>
+                        <button type="button" onclick="setOmniLocationPreset('Hyderabad')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">Hyderabad</button>
+                        <button type="button" onclick="setOmniLocationPreset('Pune')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">Pune</button>
+                        <button type="button" onclick="setOmniLocationPreset('United States')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">🇺🇸 USA</button>
+                        <button type="button" onclick="setOmniLocationPreset('Europe')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">🇪🇺 Europe</button>
+                    </div>
+                </div>
+
+                <!-- 6. Work Arrangement & Contract Type (Segmented Controls) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                    <div>
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1.5">Work Arrangement</label>
+                        <div class="grid grid-cols-4 gap-1 text-[11px] font-bold">
+                            <label class="omni-work-pill border border-slate-900 bg-slate-950 text-white rounded-xl py-1.5 text-center cursor-pointer flex items-center justify-center transition">
+                                <input type="radio" name="omni_work_mode" value="all" checked class="hidden" onchange="updateOmniPillStyles()">
+                                <span>All</span>
+                            </label>
+                            <label class="omni-work-pill border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition">
+                                <input type="radio" name="omni_work_mode" value="remote" class="hidden" onchange="updateOmniPillStyles()">
+                                <span>Remote</span>
+                            </label>
+                            <label class="omni-work-pill border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition">
+                                <input type="radio" name="omni_work_mode" value="hybrid" class="hidden" onchange="updateOmniPillStyles()">
+                                <span>Hybrid</span>
+                            </label>
+                            <label class="omni-work-pill border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition">
+                                <input type="radio" name="omni_work_mode" value="onsite" class="hidden" onchange="updateOmniPillStyles()">
+                                <span>Onsite</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1.5">Contract Type</label>
+                        <div class="grid grid-cols-4 gap-1 text-[11px] font-bold">
+                            <label class="omni-emp-pill border border-slate-900 bg-slate-950 text-white rounded-xl py-1.5 text-center cursor-pointer flex items-center justify-center transition">
+                                <input type="radio" name="omni_contract_type" value="all" checked class="hidden" onchange="updateOmniPillStyles()">
+                                <span>All</span>
+                            </label>
+                            <label class="omni-emp-pill border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition">
+                                <input type="radio" name="omni_contract_type" value="full-time" class="hidden" onchange="updateOmniPillStyles()">
+                                <span>Full-Time</span>
+                            </label>
+                            <label class="omni-emp-pill border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition">
+                                <input type="radio" name="omni_contract_type" value="internship" class="hidden" onchange="updateOmniPillStyles()">
+                                <span>Intern</span>
+                            </label>
+                            <label class="omni-emp-pill border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition">
+                                <input type="radio" name="omni_contract_type" value="contract" class="hidden" onchange="updateOmniPillStyles()">
+                                <span>Contract</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Sticky Modal Footer -->
+            <div class="p-4 sm:p-5 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
+                <button type="button" onclick="closeOmniCriteriaModal()" class="py-2.5 px-4 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold text-xs transition cursor-pointer">
+                    Cancel
+                </button>
+                <button type="button" id="omniCriteriaSubmitBtn" onclick="submitOmniCriteria()" class="flex-1 py-3 px-6 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm tracking-wide shadow-md shadow-violet-500/25 flex items-center justify-center gap-2 cursor-pointer transition active:scale-98">
                     <span>Show Matching Direct Jobs</span>
                     <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>
             </div>
+
         </div>
     </div>
 

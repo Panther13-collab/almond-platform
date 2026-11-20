@@ -1146,17 +1146,23 @@ async def api_omni_search(
     location: str = Query("all"),
     category: str = Query("All"),
     min_lpa: float = Query(0.0),
+    min_package_lpa: Optional[float] = Query(None),
+    work_mode: str = Query("all"),
+    contract_type: str = Query("all"),
     limit: int = Query(25),
     offset: int = Query(0),
     user_id: Optional[str] = Query(None)
 ):
     """Unified instant discovery query across internships, entry-level and AI/ML feeds."""
+    effective_min_lpa = max(min_lpa, min_package_lpa or 0.0)
     user_paid = is_user_paid(user_id) if user_id else False
     res = omni_search_all_feeds(
         query=q,
         category=category,
         location=location,
-        min_package_lpa=min_lpa,
+        min_package_lpa=effective_min_lpa,
+        work_mode=work_mode,
+        contract_type=contract_type,
         limit=min(limit, 100),
         offset=offset,
         user_is_paid=user_paid
