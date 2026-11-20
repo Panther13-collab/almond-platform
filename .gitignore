@@ -29,6 +29,9 @@ venv/
 .venv/
 env/
 
+# Superpowers artifacts & SDD workspace
+.superpowers/
+
 # Scratch files and temporary image processing artifacts
 capture_*.py
 templates/kage_preview.html
