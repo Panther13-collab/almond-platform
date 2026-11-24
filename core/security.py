@@ -2,6 +2,7 @@ import time
 import os
 import re
 import html
+import threading
 from collections import defaultdict
 from fastapi import Request, HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -97,20 +98,19 @@ rate_limiter = SlidingWindowRateLimiter()
 # 3. GLOBAL CONCURRENCY SEMAPHORE
 # =====================================================================
 # Protects worker threads from starvation when bots hit search simultaneously
-CURRENT_SEARCH_WORKERS = 0
-MAX_CONCURRENT_SEARCHES = 24
+MAX_CONCURRENT_SEARCHES = 32
+_SEARCH_SEMAPHORE = threading.BoundedSemaphore(MAX_CONCURRENT_SEARCHES)
 
 def acquire_search_slot() -> bool:
-    global CURRENT_SEARCH_WORKERS
-    if CURRENT_SEARCH_WORKERS >= MAX_CONCURRENT_SEARCHES:
-        return False
-    CURRENT_SEARCH_WORKERS += 1
-    return True
+    """Atomic, thread-safe acquisition of a worker slot without race conditions."""
+    return _SEARCH_SEMAPHORE.acquire(blocking=False)
 
 def release_search_slot():
-    global CURRENT_SEARCH_WORKERS
-    if CURRENT_SEARCH_WORKERS > 0:
-        CURRENT_SEARCH_WORKERS -= 1
+    """Atomic, thread-safe release of a worker slot."""
+    try:
+        _SEARCH_SEMAPHORE.release()
+    except ValueError:
+        pass
 
 # =====================================================================
 # 4. BOT SHIELD & RATE LIMITING MIDDLEWARE

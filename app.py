@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 import hmac
+import hashlib
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from core.parser import extract_text_from_file, parse_candidate_profile
@@ -30,7 +31,7 @@ from core.config import Config
 from core.auth_db import (
     signup_user, login_user, is_user_paid, verify_session_token, get_user_profile,
     recover_verified_session, get_recent_contributions, grant_vip_to_email, revoke_vip_from_email,
-    add_admin_reply_to_contribution,
+    add_admin_reply_to_contribution, record_successful_payment, record_contribution_payment,
     get_user_kanban, save_user_kanban_application, sync_full_kanban,
     send_signup_otp, verify_otp_and_signup, login_or_signup_google_user,
     record_page_visit, get_analytics_summary, get_all_users_admin,
@@ -52,6 +53,38 @@ from core.legal_renderer import (
 _API_SEARCH_CACHE = {}
 _API_SEARCH_CACHE_LOCK = threading.Lock()
 _API_SEARCH_CACHE_TTL = 7200  # 2 Hours
+
+# High-Performance In-Memory Cache for Omni Search Discovery (Sub-millisecond responses under load)
+_OMNI_SEARCH_CACHE = {}
+_OMNI_SEARCH_CACHE_LOCK = threading.Lock()
+_OMNI_SEARCH_CACHE_TTL = 300  # 5 Minutes
+_OMNI_SEARCH_CACHE_MAX = 2000
+
+# Executive Admin Rate Limiting & Brute-Force Lockout Defense
+_FAILED_ADMIN_ATTEMPTS = {}
+_FAILED_ADMIN_LOCK = threading.Lock()
+_MAX_FAILED_ADMIN_ATTEMPTS = 5
+_LOCKOUT_WINDOW_SECONDS = 900  # 15 minutes
+
+def _is_ip_locked_out_admin(ip: str) -> bool:
+    now = time.time()
+    with _FAILED_ADMIN_LOCK:
+        attempts = _FAILED_ADMIN_ATTEMPTS.get(ip, [])
+        valid_attempts = [t for t in attempts if now - t < _LOCKOUT_WINDOW_SECONDS]
+        _FAILED_ADMIN_ATTEMPTS[ip] = valid_attempts
+        return len(valid_attempts) >= _MAX_FAILED_ADMIN_ATTEMPTS
+
+def _record_failed_admin_attempt(ip: str):
+    now = time.time()
+    with _FAILED_ADMIN_LOCK:
+        if ip not in _FAILED_ADMIN_ATTEMPTS:
+            _FAILED_ADMIN_ATTEMPTS[ip] = []
+        _FAILED_ADMIN_ATTEMPTS[ip].append(now)
+
+def _reset_failed_admin_attempts(ip: str):
+    with _FAILED_ADMIN_LOCK:
+        if ip in _FAILED_ADMIN_ATTEMPTS:
+            del _FAILED_ADMIN_ATTEMPTS[ip]
 
 app = FastAPI(title="Almond Jobs - Direct Corporate Career Engine", version="2.0.0")
 
@@ -398,9 +431,21 @@ async def serve_admin_dashboard(
         res.delete_cookie("almond_admin_key")
         return res
 
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        client_ip = forwarded.split(",")[0].strip()
+
+    if _is_ip_locked_out_admin(client_ip):
+        raise HTTPException(status_code=429, detail="Too many failed administrative login attempts. Please wait 15 minutes before retrying.")
+
     cookie_key = request.cookies.get("almond_admin_key")
     provided_key = (key or cookie_key or "").strip()
     is_authenticated = _is_valid_admin_key(provided_key)
+    if key and not is_authenticated:
+        _record_failed_admin_attempt(client_ip)
+    elif is_authenticated:
+        _reset_failed_admin_attempts(client_ip)
 
     env = Environment(loader=FileSystemLoader(TEMPLATES_DIR), autoescape=select_autoescape(['html', 'xml']))
     template = env.get_template("admin.html")
@@ -1105,6 +1150,81 @@ async def api_verify_payment(payload: dict = Body(...)):
         raise HTTPException(status_code=res.get("http_status", 400), detail=res.get("message"))
     return JSONResponse(content=res)
 
+@app.post("/api/razorpay/webhook")
+async def api_razorpay_webhook(request: Request):
+    """
+    Asynchronous server-to-server webhook from Razorpay for transaction recovery.
+    Ensures candidate VIP grants and payments are recorded even if client browser
+    crashes or disconnects before frontend verification executes.
+    """
+    webhook_secret = (getattr(Config, "RAZORPAY_WEBHOOK_SECRET", "") or getattr(Config, "RAZORPAY_KEY_SECRET", "") or "").strip()
+    signature = request.headers.get("X-Razorpay-Signature", "").strip()
+
+    raw_body = await request.body()
+    if not raw_body:
+        raise HTTPException(status_code=400, detail="Empty webhook payload.")
+
+    # 1. Verify HMAC-SHA256 signature if webhook secret is configured
+    if webhook_secret and not webhook_secret.startswith("test_secret_"):
+        expected_sig = hmac.new(webhook_secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(expected_sig, signature):
+            print("[WEBHOOK] Warning: Invalid Razorpay webhook signature rejected.")
+            raise HTTPException(status_code=400, detail="Invalid webhook signature.")
+
+    # 2. Parse payload
+    try:
+        event_data = json.loads(raw_body.decode("utf-8"))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Malformed JSON: {e}")
+
+    event = event_data.get("event", "")
+    payload = event_data.get("payload", {})
+    payment_entity = payload.get("payment", {}).get("entity", {})
+
+    if event in ["payment.captured", "order.paid"] and payment_entity:
+        payment_id = payment_entity.get("id", "")
+        order_id = payment_entity.get("order_id", "")
+        amount_paise = payment_entity.get("amount", 0)
+        amount_inr = int(amount_paise / 100) if amount_paise else 0
+        payer_email = (payment_entity.get("email") or "").strip().lower()
+        notes = payment_entity.get("notes") or {}
+        plan_name = notes.get("plan_name") or "Almond Jobs VIP Pass"
+        user_id = notes.get("user_id") or payer_email or "guest"
+        purchase_type = notes.get("purchase_type") or "vip_pass"
+
+        if purchase_type == "contribution":
+            record_contribution_payment(
+                user_id=user_id,
+                payment_id=payment_id,
+                order_id=order_id,
+                amount_inr=amount_inr,
+                plan_name=plan_name,
+                supporter_name=notes.get("supporter_name", ""),
+                supporter_message=notes.get("supporter_message", ""),
+                currency=payment_entity.get("currency", "INR")
+            )
+        else:
+            # Idempotently record payment & grant VIP access
+            record_successful_payment(
+                user_id=user_id,
+                payment_id=payment_id,
+                order_id=order_id,
+                amount_inr=amount_inr,
+                plan_name=plan_name
+            )
+            if payer_email:
+                duration_days = 180 if "180" in plan_name.lower() or amount_inr >= 2500 else (90 if "90" in plan_name.lower() or amount_inr >= 1500 else 30)
+                grant_vip_to_email(
+                    payer_email,
+                    duration_days=duration_days,
+                    granted_by="razorpay_webhook",
+                    notes=f"Processed via webhook event {event} (order {order_id})"
+                )
+
+        print(f"[WEBHOOK] Successfully recovered transaction {payment_id} for {payer_email or user_id}.")
+
+    return JSONResponse(content={"status": "ok", "event": event})
+
 @app.post("/api/kanban/get")
 async def api_get_kanban(payload: dict = Body(...)):
     token = payload.get("token", "")
@@ -1160,6 +1280,29 @@ async def api_omni_search(
     skills_list = [s.strip().lower() for s in skills.split(",") if s.strip()] if skills else None
     effective_min_lpa = max(min_lpa, min_package_lpa or 0.0)
     user_paid = is_user_paid(user_id) if user_id else False
+
+    # Concurrency Caching: Sub-millisecond response for concurrent search traffic
+    cache_key = (
+        (q or "").strip().lower(),
+        category,
+        (location or "all").strip().lower(),
+        effective_min_lpa,
+        work_mode,
+        contract_type,
+        tuple(sorted(skills_list)) if skills_list else (),
+        match_resume,
+        (target_role or "").strip().lower(),
+        min(limit, 100),
+        offset,
+        user_paid
+    )
+    now = time.time()
+    with _OMNI_SEARCH_CACHE_LOCK:
+        if cache_key in _OMNI_SEARCH_CACHE:
+            entry = _OMNI_SEARCH_CACHE[cache_key]
+            if now - entry["timestamp"] < _OMNI_SEARCH_CACHE_TTL:
+                return JSONResponse(content={"status": "success", "result": entry["data"], "cached": True})
+
     res = omni_search_all_feeds(
         query=q,
         category=category,
@@ -1174,6 +1317,14 @@ async def api_omni_search(
         offset=offset,
         user_is_paid=user_paid
     )
+
+    with _OMNI_SEARCH_CACHE_LOCK:
+        if len(_OMNI_SEARCH_CACHE) > _OMNI_SEARCH_CACHE_MAX:
+            oldest_keys = sorted(_OMNI_SEARCH_CACHE.keys(), key=lambda k: _OMNI_SEARCH_CACHE[k]["timestamp"])[:500]
+            for k in oldest_keys:
+                del _OMNI_SEARCH_CACHE[k]
+        _OMNI_SEARCH_CACHE[cache_key] = {"timestamp": now, "data": res}
+
     return JSONResponse(content={"status": "success", "result": res})
 
 

@@ -40,8 +40,11 @@ else:
     print("[AUTH_DB] Notice: Running with local persistent SQLite storage. Supabase keys not provided.")
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA busy_timeout=30000;")
     return conn
 
 def init_db():
@@ -115,6 +118,8 @@ def init_db():
         """)
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments (user_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_payment_id ON payments (payment_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments (order_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_cand_apps_user ON candidate_applications (user_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_traffic_date ON site_traffic (date);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_traffic_path ON site_traffic (path);")
@@ -1781,6 +1786,18 @@ def record_contribution_payment(
     currency: str = "INR"
 ) -> bool:
     """Record a voluntary supporter contribution with name and candidate message without granting VIP Pass access."""
+    # 0. Idempotency Check: Prevent duplicate payment recording
+    if payment_id and not str(payment_id).startswith("adm_"):
+        try:
+            with get_db() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT id FROM payments WHERE payment_id = ? AND status = 'contribution'", (payment_id,))
+                if cursor.fetchone():
+                    print(f"[AUTH_DB] [IDEMPOTENT] Contribution {payment_id} already captured. Skipping duplicate insert.")
+                    return True
+        except Exception:
+            pass
+
     now = time.time()
     clean_name = (supporter_name or "").strip()
     clean_msg = (supporter_message or "").strip()
@@ -2317,6 +2334,22 @@ def add_admin_reply_to_contribution(payment_id: str, reply_text: str) -> dict:
 
 def record_successful_payment(user_id: str, payment_id: str, order_id: str, amount_inr: float, plan_name: str = "") -> bool:
     """Record a captured payment with strict timestamp-based expiration (24h Day Sprint, 30d, or 90d)."""
+    # 0. Idempotency Check: Prevent duplicate payment recording and subscription duration stacking
+    if payment_id and not str(payment_id).startswith("adm_"):
+        try:
+            with get_db() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT id, plan_name, created_at FROM payments WHERE payment_id = ? AND status = 'captured'",
+                    (payment_id,)
+                )
+                existing = cursor.fetchone()
+                if existing:
+                    print(f"[AUTH_DB] [IDEMPOTENT] Payment {payment_id} was already captured at {existing['created_at']}. Ignoring duplicate processing.")
+                    return True
+        except Exception as e:
+            print(f"[AUTH_DB] Error during payment idempotency check: {e}")
+
     now = time.time()
     plan_lower = (plan_name or "").lower()
 
