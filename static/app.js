@@ -8502,3 +8502,63 @@ document.addEventListener("keydown", (e) => {
         closeAnyActiveModal();
     }
 });
+
+
+// ==============================================================================
+// PROGRESSIVE WEB APP (PWA) & SERVICE WORKER CONTROLLER
+// ==============================================================================
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then((registration) => {
+                console.log('[PWA] Service worker registered with scope:', registration.scope);
+            })
+            .catch((err) => {
+                console.warn('[PWA] Service worker registration failed:', err);
+            });
+    });
+}
+
+let _deferredPwaPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    _deferredPwaPrompt = e;
+
+    try {
+        if (localStorage.getItem('almond_pwa_dismissed') === 'true') return;
+    } catch (err) {}
+
+    const promptCard = document.getElementById('pwaInstallPrompt');
+    if (promptCard) {
+        setTimeout(() => {
+            promptCard.classList.remove('hidden');
+        }, 8000);
+    }
+});
+
+function installPwaApp() {
+    const promptCard = document.getElementById('pwaInstallPrompt');
+    if (promptCard) promptCard.classList.add('hidden');
+
+    if (_deferredPwaPrompt) {
+        _deferredPwaPrompt.prompt();
+        _deferredPwaPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('[PWA] Candidate accepted A2HS install');
+            }
+            _deferredPwaPrompt = null;
+        });
+    }
+}
+window.installPwaApp = installPwaApp;
+
+function dismissPwaPrompt() {
+    const promptCard = document.getElementById('pwaInstallPrompt');
+    if (promptCard) promptCard.classList.add('hidden');
+    try {
+        localStorage.setItem('almond_pwa_dismissed', 'true');
+    } catch (err) {}
+}
+window.dismissPwaPrompt = dismissPwaPrompt;

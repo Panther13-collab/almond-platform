@@ -172,6 +172,21 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 async def on_startup():
     start_curated_feed_scheduler()
 
+@app.get("/manifest.json", include_in_schema=False)
+@app.get("/manifest.webmanifest", include_in_schema=False)
+async def serve_manifest():
+    manifest_path = os.path.join(STATIC_DIR, "manifest.json")
+    return FileResponse(manifest_path, media_type="application/manifest+json")
+
+@app.get("/sw.js", include_in_schema=False)
+async def serve_service_worker():
+    sw_path = os.path.join(STATIC_DIR, "sw.js")
+    return FileResponse(
+        sw_path,
+        media_type="application/javascript",
+        headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"}
+    )
+
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     fav_path = os.path.join(STATIC_DIR, "favicon.ico")

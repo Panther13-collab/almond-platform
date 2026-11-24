@@ -12,6 +12,14 @@
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <link rel="canonical" href="https://almondjobs.com/">
     
+    <!-- PWA Progressive Web App Manifest & Mobile Metadata -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#090d16">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Almond Jobs">
+    <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+    
     <!-- OpenGraph Protocol (Facebook, LinkedIn, Discord, Slack) -->
     <meta property="og:site_name" content="Almond Jobs">
     <meta property="og:type" content="website">
@@ -3570,6 +3578,35 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
         </button>
+    </div>
+
+
+    <!-- PWA Mobile / Desktop Install Prompt Card -->
+    <div id="pwaInstallPrompt" class="hidden fixed bottom-5 right-5 z-40 max-w-xs sm:max-w-sm rounded-2xl bg-slate-900/95 backdrop-blur-md border border-indigo-500/30 shadow-2xl p-4 text-slate-200 transition-all duration-300">
+        <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/25">
+                <img src="/static/logo.png" alt="Almond Jobs Logo" class="w-7 h-7 object-contain rounded-lg">
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                    <h4 class="text-xs font-bold text-white tracking-wide">Install Almond Jobs</h4>
+                    <button type="button" onclick="dismissPwaPrompt()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer" aria-label="Dismiss">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <p class="text-[11px] text-slate-300 mt-1 leading-snug">
+                    Add to your Home Screen for instant 1-tap access to fresh first-wave corporate job openings.
+                </p>
+                <div class="flex items-center gap-2 mt-3">
+                    <button type="button" id="pwaInstallBtn" onclick="installPwaApp()" class="flex-1 py-1.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-500/30 transition cursor-pointer text-center">
+                        Add to Home Screen
+                    </button>
+                    <button type="button" onclick="dismissPwaPrompt()" class="py-1.5 px-3 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 font-medium text-xs transition cursor-pointer">
+                        Not Now
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
 </body>
