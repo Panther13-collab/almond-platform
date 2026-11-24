@@ -36,7 +36,7 @@ from core.auth_db import (
     send_signup_otp, verify_otp_and_signup, login_or_signup_google_user,
     record_page_visit, get_analytics_summary, get_all_users_admin,
     parse_device_hardware, is_bot_or_scanner, get_dynamic_pricing, update_tier_pricing,
-    save_candidate_feedback, get_all_candidate_feedback, reply_to_candidate_feedback, get_revenue_analytics
+    save_candidate_feedback, get_all_candidate_feedback, reply_to_candidate_feedback, get_revenue_analytics, purge_dummy_candidates_admin
 )
 from core.payment import apply_vip_latest_feed_lock, create_razorpay_order, verify_razorpay_signature
 from core.security import BotShieldMiddleware, validate_uploaded_file, acquire_search_slot, release_search_slot
@@ -506,6 +506,16 @@ async def serve_admin_dashboard(
             candidates=[]
         )
         return HTMLResponse(content=rendered)
+
+@app.post("/api/admin/clean-test-candidates")
+async def clean_test_candidates_endpoint(request: Request, key: Optional[str] = Query(None)):
+    """Safely purge synthetic test accounts from the database so only real candidate signups remain."""
+    cookie_key = request.cookies.get("almond_admin_key")
+    header_key = request.headers.get("x-admin-key")
+    provided_key = (key or cookie_key or header_key or "").strip()
+    if not _is_valid_admin_key(provided_key):
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin secret key.")
+    return purge_dummy_candidates_admin()
 
 @app.get("/api/admin/metrics")
 async def get_admin_metrics(request: Request, key: Optional[str] = Query(None)):

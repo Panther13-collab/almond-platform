@@ -220,6 +220,151 @@
                 </div>
             </div>
 
+            <!-- FounderScale Conversion Funnel & Strategy Guide -->
+            <div class="card-surface p-5 rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-slate-900/80 to-emerald-500/10 space-y-3">
+                <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-black uppercase tracking-wider text-amber-400">&#129517; Founder Conversion Intelligence</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">Live Stream Active</span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed max-w-3xl">
+                            <strong class="text-white">Why 11 Visitors != 11 Candidates:</strong> When people click your Reddit, Peerlist, or WhatsApp posts, they arrive as <strong class="text-amber-300">Verified Web Visitors</strong> (logged in real time below). They only enter the <strong class="text-violet-300">Candidate Directory</strong> when they complete free signup/OTP to save jobs. In tech SaaS, a 5% to 15% visit-to-signup conversion is healthy.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs font-mono bg-slate-950/90 px-4 py-2.5 rounded-xl border border-white/10 shrink-0">
+                        <span class="text-amber-400 font-bold">{{ analytics.unique_visitors_total or 0 }} Visitors</span>
+                        <span class="text-slate-500">&rarr;</span>
+                        <span class="text-violet-400 font-bold">{{ genuine_count }} Real Candidates</span>
+                        <span class="text-slate-500">&rarr;</span>
+                        <span class="text-emerald-400 font-bold">{{ vip_count }} VIP Members</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Marketing Acquisition Channels (Reddit, Peerlist, Direct, Search) -->
+            <div class="card-surface p-5 rounded-2xl space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <span>&#128225;</span> Live Acquisition Channels (Where Visitors Come From)
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Tracking clicks from Reddit posts, Peerlist launches, and social links</p>
+                    </div>
+                    <span class="text-xs text-slate-500 font-mono">Live Ingestion</span>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                    {% for src in analytics.traffic_sources or [] %}
+                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1 hover:border-slate-700 transition">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-white truncate">{{ src.icon }} {{ src.channel }}</span>
+                        </div>
+                        <div class="text-xl font-extrabold text-amber-400 font-mono">{{ src.uniques }} <span class="text-xs font-normal text-slate-400">uniques</span></div>
+                        <div class="text-[11px] text-slate-500 font-mono">{{ src.hits }} total clicks</div>
+                    </div>
+                    {% else %}
+                    <div class="col-span-full py-4 text-center text-xs text-slate-500">
+                        No external channel clicks recorded yet today. Share links on Reddit, Peerlist, and WhatsApp to populate.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Live Human Visitor Stream (Real-Time Ingestion) -->
+            <div class="card-surface p-6 rounded-2xl space-y-4 border-l-4 border-l-emerald-400">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="relative flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                            </span>
+                            <h3 class="text-base font-bold text-white">Live Human Visitor Stream (Recent Page Hits)</h3>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Real Humans Only</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">
+                            Exact hardware devices, landing pages, and referral sources (Reddit subreddits, Peerlist, etc.) of candidates currently browsing Almond Jobs.
+                        </p>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <input type="text" id="visitor-search" placeholder="Filter stream (reddit, iphone, /jobs)..." 
+                               oninput="filterVisitorStream()"
+                               class="w-full sm:w-64 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-400 font-mono">
+                        <button type="button" onclick="window.location.reload()" title="Refresh Feed"
+                                class="p-1.5 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition flex items-center gap-1 shrink-0">
+                            <span>&#8635;</span> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Visitors Table -->
+                <div class="overflow-x-auto custom-scrollbar border border-slate-800/80 rounded-xl">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-800 bg-slate-900/90 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+                                <th class="py-3 px-3">Status</th>
+                                <th class="py-3 px-3">Time</th>
+                                <th class="py-3 px-3">Acquisition Source</th>
+                                <th class="py-3 px-3">Target Landing Page</th>
+                                <th class="py-3 px-3">Hardware &amp; Device</th>
+                                <th class="py-3 px-3 font-mono">Visitor Hash</th>
+                            </tr>
+                        </thead>
+                        <tbody id="visitor-stream-body" class="divide-y divide-slate-800/60 font-mono">
+                            {% for v in analytics.recent_visitors or [] %}
+                            <tr class="visitor-stream-row hover:bg-slate-800/40 transition"
+                                data-source="{{ v.referrer_channel|lower }} {{ v.referrer_detail|lower }}"
+                                data-path="{{ v.path|lower }}"
+                                data-device="{{ v.device_model|lower }}">
+                                <td class="py-2.5 px-3 whitespace-nowrap">
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Real Human
+                                    </span>
+                                </td>
+                                <td class="py-2.5 px-3 text-slate-300 whitespace-nowrap" title="{{ v.time_str }}">
+                                    <span class="font-bold text-white">{{ v.time_ago }}</span>
+                                    <span class="text-[10px] text-slate-500 block font-sans">{{ v.date }}</span>
+                                </td>
+                                <td class="py-2.5 px-3">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold 
+                                            {% if 'reddit' in v.referrer_channel|lower %}bg-amber-500/20 text-amber-300 border border-amber-500/40
+                                            {% elif 'peerlist' in v.referrer_channel|lower %}bg-emerald-500/20 text-emerald-300 border border-emerald-500/40
+                                            {% elif 'linkedin' in v.referrer_channel|lower %}bg-blue-500/20 text-blue-300 border border-blue-500/40
+                                            {% elif 'google' in v.referrer_channel|lower %}bg-violet-500/20 text-violet-300 border border-violet-500/40
+                                            {% else %}bg-slate-800 text-slate-300 border border-slate-700{% endif %}">
+                                            {{ v.referrer_icon }} {{ v.referrer_channel }}
+                                        </span>
+                                        {% if v.referrer_detail and v.referrer_detail != v.referrer_channel %}
+                                        <span class="text-[11px] text-slate-400 font-sans truncate max-w-[180px]">{{ v.referrer_detail }}</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="py-2.5 px-3 font-mono text-amber-300 text-xs">
+                                    <span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">{{ v.path }}</span>
+                                </td>
+                                <td class="py-2.5 px-3 text-slate-200 font-sans text-xs">
+                                    <span class="font-medium">{{ v.device_model }}</span>
+                                    {% if v.device_brand %}<span class="text-[10px] text-slate-500 ml-1">({{ v.device_brand }})</span>{% endif %}
+                                </td>
+                                <td class="py-2.5 px-3 text-slate-400 font-mono text-[11px]">
+                                    vis_{{ v.visitor_hash }}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr id="no-visitors-row">
+                                <td colspan="6" class="py-8 text-center text-xs text-slate-500">
+                                    No live human visits recorded in this session yet. As visitors browse from Reddit or Peerlist, they stream here instantly.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Executive Quick Management Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div onclick="switchAdminTab('pricing')" class="card-surface p-6 rounded-2xl cursor-pointer hover:border-amber-400 transition space-y-3 group">
@@ -533,20 +678,25 @@
                     <div class="space-y-1.5">
                         <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-1 block">Quick Filters:</span>
                         <div class="flex items-center gap-2 flex-wrap text-xs">
-                            <button type="button" onclick="setQuickFilter('all')" id="pill-all" class="filter-pill active px-3 py-1.5 rounded-lg cursor-pointer font-bold">
-                                All (<span id="count-all">{{ candidates|length }}</span>)
+                            <button type="button" onclick="setQuickFilter('genuine')" id="pill-genuine" class="filter-pill active px-3.5 py-1.5 rounded-lg cursor-pointer font-bold text-emerald-300 border-emerald-500/40">
+                                &#10003; Genuine Real Candidates (<span id="count-genuine">{{ genuine_count }}</span>)
                             </button>
-                            <button type="button" onclick="setQuickFilter('genuine')" id="pill-genuine" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer font-bold">
-                                ✨ Genuine Real (<span id="count-genuine">{{ genuine_count }}</span>)
+                            <button type="button" onclick="setQuickFilter('all')" id="pill-all" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer font-bold">
+                                All (Real + Test) (<span id="count-all">{{ candidates|length }}</span>)
                             </button>
                             <button type="button" onclick="setQuickFilter('vip')" id="pill-vip" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer font-bold">
-                                ⭐ Active VIP (<span id="count-vip">{{ vip_count }}</span>)
+                                &#128081; Active VIP (<span id="count-vip">{{ vip_count }}</span>)
                             </button>
                             <button type="button" onclick="setQuickFilter('new')" id="pill-new" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer font-bold">
-                                ⚡ Newly Added (24h) (<span id="count-new">{{ new_count }}</span>)
+                                &#9889; Newly Added (24h) (<span id="count-new">{{ new_count }}</span>)
                             </button>
-                            <button type="button" onclick="setQuickFilter('dummy')" id="pill-dummy" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer font-bold">
-                                🧪 Test / Dummy (<span id="count-dummy">{{ dummy_count }}</span>)
+                            <button type="button" onclick="setQuickFilter('dummy')" id="pill-dummy" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer font-bold text-slate-400">
+                                &#129514; Test / Seeded (<span id="count-dummy">{{ dummy_count }}</span>)
+                            </button>
+
+                            <!-- Safe 1-Click Clean of Test / Dummy Accounts -->
+                            <button type="button" onclick="triggerPurgeTestAccounts()" class="ml-auto px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold transition flex items-center gap-1.5">
+                                <span>&#128465;&#65039;</span> Clean {{ dummy_count }} Test Accounts
                             </button>
                         </div>
                     </div>
@@ -556,8 +706,8 @@
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Account Classification</label>
                             <select id="filter-type" onchange="applyFilters()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-400">
+                                <option value="genuine" selected>Genuine Candidates (Hide Test / Dummy)</option>
                                 <option value="all">All Accounts (Real &amp; Test)</option>
-                                <option value="genuine">Genuine Candidates (Hide Dummy)</option>
                                 <option value="dummy">Dummy / Test Accounts Only</option>
                             </select>
                         </div>
@@ -1232,8 +1382,50 @@
             }
         };
 
+        // --- VISITOR STREAM LIVE SEARCH ---
+        function filterVisitorStream() {
+            const query = (document.getElementById('visitor-search')?.value || '').toLowerCase().trim();
+            const rows = document.querySelectorAll('.visitor-stream-row');
+            let visibleCount = 0;
+            rows.forEach(r => {
+                const src = r.getAttribute('data-source') || '';
+                const path = r.getAttribute('data-path') || '';
+                const dev = r.getAttribute('data-device') || '';
+                const match = !query || src.includes(query) || path.includes(query) || dev.includes(query);
+                r.style.display = match ? '' : 'none';
+                if (match) visibleCount++;
+            });
+            const noRow = document.getElementById('no-visitors-row');
+            if (noRow) noRow.style.display = (visibleCount === 0 && query) ? '' : 'none';
+        }
+
+        // --- PURGE DUMMY ACCOUNTS CONTROLLER ---
+        async function triggerPurgeTestAccounts() {
+            const confirmed = confirm(
+                'Are you sure you want to clean all test/dummy accounts?\n\n' +
+                'This will safely delete synthetic test accounts from development while keeping genuine registered candidates (and your own founder account) completely safe.'
+            );
+            if (!confirmed) return;
+
+            try {
+                const res = await fetch('/api/admin/clean-test-candidates', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    alert('Clean complete: ' + data.message);
+                    window.location.reload();
+                } else {
+                    alert('Purge error: ' + (data.message || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('Request failed: ' + err.message);
+            }
+        }
+
         // --- CANDIDATE DIRECTORY FILTER CONTROLLER ---
-        let currentQuickFilter = 'all';
+        let currentQuickFilter = 'genuine';
 
         function setQuickFilter(mode) {
             currentQuickFilter = mode;
@@ -1315,6 +1507,8 @@
         }
 
         document.getElementById('candidate-search')?.addEventListener('input', applyFilters);
+        // Apply genuine filter by default so founder sees real candidates immediately
+        setQuickFilter('genuine');
 
         // --- VIP GRANT & REVOKE AJAX CONTROLLER ---
         async function apiGrantVip(email, action = 'grant', duration = 30) {

@@ -1432,7 +1432,9 @@ def is_dummy_email(email: str) -> bool:
     dummy_domains = {
         "example.com", "test.com", "dummy.com", "fake.com", "sample.com",
         "mailinator.com", "tempmail.com", "10minutemail.com", "throwaway.com",
-        "guerrillamail.com", "trashmail.com", "localhost"
+        "guerrillamail.com", "trashmail.com", "localhost",
+        "enterprise.org", "techcorp.com", "startup.ai", "domain.com",
+        "almondjobs-test.com", "almondtest.com", "startup.io"
     }
     if domain in dummy_domains or domain.endswith(".test") or domain.endswith(".example"):
         return True
@@ -1443,10 +1445,17 @@ def is_dummy_email(email: str) -> bool:
         if kw in local_part:
             return True
 
-    test_prefixes = ["vip_split_", "supporter_feed_", "otp_test_", "smoke_test_", "perf_test_", "test_"]
+    test_prefixes = [
+        "vip_split_", "supporter_feed_", "otp_test_", "smoke_test_", "perf_test_", "test_",
+        "matcher_", "persist_", "direct_cand_", "google_vip_", "candidate_", "director_", "webhook_candidate"
+    ]
     for pfx in test_prefixes:
         if local_part.startswith(pfx):
             return True
+
+    # Pattern for synthetic test accounts with timestamp hashes, e.g. foo_1795177899
+    if re.search(r'_[0-9]{8,}', local_part):
+        return True
 
     return False
 
@@ -2852,6 +2861,269 @@ def record_page_visit(
         print(f"[TRAFFIC_TRACKER] Visit record note: {e}")
         return False
 
+def parse_referrer_info(referrer: str) -> dict:
+    """Extract clean domain, channel name, subreddit/path, and badge color from raw referrer URL."""
+    ref = (referrer or "").strip()
+    if not ref:
+        return {
+            "channel": "Direct / In-App",
+            "source": "Direct / In-App",
+            "detail": "Mobile App WebView / Direct URL",
+            "badge_color": "slate",
+            "icon": "🔗"
+        }
+    
+    ref_lower = ref.lower()
+    
+    # Reddit
+    if "reddit.com" in ref_lower:
+        sub_match = re.search(r'reddit\.com/r/([^/?#]+)', ref_lower)
+        sub_name = f"r/{sub_match.group(1)}" if sub_match else "r/Reddit"
+        return {
+            "channel": "Reddit",
+            "source": "Reddit",
+            "detail": sub_name,
+            "badge_color": "amber",
+            "icon": "🔴"
+        }
+    
+    # Peerlist
+    if "peerlist.io" in ref_lower:
+        return {
+            "channel": "Peerlist",
+            "source": "Peerlist",
+            "detail": "Feed / Project Spotlight",
+            "badge_color": "emerald",
+            "icon": "🟢"
+        }
+    
+    # LinkedIn
+    if "linkedin.com" in ref_lower:
+        return {
+            "channel": "LinkedIn",
+            "source": "LinkedIn",
+            "detail": "Post / Network Feed",
+            "badge_color": "blue",
+            "icon": "💼"
+        }
+
+    # Twitter / X
+    if any(k in ref_lower for k in ["twitter.com", "x.com", "t.co"]):
+        return {
+            "channel": "Twitter / X",
+            "source": "Twitter / X",
+            "detail": "Tweet / Bio Link",
+            "badge_color": "sky",
+            "icon": "🐦"
+        }
+
+    # Google
+    if "google." in ref_lower:
+        return {
+            "channel": "Google Search",
+            "source": "Google",
+            "detail": "Organic Search",
+            "badge_color": "violet",
+            "icon": "🔍"
+        }
+
+    # WhatsApp
+    if "whatsapp" in ref_lower:
+        return {
+            "channel": "WhatsApp",
+            "source": "WhatsApp",
+            "detail": "Group / Direct Share",
+            "badge_color": "emerald",
+            "icon": "💬"
+        }
+
+    # Telegram
+    if "telegram" in ref_lower or "t.me" in ref_lower:
+        return {
+            "channel": "Telegram",
+            "source": "Telegram",
+            "detail": "Channel / Chat Link",
+            "badge_color": "sky",
+            "icon": "✈️"
+        }
+
+    # Other External Website
+    domain_match = re.search(r'https?://([^/?#]+)', ref)
+    domain = domain_match.group(1) if domain_match else ref[:30]
+    return {
+        "channel": "External Web",
+        "source": domain,
+        "detail": domain,
+        "badge_color": "indigo",
+        "icon": "🌐"
+    }
+
+def get_recent_visitors(limit: int = 50, bots_only: bool = False) -> list:
+    """
+    Retrieve live stream of recent page hits with enriched referrer attribution,
+    hardware device models, and relative timestamps for founder telemetry.
+    """
+    now = time.time()
+    bot_filter = 1 if bots_only else 0
+    results = []
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, date, path, visitor_hash, device, device_model, device_brand, is_bot, referrer, timestamp
+                FROM site_traffic
+                WHERE is_bot = ?
+                ORDER BY timestamp DESC
+                LIMIT ?;
+            """, (bot_filter, limit))
+            rows = cursor.fetchall()
+
+        for r in rows:
+            ts = r["timestamp"] or now
+            diff = int(now - ts)
+            if diff < 10:
+                time_ago = "Just now"
+            elif diff < 60:
+                time_ago = f"{diff}s ago"
+            elif diff < 3600:
+                time_ago = f"{diff // 60}m ago"
+            elif diff < 86400:
+                time_ago = f"{diff // 3600}h ago"
+            elif diff < 604800:
+                time_ago = f"{diff // 86400}d ago"
+            else:
+                time_ago = time.strftime("%b %d, %H:%M", time.localtime(ts))
+
+            time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
+            
+            ref_meta = parse_referrer_info(r["referrer"])
+            
+            model = (r["device_model"] or "").strip()
+            brand = (r["device_brand"] or "").strip()
+            dev_type = (r["device"] or "desktop").strip()
+            if not model:
+                if dev_type == "mobile":
+                    model = "Mobile Smartphone"
+                elif dev_type == "tablet":
+                    model = "Tablet Device"
+                else:
+                    model = "Desktop Browser"
+            
+            v_hash = (r["visitor_hash"] or "")[:8]
+            
+            results.append({
+                "id": r["id"],
+                "date": r["date"],
+                "path": r["path"],
+                "visitor_hash": v_hash,
+                "device": dev_type,
+                "device_model": model,
+                "device_brand": brand,
+                "is_bot": bool(r["is_bot"]),
+                "referrer": r["referrer"] or "",
+                "referrer_channel": ref_meta["channel"],
+                "referrer_source": ref_meta["source"],
+                "referrer_detail": ref_meta["detail"],
+                "referrer_badge_color": ref_meta["badge_color"],
+                "referrer_icon": ref_meta["icon"],
+                "timestamp": ts,
+                "time_ago": time_ago,
+                "time_str": time_str
+            })
+    except Exception as e:
+        print(f"[AUTH_DB] get_recent_visitors error: {e}")
+    return results
+
+def get_traffic_source_breakdown() -> list:
+    """
+    Aggregate real human candidate traffic by marketing acquisition channel
+    (Reddit, Peerlist, LinkedIn, Google, Direct/App, etc.).
+    """
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT 
+                    CASE 
+                        WHEN LOWER(referrer) LIKE '%reddit.com%' THEN 'Reddit'
+                        WHEN LOWER(referrer) LIKE '%peerlist.io%' THEN 'Peerlist'
+                        WHEN LOWER(referrer) LIKE '%linkedin.com%' THEN 'LinkedIn'
+                        WHEN LOWER(referrer) LIKE '%twitter.com%' OR LOWER(referrer) LIKE '%t.co%' OR LOWER(referrer) LIKE '%x.com%' THEN 'Twitter / X'
+                        WHEN LOWER(referrer) LIKE '%google.%' THEN 'Google Search'
+                        WHEN LOWER(referrer) LIKE '%whatsapp%' THEN 'WhatsApp'
+                        WHEN LOWER(referrer) LIKE '%telegram%' OR LOWER(referrer) LIKE '%t.me%' THEN 'Telegram'
+                        WHEN referrer = '' OR referrer IS NULL THEN 'Direct / In-App'
+                        ELSE 'Other Websites'
+                    END as channel,
+                    COUNT(*) as hits,
+                    COUNT(DISTINCT visitor_hash) as uniques
+                FROM site_traffic
+                WHERE is_bot = 0
+                GROUP BY channel
+                ORDER BY hits DESC;
+            """)
+            rows = cursor.fetchall()
+    except Exception as e:
+        print(f"[AUTH_DB] get_traffic_source_breakdown error: {e}")
+        rows = []
+        
+    badge_colors = {
+        "Reddit": "amber",
+        "Peerlist": "emerald",
+        "LinkedIn": "blue",
+        "Twitter / X": "sky",
+        "Google Search": "violet",
+        "WhatsApp": "emerald",
+        "Telegram": "sky",
+        "Direct / In-App": "slate",
+        "Other Websites": "indigo"
+    }
+    icons = {
+        "Reddit": "🔴",
+        "Peerlist": "🟢",
+        "LinkedIn": "💼",
+        "Twitter / X": "🐦",
+        "Google Search": "🔍",
+        "WhatsApp": "💬",
+        "Telegram": "✈️",
+        "Direct / In-App": "🔗",
+        "Other Websites": "🌐"
+    }
+    
+    breakdown = []
+    for r in rows:
+        ch = r["channel"]
+        breakdown.append({
+            "channel": ch,
+            "hits": r["hits"],
+            "uniques": r["uniques"],
+            "badge_color": badge_colors.get(ch, "slate"),
+            "icon": icons.get(ch, "📌")
+        })
+    return breakdown
+
+def purge_dummy_candidates_admin() -> dict:
+    """
+    Safely purge synthetic/dummy test accounts from the users table.
+    Preserves genuine candidates and internal system accounts.
+    """
+    try:
+        candidates = get_all_users_admin()
+        dummy_ids = [c["id"] for c in candidates if c.get("is_dummy") and c["id"] != SYSTEM_STORE_EMAIL]
+        if not dummy_ids:
+            return {"status": "success", "deleted_count": 0, "message": "No test accounts to purge."}
+        
+        with get_db() as conn:
+            cursor = conn.cursor()
+            placeholders = ",".join("?" for _ in dummy_ids)
+            cursor.execute(f"DELETE FROM candidate_applications WHERE user_id IN ({placeholders});", dummy_ids)
+            cursor.execute(f"DELETE FROM payments WHERE user_id IN ({placeholders});", dummy_ids)
+            cursor.execute(f"DELETE FROM users WHERE id IN ({placeholders});", dummy_ids)
+            conn.commit()
+        return {"status": "success", "deleted_count": len(dummy_ids), "message": f"Successfully purged {len(dummy_ids)} dummy accounts."}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "deleted_count": 0}
+
 def get_analytics_summary() -> dict:
     """
     Calculate comprehensive real-time site analytics and engagement metrics.
@@ -2985,7 +3257,12 @@ def get_analytics_summary() -> dict:
         "genuine_users": sum(1 for c in candidates if not c.get("is_dummy")),
         "dummy_users": sum(1 for c in candidates if c.get("is_dummy")),
         "new_users_24h": sum(1 for c in candidates if c.get("is_new")),
-        "today_date": today_str
+        "today_date": today_str,
+
+        # Real-Time Telemetry Stream & Acquisition Sources
+        "recent_visitors": get_recent_visitors(limit=50, bots_only=False),
+        "recent_bot_probes": get_recent_visitors(limit=20, bots_only=True),
+        "traffic_sources": get_traffic_source_breakdown()
     }
 
 def get_all_users_admin() -> list:
