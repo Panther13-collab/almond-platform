@@ -3537,5 +3537,40 @@
         </div>
     </div>
 
+
+    <!-- Real-Time Social Proof Toast Notification (Micro-Moments) -->
+    <div id="socialProofToast" 
+         class="fixed bottom-5 left-5 z-40 transform translate-y-10 opacity-0 pointer-events-none transition-all duration-500 max-w-xs sm:max-w-sm rounded-2xl bg-slate-900/90 backdrop-blur-md border border-slate-700/60 shadow-2xl p-3.5 flex items-start gap-3 text-slate-200"
+         role="status" aria-live="polite">
+        <div class="relative shrink-0 mt-0.5">
+            <div id="socialToastAvatar" class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold text-xs shadow-md shadow-indigo-500/20">
+                UB
+            </div>
+            <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+        </div>
+        <div class="flex-1 min-w-0 pr-1">
+            <div class="flex items-center gap-1.5 leading-tight mb-0.5">
+                <span id="socialToastCandidate" class="text-xs font-semibold text-white truncate">Full Stack Dev in Bengaluru</span>
+            </div>
+            <p class="text-[11px] text-slate-300 truncate">
+                Matched to <span id="socialToastCompany" class="text-indigo-300 font-medium">Uber Careers</span>
+            </p>
+            <div class="flex items-center gap-2 mt-1">
+                <span id="socialToastTime" class="text-[10px] text-slate-400 font-medium">Just now</span>
+                <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/40 font-semibold tracking-wider uppercase">Direct ATS Feed</span>
+            </div>
+        </div>
+        <button id="dismissSocialToastBtn" type="button" onclick="dismissSocialToast()" 
+                class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800/60 transition cursor-pointer shrink-0" 
+                aria-label="Dismiss notification">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
+
 </body>
 </html>

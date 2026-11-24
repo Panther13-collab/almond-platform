@@ -8276,11 +8276,99 @@ window.initOmniSearch = function() {
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
         window.initOmniSearch();
+        window.initSocialProofToasts();
         // Container remains hidden until user types in search or uploads resume
     });
 } else {
     setTimeout(() => {
         window.initOmniSearch();
+        window.initSocialProofToasts();
         // Container remains hidden until user types in search or uploads resume
     }, 100);
 }
+
+
+// ==============================================================================
+// SOCIAL PROOF MICRO-MOMENTS TOAST MANAGER
+// ==============================================================================
+
+const ALMOND_SOCIAL_PROOF_FEED = [
+    { candidate: "Full Stack Dev in Bengaluru", company: "Uber Careers (Direct)", time: "1m ago", avatar: "UB" },
+    { candidate: "SWE Fresher in Hyderabad", company: "Microsoft Careers", time: "2m ago", avatar: "MS" },
+    { candidate: "AI / ML Engineer in Remote", company: "OpenAI Ashby Gateway", time: "3m ago", avatar: "AI" },
+    { candidate: "Frontend Architect in Pune", company: "Cisco Systems Direct", time: "4m ago", avatar: "CS" },
+    { candidate: "Backend Developer in Bengaluru", company: "Swiggy Greenhouse", time: "1m ago", avatar: "SW" },
+    { candidate: "Cloud Solutions Lead in Gurgaon", company: "Zomato Workday Portal", time: "5m ago", avatar: "ZM" },
+    { candidate: "Data Scientist in Dublin", company: "Stripe Careers", time: "3m ago", avatar: "ST" },
+    { candidate: "DevOps Engineer in Austin, TX", company: "Tesla Internal Careers", time: "6m ago", avatar: "TS" },
+    { candidate: "AI Research Intern in Bengaluru", company: "Adobe Research Feed", time: "2m ago", avatar: "AD" },
+    { candidate: "Junior SWE in Chennai", company: "Zoho Careers Direct", time: "4m ago", avatar: "ZH" }
+];
+
+let _socialToastIndex = 0;
+let _socialToastTimer = null;
+let _socialToastHideTimer = null;
+
+function dismissSocialToast() {
+    const toast = document.getElementById("socialProofToast");
+    if (toast) {
+        toast.classList.remove("translate-y-0", "opacity-100", "pointer-events-auto");
+        toast.classList.add("translate-y-10", "opacity-0", "pointer-events-none");
+    }
+    try {
+        sessionStorage.setItem("almond_social_toast_dismissed", "true");
+    } catch (e) {}
+    if (_socialToastTimer) clearInterval(_socialToastTimer);
+    if (_socialToastHideTimer) clearTimeout(_socialToastHideTimer);
+}
+window.dismissSocialToast = dismissSocialToast;
+
+function showNextSocialToast() {
+    try {
+        if (sessionStorage.getItem("almond_social_toast_dismissed") === "true") return;
+    } catch (e) {}
+
+    const toast = document.getElementById("socialProofToast");
+    if (!toast) return;
+
+    // Do not show toast if any full-screen modal or criteria intake modal is open
+    const openModal = document.querySelector(".fixed.inset-0:not(.hidden)");
+    if (openModal) return;
+
+    const data = ALMOND_SOCIAL_PROOF_FEED[_socialToastIndex % ALMOND_SOCIAL_PROOF_FEED.length];
+    _socialToastIndex++;
+
+    const candEl = document.getElementById("socialToastCandidate");
+    const compEl = document.getElementById("socialToastCompany");
+    const timeEl = document.getElementById("socialToastTime");
+    const avEl = document.getElementById("socialToastAvatar");
+
+    if (candEl) candEl.textContent = data.candidate;
+    if (compEl) compEl.textContent = data.company;
+    if (timeEl) timeEl.textContent = data.time;
+    if (avEl) avEl.textContent = data.avatar;
+
+    toast.classList.remove("translate-y-10", "opacity-0", "pointer-events-none");
+    toast.classList.add("translate-y-0", "opacity-100", "pointer-events-auto");
+
+    // Hide after 5 seconds
+    if (_socialToastHideTimer) clearTimeout(_socialToastHideTimer);
+    _socialToastHideTimer = setTimeout(() => {
+        toast.classList.remove("translate-y-0", "opacity-100", "pointer-events-auto");
+        toast.classList.add("translate-y-10", "opacity-0", "pointer-events-none");
+    }, 5000);
+}
+
+function initSocialProofToasts() {
+    try {
+        if (sessionStorage.getItem("almond_social_toast_dismissed") === "true") return;
+    } catch (e) {}
+
+    // First display delayed by 7 seconds to let the user absorb the hero fold
+    setTimeout(() => {
+        showNextSocialToast();
+        // Subsequent rotations every 24 seconds
+        _socialToastTimer = setInterval(showNextSocialToast, 24000);
+    }, 7000);
+}
+window.initSocialProofToasts = initSocialProofToasts;
