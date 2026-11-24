@@ -8372,3 +8372,133 @@ function initSocialProofToasts() {
     }, 7000);
 }
 window.initSocialProofToasts = initSocialProofToasts;
+
+
+// ==============================================================================
+// UNIVERSAL KEYBOARD ACCESSIBILITY: ESCAPE MODAL MANAGER
+// ==============================================================================
+
+function closeAnyActiveModal() {
+    let closedAny = false;
+    const isVisible = (el) => el && !el.classList.contains("hidden") && el.style.display !== "none";
+
+    // 1. Check modals
+    const omniModal = document.getElementById("omniCriteriaModal");
+    if (isVisible(omniModal)) {
+        if (typeof window.closeOmniCriteriaModal === "function") window.closeOmniCriteriaModal();
+        else omniModal.classList.add("hidden");
+        closedAny = true;
+    }
+
+    const profModal = document.getElementById("profileModal");
+    if (isVisible(profModal)) {
+        if (typeof closeProfileModal === "function") closeProfileModal();
+        else profModal.classList.add("hidden");
+        closedAny = true;
+    }
+
+    const vipPass = document.getElementById("vipPassModal");
+    if (isVisible(vipPass)) {
+        if (typeof window.closeVipPassModal === "function") window.closeVipPassModal();
+        else vipPass.classList.add("hidden");
+        closedAny = true;
+    }
+
+    const vipPricing = document.getElementById("vipPricingModal");
+    if (isVisible(vipPricing)) {
+        if (typeof closeVipPricingModal === "function") closeVipPricingModal();
+        else vipPricing.classList.add("hidden");
+        closedAny = true;
+    }
+
+    const kanban = document.getElementById("kanbanModal");
+    if (isVisible(kanban)) {
+        if (typeof closeKanbanModal === "function") closeKanbanModal();
+        else kanban.classList.add("hidden");
+        closedAny = true;
+    }
+
+    const feedback = document.getElementById("candidateFeedbackModal");
+    if (isVisible(feedback)) {
+        if (typeof closeCandidateFeedbackModal === "function") closeCandidateFeedbackModal();
+        else feedback.classList.add("hidden");
+        closedAny = true;
+    }
+
+    const curated = document.getElementById("curatedFeedsModal");
+    if (isVisible(curated)) {
+        if (typeof closeCuratedFeedsModal === "function") closeCuratedFeedsModal();
+        else curated.classList.add("hidden");
+        closedAny = true;
+    }
+
+    const pitch = document.getElementById("pitchModal");
+    if (isVisible(pitch)) {
+        pitch.classList.add("hidden");
+        closedAny = true;
+    }
+
+    const coverLetter = document.getElementById("coverLetterModal");
+    if (isVisible(coverLetter)) {
+        coverLetter.classList.add("hidden");
+        closedAny = true;
+    }
+
+    const dossier = document.getElementById("techDossierModal");
+    if (isVisible(dossier)) {
+        if (typeof closeTechDossierModal === "function") closeTechDossierModal();
+        else dossier.classList.add("hidden");
+        closedAny = true;
+    }
+
+    const coffee = document.getElementById("coffeeCheckoutModal");
+    if (isVisible(coffee)) {
+        if (typeof closeCoffeeCheckoutModal === "function") closeCoffeeCheckoutModal();
+        else coffee.classList.add("hidden");
+        closedAny = true;
+    }
+
+    const exitIntent = document.getElementById("paymentExitIntentModal");
+    if (isVisible(exitIntent)) {
+        if (typeof closeExitIntentModal === "function") closeExitIntentModal();
+        else exitIntent.classList.add("hidden");
+        closedAny = true;
+    }
+
+    const heroInfo = document.getElementById("heroInfoModal");
+    if (isVisible(heroInfo)) {
+        if (typeof closeHeroInfoModal === "function") closeHeroInfoModal();
+        else heroInfo.classList.add("hidden");
+        closedAny = true;
+    }
+
+    // 2. Side Panel / Navigation Drawer
+    const sidePanel = document.getElementById("sidePanel");
+    if (sidePanel && !sidePanel.classList.contains("translate-x-full")) {
+        if (typeof window.closeSidePanel === "function") window.closeSidePanel();
+        closedAny = true;
+    }
+
+    // 3. Dropdowns
+    const omniDrop = document.getElementById("omniCriteriaLocationDropdown");
+    if (isVisible(omniDrop)) {
+        omniDrop.classList.add("hidden");
+        closedAny = true;
+    }
+
+    const prefDrop = document.getElementById("preferredLocationDropdown");
+    if (isVisible(prefDrop)) {
+        prefDrop.classList.add("hidden");
+        closedAny = true;
+    }
+
+    return closedAny;
+}
+window.closeAnyActiveModal = closeAnyActiveModal;
+
+// Unified global Escape key listener
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" || e.keyCode === 27) {
+        closeAnyActiveModal();
+    }
+});
