@@ -4,7 +4,8 @@ import time
 import re
 import os
 import threading
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
+import datetime
 from core.job_engine import clean_job_url
 from core.payment import apply_vip_latest_feed_lock
 
@@ -51,38 +52,38 @@ def estimate_job_package(role_str: str, company_str: str, feed_type: str = "") -
 
     if feed_type == "internships" or "intern" in r:
         if tier1 or "ai" in r or "research" in r or "quant" in r:
-            return 8.0, "₹65,000 - ₹1,20,000 / mo Stipend (~8 LPA)"
+            return 8.0, "65,000 - 1,20,000 / mo Stipend (~8 LPA)"
         elif any(k in r for k in ["software", "developer", "engineer", "data", "cloud", "security"]):
-            return 5.5, "₹35,000 - ₹55,000 / mo Stipend (~5.5 LPA)"
+            return 5.5, "35,000 - 55,000 / mo Stipend (~5.5 LPA)"
         else:
-            return 3.6, "₹20,000 - ₹35,000 / mo Stipend (~3.6 LPA)"
+            return 3.6, "20,000 - 35,000 / mo Stipend (~3.6 LPA)"
 
     if any(k in r for k in ["ai", "ml", "machine learning", "deep learning", "llm", "nlp", "computer vision", "quant"]):
         if tier1:
-            return 34.0, "₹28 - ₹42 LPA (Tier-1 Benchmark)"
-        return 22.0, "₹18 - ₹26 LPA (Corporate Disclosed)"
+            return 34.0, "28 - 42 LPA (Tier-1 Benchmark)"
+        return 22.0, "18 - 26 LPA (Corporate Disclosed)"
 
     if any(k in r for k in ["lead", "principal", "staff", "architect", "senior", "director"]):
         if tier1:
-            return 45.0, "₹40 - ₹60 LPA (Leadership Tier)"
-        return 28.0, "₹24 - ₹35 LPA (Senior Benchmark)"
+            return 45.0, "40 - 60 LPA (Leadership Tier)"
+        return 28.0, "24 - 35 LPA (Senior Benchmark)"
 
     if any(k in r for k in ["software", "developer", "backend", "frontend", "full stack", "devops", "cloud", "security", "systems"]):
         if tier1:
-            return 26.0, "₹20 - ₹32 LPA (Disclosed Tier-1)"
-        return 16.5, "₹12 - ₹20 LPA (Corporate Direct Feed)"
+            return 26.0, "20 - 32 LPA (Disclosed Tier-1)"
+        return 16.5, "12 - 20 LPA (Corporate Direct Feed)"
 
     if any(k in r for k in ["product", "program", "analytics", "data analyst", "bi engineer"]):
         if tier1:
-            return 22.0, "₹18 - ₹26 LPA"
-        return 14.0, "₹10 - ₹16 LPA"
+            return 22.0, "18 - 26 LPA"
+        return 14.0, "10 - 16 LPA"
 
-    if any(k in r for k in ["mechanical", "electrical", "civil", "hardware", "embedded", "robotics"]):
+    if any(k in r for k in ["mechanical", "electrical", "civil", "hardware", "embedded", "robotics", "catia", "cad", "design"]):
         if tier1:
-            return 16.0, "₹14 - ₹20 LPA"
-        return 11.0, "₹8 - ₹14 LPA (Core Industry Benchmark)"
+            return 16.0, "14 - 20 LPA"
+        return 11.0, "8 - 14 LPA (Core Industry Benchmark)"
 
-    return 9.0, "₹7 - ₹12 LPA (Enterprise Benchmark)"
+    return 9.0, "7 - 12 LPA (Enterprise Benchmark)"
 
 def _normalize_simplify_listing(item: Dict[str, Any], feed_type: str) -> Optional[Dict[str, Any]]:
     if not item.get("active", False):
@@ -92,7 +93,7 @@ def _normalize_simplify_listing(item: Dict[str, Any], feed_type: str) -> Optiona
     if not cleaned_url or not cleaned_url.startswith("http"):
         return None
 
-    # Detect corporate ATS provider
+    # Detect corporate portal provider
     provider = "Direct Portal"
     lower_url = cleaned_url.lower()
     if "greenhouse.io" in lower_url:
@@ -340,140 +341,404 @@ US_STATE_CODES = {
 }
 CA_PROVINCE_CODES = {'ON','BC','QC','AB','MB','SK','NS','NB','NL','PE'}
 
+_LOCAL_CORPORATE_CACHE: List[Dict[str, Any]] = []
+_LOCAL_CORPORATE_LOADED = False
+_LOCAL_CORPORATE_LOCK = threading.Lock()
+
+def load_local_corporate_jobs() -> List[Dict[str, Any]]:
+    """Loads verified direct corporate jobs from local verified datasets (India & Global)."""
+    global _LOCAL_CORPORATE_CACHE, _LOCAL_CORPORATE_LOADED
+    with _LOCAL_CORPORATE_LOCK:
+        if _LOCAL_CORPORATE_LOADED and _LOCAL_CORPORATE_CACHE:
+            return _LOCAL_CORPORATE_CACHE
+
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        root_dir = os.path.dirname(base_dir)
+        extra = []
+        seen = set()
+
+        file_list = [
+            'final_verified_jobs.json',
+            'matched_jobs.json',
+            'targeted_south_and_remote.json',
+            'filtered_target_jobs.json'
+        ]
+
+        for fname in file_list:
+            paths_to_check = [os.path.join(root_dir, fname), os.path.join(base_dir, fname)]
+            p = next((path for path in paths_to_check if os.path.exists(path)), None)
+            if not p:
+                continue
+
+            try:
+                with open(p, 'r', encoding='utf-8') as f:
+                    items = json.load(f)
+                for it in items:
+                    u = it.get('url') or it.get('public_slug')
+                    if u and u not in seen:
+                        seen.add(u)
+                        posted = it.get('posted_at')
+                        ts = 1731000000
+                        if isinstance(posted, (int, float)):
+                            ts = int(posted)
+                        elif isinstance(posted, str):
+                            try:
+                                dt = datetime.datetime.fromisoformat(posted.replace('Z', '+00:00'))
+                                ts = int(dt.timestamp())
+                            except Exception:
+                                ts = 1731000000
+
+                        norm = {
+                            'company': it.get('company', 'Direct Corporate'),
+                            'role': it.get('title', 'Corporate Opening'),
+                            'location': it.get('location', 'Remote / Hybrid'),
+                            'locations_list': [str(c).lower() for c in (it.get('cities') or [])] + [str(r).lower() for r in (it.get('countries') or [])],
+                            'url': clean_job_url(it.get('url', '')),
+                            'feed_type': 'aiml' if it.get('is_tech') else 'entrylevel',
+                            'category': 'Tech / AI' if it.get('is_tech') else 'Corporate',
+                            'date_posted_ts': ts,
+                            'skills': [str(s).lower() for s in (it.get('skills') or [])],
+                            'description': it.get('description', '')
+                        }
+                        extra.append(norm)
+            except Exception as e:
+                print(f"[CURATED] Warning reading local corporate dataset {fname}: {e}")
+
+        _LOCAL_CORPORATE_CACHE = extra
+        _LOCAL_CORPORATE_LOADED = True
+        return _LOCAL_CORPORATE_CACHE
+
+
 def matches_country_filter(item: Dict[str, Any], target_country: str) -> bool:
-    """Matches a job against a requested country filter using name, aliases, states, and hubs."""
+    """Matches a job against a requested country or city filter using name, aliases, states, and hubs."""
     if not target_country or target_country.lower() in ["all", "any", "all locations", "all countries", "worldwide"]:
         return True
 
-    # Support composite locations like "Remote / Bangalore", "India, Remote", "USA | Remote"
-    parts = [p.strip() for p in re.split(r'[/,|;]|or', target_country, flags=re.IGNORECASE) if p.strip()]
-    if len(parts) > 1:
-        return any(matches_country_filter(item, p) for p in parts)
+    # 1. Alternative split (only for / or | or ' or ')
+    alt_parts = [p.strip() for p in re.split(r'[/|]| or ', target_country, flags=re.IGNORECASE) if p.strip()]
+    if len(alt_parts) > 1:
+        return any(matches_country_filter(item, p) for p in alt_parts)
 
     t = target_country.strip().lower()
     loc = (item.get("location") or "").lower()
-    locs_list = [l.lower() for l in (item.get("locations_list") or [])]
+    locs_list = [str(l).lower() for l in (item.get("locations_list") or [])]
     full_loc_text = " ".join([loc] + locs_list)
     raw_loc = item.get("location") or ""
 
     # Remote / Worldwide target
-    if t in ["remote", "worldwide", "remote / worldwide", "remote only"]:
+    if t in ["remote", "worldwide", "remote / worldwide", "remote only", "global", "anywhere"]:
         return any(k in full_loc_text for k in ["remote", "worldwide", "anywhere", "global"])
 
-    # India target & major Indian hubs
-    if t in ["india", "in", "ind", "bharat"] or any(c == t for c in [
-        "bengaluru", "bangalore", "chennai", "hyderabad", "pune", "mumbai",
-        "delhi", "new delhi", "noida", "gurgaon", "gurugram", "kolkata",
-        "ahmedabad", "coimbatore", "kochi", "ernakulam", "trivandrum",
-        "thiruvananthapuram", "mysore", "chandigarh", "jaipur"
-    ]):
-        if re.search(r'\bindia\b', full_loc_text):
-            return True
-        if any(c in full_loc_text for c in [
-            "bengaluru", "bangalore", "chennai", "hyderabad", "pune", "mumbai",
-            "delhi", "new delhi", "noida", "gurgaon", "gurugram", "kolkata",
-            "ahmedabad", "coimbatore", "kochi", "ernakulam", "trivandrum",
-            "thiruvananthapuram", "mysore", "chandigarh", "jaipur"
-        ]):
-            return True
-        return False
+    # Extract primary city candidate if format is "City, Country" or "City, State (Country)"
+    # E.g. "Austin, America" -> "austin", "Bengaluru, India" -> "bengaluru", "Dublin, Ireland" -> "dublin"
+    city_candidate = t.split(',')[0].strip() if ',' in t else t
+    city_candidate = re.sub(r'\(.*?\)', '', city_candidate).strip()
+    t_clean = re.sub(r'\(.*?\)', '', t).strip()
 
-    # United States / America / USA target
-    if t in ["united states", "america", "usa", "us", "united states (america)"]:
+    # 1. Comprehensive Indian City Hubs
+    indian_city_map = {
+        "bengaluru": ["bengaluru", "bangalore", "blr"],
+        "bangalore": ["bengaluru", "bangalore", "blr"],
+        "blr": ["bengaluru", "bangalore", "blr"],
+        "chennai": ["chennai", "madras"],
+        "hyderabad": ["hyderabad", "secunderabad"],
+        "pune": ["pune"],
+        "mumbai": ["mumbai", "bombay", "navi mumbai", "thane"],
+        "delhi": ["delhi", "new delhi", "noida", "gurgaon", "gurugram", "delhi ncr"],
+        "noida": ["noida", "greater noida", "delhi ncr"],
+        "gurgaon": ["gurgaon", "gurugram", "delhi ncr"],
+        "gurugram": ["gurgaon", "gurugram", "delhi ncr"],
+        "kolkata": ["kolkata", "calcutta"],
+        "ahmedabad": ["ahmedabad"],
+        "coimbatore": ["coimbatore"],
+        "kochi": ["kochi", "cochin", "ernakulam"],
+        "trivandrum": ["trivandrum", "thiruvananthapuram"],
+        "chandigarh": ["chandigarh", "mohali", "panchkula"],
+        "jaipur": ["jaipur"],
+        "indore": ["indore"],
+        "lucknow": ["lucknow"],
+        "bhubaneswar": ["bhubaneswar"],
+        "visakhapatnam": ["visakhapatnam", "vizag"],
+        "surat": ["surat"],
+        "nagpur": ["nagpur"],
+        "kanpur": ["kanpur"],
+        "thane": ["thane"],
+        "bhopal": ["bhopal"],
+        "patna": ["patna"],
+        "vadodara": ["vadodara", "baroda"],
+        "ghaziabad": ["ghaziabad"],
+        "ludhiana": ["ludhiana"],
+        "agra": ["agra"],
+        "nashik": ["nashik"],
+        "faridabad": ["faridabad"],
+        "meerut": ["meerut"],
+        "rajkot": ["rajkot"],
+        "varanasi": ["varanasi", "banaras", "kashi"],
+        "srinagar": ["srinagar"],
+        "aurangabad": ["aurangabad"],
+        "dhanbad": ["dhanbad"],
+        "amritsar": ["amritsar"],
+        "navi mumbai": ["navi mumbai"],
+        "allahabad": ["allahabad", "prayagraj"],
+        "prayagraj": ["allahabad", "prayagraj"],
+        "howrah": ["howrah"],
+        "ranchi": ["ranchi"],
+        "gwalior": ["gwalior"],
+        "jabalpur": ["jabalpur"],
+        "vijayawada": ["vijayawada"],
+        "jodhpur": ["jodhpur"],
+        "madurai": ["madurai"],
+        "raipur": ["raipur"],
+        "kota": ["kota"],
+        "guwahati": ["guwahati"],
+        "solapur": ["solapur"],
+        "hubli": ["hubli", "dharwad"],
+        "dharwad": ["hubli", "dharwad"],
+        "mysore": ["mysore", "mysuru"],
+        "mysuru": ["mysore", "mysuru"],
+        "tiruchirappalli": ["tiruchirappalli", "trichy"],
+        "trichy": ["tiruchirappalli", "trichy"],
+        "bareilly": ["bareilly"],
+        "aligarh": ["aligarh"],
+        "tiruppur": ["tiruppur"],
+        "moradabad": ["moradabad"],
+        "jalandhar": ["jalandhar"],
+        "salem": ["salem"],
+        "warangal": ["warangal"],
+        "guntur": ["guntur"],
+        "bhiwandi": ["bhiwandi"],
+        "saharanpur": ["saharanpur"],
+        "gorakhpur": ["gorakhpur"],
+        "bikaner": ["bikaner"],
+        "amravati": ["amravati"],
+        "jamshedpur": ["jamshedpur"],
+        "bhilai": ["bhilai"],
+        "cuttack": ["cuttack"],
+        "firozabad": ["firozabad"],
+        "calicut": ["calicut", "kozhikode"],
+        "kozhikode": ["calicut", "kozhikode"],
+        "thrissur": ["thrissur"],
+        "mangalore": ["mangalore", "mangaluru"],
+        "mangaluru": ["mangalore", "mangaluru"],
+        "belgaum": ["belgaum", "belagavi"],
+        "belagavi": ["belgaum", "belagavi"],
+        "udupi": ["udupi"],
+        "dehradun": ["dehradun"],
+        "shimla": ["shimla"],
+        "jammu": ["jammu"],
+        "goa": ["goa", "panaji"],
+        "panaji": ["goa", "panaji"],
+        "pondicherry": ["pondicherry", "puducherry"],
+        "puducherry": ["pondicherry", "puducherry"]
+    }
+
+    # 2. Comprehensive Global City Hubs
+    global_city_map = {
+        "austin": ["austin"],
+        "seattle": ["seattle"],
+        "san francisco": ["san francisco", "sf", "bay area", "silicon valley"],
+        "san jose": ["san jose", "silicon valley", "sunnyvale", "santa clara", "mountain view", "palo alto"],
+        "new york": ["new york", "nyc", "ny"],
+        "boston": ["boston", "cambridge"],
+        "chicago": ["chicago"],
+        "los angeles": ["los angeles", "la"],
+        "denver": ["denver"],
+        "atlanta": ["atlanta"],
+        "dallas": ["dallas", "fort worth"],
+        "houston": ["houston"],
+        "san diego": ["san diego"],
+        "portland": ["portland"],
+        "washington": ["washington", "dc"],
+        "miami": ["miami"],
+        "philadelphia": ["philadelphia"],
+        "phoenix": ["phoenix"],
+        "minneapolis": ["minneapolis"],
+        "raleigh": ["raleigh", "durham"],
+        "salt lake city": ["salt lake city"],
+        "detroit": ["detroit"],
+        "charlotte": ["charlotte"],
+        "tampa": ["tampa"],
+        "orlando": ["orlando"],
+        "nashville": ["nashville"],
+        "pittsburgh": ["pittsburgh"],
+        "boulder": ["boulder"],
+        "sunnyvale": ["sunnyvale"],
+        "mountain view": ["mountain view"],
+        "palo alto": ["palo alto"],
+        "santa clara": ["santa clara"],
+        "cupertino": ["cupertino"],
+        "redmond": ["redmond"],
+        "bellevue": ["bellevue"],
+        "london": ["london"],
+        "manchester": ["manchester"],
+        "birmingham": ["birmingham"],
+        "edinburgh": ["edinburgh"],
+        "glasgow": ["glasgow"],
+        "bristol": ["bristol"],
+        "cambridge": ["cambridge"],
+        "oxford": ["oxford"],
+        "leeds": ["leeds"],
+        "dublin": ["dublin"],
+        "cork": ["cork"],
+        "galway": ["galway"],
+        "limerick": ["limerick"],
+        "toronto": ["toronto"],
+        "vancouver": ["vancouver"],
+        "montreal": ["montreal"],
+        "ottawa": ["ottawa"],
+        "waterloo": ["waterloo"],
+        "calgary": ["calgary"],
+        "edmonton": ["edmonton"],
+        "berlin": ["berlin"],
+        "munich": ["munich"],
+        "frankfurt": ["frankfurt"],
+        "hamburg": ["hamburg"],
+        "stuttgart": ["stuttgart"],
+        "cologne": ["cologne"],
+        "amsterdam": ["amsterdam"],
+        "rotterdam": ["rotterdam"],
+        "utrecht": ["utrecht"],
+        "eindhoven": ["eindhoven"],
+        "paris": ["paris"],
+        "lyon": ["lyon"],
+        "toulouse": ["toulouse"],
+        "zurich": ["zurich"],
+        "geneva": ["geneva"],
+        "lausanne": ["lausanne"],
+        "basel": ["basel"],
+        "stockholm": ["stockholm"],
+        "gothenburg": ["gothenburg"],
+        "copenhagen": ["copenhagen"],
+        "oslo": ["oslo"],
+        "helsinki": ["helsinki"],
+        "warsaw": ["warsaw"],
+        "krakow": ["krakow"],
+        "wroclaw": ["wroclaw"],
+        "madrid": ["madrid"],
+        "barcelona": ["barcelona"],
+        "valencia": ["valencia"],
+        "milan": ["milan"],
+        "rome": ["rome"],
+        "vienna": ["vienna"],
+        "brussels": ["brussels"],
+        "lisbon": ["lisbon"],
+        "porto": ["porto"],
+        "prague": ["prague"],
+        "tallinn": ["tallinn"],
+        "bucharest": ["bucharest"],
+        "singapore": ["singapore"],
+        "dubai": ["dubai"],
+        "abu dhabi": ["abu dhabi"],
+        "riyadh": ["riyadh"],
+        "tel aviv": ["tel aviv"],
+        "tokyo": ["tokyo"],
+        "osaka": ["osaka"],
+        "seoul": ["seoul"],
+        "sydney": ["sydney"],
+        "melbourne": ["melbourne"],
+        "brisbane": ["brisbane"],
+        "perth": ["perth"],
+        "auckland": ["auckland"],
+        "wellington": ["wellington"],
+        "hong kong": ["hong kong"],
+        "taipei": ["taipei"],
+        "sao paulo": ["sao paulo"],
+        "rio de janeiro": ["rio de janeiro", "rio"],
+        "mexico city": ["mexico city"],
+        "buenos aires": ["buenos aires"],
+        "cape town": ["cape town"],
+        "johannesburg": ["johannesburg"]
+    }
+
+    # Match City candidate first (takes priority over broad country match when city is supplied)
+    all_cities = {**indian_city_map, **global_city_map}
+    for city_key, aliases in all_cities.items():
+        if city_candidate == city_key or f" {city_key} " in f" {city_candidate} ":
+            # If matching Dublin, make sure it's not Dublin, OH or Dublin, CA unless target explicitly asked for Ohio/CA
+            if city_key == "dublin" and not any(us_s in t for us_s in ["oh", "ca", "ohio", "california"]):
+                if any(us_s in full_loc_text for us_s in [", oh", ", ca", "ohio", "california"]):
+                    return False
+            return any(a in full_loc_text for a in aliases)
+
+    # 3. Broad Country Targets
+    if t in ["india", "ind", "bharat", "pan-india", "india (all cities)"]:
+        if re.search(r'\bindia\b', full_loc_text) and not any(k in full_loc_text for k in ["indiana", "indianapolis"]):
+            return True
+        return any(c in full_loc_text for c in indian_city_map)
+
+    if t in ["ireland", "ie", "ireland (all cities)"]:
+        if re.search(r'\b(ireland|ie)\b', full_loc_text):
+            return True
+        if "dublin" in full_loc_text and not any(us_st in full_loc_text for us_st in [", oh", ", ca", "ohio", "california"]):
+            return True
+        return any(c in full_loc_text for c in ["cork", "galway", "limerick"])
+
+    if t in ["united states", "america", "usa", "us", "united states (america)", "united states (usa)"]:
         if any(k in full_loc_text for k in ["united states", "usa", "u.s.", "america"]):
             return True
         for st in US_STATE_CODES:
             if re.search(r'[\s,]' + st + r'(\b|\+|$)', raw_loc):
                 return True
-        if any(c in full_loc_text for c in [
+        return any(c in full_loc_text for c in [
             "san francisco", "sf", "silicon valley", "new york", "nyc", "seattle",
             "austin", "chicago", "boston", "los angeles", "atlanta", "denver",
-            "palo alto", "mountain view", "sunnyvale", "san jose"
-        ]):
-            return True
-        return False
+            "palo alto", "mountain view", "sunnyvale", "san jose", "dallas", "houston"
+        ])
 
-    # United Kingdom target
     if t in ["united kingdom", "uk", "great britain", "england", "scotland", "wales", "united kingdom (uk)"]:
         if any(k in full_loc_text for k in ["united kingdom", "england", "scotland", "wales", "great britain"]):
             return True
         if re.search(r'[\s,]uk\b', full_loc_text):
             return True
-        if any(c in full_loc_text for c in ["london", "manchester", "birmingham", "edinburgh", "bristol", "cambridge", "oxford", "glasgow", "leeds"]):
-            return True
-        return False
+        return any(c in full_loc_text for c in ["london", "manchester", "birmingham", "edinburgh", "bristol", "cambridge", "oxford", "glasgow", "leeds"])
 
-    # Canada target
     if t in ["canada", "can"]:
         if "canada" in full_loc_text:
             return True
         for pr in CA_PROVINCE_CODES:
             if re.search(r'[\s,]' + pr + r'(\b|\+|$)', raw_loc):
                 return True
-        if any(c in full_loc_text for c in ["toronto", "vancouver", "montreal", "ottawa", "waterloo", "calgary", "edmonton"]):
-            return True
-        return False
+        return any(c in full_loc_text for c in ["toronto", "vancouver", "montreal", "ottawa", "waterloo", "calgary", "edmonton"])
 
-    # Germany target
     if t in ["germany", "deutschland", "de"]:
-        if any(k in full_loc_text for k in ["germany", "deutschland", "berlin", "munich", "frankfurt", "hamburg", "stuttgart"]):
-            return True
-        return False
+        return any(k in full_loc_text for k in ["germany", "deutschland", "berlin", "munich", "frankfurt", "hamburg", "stuttgart", "cologne"])
 
-    # Australia target
     if t in ["australia", "au"]:
-        if any(k in full_loc_text for k in ["australia", "sydney", "melbourne", "brisbane", "perth", "canberra"]):
-            return True
-        return False
+        return any(k in full_loc_text for k in ["australia", "sydney", "melbourne", "brisbane", "perth", "canberra", "adelaide"])
 
-    # Netherlands target
     if t in ["netherlands", "holland", "nl"]:
-        if any(k in full_loc_text for k in ["netherlands", "holland", "amsterdam", "rotterdam", "utrecht", "eindhoven", "the hague"]):
-            return True
-        return False
+        return any(k in full_loc_text for k in ["netherlands", "holland", "amsterdam", "rotterdam", "utrecht", "eindhoven", "the hague"])
 
-    # Singapore target
     if t in ["singapore", "sg"]:
         return "singapore" in full_loc_text
 
-    # Ireland target
-    if t in ["ireland", "ie"]:
-        return any(k in full_loc_text for k in ["ireland", "dublin", "cork", "galway"])
-
-    # France target
     if t in ["france", "fr"]:
         return any(k in full_loc_text for k in ["france", "paris", "lyon", "toulouse"])
 
-    # Switzerland target
     if t in ["switzerland", "ch"]:
         return any(k in full_loc_text for k in ["switzerland", "zurich", "geneva", "lausanne", "basel"])
 
-    # UAE target
     if t in ["united arab emirates", "uae", "dubai", "abu dhabi", "united arab emirates (uae)"]:
         return any(k in full_loc_text for k in ["uae", "united arab emirates", "dubai", "abu dhabi"])
 
-    # Japan target
     if t in ["japan", "jp"]:
         return any(k in full_loc_text for k in ["japan", "tokyo", "osaka", "kyoto"])
 
-    # Spain target
     if t in ["spain", "es"]:
         return any(k in full_loc_text for k in ["spain", "madrid", "barcelona", "valencia"])
 
-    # Sweden
     if t in ["sweden", "se"]:
         return any(k in full_loc_text for k in ["sweden", "stockholm", "gothenburg"])
 
-    # Poland
     if t in ["poland", "pl"]:
         return any(k in full_loc_text for k in ["poland", "warsaw", "krakow", "wroclaw"])
 
-    # Brazil
     if t in ["brazil", "br"]:
         return any(k in full_loc_text for k in ["brazil", "brasil", "sao paulo", "rio"])
 
-    clean_t = re.sub(r'\(.*?\)', '', t).strip()
-    return clean_t in full_loc_text
+    # Fallback to direct substring match for any other custom city or country
+    return city_candidate in full_loc_text or t_clean in full_loc_text
+
 
 def query_curated_feed(
     feed_type: str = "internships",
@@ -491,7 +756,6 @@ def query_curated_feed(
     if not all_items:
         return {"total": 0, "items": [], "categories": []}
 
-    # Extract all distinct categories
     all_categories = sorted(list(set(item.get("category", "General") for item in all_items if item.get("category"))))
 
     filtered = []
@@ -499,19 +763,17 @@ def query_curated_feed(
     now_ts = int(time.time())
 
     for item in all_items:
-        # Location / Country filter
         if location and location.lower() not in ["all", "any", "all locations", "all countries", "worldwide"]:
             if not matches_country_filter(item, location):
                 continue
 
-        # Category filter
         item_cat = (item.get("category") or "").lower()
         if category and category.lower() not in ["all", "any"]:
             cat_target = category.lower()
-            if cat_target == "tech" or cat_target == "software":
+            if cat_target in ["tech", "software"]:
                 if not any(k in item_cat for k in ["software", "tech", "engineering"]):
                     continue
-            elif cat_target == "ai" or cat_target == "data":
+            elif cat_target in ["ai", "data"]:
                 if not any(k in item_cat for k in ["ai", "ml", "data", "machine learning"]):
                     continue
             elif cat_target == "quant":
@@ -526,7 +788,6 @@ def query_curated_feed(
             elif cat_target != item_cat:
                 continue
 
-        # Time filter
         if time_filter and time_filter != "all":
             posted_ts = item.get("date_posted_ts", 0)
             if time_filter == "24h" and (now_ts - posted_ts > 86400 * 1.5):
@@ -536,7 +797,6 @@ def query_curated_feed(
             elif time_filter == "30d" and (now_ts - posted_ts > 86400 * 30):
                 continue
 
-        # Query search across company, role, location
         if q_tokens:
             haystack = f"{item.get('company', '')} {item.get('role', '')} {item.get('location', '')} {item.get('category', '')}".lower()
             if not all(token in haystack for token in q_tokens):
@@ -544,35 +804,30 @@ def query_curated_feed(
 
         filtered.append(item)
 
-    # Flipkart / Amazon style sort options (Latest, Oldest, Package High to Low, Package Low to High)
     if sort_by == "oldest":
         filtered.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=False)
     elif sort_by == "package_desc":
         filtered.sort(key=lambda x: (x.get("package_inr_lpa") or estimate_job_package(x.get("role", ""), x.get("company", ""), x.get("feed_type", feed_type))[0]), reverse=True)
     elif sort_by == "package_asc":
         filtered.sort(key=lambda x: (x.get("package_inr_lpa") or estimate_job_package(x.get("role", ""), x.get("company", ""), x.get("feed_type", feed_type))[0]), reverse=False)
-    else: # latest (default)
+    else:
         filtered.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=True)
 
     total_count = len(filtered)
     page_slice = filtered[offset : offset + limit]
 
-    # Apply free preview vs VIP locking (first 10 jobs 100% unlocked with direct links across all tabs & categories)
     processed_items = []
     for idx, item in enumerate(page_slice):
         item_copy = dict(item)
-        # Attach package if not already set
         pkg_val, pkg_disp = estimate_job_package(item_copy.get("role", ""), item_copy.get("company", ""), item_copy.get("feed_type", feed_type))
         item_copy["package_inr_lpa"] = item_copy.get("package_inr_lpa") or pkg_val
         item_copy["package_display"] = item_copy.get("package_display") or pkg_disp
 
-        # Recalculate dynamic freshness relative to right now
         posted_ts = item_copy.get("date_posted_ts", 0)
-        if posted_ts and posted_ts > 100000:
-            diff_days = max(0, (now_ts - posted_ts) // 86400)
-            item_copy["date_posted_str"] = f"{diff_days}d ago" if diff_days > 0 else "Today"
+        diff_days = max(0, (now_ts - posted_ts) // 86400) if (posted_ts and posted_ts > 100000) else 0
+        item_copy["date_posted_str"] = f"{diff_days}d ago" if diff_days > 0 else "Today"
+        item_copy["days_ago"] = diff_days
 
-        item_copy["days_ago"] = diff_days if posted_ts and posted_ts > 100000 else None
         processed_items.append(item_copy)
 
     apply_vip_latest_feed_lock(processed_items, user_is_paid=user_is_paid)
@@ -593,16 +848,17 @@ def omni_search_all_feeds(
     min_package_lpa: float = 0.0,
     work_mode: str = "all",
     contract_type: str = "all",
+    skills: Optional[List[str]] = None,
+    match_resume: bool = False,
+    target_role: Optional[str] = None,
     limit: int = 25,
     offset: int = 0,
     user_is_paid: bool = False
 ) -> Dict[str, Any]:
-    """High-speed unified discovery engine querying across all curated feeds
-    (Internships, Entry-Level, AI/ML Specialist) with letter-by-letter live filtering,
-    package parsing ('7 LPA', '7-12 LPA', '$90,000' -> compensation filter), location, and corporate ATS indexing.
-    Optimized for <10ms keystroke search latency.
+    """High-speed unified discovery engine querying across curated feeds and verified corporate postings
+    with precision location filtering, compensation benchmarks, and resume skill matching.
     """
-    # 1. Aggregate listings from in-memory cache
+    # 1. Aggregate listings from in-memory cache + local verified datasets
     combined_items = []
     seen_urls = set()
 
@@ -616,13 +872,21 @@ def omni_search_all_feeds(
                     item["feed_type"] = ft
                 combined_items.append(item)
 
+    # Supplement with local verified direct corporate listings (rich India + global openings)
+    extra_corporate = load_local_corporate_jobs()
+    for item in extra_corporate:
+        url = item.get("url")
+        if url and url not in seen_urls:
+            seen_urls.add(url)
+            combined_items.append(item)
+
     if not combined_items:
         return {"total": 0, "items": [], "limit": limit, "offset": offset, "query": query}
 
     now_ts = int(time.time())
 
-    # 2. Extract potential compensation package queries (e.g. '7-12 LPA', '7 LPA', '$90,000', '100k')
-    clean_query = query.strip()
+    # 2. Extract potential compensation package queries (e.g. '7-12 LPA', '7 LPA', '$90,000')
+    clean_query = (query or "").strip()
     range_match = re.search(r'(\d+(?:\.\d+)?)\s*(?:-|to)\s*(\d+(?:\.\d+)?)\s*(?:lpa|lakh|lac)', clean_query, re.IGNORECASE)
     if range_match:
         try:
@@ -642,7 +906,7 @@ def omni_search_all_feeds(
             except (ValueError, TypeError):
                 pass
             text_query = re.sub(r'(\d+(?:\.\d+)?)\s*(?:lpa|lakh|lac)', '', clean_query, flags=re.IGNORECASE).strip()
-        else:            # Match foreign currency or shorthand like '$90,000', '$100k', '90k usd', '100k'
+        else:
             usd_match = re.search(r'(?:\$\s*(\d[\d,]*(?:\.\d+)?)\s*(?:k|usd)?|(\d[\d,]*(?:\.\d+)?)\s*(?:k|usd))', clean_query, re.IGNORECASE)
             if usd_match:
                 try:
@@ -659,22 +923,40 @@ def omni_search_all_feeds(
                 text_query = clean_query
 
     q_tokens = [t.lower().strip() for t in text_query.split() if t.strip()]
+    clean_skills = [s.strip().lower() for s in skills if s and s.strip()] if skills else []
+    role_tokens = [t.lower().strip() for t in target_role.split() if len(t.strip()) > 2] if target_role else []
 
-    # 3. Filter across combined items with fast rejection pipeline
-    filtered = []
+    has_specific_loc = bool(location and location.strip().lower() not in ["all", "any", "all locations", "all countries", "worldwide"])
+
+    # 3. Filter across combined items
+    scored_items = []
     for item in combined_items:
-        # Fast Token matching with multi-word query relaxation
-        if q_tokens:
-            haystack = f"{item.get('company', '')} {item.get('role', '')} {item.get('location', '')}".lower()
+        # STRICT Location filter: never leak any outside geography when location is requested!
+        if has_specific_loc:
+            if not matches_country_filter(item, location):
+                continue
+
+        haystack = f"{item.get('company', '')} {item.get('role', '')} {item.get('category', '')} {item.get('location', '')} {' '.join(item.get('skills', []))} {item.get('description', '')}".lower()
+        role_haystack = (item.get('role') or '').lower()
+
+        # Token & Skills matching
+        item_score = 0
+        if match_resume:
+            matched_skills = [s for s in clean_skills if s in haystack]
+            matched_role = [t for t in role_tokens if t in role_haystack] if role_tokens else []
+            matched_q = [t for t in q_tokens if t in haystack] if q_tokens else []
+            
+            # Score bonus for skills and optional role matching
+            # Note: Target role is strictly optional bonus and NEVER eliminates a job!
+            item_score = (len(matched_skills) * 20) + (len(matched_role) * 5) + (len(matched_q) * 10)
+        elif q_tokens:
             matched_count = sum(1 for token in q_tokens if token in haystack)
             min_required = len(q_tokens) if len(q_tokens) <= 2 else max(2, int(len(q_tokens) * 0.6))
             if matched_count < min_required:
                 continue
-
-        # Location filter
-        if location and location.lower() not in ["all", "any", "all locations", "all countries", "worldwide"]:
-            if not matches_country_filter(item, location):
-                continue
+            item_score = matched_count * 10
+        else:
+            item_score = 10
 
         # Category filter
         item_cat = (item.get("category") or "").lower()
@@ -692,7 +974,7 @@ def omni_search_all_feeds(
             elif cat_target != item_cat:
                 continue
 
-        # Work mode filter (remote, hybrid, onsite)
+        # Work mode filter
         if work_mode and work_mode.lower() not in ["all", "any"]:
             wm = work_mode.lower()
             loc_lower = (item.get("location") or "").lower()
@@ -704,7 +986,7 @@ def omni_search_all_feeds(
             elif wm == "onsite" and is_remote:
                 continue
 
-        # Contract type filter (full-time, internship, contract)
+        # Contract type filter
         if contract_type and contract_type.lower() not in ["all", "any"]:
             ct = contract_type.lower()
             role_lower = (item.get("role") or "").lower()
@@ -717,7 +999,7 @@ def omni_search_all_feeds(
             elif ct in ["full-time", "fulltime"] and is_intern:
                 continue
 
-        # Minimum package check: evaluate only when package filter was explicitly requested
+        # Minimum package check
         if min_package_lpa > 0.0:
             item_pkg = item.get("package_inr_lpa")
             if item_pkg is None:
@@ -729,30 +1011,51 @@ def omni_search_all_feeds(
             if item_pkg < (min_package_lpa - 0.5):
                 continue
 
-        filtered.append(item)
+        item_dict = dict(item)
+        item_dict["_match_score"] = item_score
+        scored_items.append(item_dict)
 
-    # 4. Multi-tier fallback pipeline: ensure candidates always get relevant corporate postings
+    filtered = scored_items
+
+    # 4. Fallback pipeline: strictly preserve requested location WITHOUT leaking other geographies!
     if not filtered:
-        # Tier 1: Try matching any token across all locations & packages
-        if q_tokens:
-            for item in combined_items:
-                haystack = f"{item.get('company', '')} {item.get('role', '')} {item.get('location', '')}".lower()
-                if any(token in haystack for token in q_tokens):
-                    filtered.append(item)
-        # Tier 2: If still empty, return top curated corporate openings
-        if not filtered:
-            filtered = list(combined_items[:50])
+        if has_specific_loc:
+            # Fallback ONLY within the requested location!
+            loc_pool = [it for it in combined_items if matches_country_filter(it, location)]
+            if loc_pool:
+                filtered = list(loc_pool[:50])
+            else:
+                filtered = []
+        else:
+            # Broad search fallback
+            if q_tokens or clean_skills:
+                match_pool = clean_skills or q_tokens
+                for item in combined_items:
+                    haystack = f"{item.get('company', '')} {item.get('role', '')} {item.get('location', '')}".lower()
+                    if any(token in haystack for token in match_pool):
+                        filtered.append(item)
+            if not filtered:
+                filtered = list(combined_items[:50])
 
-    # 5. Sort by latest first
-    filtered.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=True)
+    # 5. Sort: primarily by match score if matching resume, then by recency
+    if match_resume:
+        filtered.sort(key=lambda x: (x.get("_match_score", 0), x.get("date_posted_ts", 0)), reverse=True)
+    else:
+        filtered.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=True)
 
     total_count = len(filtered)
     page_slice = filtered[offset : offset + limit]
 
-    # 5. Hydrate display package metadata ONLY for the current visible slice (ultra-fast)
+    # 6. Hydrate display package metadata (clean without rupee symbols)
     processed_items = []
     for item in page_slice:
         item_copy = dict(item)
+        loc = item_copy.get("location")
+        if not loc and item_copy.get("locations_list"):
+            loc = ", ".join([str(c).title() for c in item_copy.get("locations_list") if c])
+        if has_specific_loc and loc and not matches_country_filter({"location": loc, "locations_list": []}, location):
+            loc = f"{location.title()} / {loc}"
+        item_copy["location"] = loc or "Remote / Hybrid"
         pkg_val, pkg_disp = estimate_job_package(
             item_copy.get("role", ""),
             item_copy.get("company", ""),

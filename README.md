@@ -1,9 +1,9 @@
-# Almond AI — Direct ATS Intelligence & Career Platform
+# Almond AI — Direct Corporate Intelligence & Career Platform
 
-Almond AI is a production-grade enterprise intelligence platform designed to eliminate recruiter markups, middlemen spreads, and ghost postings. It matches candidates directly with verified ATS endpoints (SmartRecruiters, Lever, Greenhouse, Ashby, Workday) and generates STAR-grounded application dossiers.
+Almond AI is a production-grade enterprise intelligence platform designed to eliminate recruiter markups, middlemen spreads, and ghost postings. It matches candidates directly with verified company endpoints (SmartRecruiters, Lever, Greenhouse, Ashby, Workday) and generates STAR-grounded application dossiers.
 
 ## Features
-- **Direct ATS Verification:** 100% direct application links with zero recruiter spread or middleman commission.
+- **Direct Corporate Verification:** 100% direct application links with zero recruiter spread or middleman commission.
 - **Proof-of-Human Presence Barrier:** Interactive hold-to-verify protection (mouse, touch, spacebar) that completely halts automated bot crawling and scraping.
 - **Multi-Currency Band Engine:** Dynamic salary band filtering across INR (LPA), USD, EUR, GBP, CAD, AUD, and AED with automatic currency normalization.
 - **Dynamic Postings Telemetry:** Real-time crawler telemetry simulation reflecting active index updates and pruning.

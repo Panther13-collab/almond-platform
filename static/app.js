@@ -192,18 +192,28 @@ let isSlideTransitioning = false;
 const TOTAL_SLIDES = 4;
 
 window.goToSlide = function(slideIdx) {
-    if (slideIdx < 0 || slideIdx >= TOTAL_SLIDES) return;
+    if (slideIdx < 0) return;
+    if (slideIdx >= 2) {
+        const stream = document.getElementById("omniSearchResultsContainer");
+        if (stream && !stream.classList.contains("hidden")) {
+            const navOffset = 90;
+            const elementPosition = stream.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - navOffset;
+            window.scrollTo({ top: Math.max(0, offsetPosition), behavior: "smooth" });
+        } else {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+        return;
+    }
     currentSlide = slideIdx;
     window.currentSlide = currentSlide;
 
     const anchorMap = {
-        0: ["hero", "hero"],
-        1: ["discovery", "hero"],
-        2: ["workspace", "search-deck"],
-        3: ["results-stream", "feed-stream"]
+        0: "hero",
+        1: "discovery"
     };
-    const pair = anchorMap[slideIdx] || ["hero", "hero"];
-    const targetEl = document.getElementById(pair[0]) || document.getElementById(pair[1]);
+    const targetId = anchorMap[slideIdx] || "hero";
+    const targetEl = document.getElementById(targetId);
 
     // Responsive Fluid Smooth Navigation with header offset: keeps title and card tops fully visible
     if (targetEl) {
@@ -961,9 +971,9 @@ function initAddSkillControls() {
 
 }
 
-// Educational Value Proposition Modal (No Brokers, No Middlemen, No Dead Posts, 100% Direct ATS)
+// Educational Value Proposition Modal (No Brokers, No Middlemen, No Dead Posts, 100% Direct Corporate)
 
-// High-Contrast Light Theme Educational Value Modal (No Brokers, No Middlemen, No Dead Posts, 100% Direct ATS)
+// High-Contrast Light Theme Educational Value Modal (No Brokers, No Middlemen, No Dead Posts, 100% Direct Corporate)
 const HERO_MODAL_DATA = {
     brokers: {
         badge: "✕ NO BROKERS",
@@ -1106,7 +1116,9 @@ const HERO_MODAL_DATA = {
             }
         ]
     },
-    ats: {
+    about: {
+        // Corporate Company Portal Architecture
+
         badge: "✓ WHO WE ARE",
         icon: "shield-check",
         iconClass: "text-emerald-700",
@@ -1156,13 +1168,13 @@ const HERO_MODAL_DATA = {
 };
 
 function switchHeroModalTab(tabKey) {
-    const key = HERO_MODAL_DATA[tabKey] ? tabKey : 'ats';
+    const key = HERO_MODAL_DATA[tabKey] ? tabKey : (HERO_MODAL_DATA['about'] ? 'about' : 'ats');
     const data = HERO_MODAL_DATA[key];
     const modal = document.getElementById('heroInfoModal');
     if (!modal) return;
 
     // Update tab button styles
-    const tabKeys = ['brokers', 'middlemen', 'deadposts', 'ats'];
+    const tabKeys = ['brokers', 'middlemen', 'deadposts', 'about', 'ats'];
     tabKeys.forEach(t => {
         const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
         if (btn) {
@@ -1211,7 +1223,7 @@ window.openHeroInfoModal = function(tabKey) {
     const modal = document.getElementById('heroInfoModal');
     if (!modal) return;
     modal.classList.remove('hidden');
-    switchHeroModalTab(tabKey || 'ats');
+    switchHeroModalTab(tabKey || 'about');
 };
 
 window.closeHeroInfoModal = function() {
@@ -1221,7 +1233,7 @@ window.closeHeroInfoModal = function() {
 
 window.switchHeroModalTab = switchHeroModalTab;
 window.openAtsModal = function() {
-    window.openHeroInfoModal('ats');
+    window.openHeroInfoModal('about');
 };
 
 function initHeroInfoModal() {
@@ -2081,7 +2093,7 @@ function initJobSearch() {
 
                 renderJobCards(currentAtsJobs, "jobListContainer", false);
 
-                // Reveal LinkedIn Toggle at bottom of all verified direct ATS jobs
+                // Reveal LinkedIn Toggle at bottom of all verified direct company jobs
 
                 if (bottomLinkedinToggleCard) {
 
@@ -3030,7 +3042,7 @@ async function openCoverLetterModal(job) {
 
 }
 
-// 5c. View Switcher Tabs (Direct ATS / Founder Direct / Kanban Tracker)
+// 5c. View Switcher Tabs (Direct Corporate / Founder Direct / Kanban Tracker)
 
 function initResultsTabs() {
 
@@ -4023,7 +4035,7 @@ function getCandidateUserName() {
     return localStorage.getItem("almond_user_name") || "";
 }
 
-// 8. Dynamic Live Postings Telemetry (Direct ATS Synchronization Engine)
+// 8. Dynamic Live Postings Telemetry (Direct Corporate Synchronization Engine)
 
 function initLivePostingsCounter() {
 
@@ -7005,7 +7017,7 @@ function initWorkArrangementControls() {
     });
 }
 
-// Live Corporate ATS Hiring Ticker
+// Live Corporate Direct Hiring Ticker
 function initTelemetryTicker() {
     const tickerEl = document.getElementById("tickerFeedItem");
     if (!tickerEl) return;
@@ -7066,16 +7078,18 @@ window.navigateFromSidePanel = function(actionType, param, query = "") {
     setTimeout(() => {
         if (actionType === 'slide') {
             window.goToSlide(param);
+        } else if (actionType === 'resume') {
+            window.goToSlide(0);
+            if (typeof window.triggerOmniResumeUpload === 'function') {
+                window.triggerOmniResumeUpload();
+            }
         } else if (actionType === 'curated') {
             if (typeof openCuratedFeedsModal === 'function') {
                 openCuratedFeedsModal(param, query);
             }
         } else if (actionType === 'kanban') {
-            if (typeof goToKanbanTabAndScroll === 'function') {
-                goToKanbanTabAndScroll();
-            } else {
-                window.goToSlide(3);
-                document.getElementById("tabKanbanTracker")?.click();
+            if (typeof window.openKanbanModal === 'function') {
+                window.openKanbanModal();
             }
         } else if (actionType === 'filter_search') {
             if (typeof openCuratedFeedsModal === 'function') {
@@ -7083,7 +7097,7 @@ window.navigateFromSidePanel = function(actionType, param, query = "") {
             }
         } else if (actionType === 'who') {
             if (typeof openHeroInfoModal === 'function') {
-                openHeroInfoModal('ats');
+                openHeroInfoModal('about');
             }
         } else if (actionType === 'vip') {
             if (typeof openVipPassModal === 'function') {
@@ -7415,20 +7429,39 @@ window.omniCurrentProfile = null;
 
 window.handleOmniSearchInput = function(e) {
     const rawVal = e && e.target ? e.target.value : (document.getElementById("omniSearchInput")?.value || "");
+    const trimmed = rawVal.trim();
     const clearBtn = document.getElementById("omniClearBtn");
+    const container = document.getElementById("omniSearchResultsContainer");
+
     if (clearBtn) {
-        if (rawVal.trim().length > 0) {
+        if (trimmed.length > 0) {
             clearBtn.classList.remove("hidden");
         } else {
             clearBtn.classList.add("hidden");
         }
     }
 
+    // Reset resume matching mode when user manually types in search box
+    window.omniMatchResumeMode = false;
+
+    if (!trimmed) {
+        // User cleared the search box -> hide Direct Corporate Openings container
+        if (container) container.classList.add("hidden");
+        const gridEl = document.getElementById("omniResultsCardsGrid");
+        if (gridEl) gridEl.replaceChildren();
+        window.omniCurrentQuery = "";
+        window.omniCurrentOffset = 0;
+        return;
+    }
+
+    // User is typing -> display results at bottom
+    if (container) container.classList.remove("hidden");
+
     clearTimeout(window.omniSearchDebounceTimer);
     window.omniSearchDebounceTimer = setTimeout(() => {
         window.omniCurrentOffset = 0;
-        window.omniCurrentQuery = rawVal.trim();
-        window.executeOmniSearch(window.omniCurrentQuery, false);
+        window.omniCurrentQuery = trimmed;
+        window.executeOmniSearch(trimmed, false);
     }, 120);
 };
 
@@ -7437,9 +7470,13 @@ window.clearOmniSearch = function() {
     if (input) input.value = "";
     const clearBtn = document.getElementById("omniClearBtn");
     if (clearBtn) clearBtn.classList.add("hidden");
+    const container = document.getElementById("omniSearchResultsContainer");
+    if (container) container.classList.add("hidden");
+    const gridEl = document.getElementById("omniResultsCardsGrid");
+    if (gridEl) gridEl.replaceChildren();
     window.omniCurrentQuery = "";
     window.omniCurrentOffset = 0;
-    window.executeOmniSearch("", false);
+    window.omniMatchResumeMode = false;
 };
 
 window.setOmniCategoryFilter = function(category) {
@@ -7487,6 +7524,15 @@ window.executeOmniSearch = async function(query = "", append = false) {
             limit: "21",
             offset: String(window.omniCurrentOffset || 0)
         });
+        if (window.omniMatchResumeMode) {
+            params.append("match_resume", "true");
+            if (window.omniDerivedSkills && window.omniDerivedSkills.length > 0) {
+                params.append("skills", window.omniDerivedSkills.join(","));
+            }
+            if (window.omniTargetRole) {
+                params.append("target_role", window.omniTargetRole);
+            }
+        }
         const currentUserId = window.currentUserId || localStorage.getItem("almond_user_id");
         if (currentUserId) {
             params.append("user_id", currentUserId);
@@ -7526,20 +7572,20 @@ window.renderOmniResults = function(result, query, append) {
     const total = result.total || 0;
 
     if (countBadge) {
-        if (window.omniCurrentProfile && window.omniCurrentProfile.name) {
+        if (window.omniMatchResumeMode && window.omniCurrentProfile && window.omniCurrentProfile.name) {
             countBadge.textContent = `${total} Matched to your Resume`;
             countBadge.className = "text-[11px] font-bold bg-violet-100 text-violet-800 px-2.5 py-0.5 rounded-full";
         } else if (query) {
             countBadge.textContent = `${total} matching "${query}"`;
             countBadge.className = "text-[11px] font-bold bg-violet-100 text-violet-800 px-2.5 py-0.5 rounded-full";
         } else {
-            countBadge.textContent = `${total}+ live corporate feeds`;
+            countBadge.textContent = `${total}+ live corporate openings`;
             countBadge.className = "text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full";
         }
     }
 
     if (headerTitle) {
-        if (window.omniCurrentProfile && window.omniCurrentProfile.name) {
+        if (window.omniMatchResumeMode && window.omniCurrentProfile && window.omniCurrentProfile.name) {
             headerTitle.textContent = `Matching Corporate Openings for ${window.omniCurrentProfile.name}`;
         } else if (query) {
             headerTitle.textContent = `Matching Corporate Openings`;
@@ -7569,12 +7615,15 @@ window.renderOmniResults = function(result, query, append) {
         card.className = "p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-violet-300 transition-all duration-200 flex flex-col justify-between group";
 
         const compName = window.escapeClean(job.company || "Direct Corporate");
-        const roleName = window.escapeClean(job.role || "Software Engineering Opening");
+        const roleName = window.escapeClean(job.role || "Corporate Career Opening");
         const locName = window.escapeClean(job.location || "Remote / Hybrid");
-        const pkgDisplay = window.escapeClean(job.package_display || (job.package_inr_lpa ? `₹${job.package_inr_lpa} LPA Benchmark` : "Disclosed Corporate Band"));
+        let rawPkg = job.package_display || (job.package_inr_lpa ? `${job.package_inr_lpa} LPA Benchmark` : "Disclosed Corporate Band");
+        rawPkg = String(rawPkg).replace(/[₹\u20b9]/g, "").trim();
+        const pkgDisplay = window.escapeClean(rawPkg);
         const isLocked = Boolean(job.is_locked);
-        const rawAts = job.ats_provider || (job.url && job.url.includes("greenhouse") ? "Greenhouse" : (job.url && job.url.includes("lever") ? "Lever" : (job.url && job.url.includes("ashby") ? "Ashby" : "Direct Portal")));
-        const atsProvider = window.escapeClean(rawAts);
+        let rawProvider = job.portal_provider || (job.url && job.url.includes("greenhouse") ? "Greenhouse" : (job.url && job.url.includes("lever") ? "Lever" : (job.url && job.url.includes("ashby") ? "Ashby" : (job.url && job.url.includes("workday") ? "Workday" : "Direct Portal"))));
+        rawProvider = String(rawProvider).replace(/\bATS\b/gi, "Portal").trim();
+        const portalProvider = window.escapeClean(rawProvider);
         const dateStr = window.escapeClean(job.date_posted_str || "Today");
 
         const letter = window.escapeClean(compName.charAt(0).toUpperCase());
@@ -7587,7 +7636,7 @@ window.renderOmniResults = function(result, query, append) {
                 <span>Unlock with Pro</span>
             </button>`;
         } else {
-            actionBtnHtml = `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-violet-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 transition text-center group-hover:bg-violet-600">
+            actionBtnHtml = `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="omni-apply-btn w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-violet-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 transition text-center group-hover:bg-violet-600">
                 <span>Apply Direct</span>
                 <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
             </a>`;
@@ -7602,7 +7651,7 @@ window.renderOmniResults = function(result, query, append) {
                         </div>
                         <div class="min-w-0">
                             <span class="block text-xs font-extrabold text-slate-950 truncate">${compName}</span>
-                            <span class="block text-[10px] text-slate-500 font-medium truncate">${atsProvider} &bull; ${dateStr}</span>
+                            <span class="block text-[10px] text-slate-500 font-medium truncate">${portalProvider} &bull; ${dateStr}</span>
                         </div>
                     </div>
                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 shrink-0">
@@ -7626,6 +7675,21 @@ window.renderOmniResults = function(result, query, append) {
             </div>
         `;
         gridEl.appendChild(card);
+        const applyBtn = card.querySelector(".omni-apply-btn");
+        if (applyBtn) {
+            applyBtn.addEventListener("click", () => {
+                if (typeof window.trackJobApplication === "function") {
+                    window.trackJobApplication({
+                        id: job.id || (compName + "_" + roleName),
+                        title: roleName,
+                        company: compName,
+                        location: locName,
+                        url: safeUrl,
+                        package_display: pkgDisplay
+                    });
+                }
+            });
+        }
     });
 
     if (window.lucide && typeof window.lucide.createIcons === "function") {
@@ -7722,46 +7786,234 @@ window.addOmniSkillFromInput = function() {
     }
 };
 
-const OMNI_POPULAR_LOCATIONS = [
-    { name: "Remote / Worldwide", flag: "🌐", code: "Remote" },
-    { name: "India (All Cities)", flag: "🇮🇳", code: "India" },
-    { name: "Bengaluru / Bangalore", flag: "📍", code: "Bengaluru" },
-    { name: "Chennai", flag: "📍", code: "Chennai" },
-    { name: "Hyderabad", flag: "📍", code: "Hyderabad" },
-    { name: "Pune", flag: "📍", code: "Pune" },
-    { name: "Mumbai", flag: "📍", code: "Mumbai" },
-    { name: "Delhi NCR / Noida / Gurgaon", flag: "📍", code: "Delhi" },
-    { name: "United States (USA)", flag: "🇺🇸", code: "United States" },
-    { name: "San Francisco / Bay Area", flag: "📍", code: "San Francisco" },
-    { name: "New York", flag: "📍", code: "New York" },
-    { name: "United Kingdom (London)", flag: "🇬🇧", code: "United Kingdom" },
-    { name: "Europe (Germany, France, Netherlands)", flag: "🇪🇺", code: "Europe" },
-    { name: "Canada (Toronto, Vancouver)", flag: "🇨🇦", code: "Canada" },
-    { name: "Singapore", flag: "🇸🇬", code: "Singapore" },
-    { name: "United Arab Emirates (Dubai)", flag: "🇦🇪", code: "United Arab Emirates" },
-    { name: "Australia (Sydney, Melbourne)", flag: "🇦🇺", code: "Australia" }
+
+window.toggleOmniYoeEdit = function() {
+    const span = document.getElementById("omniProfileYoe");
+    const input = document.getElementById("omniProfileYoeInput");
+    if (!span || !input) return;
+
+    if (input.classList.contains("hidden")) {
+        let currentYoe = window.omniCurrentProfile?.years_experience;
+        if (currentYoe === undefined || currentYoe === null) {
+            const m = span.textContent.match(/\d+/);
+            currentYoe = m ? parseInt(m[0], 10) : 0;
+        }
+        input.value = currentYoe;
+        span.classList.add("hidden");
+        input.classList.remove("hidden");
+        input.focus();
+        input.select();
+    } else {
+        window.saveOmniYoeEdit();
+    }
+};
+
+window.saveOmniYoeEdit = function() {
+    const span = document.getElementById("omniProfileYoe");
+    const input = document.getElementById("omniProfileYoeInput");
+    if (!span || !input) return;
+
+    const val = parseInt(input.value, 10);
+    const validVal = (!isNaN(val) && val >= 0) ? Math.min(val, 50) : 0;
+
+    if (!window.omniCurrentProfile) window.omniCurrentProfile = {};
+    window.omniCurrentProfile.years_experience = validVal;
+
+    if (validVal === 0) {
+        span.textContent = "Fresher / Direct Entry";
+    } else if (validVal === 1) {
+        span.textContent = "1 Year Experience";
+    } else {
+        span.textContent = `${validVal} Years Experience`;
+    }
+
+    input.classList.add("hidden");
+    span.classList.remove("hidden");
+};
+
+const OMNI_ALL_LOCATIONS = [
+    // Global & Remote Presets
+    { name: "Remote / Worldwide", flag: "🌐", code: "Remote", country: "Global", aliases: ["remote", "worldwide", "anywhere", "global", "wfh"] },
+    { name: "India (All Cities)", flag: "🇮🇳", code: "India", country: "India", aliases: ["india", "bharat", "pan-india"] },
+    { name: "United States (America)", flag: "🇺🇸", code: "United States", country: "USA", aliases: ["america", "usa", "us", "united states"] },
+    { name: "United Kingdom (UK)", flag: "🇬🇧", code: "United Kingdom", country: "UK", aliases: ["uk", "england", "great britain", "britain"] },
+    { name: "Ireland", flag: "🇮🇪", code: "Ireland", country: "Ireland", aliases: ["ireland", "ie", "irish", "dublin"] },
+    { name: "Europe (EU)", flag: "🇪🇺", code: "Europe", country: "Europe", aliases: ["europe", "eu", "european union"] },
+    { name: "Canada", flag: "🇨🇦", code: "Canada", country: "Canada", aliases: ["canada", "can"] },
+    { name: "Germany", flag: "🇩🇪", code: "Germany", country: "Germany", aliases: ["germany", "deutschland", "de"] },
+    { name: "Australia", flag: "🇦🇺", code: "Australia", country: "Australia", aliases: ["australia", "au", "aussie"] },
+    { name: "Singapore", flag: "🇸🇬", code: "Singapore", country: "Singapore", aliases: ["singapore", "sg"] },
+    { name: "United Arab Emirates (UAE)", flag: "🇦🇪", code: "United Arab Emirates", country: "UAE", aliases: ["uae", "dubai", "abu dhabi"] },
+
+    // Top Indian Tech Hubs & Tier-1 Cities
+    { name: "Bengaluru / Bangalore", flag: "📍", code: "Bengaluru", country: "India", aliases: ["bengaluru", "bangalore", "blr", "karnataka"] },
+    { name: "Chennai", flag: "📍", code: "Chennai", country: "India", aliases: ["chennai", "madras", "tamil nadu"] },
+    { name: "Hyderabad / Secunderabad", flag: "📍", code: "Hyderabad", country: "India", aliases: ["hyderabad", "secunderabad", "telangana"] },
+    { name: "Pune", flag: "📍", code: "Pune", country: "India", aliases: ["pune", "maharashtra"] },
+    { name: "Mumbai / Navi Mumbai / Thane", flag: "📍", code: "Mumbai", country: "India", aliases: ["mumbai", "bombay", "navi mumbai", "thane"] },
+    { name: "Delhi NCR / Noida / Gurgaon / Gurugram", flag: "📍", code: "Delhi", country: "India", aliases: ["delhi", "new delhi", "noida", "gurgaon", "gurugram", "delhi ncr"] },
+    { name: "Kolkata", flag: "📍", code: "Kolkata", country: "India", aliases: ["kolkata", "calcutta", "west bengal"] },
+    { name: "Ahmedabad / Gandhinagar", flag: "📍", code: "Ahmedabad", country: "India", aliases: ["ahmedabad", "gandhinagar", "gujarat"] },
+    { name: "Coimbatore", flag: "📍", code: "Coimbatore", country: "India", aliases: ["coimbatore", "tamil nadu"] },
+    { name: "Kochi / Cochin / Ernakulam", flag: "📍", code: "Kochi", country: "India", aliases: ["kochi", "cochin", "ernakulam", "kerala"] },
+    { name: "Trivandrum / Thiruvananthapuram", flag: "📍", code: "Trivandrum", country: "India", aliases: ["trivandrum", "thiruvananthapuram", "kerala"] },
+    { name: "Chandigarh / Mohali / Panchkula", flag: "📍", code: "Chandigarh", country: "India", aliases: ["chandigarh", "mohali", "panchkula", "punjab"] },
+    { name: "Jaipur", flag: "📍", code: "Jaipur", country: "India", aliases: ["jaipur", "rajasthan"] },
+    { name: "Indore", flag: "📍", code: "Indore", country: "India", aliases: ["indore", "madhya pradesh"] },
+    { name: "Lucknow", flag: "📍", code: "Lucknow", country: "India", aliases: ["lucknow", "uttar pradesh"] },
+    { name: "Bhubaneswar", flag: "📍", code: "Bhubaneswar", country: "India", aliases: ["bhubaneswar", "odisha"] },
+    { name: "Visakhapatnam / Vizag", flag: "📍", code: "Visakhapatnam", country: "India", aliases: ["visakhapatnam", "vizag", "andhra pradesh"] },
+
+    // Indian Tier-2 & Emerging Cities
+    { name: "Surat", flag: "📍", code: "Surat", country: "India", aliases: ["surat", "gujarat"] },
+    { name: "Nagpur", flag: "📍", code: "Nagpur", country: "India", aliases: ["nagpur", "maharashtra"] },
+    { name: "Kanpur", flag: "📍", code: "Kanpur", country: "India", aliases: ["kanpur", "uttar pradesh"] },
+    { name: "Bhopal", flag: "📍", code: "Bhopal", country: "India", aliases: ["bhopal", "madhya pradesh"] },
+    { name: "Patna", flag: "📍", code: "Patna", country: "India", aliases: ["patna", "bihar"] },
+    { name: "Vadodara / Baroda", flag: "📍", code: "Vadodara", country: "India", aliases: ["vadodara", "baroda", "gujarat"] },
+    { name: "Ghaziabad", flag: "📍", code: "Ghaziabad", country: "India", aliases: ["ghaziabad", "uttar pradesh"] },
+    { name: "Ludhiana", flag: "📍", code: "Ludhiana", country: "India", aliases: ["ludhiana", "punjab"] },
+    { name: "Agra", flag: "📍", code: "Agra", country: "India", aliases: ["agra", "uttar pradesh"] },
+    { name: "Nashik", flag: "📍", code: "Nashik", country: "India", aliases: ["nashik", "maharashtra"] },
+    { name: "Faridabad", flag: "📍", code: "Faridabad", country: "India", aliases: ["faridabad", "haryana"] },
+    { name: "Meerut", flag: "📍", code: "Meerut", country: "India", aliases: ["meerut", "uttar pradesh"] },
+    { name: "Rajkot", flag: "📍", code: "Rajkot", country: "India", aliases: ["rajkot", "gujarat"] },
+    { name: "Varanasi", flag: "📍", code: "Varanasi", country: "India", aliases: ["varanasi", "kashi", "banaras", "uttar pradesh"] },
+    { name: "Srinagar", flag: "📍", code: "Srinagar", country: "India", aliases: ["srinagar", "kashmir"] },
+    { name: "Aurangabad / Chhatrapati Sambhajinagar", flag: "📍", code: "Aurangabad", country: "India", aliases: ["aurangabad", "sambhajinagar", "maharashtra"] },
+    { name: "Dhanbad", flag: "📍", code: "Dhanbad", country: "India", aliases: ["dhanbad", "jharkhand"] },
+    { name: "Amritsar", flag: "📍", code: "Amritsar", country: "India", aliases: ["amritsar", "punjab"] },
+    { name: "Prayagraj / Allahabad", flag: "📍", code: "Prayagraj", country: "India", aliases: ["prayagraj", "allahabad", "uttar pradesh"] },
+    { name: "Ranchi", flag: "📍", code: "Ranchi", country: "India", aliases: ["ranchi", "jharkhand"] },
+    { name: "Gwalior", flag: "📍", code: "Gwalior", country: "India", aliases: ["gwalior", "madhya pradesh"] },
+    { name: "Jabalpur", flag: "📍", code: "Jabalpur", country: "India", aliases: ["jabalpur", "madhya pradesh"] },
+    { name: "Vijayawada", flag: "📍", code: "Vijayawada", country: "India", aliases: ["vijayawada", "andhra pradesh"] },
+    { name: "Jodhpur", flag: "📍", code: "Jodhpur", country: "India", aliases: ["jodhpur", "rajasthan"] },
+    { name: "Madurai", flag: "📍", code: "Madurai", country: "India", aliases: ["madurai", "tamil nadu"] },
+    { name: "Raipur", flag: "📍", code: "Raipur", country: "India", aliases: ["raipur", "chhattisgarh"] },
+    { name: "Kota", flag: "📍", code: "Kota", country: "India", aliases: ["kota", "rajasthan"] },
+    { name: "Guwahati", flag: "📍", code: "Guwahati", country: "India", aliases: ["guwahati", "assam"] },
+    { name: "Mysore / Mysuru", flag: "📍", code: "Mysore", country: "India", aliases: ["mysore", "mysuru", "karnataka"] },
+    { name: "Trichy / Tiruchirappalli", flag: "📍", code: "Trichy", country: "India", aliases: ["trichy", "tiruchirappalli", "tamil nadu"] },
+    { name: "Tiruppur", flag: "📍", code: "Tiruppur", country: "India", aliases: ["tiruppur", "tamil nadu"] },
+    { name: "Salem", flag: "📍", code: "Salem", country: "India", aliases: ["salem", "tamil nadu"] },
+    { name: "Jalandhar", flag: "📍", code: "Jalandhar", country: "India", aliases: ["jalandhar", "punjab"] },
+    { name: "Warangal", flag: "📍", code: "Warangal", country: "India", aliases: ["warangal", "telangana"] },
+    { name: "Guntur", flag: "📍", code: "Guntur", country: "India", aliases: ["guntur", "andhra pradesh"] },
+    { name: "Jamshedpur", flag: "📍", code: "Jamshedpur", country: "India", aliases: ["jamshedpur", "jharkhand"] },
+    { name: "Kozhikode / Calicut", flag: "📍", code: "Calicut", country: "India", aliases: ["calicut", "kozhikode", "kerala"] },
+    { name: "Thrissur", flag: "📍", code: "Thrissur", country: "India", aliases: ["thrissur", "kerala"] },
+    { name: "Mangalore / Mangaluru", flag: "📍", code: "Mangalore", country: "India", aliases: ["mangalore", "mangaluru", "karnataka"] },
+    { name: "Belgaum / Belagavi", flag: "📍", code: "Belgaum", country: "India", aliases: ["belgaum", "belagavi", "karnataka"] },
+    { name: "Udupi / Manipal", flag: "📍", code: "Udupi", country: "India", aliases: ["udupi", "manipal", "karnataka"] },
+    { name: "Dehradun", flag: "📍", code: "Dehradun", country: "India", aliases: ["dehradun", "uttarakhand"] },
+    { name: "Shimla", flag: "📍", code: "Shimla", country: "India", aliases: ["shimla", "himachal pradesh"] },
+    { name: "Goa / Panaji", flag: "📍", code: "Goa", country: "India", aliases: ["goa", "panaji"] },
+    { name: "Pondicherry / Puducherry", flag: "📍", code: "Pondicherry", country: "India", aliases: ["pondicherry", "puducherry"] },
+
+    // Major US Tech Hubs & Cities
+    { name: "Austin, TX (USA)", flag: "📍", code: "Austin", country: "USA", aliases: ["austin", "texas", "austin tx", "austin america"] },
+    { name: "San Francisco / Bay Area, CA (USA)", flag: "📍", code: "San Francisco", country: "USA", aliases: ["san francisco", "sf", "bay area", "california"] },
+    { name: "San Jose / Silicon Valley, CA (USA)", flag: "📍", code: "San Jose", country: "USA", aliases: ["san jose", "silicon valley", "sunnyvale", "santa clara", "palo alto", "mountain view"] },
+    { name: "Seattle, WA (USA)", flag: "📍", code: "Seattle", country: "USA", aliases: ["seattle", "washington", "redmond", "bellevue"] },
+    { name: "New York, NY (USA)", flag: "📍", code: "New York", country: "USA", aliases: ["new york", "nyc", "manhattan", "brooklyn"] },
+    { name: "Boston / Cambridge, MA (USA)", flag: "📍", code: "Boston", country: "USA", aliases: ["boston", "cambridge", "massachusetts"] },
+    { name: "Chicago, IL (USA)", flag: "📍", code: "Chicago", country: "USA", aliases: ["chicago", "illinois"] },
+    { name: "Los Angeles, CA (USA)", flag: "📍", code: "Los Angeles", country: "USA", aliases: ["los angeles", "la", "california"] },
+    { name: "Denver / Boulder, CO (USA)", flag: "📍", code: "Denver", country: "USA", aliases: ["denver", "boulder", "colorado"] },
+    { name: "Atlanta, GA (USA)", flag: "📍", code: "Atlanta", country: "USA", aliases: ["atlanta", "georgia"] },
+    { name: "Dallas / Fort Worth, TX (USA)", flag: "📍", code: "Dallas", country: "USA", aliases: ["dallas", "fort worth", "texas"] },
+    { name: "Houston, TX (USA)", flag: "📍", code: "Houston", country: "USA", aliases: ["houston", "texas"] },
+    { name: "San Diego, CA (USA)", flag: "📍", code: "San Diego", country: "USA", aliases: ["san diego", "california"] },
+    { name: "Portland, OR (USA)", flag: "📍", code: "Portland", country: "USA", aliases: ["portland", "oregon"] },
+    { name: "Washington, DC (USA)", flag: "📍", code: "Washington", country: "USA", aliases: ["washington", "dc", "virginia", "maryland"] },
+    { name: "Raleigh / Durham, NC (USA)", flag: "📍", code: "Raleigh", country: "USA", aliases: ["raleigh", "durham", "research triangle"] },
+    { name: "Salt Lake City, UT (USA)", flag: "📍", code: "Salt Lake City", country: "USA", aliases: ["salt lake city", "utah"] },
+    { name: "Sunnyvale, CA (USA)", flag: "📍", code: "Sunnyvale", country: "USA", aliases: ["sunnyvale", "silicon valley"] },
+    { name: "Mountain View, CA (USA)", flag: "📍", code: "Mountain View", country: "USA", aliases: ["mountain view", "silicon valley"] },
+    { name: "Palo Alto, CA (USA)", flag: "📍", code: "Palo Alto", country: "USA", aliases: ["palo alto", "silicon valley"] },
+    { name: "Pittsburgh, PA (USA)", flag: "📍", code: "Pittsburgh", country: "USA", aliases: ["pittsburgh", "pennsylvania"] },
+
+    // European Tech Hubs & Cities
+    { name: "London (United Kingdom)", flag: "📍", code: "London", country: "UK", aliases: ["london", "england", "uk"] },
+    { name: "Dublin (Ireland)", flag: "📍", code: "Dublin", country: "Ireland", aliases: ["dublin", "ireland"] },
+    { name: "Cork (Ireland)", flag: "📍", code: "Cork", country: "Ireland", aliases: ["cork", "ireland"] },
+    { name: "Berlin (Germany)", flag: "📍", code: "Berlin", country: "Germany", aliases: ["berlin", "germany"] },
+    { name: "Munich (Germany)", flag: "📍", code: "Munich", country: "Germany", aliases: ["munich", "germany"] },
+    { name: "Frankfurt (Germany)", flag: "📍", code: "Frankfurt", country: "Germany", aliases: ["frankfurt", "germany"] },
+    { name: "Amsterdam (Netherlands)", flag: "📍", code: "Amsterdam", country: "Netherlands", aliases: ["amsterdam", "holland", "netherlands"] },
+    { name: "Paris (France)", flag: "📍", code: "Paris", country: "France", aliases: ["paris", "france"] },
+    { name: "Zurich (Switzerland)", flag: "📍", code: "Zurich", country: "Switzerland", aliases: ["zurich", "switzerland"] },
+    { name: "Geneva (Switzerland)", flag: "📍", code: "Geneva", country: "Switzerland", aliases: ["geneva", "switzerland"] },
+    { name: "Stockholm (Sweden)", flag: "📍", code: "Stockholm", country: "Sweden", aliases: ["stockholm", "sweden"] },
+    { name: "Copenhagen (Denmark)", flag: "📍", code: "Copenhagen", country: "Denmark", aliases: ["copenhagen", "denmark"] },
+    { name: "Warsaw (Poland)", flag: "📍", code: "Warsaw", country: "Poland", aliases: ["warsaw", "poland"] },
+    { name: "Madrid (Spain)", flag: "📍", code: "Madrid", country: "Spain", aliases: ["madrid", "spain"] },
+    { name: "Barcelona (Spain)", flag: "📍", code: "Barcelona", country: "Spain", aliases: ["barcelona", "spain"] },
+    { name: "Milan (Italy)", flag: "📍", code: "Milan", country: "Italy", aliases: ["milan", "italy"] },
+    { name: "Vienna (Austria)", flag: "📍", code: "Vienna", country: "Austria", aliases: ["vienna", "austria"] },
+    { name: "Brussels (Belgium)", flag: "📍", code: "Brussels", country: "Belgium", aliases: ["brussels", "belgium"] },
+    { name: "Lisbon (Portugal)", flag: "📍", code: "Lisbon", country: "Portugal", aliases: ["lisbon", "portugal"] },
+    { name: "Prague (Czech Republic)", flag: "📍", code: "Prague", country: "Czech Republic", aliases: ["prague", "czech"] },
+
+    // Canada
+    { name: "Toronto (Canada)", flag: "📍", code: "Toronto", country: "Canada", aliases: ["toronto", "ontario", "canada"] },
+    { name: "Vancouver (Canada)", flag: "📍", code: "Vancouver", country: "Canada", aliases: ["vancouver", "british columbia", "canada"] },
+    { name: "Montreal (Canada)", flag: "📍", code: "Montreal", country: "Canada", aliases: ["montreal", "quebec", "canada"] },
+    { name: "Waterloo / Kitchener (Canada)", flag: "📍", code: "Waterloo", country: "Canada", aliases: ["waterloo", "kitchener", "canada"] },
+
+    // Asia-Pacific, Middle East, Global
+    { name: "Singapore", flag: "📍", code: "Singapore", country: "Singapore", aliases: ["singapore", "sg"] },
+    { name: "Dubai (UAE)", flag: "📍", code: "Dubai", country: "UAE", aliases: ["dubai", "uae"] },
+    { name: "Abu Dhabi (UAE)", flag: "📍", code: "Abu Dhabi", country: "UAE", aliases: ["abu dhabi", "uae"] },
+    { name: "Tokyo (Japan)", flag: "📍", code: "Tokyo", country: "Japan", aliases: ["tokyo", "japan"] },
+    { name: "Seoul (South Korea)", flag: "📍", code: "Seoul", country: "South Korea", aliases: ["seoul", "korea"] },
+    { name: "Sydney (Australia)", flag: "📍", code: "Sydney", country: "Australia", aliases: ["sydney", "australia"] },
+    { name: "Melbourne (Australia)", flag: "📍", code: "Melbourne", country: "Australia", aliases: ["melbourne", "australia"] },
+    { name: "Auckland (New Zealand)", flag: "📍", code: "Auckland", country: "New Zealand", aliases: ["auckland", "new zealand"] },
+    { name: "Hong Kong", flag: "📍", code: "Hong Kong", country: "Hong Kong", aliases: ["hong kong", "hk"] },
+    { name: "Sao Paulo (Brazil)", flag: "📍", code: "Sao Paulo", country: "Brazil", aliases: ["sao paulo", "brazil"] },
+    { name: "Mexico City (Mexico)", flag: "📍", code: "Mexico City", country: "Mexico", aliases: ["mexico city", "mexico"] }
 ];
 
 window.filterOmniLocationList = function(q) {
     const dropdown = document.getElementById("omniCriteriaLocationDropdown");
     if (!dropdown) return;
     const query = (q || "").trim().toLowerCase();
-    const filtered = OMNI_POPULAR_LOCATIONS.filter(loc => 
-        !query || loc.name.toLowerCase().includes(query) || loc.code.toLowerCase().includes(query)
-    );
-    if (filtered.length === 0) {
-        dropdown.innerHTML = `<div class="p-3 text-xs text-slate-400">No preset match. Using "${escapeOmniHtml(q)}".</div>`;
+
+    const filtered = OMNI_ALL_LOCATIONS.filter(loc => {
+        if (!query) return true;
+        const nameMatch = loc.name.toLowerCase().includes(query);
+        const codeMatch = loc.code.toLowerCase().includes(query);
+        const countryMatch = loc.country ? loc.country.toLowerCase().includes(query) : false;
+        const aliasesMatch = loc.aliases ? loc.aliases.some(a => a.toLowerCase().includes(query)) : false;
+        return nameMatch || codeMatch || countryMatch || aliasesMatch;
+    }).slice(0, 35);
+
+    dropdown.replaceChildren();
+
+    if (query && !filtered.some(loc => loc.code.toLowerCase() === query || loc.name.toLowerCase() === query)) {
+        const customItem = document.createElement("div");
+        customItem.className = "px-3.5 py-2.5 text-xs font-bold text-violet-800 bg-violet-50/70 hover:bg-violet-100 cursor-pointer flex items-center justify-between transition border-b border-violet-100";
+        customItem.innerHTML = `<span class="flex items-center gap-2"><span>🎯</span><span>Use custom: <strong>${escapeOmniHtml(q)}</strong></span></span><span class="text-[10px] text-violet-600 font-semibold uppercase">Custom</span>`;
+        customItem.onclick = () => window.selectOmniLocation(q, q);
+        dropdown.appendChild(customItem);
+    }
+
+    if (filtered.length === 0 && !query) {
+        dropdown.innerHTML = '<div class="p-3 text-xs text-slate-400">Type any city or country name...</div>';
         dropdown.classList.remove("hidden");
         return;
     }
-    dropdown.replaceChildren();
+
     filtered.forEach(loc => {
         const item = document.createElement("div");
-        item.className = "px-3.5 py-2.5 text-xs font-bold text-slate-800 hover:bg-violet-50 hover:text-violet-900 cursor-pointer flex items-center justify-between transition";
-        item.innerHTML = `<span class="flex items-center gap-2"><span>${loc.flag}</span><span>${escapeOmniHtml(loc.name)}</span></span><span class="text-[10px] text-slate-400 font-semibold uppercase">${escapeOmniHtml(loc.code)}</span>`;
+        item.className = "px-3.5 py-2 text-xs font-bold text-slate-800 hover:bg-violet-50 hover:text-violet-900 cursor-pointer flex items-center justify-between transition";
+        item.innerHTML = `<span class="flex items-center gap-2"><span>${loc.flag || '📍'}</span><span>${escapeOmniHtml(loc.name)}</span></span><span class="text-[10px] text-slate-400 font-semibold uppercase">${escapeOmniHtml(loc.country || loc.code)}</span>`;
         item.onclick = () => window.selectOmniLocation(loc.code, loc.name);
         dropdown.appendChild(item);
     });
+
     dropdown.classList.remove("hidden");
 };
 
@@ -7769,8 +8021,8 @@ window.selectOmniLocation = function(code, name) {
     const input = document.getElementById("omniCriteriaLocationInput");
     const hidden = document.getElementById("omniCriteriaLocation");
     const dropdown = document.getElementById("omniCriteriaLocationDropdown");
-    if (input) input.value = name;
-    if (hidden) hidden.value = code;
+    if (input) input.value = name || code;
+    if (hidden) hidden.value = code || name;
     if (dropdown) dropdown.classList.add("hidden");
 };
 
@@ -7784,37 +8036,32 @@ window.setOmniLocationPreset = function(loc) {
 };
 
 window.updateOmniPillStyles = function() {
-    document.querySelectorAll(".omni-work-pill").forEach(label => {
-        const radio = label.querySelector("input[name='omni_work_mode']");
+    document.querySelectorAll('.omni-work-pill').forEach(pill => {
+        const radio = pill.querySelector('input[type="radio"]');
         if (radio && radio.checked) {
-            label.className = "omni-work-pill border border-slate-900 bg-slate-950 text-white rounded-xl py-1.5 text-center cursor-pointer flex items-center justify-center transition shadow-2xs font-bold";
+            pill.className = "omni-work-pill border border-slate-900 bg-slate-950 text-white rounded-xl py-1.5 text-center cursor-pointer flex items-center justify-center transition";
         } else {
-            label.className = "omni-work-pill border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition font-bold";
+            pill.className = "omni-work-pill border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition";
         }
     });
 
-    document.querySelectorAll(".omni-emp-pill").forEach(label => {
-        const radio = label.querySelector("input[name='omni_contract_type']");
+    document.querySelectorAll('.omni-emp-pill').forEach(pill => {
+        const radio = pill.querySelector('input[type="radio"]');
         if (radio && radio.checked) {
-            label.className = "omni-emp-pill border border-slate-900 bg-slate-950 text-white rounded-xl py-1.5 text-center cursor-pointer flex items-center justify-center transition shadow-2xs font-bold";
+            pill.className = "omni-emp-pill border border-slate-900 bg-slate-950 text-white rounded-xl py-1.5 text-center cursor-pointer flex items-center justify-center transition";
         } else {
-            label.className = "omni-emp-pill border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition font-bold";
+            pill.className = "omni-emp-pill border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition";
         }
     });
-};
-
-window.triggerOmniResumeUpload = function() {
-    const fileInput = document.getElementById("omniResumeFileInput");
-    if (fileInput) fileInput.click();
 };
 
 window.handleOmniResumeSelected = async function(event) {
-    const file = event && event.target && event.target.files ? event.target.files[0] : null;
+    const file = event && event.target && event.target.files && event.target.files[0];
     if (!file) return;
 
     const uploadLabel = document.getElementById("omniResumeUploadLabel");
-    const originalLabel = uploadLabel ? uploadLabel.textContent : "Upload your resume to find your dream job";
-    if (uploadLabel) uploadLabel.textContent = "Parsing resume intelligence...";
+    const originalLabel = uploadLabel ? uploadLabel.textContent : "Drop Resume (PDF/DOCX)";
+    if (uploadLabel) uploadLabel.textContent = "Analyzing Profile Vector...";
 
     const formData = new FormData();
     formData.append("file", file);
@@ -7844,23 +8091,29 @@ window.handleOmniResumeSelected = async function(event) {
 
         // 2. Verified Experience
         const yoeEl = document.getElementById("omniProfileYoe");
+        const yoeInput = document.getElementById("omniProfileYoeInput");
+        const yoe = profile.years_experience;
         if (yoeEl) {
-            const yoe = profile.years_experience;
             if (yoe !== undefined && yoe !== null && yoe > 0) {
                 yoeEl.textContent = `${yoe} Years Experience`;
             } else {
                 yoeEl.textContent = "Fresher / Direct Entry";
             }
+            yoeEl.classList.remove("hidden");
+        }
+        if (yoeInput) {
+            yoeInput.value = (yoe !== undefined && yoe !== null) ? yoe : 0;
+            yoeInput.classList.add("hidden");
         }
 
         // 3. Derived Skills
         window.omniDerivedSkills = Array.isArray(profile.skills) ? [...profile.skills] : [];
         window.renderOmniSkillBadges();
 
-        // 4. Target Role / Specialization
+        // 4. Target Role
         const roleField = document.getElementById("omniCriteriaTargetRole");
         if (roleField) {
-            roleField.value = profile.current_role || (profile.skills && profile.skills[0]) || "Software Engineer";
+            roleField.value = profile.current_role || (profile.skills && profile.skills[0]) || "";
         }
 
         // 5. Minimum Expected Package Dropdown
@@ -7910,7 +8163,7 @@ window.submitOmniCriteria = async function() {
     const pkgVal = pkgSelect ? parseFloat(pkgSelect.value) || 0 : 7;
     const locInput = (document.getElementById("omniCriteriaLocationInput")?.value || "").trim();
     const locHidden = (document.getElementById("omniCriteriaLocation")?.value || "").trim();
-    const loc = locInput || locHidden || "all";
+    const loc = locInput || locHidden || "Bengaluru";
 
     const workMode = document.querySelector('input[name="omni_work_mode"]:checked')?.value || "all";
     const contractType = document.querySelector('input[name="omni_contract_type"]:checked')?.value || "all";
@@ -7920,34 +8173,70 @@ window.submitOmniCriteria = async function() {
     window.omniActiveWorkMode = workMode;
     window.omniActiveContractType = contractType;
 
-    // Use role title for text query. If blank, use top skill.
-    let searchQuery = role;
-    if (!searchQuery && window.omniDerivedSkills && window.omniDerivedSkills.length > 0) {
-        searchQuery = window.omniDerivedSkills[0];
-    }
+    // Do NOT restrict search query strictly to designation: role is optional criteria
+    window.omniTargetRole = role;
+    window.omniMatchResumeMode = true;
 
+    // Clean up omni search input box
     const input = document.getElementById("omniSearchInput");
-    if (input) input.value = searchQuery;
+    if (input) input.value = "";
 
     const clearBtn = document.getElementById("omniClearBtn");
-    if (clearBtn) {
-        if (searchQuery) clearBtn.classList.remove("hidden");
-        else clearBtn.classList.add("hidden");
-    }
+    if (clearBtn) clearBtn.classList.add("hidden");
 
     window.closeOmniCriteriaModal();
 
-    window.omniCurrentQuery = searchQuery;
-    window.omniCurrentOffset = 0;
-    await window.executeOmniSearch(searchQuery, false);
-
+    // Reveal search results container
     const streamContainer = document.getElementById("omniSearchResultsContainer");
+    if (streamContainer) {
+        streamContainer.classList.remove("hidden");
+    }
+
+    window.omniCurrentQuery = "";
+    window.omniCurrentOffset = 0;
+    await window.executeOmniSearch("", false);
+
     if (streamContainer) {
         streamContainer.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 };
 
+
+// Global Resume Upload Trigger & Kanban Modal Controllers
+window.triggerOmniResumeUpload = function() {
+    const fileInput = document.getElementById("omniResumeFileInput");
+    if (fileInput) {
+        fileInput.value = "";
+        fileInput.click();
+    }
+};
+
+window.openKanbanModal = function() {
+    const modal = document.getElementById("kanbanModal");
+    if (modal) {
+        modal.classList.remove("hidden");
+        const board = document.getElementById("kanbanBoardContainer");
+        if (board) board.classList.remove("hidden");
+        if (typeof renderKanbanBoard === "function") {
+            renderKanbanBoard();
+        }
+    }
+};
+
+window.closeKanbanModal = function() {
+    const modal = document.getElementById("kanbanModal");
+    if (modal) modal.classList.add("hidden");
+};
+
 window.initOmniSearch = function() {
+    const uploadBtn = document.getElementById("omniResumeUploadBtn");
+    if (uploadBtn && !uploadBtn.dataset.bound) {
+        uploadBtn.dataset.bound = "true";
+        uploadBtn.addEventListener("click", () => {
+            window.triggerOmniResumeUpload();
+        });
+    }
+
     const searchContainer = document.getElementById("omniSearchBarContainer");
     if (searchContainer) {
         ["dragenter", "dragover"].forEach(evtName => {
@@ -7983,15 +8272,15 @@ window.initOmniSearch = function() {
     });
 };
 
-// Initial auto-population of live corporate postings on homepage load
+// Initial load: do NOT display Direct Corporate Openings explicitly on homepage load
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
         window.initOmniSearch();
-        window.executeOmniSearch("", false);
+        // Container remains hidden until user types in search or uploads resume
     });
 } else {
     setTimeout(() => {
         window.initOmniSearch();
-        window.executeOmniSearch("", false);
+        // Container remains hidden until user types in search or uploads resume
     }, 100);
 }

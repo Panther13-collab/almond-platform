@@ -84,7 +84,7 @@ def build_otp_html(otp_code: str, to_email: str) -> str:
                                 </div>
                                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="font-size: 12.5px; color: #334155; line-height: 1.5;">
                                     <tr>
-                                        <td style="padding: 2px 0;">&#10003; <strong>0% Recruiter Spread</strong> &mdash; 100% direct corporate ATS portal URLs</td>
+                                        <td style="padding: 2px 0;">&#10003; <strong>0% Recruiter Spread</strong> &mdash; 100% direct corporate company portal URLs</td>
                                     </tr>
                                     <tr>
                                         <td style="padding: 2px 0;">&#10003; <strong>Vector Skill Gap Match</strong> &mdash; Instant keyword alignment before you apply</td>

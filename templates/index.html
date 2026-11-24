@@ -96,11 +96,11 @@
             "https://twitter.com/almondjobs",
             "https://www.linkedin.com/company/almond-jobs"
           ],
-          "description": "Almond Jobs is an active AI career discovery engine connecting job seekers directly to corporate applicant tracking systems (Ashby, Greenhouse, Lever, Workday, SmartRecruiters) with zero recruiter spread.",
+          "description": "Almond Jobs is an active AI career discovery engine connecting job seekers directly to corporate company portals (Ashby, Greenhouse, Lever, Workday, SmartRecruiters) with zero recruiter spread.",
           "knowsAbout": [
             "Job Search Engine",
             "Direct Enterprise Careers",
-            "Applicant Tracking Systems",
+            "Corporate Career Portals",
             "Software Engineering Jobs",
             "AI/ML Engineering Jobs",
             "Corporate Internships 2026",
@@ -166,7 +166,7 @@
               "name": "How does Almond Jobs bypass recruitment agencies and headhunters?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Almond Jobs ingests direct feeds straight from company internal Applicant Tracking Systems (Ashby, Greenhouse, Lever, Workday, SmartRecruiters) the exact second they open. Candidates apply directly on employer infrastructure with 0% agency markup."
+                "text": "Almond Jobs ingests direct feeds straight from company internal hiring portals (Ashby, Greenhouse, Lever, Workday, SmartRecruiters) the exact second they open. Candidates apply directly on employer infrastructure with 0% agency markup."
               }
             },
             {
@@ -653,7 +653,7 @@
 
             <!-- RIGHT: Profile Icon Button & Desktop Quick CTAs -->
             <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0 justify-end">
-                <button type="button" onclick="openHeroInfoModal('ats')" class="hidden lg:flex px-3 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-bold text-slate-800 hover:text-emerald-900 bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer items-center gap-1.5" title="Learn more about Almond Jobs & our mission">
+                <button type="button" onclick="openHeroInfoModal('about')" class="hidden lg:flex px-3 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-bold text-slate-800 hover:text-emerald-900 bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer items-center gap-1.5" title="Learn more about Almond Jobs & our mission">
                     <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
                     <span>Who We Are?</span>
                 </button>
@@ -712,23 +712,23 @@
                         <span class="block text-[11px] text-slate-500 truncate">Move first. Apply unseen.</span>
                     </div>
                 </button>
-                <button type="button" onclick="navigateFromSidePanel('slide', 2)" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-xs sm:text-[13px] font-bold text-slate-800 hover:text-violet-900 hover:bg-violet-50/80 transition text-left cursor-pointer group">
+                <button type="button" onclick="navigateFromSidePanel('resume')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-xs sm:text-[13px] font-bold text-slate-800 hover:text-violet-900 hover:bg-violet-50/80 transition text-left cursor-pointer group">
                     <div class="w-8 h-8 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center shrink-0">
-                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        <i data-lucide="paperclip" class="w-4 h-4"></i>
                     </div>
                     <div class="flex-1 min-w-0">
                         <span class="block font-black text-violet-950">Match Dream Jobs</span>
-                        <span class="block text-[11px] text-slate-500 truncate">1-Click Resume Matcher</span>
+                        <span class="block text-[11px] text-slate-500 truncate">Upload Resume to Match</span>
                     </div>
                     <span class="px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 text-[10px] font-black uppercase tracking-wider shrink-0">Core</span>
                 </button>
-                <button type="button" onclick="navigateFromSidePanel('slide', 3)" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-xs sm:text-[13px] font-bold text-slate-800 hover:text-violet-900 hover:bg-violet-50/80 transition text-left cursor-pointer group">
+                <button type="button" onclick="navigateFromSidePanel('slide', 1)" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-xs sm:text-[13px] font-bold text-slate-800 hover:text-violet-900 hover:bg-violet-50/80 transition text-left cursor-pointer group">
                     <div class="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-emerald-100 flex items-center justify-center text-slate-600 group-hover:text-emerald-700 transition shrink-0">
-                        <i data-lucide="search" class="w-4 h-4"></i>
+                        <i data-lucide="radar" class="w-4 h-4"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <span class="block font-black text-slate-950">Live Direct Portals</span>
-                        <span class="block text-[11px] text-slate-500 truncate">3,315,000+ Verified Openings</span>
+                        <span class="block font-black text-slate-950">Direct Intelligence</span>
+                        <span class="block text-[11px] text-slate-500 truncate">3,315,000+ Corporate Feeds</span>
                     </div>
                 </button>
                 <button type="button" onclick="navigateFromSidePanel('kanban')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-xs sm:text-[13px] font-bold text-slate-800 hover:text-violet-900 hover:bg-violet-50/80 transition text-left cursor-pointer group">
@@ -841,13 +841,7 @@
                 <!-- Centered Hero Content with generous top breathing room and zero clutter -->
                 <div class="max-w-6xl mx-auto w-full relative z-10 flex flex-col justify-start items-center text-center px-4 sm:px-6 lg:px-8 pt-24 sm:pt-32 pb-12 sm:pb-16">
 
-                    <!-- High-Trust Minimalist Subtitle Tag -->
-                    <div class="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-white/95 border border-slate-200/90 shadow-2xs backdrop-blur-md mb-3">
-                        <img src="/static/logo.png" alt="Almond Logo" class="w-3.5 h-3.5 object-contain shrink-0">
-                        <span class="text-xs sm:text-sm font-black text-slate-900 tracking-tight">Almond Jobs &bull; Direct Corporate Feeds</span>
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                        <span class="text-[10px] sm:text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">0% Agency Spread</span>
-                    </div>
+
 
                     <!-- Perfectly Centered Dual Headline -->
                     <h1 class="tracking-tight max-w-5xl mx-auto mb-4 text-center select-none flex flex-col items-center justify-center">
@@ -855,9 +849,10 @@
                         <span class="block text-4xl sm:text-6xl md:text-7xl font-black text-violet-600 tracking-tight leading-[1.05] mt-1 whitespace-nowrap">Apply unseen!</span>
                     </h1>
 
-                    <!-- Narrative Subheadline: Anti-Oversaturation Ingestion Hook -->
-                    <p class="text-sm sm:text-base md:text-lg text-slate-600 font-medium max-w-2xl mx-auto leading-relaxed mb-6">
-                        &ldquo;The job market isn't oversaturated &mdash; you're just applying after the door has already closed. We ingest jobs straight from company internal servers the second they open.&rdquo;
+                    <!-- Narrative Subheadline: Clean 2-Line Proportion -->
+                    <p class="text-sm sm:text-base md:text-lg text-slate-600 font-medium max-w-xl mx-auto leading-normal mb-8">
+                        The job market isn't oversaturated &mdash; you're just applying too late.<br class="hidden sm:inline">
+                        We ingest openings directly from company career portals the second they open.
                     </p>
 
                     <!-- UNIFIED OMNI-SEARCH & RESUME BAR -->
@@ -874,7 +869,7 @@
 
                             <!-- Right: Upload Resume Action Chip / Button -->
                             <div class="shrink-0 flex items-center justify-end">
-                                <button type="button" id="omniResumeUploadBtn" onclick="triggerOmniResumeUpload()" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-violet-500/20 hover:scale-[1.02] active:scale-98 transition cursor-pointer whitespace-nowrap">
+                                <button type="button" id="omniResumeUploadBtn" onclick="if(window.triggerOmniResumeUpload){window.triggerOmniResumeUpload();}else{document.getElementById('omniResumeFileInput')?.click();}" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-extrabold text-xs sm:text-sm shadow-md shadow-violet-500/20 hover:scale-[1.02] active:scale-98 transition cursor-pointer whitespace-nowrap">
                                     <i data-lucide="paperclip" class="w-4 h-4 text-violet-200"></i>
                                     <span id="omniResumeUploadLabel">Upload your resume to find your dream job</span>
                                 </button>
@@ -884,7 +879,7 @@
                     </div>
 
                     <!-- DIRECT INLINE RESULTS STREAM (Directly below the search bar) -->
-                    <div id="omniSearchResultsContainer" class="w-full max-w-5xl mx-auto mb-10">
+                    <div id="omniSearchResultsContainer" class="hidden w-full max-w-5xl mx-auto mb-10">
                         <!-- Feed Header & Category Filters -->
                         <div class="flex items-center justify-between gap-3 mb-4 flex-wrap px-1">
                             <div class="flex items-center gap-2">
@@ -931,17 +926,7 @@
                         </div>
                     </div>
 
-                    <!-- Real-Time Dynamic Ingestion Live Ticker (Fresh crawled counter) -->
-                    <div class="w-full max-w-5xl mx-auto mb-3.5 flex items-center justify-between px-4 py-2 rounded-2xl bg-slate-900 text-white text-xs font-semibold shadow-md border border-slate-800">
-                        <div class="flex items-center gap-2.5 min-w-0">
-                            <span class="relative flex h-2.5 w-2.5 shrink-0">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                            </span>
-                            <span class="truncate font-mono" id="heroLiveCrawlTicker">🔥 1,420 direct roles crawled today across 840 companies &bull; 3,315,000+ total indexed</span>
-                        </div>
-                        <span class="text-[10px] uppercase font-mono font-bold text-emerald-400 bg-emerald-950 px-2.5 py-0.5 rounded-full border border-emerald-800 shrink-0 hidden sm:inline">LIVE INGESTION ACTIVE</span>
-                    </div>
+
 
                     <!-- Live Ingestion Infrastructure & Proof Metrics Strip -->
                     <div class="w-full max-w-5xl mx-auto bg-white/90 rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-sm backdrop-blur-md">
@@ -976,208 +961,197 @@
                     
                     <!-- Section Header -->
                     <div class="text-center max-w-3xl mx-auto mb-10 sm:mb-12">
-                        <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-50 border border-violet-200 text-violet-900 text-xs font-black uppercase tracking-wider mb-3 shadow-2xs">
-                            <i data-lucide="radar" class="w-3.5 h-3.5 text-violet-600"></i>
-                            <span>Direct Intelligence Radar &bull; Live Enterprise Feeds</span>
-                        </span>
                         <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-950 tracking-tight">
-                            Bypass Stale Boards. Apply at the Source.
+                            Apply at the Source
                         </h2>
-                        <p class="text-xs sm:text-sm text-slate-600 mt-2 font-medium">
-                            Corporate internal hiring pipelines updated every millisecond. Verified budgets, real hiring managers, and zero agency markups.
+                        <p class="text-xs sm:text-sm text-slate-500 mt-2 font-medium">
+                            Corporate internal hiring pipelines. Verified budgets, real hiring managers, zero agency markups.
                         </p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4 lg:gap-x-5 gap-y-6 lg:gap-y-7 w-full">
                         
-                        <!-- CARD 1: 3.3M+ Live Jobs (Top-Left, Spans 2 Columns - Fully Utilized Interior) -->
+                        <!-- CARD 1: 3.3M+ Live Corporate Roles -->
                         <div class="md:col-span-2 bg-white/95 rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg transition flex flex-col justify-between">
                             <div>
-                                <div class="flex items-center justify-between mb-2.5">
+                                <div class="flex items-center justify-between mb-2">
                                     <span class="text-xs font-black uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
                                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                                         LIVE DIRECTORIES
                                     </span>
-                                    <span class="text-[11px] font-mono font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">Continuous Ingestion</span>
+                                    <span class="text-[11px] font-mono font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">Real-Time Ingestion</span>
                                 </div>
-                                <h3 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-950 tracking-tight mb-2.5">
+                                <h3 class="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight mb-1.5">
                                     3.3M+ Live Jobs
                                 </h3>
-                                <p class="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed mb-5">
-                                    Almond Jobs indexes 3.3M+ direct enterprise live feeds in real-time. Target unadvertised engineering seats with precision and negotiate from a position of absolute strength. <strong class="text-slate-800 font-bold">Quiet applications. Loud offers.</strong>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed mb-4">
+                                    Target unadvertised engineering &amp; corporate seats straight from internal company hiring pipelines.
                                 </p>
                                 
-                                <!-- Active Direct Feed Channels Grid: Eliminates Dead Empty Space in Card 1 -->
-                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-4 border-t border-slate-100">
-                                    <div class="bg-slate-50/90 rounded-2xl p-3 border border-slate-100">
+                                <!-- Active Direct Feed Channels -->
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-100">
+                                    <div class="bg-slate-50/90 rounded-2xl p-2.5 border border-slate-100 text-center">
                                         <div class="text-xs font-black text-slate-950">Ashby Direct</div>
-                                        <div class="text-xs font-bold text-emerald-600">842,000+ roles</div>
-                                        <div class="text-[10px] text-slate-400 mt-0.5">High-growth tech</div>
+                                        <div class="text-xs font-bold text-emerald-600">842,000+</div>
                                     </div>
-                                    <div class="bg-slate-50/90 rounded-2xl p-3 border border-slate-100">
+                                    <div class="bg-slate-50/90 rounded-2xl p-2.5 border border-slate-100 text-center">
                                         <div class="text-xs font-black text-slate-950">Greenhouse</div>
-                                        <div class="text-xs font-bold text-emerald-600">1.12M+ seats</div>
-                                        <div class="text-[10px] text-slate-400 mt-0.5">Enterprise scale</div>
+                                        <div class="text-xs font-bold text-emerald-600">1.12M+</div>
                                     </div>
-                                    <div class="bg-slate-50/90 rounded-2xl p-3 border border-slate-100">
+                                    <div class="bg-slate-50/90 rounded-2xl p-2.5 border border-slate-100 text-center">
                                         <div class="text-xs font-black text-slate-950">Workday</div>
-                                        <div class="text-xs font-bold text-emerald-600">980,000+ portals</div>
-                                        <div class="text-[10px] text-slate-400 mt-0.5">Fortune 500</div>
+                                        <div class="text-xs font-bold text-emerald-600">980,000+</div>
                                     </div>
-                                    <div class="bg-slate-50/90 rounded-2xl p-3 border border-slate-100">
+                                    <div class="bg-slate-50/90 rounded-2xl p-2.5 border border-slate-100 text-center">
                                         <div class="text-xs font-black text-slate-950">Lever Feeds</div>
-                                        <div class="text-xs font-bold text-emerald-600">373,000+ seats</div>
-                                        <div class="text-[10px] text-slate-400 mt-0.5">Direct hiring</div>
+                                        <div class="text-xs font-bold text-emerald-600">373,000+</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- CARD 2: Entry-Level Role Search (Right Column, Tall Spanning 2 Rows - Fully Utilized Interior) -->
+                        <!-- CARD 2: Entry-Level & New Grad Search -->
                         <div class="md:col-span-1 md:row-span-2 bg-white/95 rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg transition flex flex-col justify-between">
                             <div>
-                                <div class="flex items-center gap-1.5 mb-2.5 text-xs font-black uppercase tracking-wider text-violet-700">
+                                <div class="flex items-center gap-1.5 mb-2 text-xs font-black uppercase tracking-wider text-violet-700">
                                     <span class="w-2 h-2 rounded-full bg-violet-600"></span>
-                                    SEARCH
+                                    EARLY CAREER
                                 </div>
-                                <h3 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight leading-snug mb-2">
-                                    Search directly where elites apply
+                                <h3 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight leading-snug mb-1">
+                                    Entry-Level &amp; New Grad
                                 </h3>
-                                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-800 text-[11px] font-bold mb-3">
-                                    <span>🚀 Entry-Level &amp; New Grad Direct Feeds</span>
-                                </div>
-                                <p class="text-xs text-slate-500 leading-relaxed mb-4">
-                                    Target 3,100+ entry-level and new graduate openings across verified enterprise infrastructure.
+                                <p class="text-xs text-slate-500 leading-relaxed mb-3">
+                                    3,100+ verified corporate openings across tech infrastructure.
                                 </p>
                             </div>
                             <div class="mt-2">
                                 <div class="relative">
-                                    <input type="text" id="p2RoleSearchInput" placeholder="Search entry-level &amp; new grad roles..." onkeydown="if(event.key==='Enter') executeP2EntrySearch()" class="w-full pl-4 pr-11 py-3 rounded-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-xs text-slate-900 transition font-medium">
-                                    <button type="button" onclick="executeP2EntrySearch()" class="absolute right-1.5 top-1.5 w-8 h-8 rounded-full bg-violet-600 hover:bg-violet-500 text-white flex items-center justify-center transition cursor-pointer shadow-xs" title="Search entry-level roles">
-                                        <i data-lucide="search" class="w-4 h-4 text-white"></i>
+                                    <input type="text" id="p2RoleSearchInput" placeholder="Search entry-level roles..." onkeydown="if(event.key==='Enter') executeP2EntrySearch()" class="w-full pl-4 pr-11 py-2.5 rounded-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-hidden text-xs text-slate-900 transition font-medium">
+                                    <button type="button" onclick="executeP2EntrySearch()" class="absolute right-1 top-1 w-7 h-7 rounded-full bg-violet-600 hover:bg-violet-500 text-white flex items-center justify-center transition cursor-pointer shadow-xs" title="Search entry-level roles">
+                                        <i data-lucide="search" class="w-3.5 h-3.5 text-white"></i>
                                     </button>
                                 </div>
                                 
-                                <!-- Popular Search Category Chips: Eliminates Dead Empty Space in Card 2 -->
-                                <div class="mt-4 pt-3 border-t border-slate-100">
-                                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">Popular Categories:</span>
-                                    <div class="flex flex-wrap gap-1.5">
-                                        <button type="button" onclick="document.getElementById('p2RoleSearchInput').value='SWE Intern'; executeP2EntrySearch();" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-violet-50 text-slate-700 hover:text-violet-700 transition cursor-pointer">SWE Intern</button>
-                                        <button type="button" onclick="document.getElementById('p2RoleSearchInput').value='AI Engineer'; executeP2EntrySearch();" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-violet-50 text-slate-700 hover:text-violet-700 transition cursor-pointer">AI Engineer</button>
-                                        <button type="button" onclick="document.getElementById('p2RoleSearchInput').value='Full Stack'; executeP2EntrySearch();" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-violet-50 text-slate-700 hover:text-violet-700 transition cursor-pointer">Full Stack</button>
-                                        <button type="button" onclick="document.getElementById('p2RoleSearchInput').value='Data Analyst'; executeP2EntrySearch();" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-violet-50 text-slate-700 hover:text-violet-700 transition cursor-pointer">Data Analyst</button>
-                                        <button type="button" onclick="document.getElementById('p2RoleSearchInput').value='Product'; executeP2EntrySearch();" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-violet-50 text-slate-700 hover:text-violet-700 transition cursor-pointer">Product</button>
-                                    </div>
-                                </div>
-                                
-                                <div class="mt-4 flex items-center justify-between text-[11px] text-slate-400 font-medium">
-                                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>0% Recruiter Spread</span>
-                                    <span class="text-violet-600 font-bold">100% Direct</span>
+                                <!-- Popular Chips -->
+                                <div class="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap gap-1.5">
+                                    <button type="button" onclick="document.getElementById('p2RoleSearchInput').value='SWE Intern'; executeP2EntrySearch();" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-violet-50 text-slate-700 hover:text-violet-700 transition cursor-pointer">SWE Intern</button>
+                                    <button type="button" onclick="document.getElementById('p2RoleSearchInput').value='AI Engineer'; executeP2EntrySearch();" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-violet-50 text-slate-700 hover:text-violet-700 transition cursor-pointer">AI Engineer</button>
+                                    <button type="button" onclick="document.getElementById('p2RoleSearchInput').value='Full Stack'; executeP2EntrySearch();" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-violet-50 text-slate-700 hover:text-violet-700 transition cursor-pointer">Full Stack</button>
+                                    <button type="button" onclick="document.getElementById('p2RoleSearchInput').value='Data Analyst'; executeP2EntrySearch();" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-violet-50 text-slate-700 hover:text-violet-700 transition cursor-pointer">Data Analyst</button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- CARD 3: Direct Internships Search (Middle-Left, Col 1) -->
-                        <div onclick="openCuratedFeedsModal('internships')" class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg hover:border-emerald-300 transition cursor-pointer flex flex-col justify-between group">
+                        <!-- CARD 3: Direct Internships Search -->
+                        <div class="md:col-span-2 bg-white/95 rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg transition flex flex-col justify-between">
                             <div>
-                                <span class="text-xs font-black uppercase tracking-wider text-emerald-700 flex items-center gap-1.5 mb-1.5">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                    LIVE JOBS
-                                </span>
-                                <h4 class="text-base sm:text-lg font-black text-slate-950 tracking-tight group-hover:text-emerald-900 transition">
-                                    Direct internships search
-                                </h4>
-                                <p class="text-xs text-slate-500 mt-1 leading-relaxed">
-                                    Summer &amp; off-cycle internships direct from company career portals.
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-black uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        INTERNSHIPS
+                                    </span>
+                                    <span class="text-[11px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">5,125+ Direct Openings</span>
+                                </div>
+                                <h3 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight mb-1">
+                                    Direct Internships &amp; Co-Ops
+                                </h3>
+                                <p class="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed mb-3">
+                                    Summer, fall &amp; off-cycle corporate internships with verified stipends. Zero unpaid roles.
                                 </p>
-                            </div>
-                            <div class="flex items-center justify-between text-[11px] font-bold text-emerald-700 mt-4 pt-3 border-t border-slate-100">
-                                <span>5,125 direct openings</span>
-                                <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"></i>
+
+                                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-2">
+                                    <div class="relative flex-1">
+                                        <input type="text" id="p2QuickKeywordInput" placeholder="Search internships by skill or role (e.g. Python, AI/ML)..." onkeydown="if(event.key==='Enter') executeP2InternSearch()" class="w-full pl-4 pr-11 py-2.5 rounded-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-hidden text-xs text-slate-900 transition font-medium">
+                                        <button type="button" onclick="executeP2InternSearch()" class="absolute right-1 top-1 w-7 h-7 rounded-full bg-violet-600 hover:bg-violet-500 text-white flex items-center justify-center transition cursor-pointer shadow-xs" title="Search intern jobs">
+                                            <i data-lucide="search" class="w-3.5 h-3.5 text-white"></i>
+                                        </button>
+                                    </div>
+                                    <button type="button" onclick="openCuratedFeedsModal('internships')" class="shrink-0 px-4 py-2.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer">
+                                        <span>Browse All</span>
+                                        <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-emerald-700"></i>
+                                    </button>
+                                </div>
+
+                                <div class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
+                                    <button type="button" onclick="document.getElementById('p2QuickKeywordInput').value='SWE Intern'; executeP2InternSearch();" class="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-slate-100 hover:bg-violet-50 text-slate-700 hover:text-violet-700 transition cursor-pointer">SWE Intern</button>
+                                    <button type="button" onclick="document.getElementById('p2QuickKeywordInput').value='Python'; executeP2InternSearch();" class="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-slate-100 hover:bg-violet-50 text-slate-700 hover:text-violet-700 transition cursor-pointer">Python</button>
+                                    <button type="button" onclick="document.getElementById('p2QuickKeywordInput').value='React'; executeP2InternSearch();" class="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-slate-100 hover:bg-violet-50 text-slate-700 hover:text-violet-700 transition cursor-pointer">React</button>
+                                    <button type="button" onclick="document.getElementById('p2QuickKeywordInput').value='Machine Learning'; executeP2InternSearch();" class="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-slate-100 hover:bg-violet-50 text-slate-700 hover:text-violet-700 transition cursor-pointer">ML / AI</button>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- CARD 4: Quick Search on Intern Jobs (Middle-Center, Col 2 - Quick Tag Filter Enriched) -->
-                        <div class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg transition flex flex-col justify-between">
-                            <div>
-                                <span class="text-xs font-black uppercase tracking-wider text-emerald-700 flex items-center gap-1.5 mb-1.5">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                    QUICK SEARCH ON INTERN JOBS
-                                </span>
-                            </div>
-                            <div class="relative mt-2">
-                                <input type="text" id="p2QuickKeywordInput" placeholder="Quick search on intern jobs..." onkeydown="if(event.key==='Enter') executeP2InternSearch()" class="w-full pl-4 pr-11 py-2.5 rounded-full bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-xs text-slate-900 transition font-medium">
-                                <button type="button" onclick="executeP2InternSearch()" class="absolute right-1 top-1 w-7 h-7 rounded-full bg-violet-600 hover:bg-violet-500 text-white flex items-center justify-center transition cursor-pointer shadow-xs" title="Search intern jobs">
-                                    <i data-lucide="search" class="w-3.5 h-3.5 text-white"></i>
-                                </button>
-                            </div>
-                            <!-- Quick Filter Chips -->
-                            <div class="flex flex-wrap gap-1.5 mt-3 pt-2.5 border-t border-slate-100">
-                                <button type="button" onclick="document.getElementById('p2QuickKeywordInput').value='Python'; executeP2InternSearch();" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 hover:bg-violet-50 text-slate-600 hover:text-violet-700 transition cursor-pointer">Python</button>
-                                <button type="button" onclick="document.getElementById('p2QuickKeywordInput').value='React'; executeP2InternSearch();" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 hover:bg-violet-50 text-slate-600 hover:text-violet-700 transition cursor-pointer">React</button>
-                                <button type="button" onclick="document.getElementById('p2QuickKeywordInput').value='Machine Learning'; executeP2InternSearch();" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 hover:bg-violet-50 text-slate-600 hover:text-violet-700 transition cursor-pointer">ML/AI</button>
-                                <button type="button" onclick="document.getElementById('p2QuickKeywordInput').value='Java'; executeP2InternSearch();" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 hover:bg-violet-50 text-slate-600 hover:text-violet-700 transition cursor-pointer">Java</button>
-                            </div>
-                        </div>
-
-                        <!-- CARD 5: 0% Recruiter Spread (Bottom-Left, Col 1) -->
+                        <!-- CARD 4: 0% Recruiter Spread -->
                         <div onclick="openHeroInfoModal('middlemen')" class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg hover:border-violet-300 transition cursor-pointer group flex flex-col justify-between">
                             <div>
-                                <div class="flex items-center gap-1.5 mb-2 text-xs font-black uppercase tracking-wider text-violet-700">
+                                <div class="flex items-center gap-1.5 mb-1.5 text-xs font-black uppercase tracking-wider text-violet-700">
                                     <span class="w-2 h-2 rounded-full bg-violet-600"></span>
                                     0% RECRUITER SPREAD
                                 </div>
-                                <p class="text-xs sm:text-sm font-bold text-slate-900 leading-snug group-hover:text-violet-950 transition">
-                                    No ghost listings. No zombie posts. Only real openings with real budgets.
+                                <h4 class="text-sm sm:text-base font-black text-slate-900 group-hover:text-violet-950 transition mb-1">
+                                    Direct Corporate Ingestion
+                                </h4>
+                                <p class="text-xs text-slate-500 leading-relaxed">
+                                    Real openings with verified budgets. Zero third-party commissions.
                                 </p>
                             </div>
-                            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-medium">
-                                <span>Zero third-party commissions</span>
+                            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-medium">
+                                <span>Zero agency markup</span>
                                 <i data-lucide="shield-check" class="w-3.5 h-3.5 text-violet-600"></i>
                             </div>
                         </div>
 
-                        <!-- CARD 6: Verified Compensation (Bottom-Center, Col 2) -->
+                        <!-- CARD 5: Verified Compensation -->
                         <div onclick="openHeroInfoModal('brokers')" class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg hover:border-emerald-300 transition cursor-pointer group flex flex-col justify-between">
                             <div>
-                                <div class="flex items-center gap-1.5 mb-2 text-xs font-black uppercase tracking-wider text-emerald-700">
+                                <div class="flex items-center gap-1.5 mb-1.5 text-xs font-black uppercase tracking-wider text-emerald-700">
                                     <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
                                     VERIFIED COMPENSATION
                                 </div>
-                                <p class="text-xs sm:text-sm font-bold text-slate-900 leading-snug group-hover:text-emerald-950 transition">
-                                    Stop feeding algorithms built to reject you. Apply using Almond, where humans read.
+                                <h4 class="text-sm sm:text-base font-black text-slate-900 group-hover:text-emerald-950 transition mb-1">
+                                    Disclosed Salary Bands
+                                </h4>
+                                <p class="text-xs text-slate-500 leading-relaxed">
+                                    Transparent compensation thresholds disclosed directly by employers.
                                 </p>
                             </div>
-                            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-medium">
-                                <span>Direct salary band transparency</span>
+                            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-medium">
+                                <span>Verified salary bands</span>
                                 <i data-lucide="badge-check" class="w-3.5 h-3.5 text-emerald-600"></i>
                             </div>
                         </div>
 
-                        <!-- CARD 7: Founder Direct Access (Bottom-Right, Col 3) -->
+                        <!-- CARD 6: Founder Direct Access -->
                         <div onclick="openHeroInfoModal('deadposts')" class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg hover:border-indigo-300 transition cursor-pointer group flex flex-col justify-between">
                             <div>
-                                <div class="flex items-center gap-1.5 mb-2 text-xs font-black uppercase tracking-wider text-indigo-700">
+                                <div class="flex items-center gap-1.5 mb-1.5 text-xs font-black uppercase tracking-wider text-indigo-700">
                                     <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
                                     FOUNDER DIRECT ACCESS
                                 </div>
-                                <p class="text-xs sm:text-sm font-bold text-slate-900 leading-snug group-hover:text-indigo-950 transition">
-                                    Put your technical dossier directly in front of leads and founders who actually know what you built.
+                                <h4 class="text-sm sm:text-base font-black text-slate-900 group-hover:text-indigo-950 transition mb-1">
+                                    Direct Hiring Routing
+                                </h4>
+                                <p class="text-xs text-slate-500 leading-relaxed">
+                                    Direct routing to engineering leads and founders who know what you built.
                                 </p>
                             </div>
-                            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-medium">
-                                <span>Direct hiring routing</span>
+                            <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-medium">
+                                <span>Direct founder routing</span>
                                 <i data-lucide="send" class="w-3.5 h-3.5 text-indigo-600"></i>
                             </div>
                         </div>
 
                     </div>
 
-                    <!-- Subtle bottom hint to advance to workspace -->
-                    <div class="flex items-center justify-center mt-8 sm:mt-10">
-                        <button type="button" onclick="goToSlide(2)" class="px-6 py-2.5 rounded-full bg-white/90 hover:bg-white text-slate-600 hover:text-violet-700 font-bold text-xs sm:text-sm border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all flex items-center gap-2 cursor-pointer group">
-                            <span>Upload Resume &amp; Configure Profile</span>
-                            <i data-lucide="arrow-down" class="w-3.5 h-3.5 text-violet-600 group-hover:translate-y-0.5 transition-transform"></i>
+                    <!-- Direct Action CTAs -->
+                    <div class="flex flex-wrap items-center justify-center gap-3 mt-8 sm:mt-10">
+                        <button type="button" onclick="window.goToSlide(0); window.triggerOmniResumeUpload();" class="px-6 py-3 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm shadow-md shadow-violet-500/25 transition-all flex items-center gap-2 cursor-pointer active:scale-98">
+                            <i data-lucide="paperclip" class="w-4 h-4 text-violet-200"></i>
+                            <span>Upload Resume to Match Dream Jobs</span>
+                        </button>
+                        <button type="button" onclick="window.goToSlide(0); document.getElementById('omniSearchInput')?.focus();" class="px-5 py-3 rounded-full bg-white hover:bg-slate-50 text-slate-700 hover:text-violet-700 font-bold text-xs sm:text-sm border border-slate-200/90 shadow-2xs hover:shadow-xs transition-all flex items-center gap-2 cursor-pointer active:scale-98">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                            <span>Search All Direct Openings &uarr;</span>
                         </button>
                     </div>
 
@@ -1185,575 +1159,34 @@
             </section>
 
 
-    <!-- 4. PAGE 3: DIRECT APPLICATION CONFIGURATION & PROFILE LANDSCAPE (SLIDE 2) -->
-    <!-- 4. PAGE 3: DIRECT APPLICATION CONFIGURATION & PROFILE LANDSCAPE (DIRECTION B SWISS LUXURY) -->
-    <section id="workspace" data-section="search-deck" class="w-full relative pt-24 sm:pt-28 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto z-10 scroll-mt-28">
-        <div id="search-deck"></div>
 
-        <!-- Section Header -->
-        <div class="text-center max-w-3xl mx-auto mb-8 sm:mb-10">
-            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-950 text-xs font-bold mb-3 shadow-2xs">
-                <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-amber-700"></i>
-                <span>1-Click Match &bull; 0% Recruiter Spread</span>
-            </span>
-            <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-slate-950 tracking-tight">
-                Find Your Dream Job Matched to Your Resume
-            </h2>
-            <p class="text-xs sm:text-sm text-slate-600 mt-2 font-medium">
-                Don&rsquo;t search through 3,315,000+ jobs manually. Upload your resume below &mdash; we&rsquo;ll extract your skills, filter by your expected package and locations, and show you exact direct openings with instant match scores.
-            </p>
-        </div>
 
-        <!-- Landscape 2-Column Responsive Grid (Swiss Luxury White Cards on Warm Cream Canvas) -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start w-full">
-            
-            <!-- Left Column: Unified Adaptive Smart CV Hub (Swiss Luxury Card) -->
-            <div class="flex flex-col">
-                <div id="candidate-cv-deck" class="rounded-3xl p-6 sm:p-7 border shadow-xl flex flex-col text-slate-900 transition-all duration-300" style="background: #ffffff; border-color: #e8dfd1; box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 0 1px 1px rgba(223, 183, 108, 0.15);">
-                    
-                    <!-- Header -->
-                    <div class="flex items-center justify-between pb-3.5 mb-4 border-b border-slate-100">
-                        <div class="flex items-center space-x-3">
-                            <span class="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white font-black text-xs sm:text-sm shadow-md shadow-violet-500/35 ring-2 ring-violet-300/60 uppercase tracking-wider flex items-center gap-1.5 shrink-0"><span class="w-2 h-2 rounded-full bg-white animate-pulse"></span><span>Step 1</span></span>
-                            <div>
-                                <h3 class="font-black text-slate-950 text-base sm:text-lg tracking-tight">Upload Your Resume (Candidate Profile)</h3>
-                                <p class="text-xs text-slate-500 font-medium">Instant skill extraction &mdash; 100% private in your browser</p>
-                            </div>
-                        </div>
-                        <span id="uploadStatusText" class="text-[11px] sm:text-xs font-black tracking-wider text-amber-950 bg-amber-50 px-3 py-1 rounded-full border border-amber-300 uppercase">PDF, DOCX, TXT</span>
-                    </div>
-
-                    <!-- Drag & Drop Zone -->
-                    <div id="dropZone" class="border-2 border-dashed rounded-2xl p-6 text-center hover:border-emerald-500 transition-all cursor-pointer relative group flex flex-col justify-center" style="background-color: #faf8f5; border-color: #dfb76c;">
-                        <input type="file" id="resumeFileInput" class="hidden" accept=".pdf,.docx,.doc,.txt">
-                        
-                        <div id="uploadPlaceholder" class="py-3">
-                            <div class="w-12 h-12 bg-amber-50 text-amber-800 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition-transform border border-amber-200 shadow-xs">
-                                <i data-lucide="upload-cloud" class="w-6 h-6 text-amber-700"></i>
-                            </div>
-                            <p class="text-sm sm:text-base font-extrabold text-slate-950">Drop your resume here or <span class="text-emerald-700 underline font-black">browse files</span></p>
-                            <p class="text-xs text-slate-500 mt-1">PDF, DOCX, TXT &bull; Automatically detects your experience, role &amp; skills</p>
-                        </div>
-
-                        <div id="uploadLoading" class="hidden py-4">
-                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto mb-2"></div>
-                            <p class="text-xs sm:text-sm font-bold text-slate-700">Extracting skills &amp; structuring vector...</p>
-                        </div>
-
-                        <div id="uploadedInfo" class="hidden text-left bg-emerald-50/80 border-2 border-emerald-400 rounded-2xl p-3 shadow-xs">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-2.5 truncate">
-                                    <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
-                                        <i data-lucide="file-check" class="w-4 h-4"></i>
-                                    </div>
-                                    <span id="fileNameDisplay" class="text-xs sm:text-sm font-black text-slate-950 truncate">resume.pdf</span>
-                                </div>
-                                <button type="button" id="reuploadBtn" class="text-xs text-emerald-800 hover:text-emerald-950 flex-shrink-0 ml-2 font-bold px-3 py-1 bg-white border border-emerald-300 rounded-xl shadow-xs cursor-pointer">Change</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Derived Profile Vector Container -->
-                    <div id="parsedProfileSection" class="mt-4 space-y-3.5">
-                        <div class="rounded-2xl p-4 border space-y-2" style="background-color: #faf8f5; border-color: #e8dfd1;">
-                            <div class="flex justify-between items-center text-xs sm:text-sm">
-                                <span class="text-slate-600 font-bold">Identified Candidate:</span>
-                                <span id="profileName" class="font-black text-xs sm:text-sm text-slate-950 bg-white px-3 py-1 rounded-xl border border-slate-200 shadow-2xs">Waiting for upload...</span>
-                            </div>
-                            <div class="flex justify-between items-center text-xs sm:text-sm">
-                                <span class="text-slate-600 font-bold">Verified Experience:</span>
-                                <span id="profileYoe" class="font-black text-xs sm:text-sm text-emerald-800 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200 shadow-2xs">&mdash;</span>
-                            </div>
-                            <div class="flex justify-between items-center text-xs sm:text-sm">
-                                <span class="text-slate-600 font-bold">Target Role:</span>
-                                <span id="profileRole" class="font-black text-xs sm:text-sm text-slate-900 truncate max-w-[200px] bg-white px-3 py-1 rounded-xl border border-slate-200 shadow-2xs">&mdash;</span>
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-xs font-black text-slate-950 uppercase tracking-wider">Derived Skills:</span>
-                                <span id="skillsCountBadge" class="text-xs font-black text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">0 extracted</span>
-                            </div>
-                            <div id="profileSkillsBadges" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1 mb-2.5">
-                                <span class="text-xs text-slate-500 font-medium">Upload your resume to extract skills automatically.</span>
-                            </div>
-
-                            <!-- Interactive Add Missing Skill Bar -->
-                            <div class="flex items-center space-x-2 pt-2.5 border-t border-slate-100">
-                                <div class="relative flex-1">
-                                    <input type="text" id="addSkillInput" placeholder="Add skill (Flutter, AWS, Python)..." class="w-full px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl bg-slate-50 text-slate-900 border border-slate-200 focus:outline-none focus:border-emerald-500 focus:bg-white placeholder:text-slate-400 shadow-2xs">
-                                </div>
-                                <button type="button" id="addSkillBtn" class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-sm flex items-center space-x-1.5 cursor-pointer transition flex-shrink-0">
-                                    <i data-lucide="plus" class="w-4 h-4"></i>
-                                    <span>Add</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600 font-bold">
-                        <span class="flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span>Direct Company Ready (Ashby, Workday, Lever)</span>
-                        </span>
-                        <span class="text-emerald-700 font-bold text-xs">0% Recruiter Spread</span>
-                    </div>
+        <!-- STREAMLINED COMPACT FOOTER: COPYRIGHT & LEGAL COMPLIANCE -->
+        <footer id="bottomDirectoryFooter" class="w-full shrink-0 relative z-30 border-t border-slate-200/90 bg-white/95 px-4 sm:px-8 lg:px-12 py-4 sm:py-5 text-slate-800">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 font-medium">
+                <div class="flex items-center gap-2">
+                    <img src="/static/logo.png" alt="Almond Logo" class="w-4 h-4 object-contain">
+                    <span class="font-bold text-slate-800">&copy; 2026 Almond Job<span class="text-violet-600">s</span> &mdash; Direct Corporate Career Feeds. All rights reserved. Operated by <strong>PantherClaws Enterprises</strong>.</span>
                 </div>
-            </div>
-
-            <!-- Right Column: Target Compensation, Locations & Search Button (Swiss Luxury Card) -->
-            <div class="flex flex-col">
-                <div id="criteria-deck" class="rounded-3xl p-6 sm:p-7 border shadow-xl space-y-4 text-slate-900" style="background: #ffffff; border-color: #e8dfd1; box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 0 1px 1px rgba(223, 183, 108, 0.15);">
-                    
-                    <!-- Header -->
-                    <div class="flex items-center justify-between pb-3.5 border-b border-slate-100">
-                        <div class="flex items-center space-x-3">
-                            <span class="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white font-black text-xs sm:text-sm shadow-md shadow-emerald-500/30 ring-2 ring-emerald-300/50 uppercase tracking-wider flex items-center gap-1.5 shrink-0"><span class="w-2 h-2 rounded-full bg-white animate-pulse"></span><span>Step 2</span></span>
-                            <div>
-                                <h3 class="font-black text-slate-950 text-base sm:text-lg tracking-tight">Set Expected Salary &amp; Locations (Target Compensation &amp; Geography)</h3>
-                                <p class="text-xs text-slate-500 font-medium">Define your minimum pay threshold and preferred work locations</p>
-                            </div>
-                        </div>
-                        <span class="text-xs font-black text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">Global Direct Portals</span>
-                    </div>
-
-                    <!-- 1. Compensation Filter (Unified Number Box + Currency Switcher + Quick Presets) -->
-                    <div class="space-y-2.5">
-                        <div class="flex justify-between items-center">
-                            <label class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 block">Minimum Expected Package</label>
-                            <div class="flex items-center space-x-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-1.5 shadow-2xs">
-                                <span id="currencySymbol" class="text-base sm:text-lg font-black text-emerald-700">₹</span>
-                                <input type="number" id="packageNumberInput" min="0" max="500" step="1" value="15" class="w-18 text-right font-black text-base sm:text-lg text-slate-950 bg-transparent focus:outline-none">
-                                <span id="currencyUnit" class="text-xs sm:text-sm font-black text-emerald-700">LPA</span>
-                            </div>
-                        </div>
-
-                        <!-- Currency Selector Tabs -->
-                        <div class="flex items-center gap-1.5 bg-slate-50 p-1.5 rounded-2xl text-xs sm:text-sm font-bold text-slate-700 border border-slate-200">
-                            <button type="button" class="currency-tab active flex-1 py-1.5 rounded-xl bg-slate-950 text-white shadow-sm transition font-black text-xs cursor-pointer" data-curr="INR">₹ INR</button>
-                            <button type="button" class="currency-tab flex-1 py-1.5 rounded-xl hover:text-slate-950 transition text-slate-600 font-bold text-xs cursor-pointer" data-curr="USD_YR">$ USD</button>
-                            <button type="button" class="currency-tab flex-1 py-1.5 rounded-xl hover:text-slate-950 transition text-slate-600 font-bold text-xs cursor-pointer" data-curr="EUR">€ EUR</button>
-                            <button type="button" class="currency-tab flex-1 py-1.5 rounded-xl hover:text-slate-950 transition text-slate-600 font-bold text-xs cursor-pointer" data-curr="GBP">£ GBP</button>
-                            <select id="moreCurrenciesSelect" class="bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer">
-                                <option value="" disabled selected>More ▾</option>
-                                <option value="CAD">C$ CAD</option>
-                                <option value="AUD">A$ AUD</option>
-                                <option value="USD_MO">$ / Mo</option>
-                            </select>
-                        </div>
-
-                        <!-- Quick Salary Presets -->
-                        <div id="salaryPresetsContainer" class="flex flex-wrap gap-1.5 pt-0.5">
-                            <button type="button" class="salary-preset-btn text-xs font-bold px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-slate-700 hover:text-emerald-950 border border-slate-200 transition cursor-pointer" onclick="setSalaryPreset(0)">No Min</button>
-                            <button type="button" class="salary-preset-btn text-xs font-bold px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-slate-700 hover:text-emerald-950 border border-slate-200 transition cursor-pointer" onclick="setSalaryPreset(10)">10 LPA</button>
-                            <button type="button" class="salary-preset-btn text-xs font-bold px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-slate-700 hover:text-emerald-950 border border-slate-200 transition cursor-pointer" onclick="setSalaryPreset(20)">20 LPA</button>
-                            <button type="button" class="salary-preset-btn text-xs font-bold px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-slate-700 hover:text-emerald-950 border border-slate-200 transition cursor-pointer" onclick="setSalaryPreset(35)">35 LPA</button>
-                            <button type="button" class="salary-preset-btn text-xs font-bold px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-slate-700 hover:text-emerald-950 border border-slate-200 transition cursor-pointer" onclick="setSalaryPreset(50)">50+ LPA</button>
-                        </div>
-                    </div>
-
-                    <!-- 2. Worldwide Locations A to Z with Typeahead & Fast Preset Pills -->
-                    <div class="space-y-2">
-                        <label class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-800 block">Target Locations (Global Cities &amp; Remote)</label>
-                        <div class="relative">
-                            <i data-lucide="map-pin" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                            <input type="text" id="locationSearchInput" autocomplete="off" placeholder="Type city or country (Bengaluru, London, USA)..." class="w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm font-bold rounded-2xl bg-slate-50 text-slate-950 border border-slate-200 focus:outline-none focus:border-emerald-500 focus:bg-white placeholder:text-slate-400 shadow-2xs">
-                            <div id="locationDropdown" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl max-h-48 overflow-y-auto z-50 text-slate-900 divide-y divide-slate-100 loc-dropdown"></div>
-                        </div>
-
-                        <!-- Active Location Tags (revealed dynamically when locations are selected) -->
-                        <div id="selectedLocationsTags" class="hidden flex-wrap gap-1.5 min-h-[34px] p-2 bg-slate-50 border border-slate-200 rounded-2xl"></div>
-
-                        <!-- Quick Preset Location Pills -->
-                        <div class="flex flex-wrap gap-1.5" id="quickLocationPills">
-                            <button type="button" onclick="addLocationPreset('Worldwide Remote')" data-loc="Worldwide Remote" class="loc-preset-pill text-xs font-bold px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-slate-700 hover:text-emerald-950 border border-slate-200 transition cursor-pointer">🌐 Remote</button>
-                            <button type="button" onclick="addLocationPreset('All India')" data-loc="All India" class="loc-preset-pill text-xs font-bold px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-slate-700 hover:text-emerald-950 border border-slate-200 transition cursor-pointer">🇮🇳 India</button>
-                            <button type="button" onclick="addLocationPreset('Bengaluru')" data-loc="Bengaluru" class="loc-preset-pill text-xs font-bold px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-slate-700 hover:text-emerald-950 border border-slate-200 transition cursor-pointer">Bengaluru</button>
-                            <button type="button" onclick="addLocationPreset('Chennai')" data-loc="Chennai" class="loc-preset-pill text-xs font-bold px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-slate-700 hover:text-emerald-950 border border-slate-200 transition cursor-pointer">Chennai</button>
-                            <button type="button" onclick="addLocationPreset('United States')" data-loc="United States" class="loc-preset-pill text-xs font-bold px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-slate-700 hover:text-emerald-950 border border-slate-200 transition cursor-pointer">🇺🇸 USA</button>
-                            <button type="button" onclick="addLocationPreset('Europe')" data-loc="Europe" class="loc-preset-pill text-xs font-bold px-2.5 py-1 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-slate-700 hover:text-emerald-950 border border-slate-200 transition cursor-pointer">🇪🇺 Europe</button>
-                        </div>
-                    </div>
-
-                    <!-- 3. Work Arrangement & Contract Modes (Segmented Compact) -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-                        <div>
-                            <label class="text-xs font-black uppercase tracking-wider text-slate-800 block mb-1.5">Work Arrangement</label>
-                            <div class="grid grid-cols-4 gap-1 text-[11px] sm:text-xs font-black">
-                                <label class="work-mode-tab border border-slate-900 bg-slate-950 text-white rounded-xl py-1.5 px-0.5 text-center cursor-pointer flex items-center justify-center transition shadow-2xs font-black">
-                                    <input type="radio" name="work_mode" value="all" checked class="hidden">
-                                    <span>All</span>
-                                </label>
-                                <label class="work-mode-tab border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 px-0.5 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition shadow-2xs font-bold">
-                                    <input type="radio" name="work_mode" value="remote" class="hidden">
-                                    <span>Remote</span>
-                                </label>
-                                <label class="work-mode-tab border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 px-0.5 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition shadow-2xs font-bold">
-                                    <input type="radio" name="work_mode" value="hybrid" class="hidden">
-                                    <span>Hybrid</span>
-                                </label>
-                                <label class="work-mode-tab border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 px-0.5 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition shadow-2xs font-bold">
-                                    <input type="radio" name="work_mode" value="onsite" class="hidden">
-                                    <span>Onsite</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="text-xs font-black uppercase tracking-wider text-slate-800 block mb-1.5">Contract Type</label>
-                            <div class="grid grid-cols-3 gap-1 text-xs font-black">
-                                <label class="emp-type-tab border border-slate-900 bg-slate-950 text-white rounded-xl py-1.5 px-1 text-center cursor-pointer flex items-center justify-center transition shadow-2xs font-black">
-                                    <input type="radio" name="employment_type" value="all" checked class="hidden">
-                                    <span>All</span>
-                                </label>
-                                <label class="emp-type-tab border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 px-1 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition shadow-2xs font-bold">
-                                    <input type="radio" name="employment_type" value="full-time" class="hidden">
-                                    <span>Full-Time</span>
-                                </label>
-                                <label class="emp-type-tab border border-slate-200 bg-slate-50 text-slate-700 rounded-xl py-1.5 px-1 text-center cursor-pointer hover:bg-slate-100 flex items-center justify-center transition shadow-2xs font-bold">
-                                    <input type="radio" name="employment_type" value="contract" class="hidden">
-                                    <span>Contract</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Primary Action Button: Find Verified Direct Jobs -->
-                    <button type="button" id="searchJobsBtn" class="w-full py-4 px-6 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl shadow-emerald-600/25 flex items-center justify-center space-x-2 transition transform active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed mt-3 cursor-pointer">
-                        <i data-lucide="sparkles" class="w-4 h-4 text-white"></i>
-                        <span>Match My Resume with 3,315,000+ Direct Jobs &rarr;</span>
+                <!-- Legal & Compliance Links -->
+                <div class="flex items-center gap-3 sm:gap-4 text-[11px] sm:text-xs text-slate-600 font-semibold flex-wrap justify-center">
+                    <a href="/terms" class="hover:text-violet-700 transition">Terms of Service</a>
+                    <span class="text-slate-300">&bull;</span>
+                    <a href="/privacy" class="hover:text-violet-700 transition">Privacy Policy</a>
+                    <span class="text-slate-300">&bull;</span>
+                    <a href="/refund-policy" class="hover:text-violet-700 transition">Refund Policy</a>
+                    <span class="text-slate-300">&bull;</span>
+                    <a href="/contact" class="hover:text-violet-700 transition">Contact Us</a>
+                    <span class="text-slate-300">&bull;</span>
+                    <button type="button" onclick="const d = document.getElementById('enterpriseEntityDrawer'); if(d){d.classList.toggle('hidden'); if(!d.classList.contains('hidden')){d.scrollIntoView({behavior:'smooth'});}}" class="hover:text-violet-700 font-bold transition text-slate-500 cursor-pointer">
+                        Architecture &amp; Disambiguation &#9662;
                     </button>
-
-                    <!-- Navigation helper between Home and Results -->
-                    <div class="flex items-center justify-between pt-1.5 text-xs font-bold text-slate-500">
-                        <button type="button" onclick="goToSlide(0)" class="hover:text-slate-950 flex items-center gap-1 cursor-pointer transition">
-                            <span>&uarr; Return to Home</span>
-                        </button>
-                        <button type="button" onclick="goToSlide(3)" class="hover:text-slate-950 flex items-center gap-1 cursor-pointer transition">
-                            <span>Live Direct Feeds &darr;</span>
-                        </button>
-                    </div>
-
-                </div>
-
-            </div>
-        </div>
-    </section>
-
-
-
-<!-- 5. PAGE 3: LIVE MATCHED OPPORTUNITIES STREAM (SLIDE 3) -->
-    <section id="results-stream" data-section="feed-stream" class="story-page w-full relative overflow-visible bg-transparent flex flex-col justify-start scroll-mt-28">
-        <div id="feed-stream"></div>
-
-        <div class="max-w-7xl mx-auto w-full relative z-10 px-4 sm:px-8 pt-16 sm:pt-20 flex-1 flex flex-col min-h-0 overflow-visible">
-        
-        <!-- Results Command Toolbar & Navigation Tabs -->
-        <div class="glass-panel rounded-3xl p-5 border border-slate-200/90 shadow-sm mb-4 flex flex-col gap-4">
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div>
-                    <h2 class="text-xl sm:text-2xl font-black text-slate-950 flex items-center space-x-2.5 tracking-tight">
-                        <span>Matched Opportunities — Direct Live Feeds</span>
-                        <span id="resultsCountBadge" class="bg-violet-100 text-violet-950 text-xs sm:text-sm font-black px-3.5 py-1.5 rounded-full border border-violet-300 shadow-xs">0 Verified Postings</span>
-                    </h2>
-                    <p class="text-xs sm:text-sm font-bold text-slate-600 mt-1">Direct Enterprise Portals (Ashby, Greenhouse, Workday, Lever) &amp; Founder Direct — 0% Recruiter Spread</p>
-                </div>
-
-                <!-- Right Controls: Dossier Exports -->
-                <div class="flex items-center space-x-2.5 flex-wrap sm:flex-nowrap gap-y-2">
-                    <!-- Dossier Export Actions -->
-                    <div class="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
-                        <button id="openTechDossierBtn" type="button" onclick="openTechDossierModal()" title="Export 1-Page Silicon Valley Standard Tech Dossier" class="px-3.5 py-2 rounded-xl border border-violet-300 text-violet-950 bg-violet-100 hover:bg-violet-200 text-xs sm:text-sm font-black flex items-center space-x-1.5 transition shadow-xs cursor-pointer">
-                            <i data-lucide="file-check" class="w-4 h-4 text-violet-700"></i>
-                            <span>1-Page Dossier</span>
-                        </button>
-                        <button type="button" id="exportPdfBtn" title="Download PDF Dossier" class="px-3.5 py-2 rounded-xl border border-slate-300 text-slate-900 text-xs sm:text-sm font-black hover:bg-violet-50 hover:border-violet-300 disabled:opacity-40 flex items-center space-x-1.5 transition bg-white shadow-xs cursor-pointer">
-                            <i data-lucide="download" class="w-4 h-4 text-red-600"></i>
-                            <span>PDF</span>
-                        </button>
-                        <button type="button" id="exportDocxBtn" title="Download Word Document" class="px-3.5 py-2 rounded-xl border border-slate-300 text-slate-900 text-xs sm:text-sm font-black hover:bg-violet-50 hover:border-violet-300 disabled:opacity-40 flex items-center space-x-1.5 transition bg-white shadow-xs cursor-pointer">
-                            <i data-lucide="file-text" class="w-4 h-4 text-blue-600"></i>
-                            <span>Word</span>
-                        </button>
-                        <button type="button" id="exportCsvBtn" title="Download CSV Tracker" class="px-3.5 py-2 rounded-xl border border-slate-300 text-slate-900 text-xs sm:text-sm font-black hover:bg-violet-50 hover:border-violet-300 disabled:opacity-40 flex items-center space-x-1.5 transition bg-white shadow-xs cursor-pointer">
-                            <i data-lucide="table" class="w-4 h-4 text-emerald-600"></i>
-                            <span>Tracker</span>
-                        </button>
-                    </div>
-
                 </div>
             </div>
 
-            <!-- View Switcher Tabs -->
-            <div class="flex items-center space-x-2.5 border-t border-slate-100 pt-3 flex-wrap gap-y-2">
-                <button type="button" id="tabAtsJobs" class="tab-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/20 flex items-center space-x-2 transition cursor-pointer">
-                    <i data-lucide="shield-check" class="w-4 h-4"></i>
-                    <span>Direct Live Feeds</span>
-                    <span id="atsCountBadge" class="bg-white/25 text-white text-xs px-2.5 py-0.5 rounded-full ml-1 font-black">0</span>
-                </button>
-                <button type="button" id="tabFounderJobs" class="tab-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black bg-white border border-slate-300 text-slate-800 hover:border-violet-400 hover:bg-violet-50/50 flex items-center space-x-2 transition cursor-pointer">
-                    <span class="text-orange-500 font-bold text-sm">🚀</span>
-                    <span>Y Combinator &amp; Hacker News Founder Direct</span>
-                    <span id="founderCountBadge" class="bg-orange-100 text-orange-950 text-xs px-2.5 py-0.5 rounded-full ml-1 font-black">0</span>
-                </button>
-                <button type="button" id="tabKanbanTracker" class="tab-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black bg-white border border-slate-300 text-slate-800 hover:border-violet-400 hover:bg-violet-50/50 flex items-center space-x-2 transition cursor-pointer">
-                    <i data-lucide="layout-grid" class="w-4 h-4 text-violet-600"></i>
-                    <span>My Application Kanban</span>
-                    <span id="kanbanCountBadge" class="bg-violet-100 text-violet-950 text-xs px-2.5 py-0.5 rounded-full ml-1 font-black">0</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Scrollable Results Container for Page 3 -->
-        <div id="resultsScrollContainer" class="w-full space-y-4 pb-16 overflow-visible">
-
-        <!-- Empty State -->
-        <div id="emptyState" class="glass-panel rounded-3xl p-12 text-center border border-slate-200/90 shadow-sm">
-            <div class="w-16 h-16 bg-violet-100 text-violet-700 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-violet-300 shadow-md">
-                <i data-lucide="inbox" class="w-8 h-8"></i>
-            </div>
-            <h3 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">No Postings Loaded</h3>
-            <p class="text-sm sm:text-base text-slate-700 mt-2 max-w-lg mx-auto leading-relaxed font-bold">
-                Upload your resume in the matching workspace above, set your compensation threshold, and Almond will query live broker-free direct company &amp; founder postings.
-            </p>
-        </div>
-
-        <!-- Loading State: Founder Reassurance & Live Corporate Discovery -->
-        <div id="jobsLoading" class="hidden glass-panel rounded-3xl p-8 sm:p-12 text-center border-2 border-emerald-500/30 bg-gradient-to-b from-white via-emerald-50/20 to-white shadow-2xl relative overflow-hidden">
-            <!-- Pulsing Ambient Glow -->
-            <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none"></div>
-
-            <div class="relative z-10 max-w-xl mx-auto space-y-6">
-                <!-- Dual-Ring Animated Spinner with Center Icon -->
-                <div class="relative w-20 h-20 mx-auto flex items-center justify-center">
-                    <div class="absolute inset-0 rounded-full border-4 border-emerald-200/60 animate-ping opacity-25"></div>
-                    <div class="absolute inset-0 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"></div>
-                    <div class="w-12 h-12 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/40">
-                        <i data-lucide="sparkles" class="w-6 h-6 animate-pulse"></i>
-                    </div>
-                </div>
-
-                <!-- Main Status & Headline -->
-                <div>
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-900 border border-emerald-300 uppercase tracking-wider mb-2">
-                        <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-                        Live Portal Direct Match
-                    </span>
-                    <h3 id="loaderHeadline" class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">
-                        Finding Your Best Matching Direct Jobs...
-                    </h3>
-                </div>
-
-                <!-- Founder Reassurance Rotating Message -->
-                <div class="min-h-[58px] flex items-center justify-center">
-                    <p id="loaderRotatingQuote" class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed px-4 py-2.5 rounded-2xl bg-white/90 border border-slate-200 shadow-2xs transition-all duration-300">
-                        "We are finding you the best matching jobs directly in company portals. It might take a few seconds — wait for the best result!"
-                    </p>
-                </div>
-
-                <!-- Animated Progress Bar -->
-                <div class="space-y-2">
-                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
-                        <div id="loaderProgressBar" class="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 h-2.5 rounded-full transition-all duration-500 ease-out" style="width: 18%"></div>
-                    </div>
-                    <div class="flex justify-between items-center text-[11px] font-black text-slate-500">
-                        <span id="loaderStepText">Scanning 3,315,000+ verified corporate job portals...</span>
-                        <span id="loaderPercentText">18%</span>
-                    </div>
-                </div>
-
-                <!-- Trust Guarantee Pill -->
-                <div class="flex flex-wrap items-center justify-center gap-2 pt-2 text-xs font-extrabold text-slate-600">
-                    <span class="inline-flex items-center gap-1 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl">
-                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
-                        Zero Broker Markups
-                    </span>
-                    <span class="inline-flex items-center gap-1 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl">
-                        <i data-lucide="send" class="w-3.5 h-3.5 text-teal-600"></i>
-                        Direct to Hiring Team &amp; HR
-                    </span>
-                    <span class="inline-flex items-center gap-1 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl">
-                        <i data-lucide="check-circle" class="w-3.5 h-3.5 text-blue-600"></i>
-                        Exact Compensation Matched
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab View 1: Direct Live Feeds Container -->
-        <div id="jobListContainer" class="space-y-4"></div>
-
-        <!-- Dedicated End-of-List LinkedIn Toggle Card (Appears after Direct Jobs are rendered) -->
-        <div id="bottomLinkedinToggleCard" class="hidden mt-6 mb-2 p-5 rounded-3xl border shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4" style="background: linear-gradient(135deg, #0d1b2a 0%, #081018 100%); border-color: rgba(10, 102, 194, 0.45); box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.5);">
-            <div class="flex items-center space-x-3.5">
-                <div class="w-10 h-10 rounded-2xl bg-[#0A66C2] text-white flex items-center justify-center font-bold text-lg shadow-lg shadow-[#0A66C2]/30 flex-shrink-0">
-                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.6 1.6 0 0 0-1.6 1.6 1.6 1.6 0 0 0 1.6-1.6Z"/></svg>
-                </div>
-                <div>
-                    <div class="flex items-center space-x-2">
-                        <h4 class="text-sm font-black text-white">Include Auxiliary LinkedIn Job Postings</h4>
-                        <span class="text-xs font-black text-amber-300 bg-amber-950/90 px-2.5 py-0.5 rounded border border-amber-500/50 uppercase">Secondary Feed</span>
-                    </div>
-                    <p class="text-xs text-slate-300 font-medium mt-0.5">Verified direct company postings are listed above. Toggle to query &amp; append third-party LinkedIn listings below.</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-3 flex-shrink-0 self-end sm:self-center">
-                <span class="text-xs font-bold text-slate-300">Show Feed</span>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" id="resultsLinkedinToggle" class="sr-only peer">
-                    <div class="w-12 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0A66C2]"></div>
-                </label>
-            </div>
-        </div>
-
-        <!-- Dedicated LinkedIn Feed Section (Below Toggle) -->
-        <div id="linkedinSectionContainer" class="hidden mt-4 space-y-4">
-            <!-- High-Contrast Warning Banner (Midnight Obsidian / Navy with vivid amber accents) -->
-            <div class="rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xl border-2" style="background: linear-gradient(135deg, #0d1b2a 0%, #081018 100%); border-color: rgba(245, 158, 11, 0.7); box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.6);">
-                <div class="flex items-start space-x-3.5">
-                    <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0 border border-amber-400/50 mt-0.5">
-                        <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400"></i>
-                    </div>
-                    <div>
-                        <div class="flex items-center space-x-2">
-                            <h3 class="text-sm font-black text-white">Third-Party LinkedIn Job Feed (10 Postings)</h3>
-                            <span class="text-xs font-black text-amber-300 bg-amber-950/90 px-2.5 py-0.5 rounded border border-amber-500/50 uppercase">Auxiliary Listing</span>
-                        </div>
-                        <p class="text-xs text-slate-300 mt-1 font-medium">
-                            <strong class="text-emerald-400 font-bold">Direct company postings above are 100% verified.</strong> Third-party LinkedIn listings are aggregated from external feeds and may contain agency markups or recruiter spreads.
-                        </p>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-2 flex-shrink-0 self-end sm:self-center">
-                    <span class="px-3.5 py-1.5 rounded-xl bg-[#0A66C2] text-white text-xs font-black flex items-center space-x-1.5 shadow-md shadow-[#0A66C2]/40 border border-blue-400/30">
-                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.6 1.6 0 0 0-1.6 1.6 1.6 1.6 0 0 0 1.6-1.6Z"/></svg>
-                        <span id="linkedinCountBadge">10 External Posts</span>
-                    </span>
-                </div>
-            </div>
-
-            <div id="linkedinLoading" class="hidden rounded-2xl p-8 text-center border shadow-xl" style="background: linear-gradient(135deg, #0d1b2a 0%, #081018 100%); border-color: rgba(10, 102, 194, 0.5);">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0A66C2] mx-auto mb-2"></div>
-                <p class="text-xs font-bold text-white">Querying live external LinkedIn feed...</p>
-            </div>
-
-            <div id="linkedinCardsContainer" class="space-y-4"></div>
-
-            <!-- LinkedIn Load More / Pagination Container -->
-            <div id="linkedinLoadMoreContainer" class="hidden text-center pt-2 pb-6">
-                <button type="button" id="loadMoreLinkedinBtn" class="px-6 py-3 rounded-2xl bg-[#0A66C2] hover:bg-[#004182] text-white text-xs sm:text-sm font-black inline-flex items-center space-x-2 shadow-lg shadow-blue-600/30 transition transform active:scale-95 cursor-pointer">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                    <span id="loadMoreLinkedinText">Show More LinkedIn Postings (+10 More)</span>
-                </button>
-                <div id="linkedinLoadMoreLoading" class="hidden py-3">
-                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#0A66C2] mx-auto mb-1"></div>
-                    <p class="text-xs font-bold text-slate-300">Fetching next tier of matching auxiliary postings...</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab View 2: YC & HN Founder Direct Container -->
-        <div id="founderListContainer" class="hidden space-y-4">
-            <div class="glass-panel rounded-2xl p-4 bg-orange-50/80 border-2 border-orange-200 text-orange-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm mb-4">
-                <div class="flex items-start space-x-3">
-                    <span class="text-xl">🚀</span>
-                    <div>
-                        <h3 class="text-xs font-black text-orange-950">Direct Founder &amp; Executive Postings (Hacker News &amp; Y Combinator)</h3>
-                        <p class="text-[11px] text-orange-900 mt-0.5 font-bold">100% Direct contact with startup founders and engineering leaders. Zero recruiters, zero agency commissions.</p>
-                    </div>
-                </div>
-                <span class="px-3 py-1 rounded-full bg-orange-500 text-white text-[11px] font-black flex items-center space-x-1 flex-shrink-0 shadow-xs">
-                    <span>Direct Founder Access</span>
-                </span>
-            </div>
-            <div id="founderCardsWrapper" class="space-y-4"></div>
-        </div>
-
-        <!-- Tab View 3: Application Kanban Tracker (100% Client-Side LocalStorage Tracker) -->
-        <div id="kanbanBoardContainer" class="hidden space-y-4">
-            <!-- Privacy notice pill -->
-            <div class="p-3.5 rounded-2xl bg-violet-50/80 border border-violet-200 text-xs text-violet-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div class="flex items-center space-x-2.5">
-                    <i data-lucide="lock" class="w-4 h-4 text-violet-600 flex-shrink-0"></i>
-                    <span class="font-medium"><strong>Zero Server Overhead:</strong> Your tracker is stored privately in your browser's local memory. Clicks on "Direct Apply" auto-track into "Applied".</span>
-                </div>
-                <button type="button" id="clearKanbanBtn" class="text-[11px] font-bold text-slate-500 hover:text-red-600 transition underline cursor-pointer">Reset Local Tracker</button>
-            </div>
-
-            <!-- 4-Column Responsive Kanban Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Column 1: Saved -->
-                <div class="glass-panel rounded-2xl p-4 border border-slate-200/90 flex flex-col min-h-[420px] bg-slate-50/60">
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-3">
-                        <div class="flex items-center space-x-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
-                            <h3 class="font-black text-xs uppercase tracking-wider text-slate-700">📌 Saved / Target</h3>
-                        </div>
-                        <span id="colCountSaved" class="text-xs font-black text-slate-500 bg-white px-2 py-0.5 rounded-full border border-slate-200">0</span>
-                    </div>
-                    <div id="kanbanColSaved" class="space-y-3 flex-1 overflow-y-auto max-h-[600px] pr-1"></div>
-                </div>
-
-                <!-- Column 2: Applied (Auto-Tracked) -->
-                <div class="glass-panel rounded-2xl p-4 border border-violet-200/90 flex flex-col min-h-[420px] bg-violet-50/30">
-                    <div class="flex items-center justify-between pb-3 border-b border-violet-200 mb-3">
-                        <div class="flex items-center space-x-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-violet-600"></span>
-                            <h3 class="font-black text-xs uppercase tracking-wider text-violet-900">📤 Applied (Auto)</h3>
-                        </div>
-                        <span id="colCountApplied" class="text-xs font-black text-violet-700 bg-white px-2 py-0.5 rounded-full border border-violet-200">0</span>
-                    </div>
-                    <div id="kanbanColApplied" class="space-y-3 flex-1 overflow-y-auto max-h-[600px] pr-1"></div>
-                </div>
-
-                <!-- Column 3: Interview Scheduled -->
-                <div class="glass-panel rounded-2xl p-4 border border-amber-200/90 flex flex-col min-h-[420px] bg-amber-50/30">
-                    <div class="flex items-center justify-between pb-3 border-b border-amber-200 mb-3">
-                        <div class="flex items-center space-x-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                            <h3 class="font-black text-xs uppercase tracking-wider text-amber-900">🎯 Interview</h3>
-                        </div>
-                        <span id="colCountInterview" class="text-xs font-black text-amber-700 bg-white px-2 py-0.5 rounded-full border border-amber-200">0</span>
-                    </div>
-                    <div id="kanbanColInterview" class="space-y-3 flex-1 overflow-y-auto max-h-[600px] pr-1"></div>
-                </div>
-
-                <!-- Column 4: Offer / Final -->
-                <div class="glass-panel rounded-2xl p-4 border border-emerald-200/90 flex flex-col min-h-[420px] bg-emerald-50/30">
-                    <div class="flex items-center justify-between pb-3 border-b border-emerald-200 mb-3">
-                        <div class="flex items-center space-x-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
-                            <h3 class="font-black text-xs uppercase tracking-wider text-emerald-900">🎉 Offer / Closed</h3>
-                        </div>
-                        <span id="colCountOffer" class="text-xs font-black text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-200">0</span>
-                    </div>
-                    <div id="kanbanColOffer" class="space-y-3 flex-1 overflow-y-auto max-h-[600px] pr-1"></div>
-                </div>
-            </div>
-        </div>
-
-
-            <!-- SEMANTIC ABOUT & ENTITY DISAMBIGUATION SECTION (CRAWLABLE BY GOOGLE AI OVERVIEW & WEB ENGINE CRAWLERS) -->
-            
-
-        </div> <!-- /#resultsScrollContainer -->
-
-        </div> <!-- /max-w-7xl -->
-
-        <!-- DOCKED FULL-WIDTH DIRECTORY & PROFESSIONAL ENTERPRISE FOOTER (SOLID WHITE, COMPACT, SPANNING LEFT TO RIGHT) -->
-        <!-- DOCKED ENTERPRISE DISAMBIGUATION & GOOGLEBOT CRAWLABLE DRAWER (CLEAN & NON-INTRUSIVE) -->
-        <details id="enterpriseEntityDrawer" class="w-full max-w-6xl mx-auto my-2 px-4 sm:px-8 group text-slate-800 relative z-20">
-            <summary class="cursor-pointer list-none flex items-center justify-between py-2 px-4 rounded-xl bg-white/95 hover:bg-white border border-slate-200 shadow-xs text-xs font-bold transition select-none">
-                <span class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-violet-600"></span>
-                    <span class="font-black text-slate-900">Enterprise Disambiguation &amp; Portal Architecture (Almond Jobs vs. Agriculture)</span>
-                    <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Googlebot &amp; LLM Verified</span>
-                </span>
-                <span class="text-[11px] text-violet-700 font-bold group-open:rotate-180 transition-transform">▾ Expand Architecture &amp; Entities</span>
-            </summary>
-            
-            <div id="aboutAlmondJobsSection" class="mt-2.5 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl text-slate-800 space-y-5">
+            <!-- COLLAPSIBLE ENTERPRISE ARCHITECTURE DRAWER (Integrated inside footer, hidden by default) -->
+            <div id="enterpriseEntityDrawer" class="hidden max-w-6xl mx-auto mt-4 pt-4 border-t border-slate-200">
+                <div id="aboutAlmondJobsSection" class="mt-2.5 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl text-slate-800 space-y-5">
                 <!-- Section Header -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
                     <div class="flex items-center gap-3">
@@ -1780,7 +1213,7 @@
                             <span>Verified Direct Almond Jobs &bull; Official Platform Mandate</span>
                         </h3>
                         <p class="text-xs sm:text-[13px] text-violet-950 mt-1.5 leading-relaxed font-medium">
-                            Looking for verified <strong>Almond Jobs</strong> or searching for a high-paying <strong>Almond job</strong>? <strong>Almond Jobs (almondjobs.com)</strong> connects you directly to internal corporate applicant tracking systems across Fortune 500 &amp; high-growth tech companies with 0% recruiter spread. Every Almond job posting features 100% unrestricted direct links to official employer career gateways.
+                            Looking for verified <strong>Almond Jobs</strong> or searching for a high-paying <strong>Almond job</strong>? <strong>Almond Jobs (almondjobs.com)</strong> connects you directly to internal corporate hiring portals across Fortune 500 &amp; high-growth tech companies with 0% recruiter spread. Every Almond job posting features 100% unrestricted direct links to official employer career gateways.
                         </p>
                     </div>
 
@@ -1845,39 +1278,103 @@
                         </ul>
                     </div>
                 </div>
-            </div>
-        </details>
-
-
-        <!-- STREAMLINED COMPACT FOOTER: COPYRIGHT & LEGAL COMPLIANCE ONLY -->
-        <footer id="bottomDirectoryFooter" class="w-full shrink-0 relative z-30 border-t border-slate-200/90 bg-white/95 px-4 sm:px-8 lg:px-12 py-4 sm:py-5 text-slate-800">
-            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 font-medium">
-                <div class="flex items-center gap-2">
-                    <img src="/static/logo.png" alt="Almond Logo" class="w-4 h-4 object-contain">
-                    <span class="font-bold text-slate-800">&copy; 2026 Almond Job<span class="text-violet-600">s</span> &mdash; Direct Corporate Career Feeds. All rights reserved. Operated by <strong>PantherClaws Enterprises</strong>.</span>
-                </div>
-                <!-- Legal & Compliance Links -->
-                <div class="flex items-center gap-3 sm:gap-4 text-[11px] sm:text-xs text-slate-600 font-semibold flex-wrap justify-center">
-                    <a href="/terms" class="hover:text-violet-700 transition">Terms of Service</a>
-                    <span class="text-slate-300">&bull;</span>
-                    <a href="/privacy" class="hover:text-violet-700 transition">Privacy Policy</a>
-                    <span class="text-slate-300">&bull;</span>
-                    <a href="/refund-policy" class="hover:text-violet-700 transition">Refund Policy</a>
-                    <span class="text-slate-300">&bull;</span>
-                    <a href="/contact" class="hover:text-violet-700 transition">Contact Us</a>
-                    <span class="text-slate-300">&bull;</span>
-                    <a href="mailto:almondjobs.official@gmail.com" class="hover:text-violet-700 font-bold transition">almondjobs.official@gmail.com</a>
-                </div>
+            
             </div>
         
     <div class="hidden">Freshers &amp; Campus Notice: Apply directly to company HR &amp; hiring teams with 0% recruiter spread</div>
 </footer>
 
-
-    </section>
-
         </div> <!-- /#story-track -->
     </div> <!-- /#story-viewport -->
+
+    <!-- APPLICATION KANBAN TRACKER MODAL -->
+    <div id="kanbanModal" class="hidden fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="rounded-3xl max-w-6xl w-full bg-white border border-slate-200 shadow-2xl relative my-auto overflow-hidden flex flex-col max-h-[92vh]">
+            
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 bg-gradient-to-r from-indigo-50/70 via-white to-violet-50/50 shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center text-lg font-black shadow-md shadow-indigo-500/20">
+                        📋
+                    </div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-black text-slate-950 tracking-tight">Application Kanban Tracker</h3>
+                        <p class="text-xs text-slate-500 font-medium">100% private in-browser application workflow &bull; Auto-tracks when you click &ldquo;Apply Direct&rdquo;</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeKanbanModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-sm font-bold cursor-pointer transition">✕</button>
+            </div>
+
+            <!-- Scrollable Modal Body -->
+            <div class="p-4 sm:p-6 overflow-y-auto space-y-4">
+                <!-- Tab View 3: Application Kanban Tracker (100% Client-Side LocalStorage Tracker) -->
+        <div id="kanbanBoardContainer" class="hidden space-y-4">
+            <!-- Privacy notice pill -->
+            <div class="p-3.5 rounded-2xl bg-violet-50/80 border border-violet-200 text-xs text-violet-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div class="flex items-center space-x-2.5">
+                    <i data-lucide="lock" class="w-4 h-4 text-violet-600 flex-shrink-0"></i>
+                    <span class="font-medium"><strong>Zero Server Overhead:</strong> Your tracker is stored privately in your browser's local memory. Clicks on "Direct Apply" auto-track into "Applied".</span>
+                </div>
+                <button type="button" id="clearKanbanBtn" class="text-[11px] font-bold text-slate-500 hover:text-red-600 transition underline cursor-pointer">Reset Local Tracker</button>
+            </div>
+
+            <!-- 4-Column Responsive Kanban Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Column 1: Saved -->
+                <div class="glass-panel rounded-2xl p-4 border border-slate-200/90 flex flex-col min-h-[420px] bg-slate-50/60">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                            <h3 class="font-black text-xs uppercase tracking-wider text-slate-700">📌 Saved / Target</h3>
+                        </div>
+                        <span id="colCountSaved" class="text-xs font-black text-slate-500 bg-white px-2 py-0.5 rounded-full border border-slate-200">0</span>
+                    </div>
+                    <div id="kanbanColSaved" class="space-y-3 flex-1 overflow-y-auto max-h-[600px] pr-1"></div>
+                </div>
+
+                <!-- Column 2: Applied (Auto-Tracked) -->
+                <div class="glass-panel rounded-2xl p-4 border border-violet-200/90 flex flex-col min-h-[420px] bg-violet-50/30">
+                    <div class="flex items-center justify-between pb-3 border-b border-violet-200 mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-violet-600"></span>
+                            <h3 class="font-black text-xs uppercase tracking-wider text-violet-900">📤 Applied (Auto)</h3>
+                        </div>
+                        <span id="colCountApplied" class="text-xs font-black text-violet-700 bg-white px-2 py-0.5 rounded-full border border-violet-200">0</span>
+                    </div>
+                    <div id="kanbanColApplied" class="space-y-3 flex-1 overflow-y-auto max-h-[600px] pr-1"></div>
+                </div>
+
+                <!-- Column 3: Interview Scheduled -->
+                <div class="glass-panel rounded-2xl p-4 border border-amber-200/90 flex flex-col min-h-[420px] bg-amber-50/30">
+                    <div class="flex items-center justify-between pb-3 border-b border-amber-200 mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                            <h3 class="font-black text-xs uppercase tracking-wider text-amber-900">🎯 Interview</h3>
+                        </div>
+                        <span id="colCountInterview" class="text-xs font-black text-amber-700 bg-white px-2 py-0.5 rounded-full border border-amber-200">0</span>
+                    </div>
+                    <div id="kanbanColInterview" class="space-y-3 flex-1 overflow-y-auto max-h-[600px] pr-1"></div>
+                </div>
+
+                <!-- Column 4: Offer / Final -->
+                <div class="glass-panel rounded-2xl p-4 border border-emerald-200/90 flex flex-col min-h-[420px] bg-emerald-50/30">
+                    <div class="flex items-center justify-between pb-3 border-b border-emerald-200 mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                            <h3 class="font-black text-xs uppercase tracking-wider text-emerald-900">🎉 Offer / Closed</h3>
+                        </div>
+                        <span id="colCountOffer" class="text-xs font-black text-emerald-700 bg-white px-2 py-0.5 rounded-full border border-emerald-200">0</span>
+                    </div>
+                    <div id="kanbanColOffer" class="space-y-3 flex-1 overflow-y-auto max-h-[600px] pr-1"></div>
+                </div>
+            </div>
+        </div>
+
+
+            <!-- SEMANTIC ABOUT & ENTITY DISAMBIGUATION SECTION (CRAWLABLE BY GOOGLE AI OVERVIEW & WEB ENGINE CRAWLERS) -->
+            </div>
+        </div>
+    </div>
 
     <!-- 5. MODAL: TAILORED STAR APPLICATION PITCH -->
     <div id="pitchModal" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
@@ -2042,7 +1539,7 @@
                 <button type="button" onclick="switchHeroModalTab('deadposts')" id="tabDeadposts" class="hero-modal-tab px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1">
                     <span>✕ No Dead Posts</span>
                 </button>
-                <button type="button" onclick="switchHeroModalTab('ats')" id="tabAts" class="hero-modal-tab px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1">
+                <button type="button" onclick="switchHeroModalTab('about')" id="tabAbout" class="hero-modal-tab px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1">
                     <span>Who We Are?</span>
                 </button>
             </div>
@@ -2640,7 +2137,7 @@
                         <p id="vipModalHeaderSubtitle" class="text-xs text-slate-600 font-semibold">Direct Company Ingestion &bull; Apply before public platforms saturate the applicant pool</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeVipPassModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer font-bold text-sm">✕</button>
+                <button type="button" id="closeVipPassModal" onclick="closeVipPassModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer font-bold text-sm">✕</button>
             </div>
 
             <!-- VIEW 1: 2-COLUMN SAAS COMPARATIVE PRICING MATRIX -->
@@ -2696,7 +2193,7 @@
                                 </div>
                                 <div class="flex items-start gap-2 text-slate-700">
                                     <span class="text-emerald-600 font-bold">✓</span>
-                                    <span>Direct links to corporate ATS portals</span>
+                                    <span>Direct links to corporate company portals</span>
                                 </div>
                                 <div class="flex items-start gap-2 text-slate-700">
                                     <span class="text-emerald-600 font-bold">✓</span>
@@ -2962,7 +2459,7 @@
                         <p id="modalSubtitleText" class="text-xs text-slate-600 font-bold">Sign in or create free account</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeProfileModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer font-bold text-sm">✕</button>
+                <button type="button" id="closeProfileModal" onclick="closeProfileModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer font-bold text-sm">✕</button>
             </div>
 
             <!-- VIEW 1: AUTHENTICATION FORM (Shown when guest / logged out) -->
@@ -3314,7 +2811,7 @@
                         <p id="curatedModalSubtitle" class="text-xs text-emerald-800 font-bold">5,125 Active Portals &bull; 0% Recruiter Spread &bull; Direct Corporate Feeds</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeCuratedFeedsModal()" class="text-slate-400 hover:text-slate-900 p-2 rounded-xl hover:bg-slate-100 transition cursor-pointer">
+                <button type="button" id="closeCuratedFeedsModal" onclick="closeCuratedFeedsModal()" class="text-slate-400 hover:text-slate-900 p-2 rounded-xl hover:bg-slate-100 transition cursor-pointer">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
@@ -3444,7 +2941,7 @@
                 <span class="text-xs text-slate-600 font-semibold text-center sm:text-left">
                     Want roles matched strictly to your resume skills vector &amp; target compensation?
                 </span>
-                <button type="button" onclick="closeCuratedFeedsModal(); goToSlide(2);" class="px-5 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs shadow-md shadow-violet-500/20 hover:scale-105 active:scale-95 transition cursor-pointer shrink-0">
+                <button type="button" onclick="closeCuratedFeedsModal(); window.goToSlide(0); window.triggerOmniResumeUpload();" class="px-5 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs shadow-md shadow-violet-500/20 hover:scale-105 active:scale-95 transition cursor-pointer shrink-0">
                     Configure Candidate Profile &rarr;
                 </button>
             </div>
@@ -3871,8 +3368,7 @@
                         🎯
                     </div>
                     <div>
-                        <h3 class="text-base sm:text-lg font-black text-slate-950 tracking-tight">Target Preferences &amp; Profile Vector</h3>
-                        <p class="text-[11px] text-slate-500 font-medium">Verified intelligence from your resume &bull; 0% Recruiter Spread</p>
+                        <h3 class="text-base sm:text-lg font-black text-slate-950 tracking-tight">Profile Vector</h3>
                     </div>
                 </div>
                 <button type="button" onclick="closeOmniCriteriaModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-sm font-bold cursor-pointer transition">✕</button>
@@ -3892,22 +3388,24 @@
                                 <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Identified Candidate:</span>
                                 <span id="omniProfileName" class="font-black text-xs sm:text-sm text-slate-950 truncate">Identified Candidate</span>
                             </div>
-                            <div class="flex items-center gap-2 mt-0.5">
+                            <div class="flex items-center gap-2 mt-1">
                                 <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Verified Experience:</span>
-                                <span id="omniProfileYoe" class="font-extrabold text-[11px] text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">4 Years Experience</span>
+                                <div class="flex items-center gap-1.5">
+                                    <span id="omniProfileYoe" class="font-extrabold text-[11px] text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full cursor-pointer hover:ring-1 hover:ring-emerald-400" onclick="toggleOmniYoeEdit()" title="Click to edit experience">4 Years Experience</span>
+                                    <input type="number" id="omniProfileYoeInput" min="0" max="40" class="hidden w-20 px-2 py-0.5 text-xs font-bold border border-violet-400 rounded-lg bg-white text-slate-900 focus:outline-hidden" onblur="saveOmniYoeEdit()" onkeydown="if(event.key==='Enter'){event.preventDefault();saveOmniYoeEdit();}">
+                                    <button type="button" id="omniEditYoeBtn" onclick="toggleOmniYoeEdit()" class="text-slate-400 hover:text-violet-700 hover:bg-violet-50 p-1 rounded-md transition cursor-pointer text-xs flex items-center justify-center" title="Edit experience years">
+                                        ✏️
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 flex items-center gap-1.5 shrink-0">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span>ATS Verified</span>
-                    </span>
                 </div>
 
                 <!-- 2. Derived Skills Section -->
                 <div>
                     <div class="flex items-center justify-between mb-1.5">
-                        <label class="text-[11px] font-black uppercase tracking-wider text-slate-700 block">Derived Skills (Verified Vector)</label>
+                        <label class="text-[11px] font-black uppercase tracking-wider text-slate-700 block">Derived Skills</label>
                         <span id="omniSkillsCountBadge" class="text-[10px] font-black text-violet-800 bg-violet-100 px-2 py-0.5 rounded-full">0 Extracted</span>
                     </div>
                     <div id="omniSkillsBadgesContainer" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto p-2.5 bg-slate-50 border border-slate-200 rounded-xl mb-2">
@@ -3922,31 +3420,31 @@
                     </div>
                 </div>
 
-                <!-- 3. Target Role / Specialization -->
+                <!-- 3. Target Role -->
                 <div>
-                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Target Role / Specialization</label>
-                    <input type="text" id="omniCriteriaTargetRole" placeholder="Target role or specialization" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden">
+                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Target Role</label>
+                    <input type="text" id="omniCriteriaTargetRole" placeholder="Target role (optional)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden">
                 </div>
 
-                <!-- 4. Minimum Expected Package / CTC (Standardized Dropdown) -->
+                <!-- 4. Minimum Expected Package (Standardized Dropdown) -->
                 <div>
-                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Minimum Expected Package / CTC</label>
+                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Minimum Expected Package</label>
                     <div class="relative">
                         <select id="omniCriteriaPackageSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden cursor-pointer appearance-none pr-8">
                             <option value="0">No Minimum (Open to all verified bands)</option>
-                            <option value="1">₹1 LPA (Entry / Intern)</option>
-                            <option value="3">₹3 LPA</option>
-                            <option value="5">₹5 LPA</option>
-                            <option value="7" selected>₹7 LPA (Benchmark Default)</option>
-                            <option value="10">₹10 LPA</option>
-                            <option value="12">₹12 LPA</option>
-                            <option value="15">₹15 LPA</option>
-                            <option value="18">₹18 LPA</option>
-                            <option value="20">₹20 LPA</option>
-                            <option value="25">₹25 LPA</option>
-                            <option value="30">₹30 LPA</option>
-                            <option value="35">₹35+ LPA</option>
-                            <option value="50">₹50+ LPA</option>
+                            <option value="1">1 LPA (Entry / Intern)</option>
+                            <option value="3">3 LPA</option>
+                            <option value="5">5 LPA</option>
+                            <option value="7" selected>7 LPA (Benchmark Default)</option>
+                            <option value="10">10 LPA</option>
+                            <option value="12">12 LPA</option>
+                            <option value="15">15 LPA</option>
+                            <option value="18">18 LPA</option>
+                            <option value="20">20 LPA</option>
+                            <option value="25">25 LPA</option>
+                            <option value="30">30 LPA</option>
+                            <option value="35">35+ LPA</option>
+                            <option value="50">50+ LPA</option>
                         </select>
                         <span class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">▼</span>
                     </div>
@@ -3958,20 +3456,21 @@
                 <div>
                     <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Preferred Location (Global Cities &amp; Remote)</label>
                     <div class="relative mb-2">
-                        <input type="text" id="omniCriteriaLocationInput" autocomplete="off" oninput="filterOmniLocationList(this.value)" onfocus="filterOmniLocationList(this.value)" placeholder="Type city or country (Bengaluru, Remote, USA, London)..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden">
+                        <input type="text" id="omniCriteriaLocationInput" autocomplete="off" oninput="filterOmniLocationList(this.value)" onfocus="filterOmniLocationList(this.value)" placeholder="Type any city or country (Bengaluru, Austin, Ireland, London)..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden">
                         <div id="omniCriteriaLocationDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-44 overflow-y-auto z-50 text-slate-900 divide-y divide-slate-100"></div>
                         <input type="hidden" id="omniCriteriaLocation" value="all">
                     </div>
                     <!-- Quick Preset Location Pills -->
                     <div class="flex flex-wrap gap-1.5">
-                        <button type="button" onclick="setOmniLocationPreset('Remote')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">🌐 Remote</button>
-                        <button type="button" onclick="setOmniLocationPreset('India')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">🇮🇳 India</button>
                         <button type="button" onclick="setOmniLocationPreset('Bengaluru')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">Bengaluru</button>
                         <button type="button" onclick="setOmniLocationPreset('Chennai')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">Chennai</button>
                         <button type="button" onclick="setOmniLocationPreset('Hyderabad')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">Hyderabad</button>
                         <button type="button" onclick="setOmniLocationPreset('Pune')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">Pune</button>
+                        <button type="button" onclick="setOmniLocationPreset('India')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">🇮🇳 India</button>
+                        <button type="button" onclick="setOmniLocationPreset('Austin')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">Austin, TX</button>
+                        <button type="button" onclick="setOmniLocationPreset('Ireland')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">🇮🇪 Ireland</button>
                         <button type="button" onclick="setOmniLocationPreset('United States')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">🇺🇸 USA</button>
-                        <button type="button" onclick="setOmniLocationPreset('Europe')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">🇪🇺 Europe</button>
+                        <button type="button" onclick="setOmniLocationPreset('Remote')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">🌐 Remote</button>
                     </div>
                 </div>
 
