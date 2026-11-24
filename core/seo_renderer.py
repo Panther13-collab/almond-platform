@@ -423,7 +423,7 @@ def render_category_page(slug: str) -> str:
             <div>
                 <span class="text-2xl font-black text-indigo-600 block mb-1">100% Free</span>
                 <span class="text-xs font-black uppercase text-slate-900 block">Direct Links</span>
-                <span class="text-xs text-slate-500">All direct application links are unblurred and unblocked for job seekers.</span>
+                <span class="text-xs text-slate-500">All direct application links are verified official portals for job seekers.</span>
             </div>
         </div>
 

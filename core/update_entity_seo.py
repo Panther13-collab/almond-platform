@@ -143,10 +143,10 @@ def update_index_html():
             },
             {
               "@type": "Question",
-              "name": "Are direct application links free and unblurred on Almond Jobs?",
+              "name": "Are direct application links official and verified on Almond Jobs?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Yes. Every job card on Almond Jobs provides 100% unblurred, direct application links pointing directly to the employer's official career portal."
+                "text": "Yes. Every job card on Almond Jobs provides verified direct application links pointing directly to the employer's official career portal."
               }
             },
             {

@@ -14,7 +14,7 @@ Almond Jobs (https://almondjobs.com) is an AI-powered stealth job discovery and 
 - **Zero Recruiter Spread**: Direct links to company application portals — 100% bypass of third-party recruitment agencies, staffing firms, and headhunters.
 - **AI STAR Pitch Generator**: Instant generation of tailored Situation-Task-Action-Result pitches customized to the candidate's CV and the target company's job description.
 - **ATS Keyword Gap Optimizer**: Real-time semantic comparison between candidate skills and required ATS keywords.
-- **One-Click Direct Applications**: Every listing provides an unblurred, direct link to the employer's internal ATS application page.
+- **One-Click Direct Applications**: Every listing provides a verified, direct link to the employer's internal ATS application page.
 - **Universal Domain Coverage**: Full support for Core IT, AI/ML, Data Science, Non-IT, Product, HR, Finance, Operations, Mechanical, Electrical, and Civil Engineering.
 
 ## Key Directories & Portals
