@@ -89,10 +89,7 @@ def apply_vip_latest_feed_lock(jobs: list, user_is_paid: bool = False, max_days:
                 job["hn_url"] = "#unlock-vip"
             if "founder_email" in job:
                 job["founder_email"] = ""
-            job["title"] = "Confidential Role (VIP Pass)"
-            if "role" in job:
-                job["role"] = "Confidential Role (VIP Pass)"
-            # KEEP COMPANY NAME VISIBLE to tempt candidates with employer identity
+            # KEEP BOTH COMPANY NAME AND ROLE TITLE VISIBLE; only lock the direct application URL & full text
             if "summary" in job:
                 job["summary"] = "Unlock VIP Pass to view full designation details and direct application portal link."
             if "full_text" in job:

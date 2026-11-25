@@ -1528,11 +1528,18 @@ async def api_omni_linkedin_more(
         li_query = (q or "").strip() or "Software Engineer"
     loc_list = [l.strip() for l in str(location or "").split(",") if l.strip() and l.strip().lower() not in ["all", "any", "worldwide"]]
     li_loc = loc_list[0] if loc_list else "India"
-    # Fetch pool up to offset + limit + 1 to check has_more
-    pool = query_linkedin_jobs(li_query, location=li_loc, limit=offset + limit + 4)
-    sliced = pool[offset : offset + limit]
+    # Query LinkedIn guest pagination directly using start=offset
+    pool = query_linkedin_jobs(li_query, location=li_loc, limit=limit, start=offset)
+    if len(pool) < 3:
+        fallback_q = (skills.split(",")[0].strip() if skills else "") or "Software Engineer"
+        fb_pool = query_linkedin_jobs(fallback_q, location="India", limit=limit, start=offset)
+        seen_u = {x.get("url") for x in pool}
+        for fp in fb_pool:
+            if fp.get("url") not in seen_u:
+                pool.append(fp)
+                seen_u.add(fp.get("url"))
     external_jobs = []
-    for lj in sliced:
+    for lj in pool[:limit]:
         lj_copy = dict(lj)
         lj_copy["role"] = lj_copy.get("title") or "External Opening"
         lj_copy["portal_provider"] = "LinkedIn (Unofficial)"
@@ -1542,7 +1549,7 @@ async def api_omni_linkedin_more(
     return JSONResponse(content={
         "status": "success",
         "external_jobs": external_jobs,
-        "has_more": len(pool) > (offset + limit),
+        "has_more": len(external_jobs) > 0,
         "next_offset": offset + len(external_jobs)
     })
 

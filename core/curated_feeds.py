@@ -841,6 +841,40 @@ def query_curated_feed(
     }
 
 
+def format_compact_location(raw_loc: str, preferred_locs: list = None) -> str:
+    """Collapse massive multi-country lists (e.g. 200+ countries) into clean, crisp labels."""
+    s = (raw_loc or "").strip()
+    if not s:
+        return "Remote / Hybrid"
+    parts = [p.strip() for p in re.split(r"[,;]+", s) if p.strip()]
+    if len(parts) <= 2 and len(s) <= 44:
+        return s
+
+    # Clean up repetitive 'Remote in ' prefixes to extract clean region/country names
+    cleaned = [re.sub(r"^remote\s+in\s+", "", p, flags=re.IGNORECASE).strip() for p in parts]
+    pref_set = [p.lower() for p in (preferred_locs or []) if p]
+    highlights = []
+    # Prioritize user's preferred hubs or major markets first
+    key_hubs = pref_set + ["india", "bengaluru", "chennai", "hyderabad", "pune", "usa", "united states", "austin", "uk", "united kingdom", "london", "germany", "canada", "singapore", "europe", "americas"]
+    for c in cleaned:
+        cl = c.lower()
+        if any(h in cl or cl in h for h in key_hubs):
+            disp = "USA" if cl in ("united states", "usa") else ("UK" if cl in ("united kingdom", "uk") else c)
+            if disp not in highlights:
+                highlights.append(disp)
+            if len(highlights) >= 2:
+                break
+
+    if not highlights:
+        highlights = [c for c in cleaned[:2] if len(c) <= 18]
+
+    is_remote = "remote" in s.lower() or "home based" in s.lower()
+    prefix = "Remote • " if is_remote else ""
+    count_label = f"{len(parts)} Locations"
+    if highlights:
+        return f"{prefix}{count_label} ({', '.join(highlights)})"
+    return f"{prefix}{count_label} (Global)"
+
 def omni_search_all_feeds(
     query: str = "",
     category: str = "All",
@@ -1093,9 +1127,10 @@ def omni_search_all_feeds(
         loc = item_copy.get("location")
         if not loc and item_copy.get("locations_list"):
             loc = ", ".join([str(c).title() for c in item_copy.get("locations_list") if c])
+        compact_loc = format_compact_location(loc, loc_list)
         if has_specific_loc and loc and not _matches_any_loc({"location": loc, "locations_list": []}):
-            loc = f"{loc_list[0].title()} / {loc}"
-        item_copy["location"] = loc or "Remote / Hybrid"
+            compact_loc = f"{loc_list[0].title()} / {compact_loc}"
+        item_copy["location"] = compact_loc
         pkg_val, pkg_disp = estimate_job_package(
             item_copy.get("role", ""),
             item_copy.get("company", ""),
@@ -1124,7 +1159,15 @@ def omni_search_all_feeds(
             if not li_query:
                 li_query = (query or "").strip() or "Software Engineer"
             li_loc = loc_list[0] if has_specific_loc else "India"
-            raw_li = query_linkedin_jobs(li_query, location=li_loc, limit=8)
+            raw_li = query_linkedin_jobs(li_query, location=li_loc, limit=8, start=0)
+            if len(raw_li) < 4:
+                broad_q = clean_skills[0] if clean_skills else "Engineer"
+                more_li = query_linkedin_jobs(broad_q, location="India", limit=8, start=0)
+                seen_li = {x.get("url") for x in raw_li}
+                for ml in more_li:
+                    if ml.get("url") not in seen_li:
+                        raw_li.append(ml)
+                        seen_li.add(ml.get("url"))
             for lj in raw_li:
                 lj_copy = dict(lj)
                 lj_copy["role"] = lj_copy.get("title") or "External Opening"

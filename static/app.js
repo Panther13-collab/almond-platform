@@ -7717,6 +7717,59 @@ window.loadMoreLinkedinResults = async function() {
     }
 };
 
+window.formatCompactLocationClient = function(rawLoc) {
+    const s = String(rawLoc || "").trim();
+    if (!s) return "Remote / Hybrid";
+    const parts = s.split(/[,;]+/).map(p => p.trim()).filter(Boolean);
+    if (parts.length <= 2 && s.length <= 44) return s;
+
+    const cleaned = parts.map(p => p.replace(/^remote\s+in\s+/i, "").trim());
+    const userPrefs = (window.omniSelectedLocations || []).map(l => l.toLowerCase());
+    const hubs = userPrefs.concat(["india", "bengaluru", "chennai", "hyderabad", "pune", "usa", "united states", "austin", "uk", "germany", "canada", "singapore", "europe", "americas"]);
+    const picked = [];
+    for (const c of cleaned) {
+        const cl = c.toLowerCase();
+        if (hubs.some(h => cl.includes(h) || h.includes(cl))) {
+            const disp = (cl === "united states" || cl === "usa") ? "USA" : ((cl === "united kingdom" || cl === "uk") ? "UK" : c);
+            if (!picked.includes(disp)) picked.push(disp);
+            if (picked.length >= 2) break;
+        }
+    }
+    if (picked.length === 0) {
+        for (const c of cleaned) {
+            if (c.length <= 18 && !picked.includes(c)) picked.push(c);
+            if (picked.length >= 2) break;
+        }
+    }
+    const isRemote = /remote|home based/i.test(s);
+    const prefix = isRemote ? "Remote • " : "";
+    const countLabel = `${parts.length} Locations`;
+    return picked.length > 0 ? `${prefix}${countLabel} (${picked.join(", ")})` : `${prefix}${countLabel} (Global)`;
+};
+
+window.formatCenterDateBadge = function(job) {
+    let ts = Number(job.date_posted_ts || 0);
+    let diff = (typeof job.days_ago === "number" && Number.isFinite(job.days_ago)) ? Math.max(0, Math.floor(job.days_ago)) : null;
+
+    if (diff === null && ts > 100000) {
+        diff = Math.max(0, Math.floor((Date.now() / 1000 - ts) / 86400));
+    }
+    if (diff === null) diff = 0;
+
+    if (!ts || ts <= 100000) {
+        ts = Math.floor(Date.now() / 1000) - (diff * 86400);
+    }
+    const dObj = new Date(ts * 1000);
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const dateShort = `${dObj.getDate()} ${months[dObj.getMonth()]} ${dObj.getFullYear()}`;
+    const dateMonthDay = `${dObj.getDate()} ${months[dObj.getMonth()]}`;
+
+    if (diff === 0) return { primary: "Today", secondary: dateMonthDay, isFresh: true };
+    if (diff === 1) return { primary: "Yesterday", secondary: dateMonthDay, isFresh: true };
+    if (diff <= 5) return { primary: `${diff} days ago`, secondary: dateMonthDay, isFresh: true };
+    return { primary: dateShort, secondary: `${diff} days ago`, isFresh: false };
+};
+
 window.renderOmniResults = function(result, query, append) {
     const loadingEl = document.getElementById("omniResultsLoading");
     const gridEl = document.getElementById("omniResultsCardsGrid");
@@ -7770,7 +7823,7 @@ window.renderOmniResults = function(result, query, append) {
 
         const compName = window.escapeClean(job.company || "Direct Corporate");
         const roleName = window.escapeClean(job.role || job.title || "Corporate Career Opening");
-        const locName = window.escapeClean(job.location || "Remote / Hybrid");
+        const locName = window.escapeClean(window.formatCompactLocationClient(job.location || "Remote / Hybrid"));
         let rawPkg = job.package_display || (job.package_inr_lpa ? `${job.package_inr_lpa} LPA Benchmark` : "Disclosed Corporate Band");
         rawPkg = String(rawPkg).replace(/[₹\u20b9]/g, "").trim();
         const pkgDisplay = window.escapeClean(rawPkg);
@@ -7778,9 +7831,8 @@ window.renderOmniResults = function(result, query, append) {
         let rawProvider = job.portal_provider || job.source || (job.url && job.url.includes("greenhouse") ? "Greenhouse" : (job.url && job.url.includes("lever") ? "Lever" : (job.url && job.url.includes("ashby") ? "Ashby" : (job.url && job.url.includes("workday") ? "Workday" : "Direct Portal"))));
         rawProvider = String(rawProvider).replace(/\bATS\b/gi, "Portal").trim();
         const portalProvider = window.escapeClean(rawProvider);
-        const dateStr = window.escapeClean(job.date_posted_str || "Today");
-        const isFresh = dateStr.toLowerCase() === "today" || /^\d+d/.test(dateStr) && parseInt(dateStr, 10) <= 5;
         const empType = job.feed_type === "internships" ? "Internship" : (job.feed_type === "aiml" ? "AI / ML" : "Full-Time");
+        const dateBadge = window.formatCenterDateBadge(job);
 
         const letter = window.escapeClean(compName.charAt(0).toUpperCase());
         const safeUrl = (job.url && /^(https?:\/\/)/i.test(job.url)) ? encodeURI(job.url) : "#";
@@ -7822,31 +7874,35 @@ window.renderOmniResults = function(result, query, append) {
             : `<span>🔖</span><span>Save</span>`;
 
         card.innerHTML = `
-            <!-- Left Zone: Brand, Role & Clean Metadata Strip -->
+            <!-- Left Zone: Highlighted Company Name + Visible Role + Compact Metadata -->
             <div class="flex items-start gap-3.5 min-w-0 flex-1">
-                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 text-violet-800 font-black text-base flex items-center justify-center shrink-0 border border-violet-200/80 shadow-2xs">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white font-black text-lg flex items-center justify-center shrink-0 shadow-xs">
                     ${letter}
                 </div>
                 <div class="min-w-0 flex-1 space-y-1.5">
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <span class="text-sm font-black text-slate-950 tracking-tight">${compName}</span>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200/80 uppercase tracking-wide">Direct &bull; ${portalProvider}</span>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isFresh ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-slate-100 text-slate-600'}">${dateStr}</span>
-                    </div>
-                    <h4 class="text-sm sm:text-base font-extrabold text-slate-900 group-hover:text-violet-700 transition leading-snug">
-                        ${roleName}
+                    <h4 class="text-base sm:text-lg font-black text-slate-950 tracking-tight leading-tight group-hover:text-violet-700 transition">
+                        ${compName}
                     </h4>
-                    <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-600 font-semibold">
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50/80 text-emerald-800 font-bold border border-emerald-200/70">💰 ${pkgDisplay}</span>
+                    <div class="text-xs sm:text-sm font-bold text-slate-700 leading-snug">
+                        ${roleName}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-600 font-semibold pt-0.5">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50/90 text-emerald-800 font-bold border border-emerald-200/70">💰 ${pkgDisplay}</span>
                         <span class="text-slate-300">&bull;</span>
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-50 text-slate-700 border border-slate-200/70">📍 ${locName}</span>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-50 text-slate-700 border border-slate-200/80" title="${window.escapeClean(job.location || '')}">📍 ${locName}</span>
                         <span class="text-slate-300">&bull;</span>
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-50/80 text-violet-800 font-bold border border-violet-200/60">${empType}</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Action Dock: Sleek 2-Tier Hierarchy -->
+            <!-- Center Zone: Freshness & Exact Date Badge -->
+            <div class="flex md:flex-col items-center md:justify-center gap-2 md:gap-0.5 px-3.5 py-2 rounded-xl ${dateBadge.isFresh ? 'bg-amber-50/80 border border-amber-200/80 text-amber-950' : 'bg-slate-50 border border-slate-200/80 text-slate-700'} shrink-0 text-center md:min-w-[120px]">
+                <span class="text-xs font-black tracking-tight">${dateBadge.primary}</span>
+                <span class="text-[10px] font-semibold opacity-75">${dateBadge.secondary}</span>
+            </div>
+
+            <!-- Right Action Dock: Primary CTA + Sleek Secondary Pill Bar -->
             <div class="flex flex-col items-stretch sm:items-end gap-2 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-slate-100">
                 ${applyActionHtml}
                 <div class="inline-flex items-center justify-center sm:justify-end gap-1 p-1 rounded-xl bg-slate-50/90 border border-slate-200/80">
@@ -7903,7 +7959,15 @@ window.renderOmniResults = function(result, query, append) {
         }
     });
 
-    // Render External / LinkedIn Unofficial Postings at bottom of matched results with Load More
+    if (loadMoreContainer) {
+        if (total > (window.omniCurrentOffset + items.length)) {
+            loadMoreContainer.classList.remove("hidden");
+        } else {
+            loadMoreContainer.classList.add("hidden");
+        }
+    }
+
+    // Ensure External / LinkedIn Unofficial Postings stay anchored AFTER all corporate jobs & Load More
     let extSection = document.getElementById("omniExternalJobsSection");
     if (!append) {
         if (extSection) extSection.remove();
@@ -7936,18 +8000,13 @@ window.renderOmniResults = function(result, query, append) {
             `;
             gridEl.parentElement.appendChild(extSection);
         }
+    } else if (extSection && gridEl.parentElement) {
+        // Keep LinkedIn section cleanly at the very bottom when loading more corporate jobs
+        gridEl.parentElement.appendChild(extSection);
     }
 
     if (window.lucide && typeof window.lucide.createIcons === "function") {
         window.lucide.createIcons();
-    }
-
-    if (loadMoreContainer) {
-        if (total > (window.omniCurrentOffset + items.length)) {
-            loadMoreContainer.classList.remove("hidden");
-        } else {
-            loadMoreContainer.classList.add("hidden");
-        }
     }
 };
 

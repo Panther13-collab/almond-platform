@@ -510,12 +510,20 @@ def generate_dynamic_search_queries(candidate_profile, pref_locations=None):
 
     return queries
 
-def query_linkedin_jobs(query, location="Worldwide", limit=12):
+_LINKEDIN_CACHE = {}
+_LINKEDIN_CACHE_TTL = 900  # 15 minutes cache to prevent LinkedIn 429 rate-limits
+
+def query_linkedin_jobs(query, location="Worldwide", limit=12, start=0):
+    cache_key = (str(query or "").strip().lower(), str(location or "").strip().lower(), int(start))
+    now_ts = time.time()
+    cached = _LINKEDIN_CACHE.get(cache_key)
+    if cached and (now_ts - cached["ts"] < _LINKEDIN_CACHE_TTL) and cached["jobs"]:
+        return [dict(j) for j in cached["jobs"][:limit]]
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept-Language": "en-US,en;q=0.9",
     }
-    url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={urllib.parse.quote(query)}&location={urllib.parse.quote(location)}&start=0"
+    url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={urllib.parse.quote(query)}&location={urllib.parse.quote(location)}&start={start}"
     req = urllib.request.Request(url, headers=headers)
     jobs = []
     try:
@@ -567,6 +575,8 @@ def query_linkedin_jobs(query, location="Worldwide", limit=12):
                     })
     except Exception as e:
         print(f"Error querying LinkedIn for '{query}': {e}")
+    if jobs:
+        _LINKEDIN_CACHE[cache_key] = {"ts": now_ts, "jobs": [dict(j) for j in jobs]}
     return jobs
 
 def fetch_linkedin_postings(candidate_profile, preferences, limit=10, offset=0):

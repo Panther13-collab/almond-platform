@@ -147,7 +147,7 @@ class TestVipPassAndLatestFeedGating(unittest.TestCase):
                 # COMPANY NAME IS PRESERVED so users are tempted!
                 self.assertEqual(j["company"], f"Corp{days}")
                 # Designation is masked
-                self.assertEqual(j["title"], "Confidential Role (VIP Pass)")
+                self.assertEqual(j["url"], "#unlock-vip")
             else:
                 self.assertFalse(j["is_locked"], f"Job {days}d old should be unlocked for free users")
                 self.assertEqual(j["company"], f"Corp{days}")
