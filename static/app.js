@@ -2527,6 +2527,7 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
         `;
 
         const isLocked = isJobLatestFeedLocked(job);
+        const isAuthLocked = !isUserLoggedIn() || Boolean(job.is_auth_locked);
 
         // Date Badge (ALWAYS clearly visible even when latest post is blurred)
         const dateInfo = formatJobDate(job.posted_at || job.created_at, job.days_ago);
@@ -2596,19 +2597,21 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
             </button>
         `;
 
-        const applyBtnHtml = isLocked
-            ? `<button type="button" onclick="openVipPassModal()" class="inline-flex items-center justify-center gap-1.5 px-5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-xs shadow-violet-600/20 transition cursor-pointer">
-                <span>👑 Unlock VIP for Latest Feed</span>
-               </button>`
-            : (isLinkedin
-                ? `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="direct-apply-link inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#0A66C2] hover:bg-[#004182] text-white text-xs sm:text-sm font-black rounded-xl shadow-xs transition" data-container="${containerId}" data-idx="${globalIdx}">
-                    <span>Apply on LinkedIn</span>
-                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                   </a>`
-                : `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="direct-apply-link inline-flex items-center justify-center gap-1.5 px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-xs shadow-emerald-600/20 transition transform active:scale-98" data-container="${containerId}" data-idx="${globalIdx}">
-                    <span>Apply Direct ↗</span>
-                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                   </a>`);
+        const applyBtnHtml = isAuthLocked
+            ? window.renderDirectApplyActionHtml({ isAuthLocked: true, isVipLocked: false, safeUrl: "#", compact: true })
+            : (isLocked
+                ? `<button type="button" onclick="openVipPassModal()" class="inline-flex items-center justify-center gap-1.5 px-5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-xs shadow-violet-600/20 transition cursor-pointer">
+                    <span>👑 Unlock VIP for Latest Feed</span>
+                   </button>`
+                : (isLinkedin
+                    ? `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="direct-apply-link inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#0A66C2] hover:bg-[#004182] text-white text-xs sm:text-sm font-black rounded-xl shadow-xs transition" data-container="${containerId}" data-idx="${globalIdx}">
+                        <span>Apply on LinkedIn</span>
+                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                       </a>`
+                    : `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="direct-apply-link inline-flex items-center justify-center gap-1.5 px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-xs shadow-emerald-600/20 transition transform active:scale-98" data-container="${containerId}" data-idx="${globalIdx}">
+                        <span>Apply Direct ↗</span>
+                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                       </a>`));
 
         const matchedSkillsHtml = (job.matched_skills || []).slice(0, 5).map(s => 
             `<span class="px-2 py-0.5 bg-slate-50 text-slate-800 text-[11px] font-bold rounded-lg border border-slate-200">${s}</span>`
@@ -3882,7 +3885,10 @@ function initExports() {
     const exportCsvBtn = document.getElementById("exportCsvBtn");
 
     async function triggerExport(format, btn) {
-
+        if (!isUserLoggedIn()) {
+            if (typeof window.openSignupToUnlockLinksModal === "function") window.openSignupToUnlockLinksModal();
+            return;
+        }
         const isLinkedinActive = document.getElementById("resultsLinkedinToggle")?.checked;
 
         const exportJobs = (isLinkedinActive && currentLinkedinJobs.length > 0)
@@ -5073,13 +5079,68 @@ window.switchAuthTab = function(tab) {
     }
 };
 
+window.openSignupToUnlockLinksModal = function() {
+    window.activeAuthTab = "signup";
+    window.openProfileModal("signup_links");
+    if (typeof window.switchAuthTab === "function") {
+        window.switchAuthTab("signup");
+    }
+};
+
+window.refreshUnlockedFeedsAfterAuth = function() {
+    try {
+        if (window.omniCurrentItems && window.omniCurrentItems.length > 0 && typeof window.executeOmniSearch === "function") {
+            window.executeOmniSearch(window.omniCurrentQuery || "", false);
+        }
+        const curatedModal = document.getElementById("curatedFeedsModal");
+        if (curatedModal && !curatedModal.classList.contains("hidden") && typeof loadCuratedFeeds === "function") {
+            loadCuratedFeeds(false);
+        }
+    } catch (_) {}
+};
+
+window.renderDirectApplyActionHtml = function({ isAuthLocked, isVipLocked, safeUrl, externalLabel = "Apply Direct ↗", compact = false }) {
+    if (isAuthLocked) {
+        const pad = compact ? "px-3.5 py-2" : "w-full sm:w-auto px-4 py-2.5";
+        return `
+            <div class="flex flex-col items-end gap-1">
+                <div class="hidden sm:inline-flex items-center px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono text-slate-400 select-none" aria-hidden="true">
+                    <span class="blur-[4px]">https://careers.direct-portal.com/apply</span>
+                </div>
+                <button type="button" onclick="openSignupToUnlockLinksModal()" class="${pad} rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition whitespace-nowrap">
+                    <span>🔒</span>
+                    <span>Sign Up Free to View Link</span>
+                </button>
+            </div>
+        `;
+    }
+    if (isVipLocked) {
+        const pad = compact ? "px-4 py-2" : "w-full sm:w-auto px-5 py-2.5";
+        return `<button type="button" onclick="openUpgradeModal()" class="${pad} rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition whitespace-nowrap">
+            <span>👑</span>
+            <span>Unlock with Pro</span>
+        </button>`;
+    }
+    const pad = compact ? "px-4 py-2" : "w-full sm:w-auto px-5 py-2.5";
+    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="omni-apply-btn ${pad} rounded-xl bg-slate-950 hover:bg-violet-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 transition whitespace-nowrap">
+        <span>${externalLabel}</span>
+        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+    </a>`;
+};
+
 window.openProfileModal = function(contextReason = "") {
     const modal = document.getElementById("profileModal");
     if (!modal) return;
 
     const contextNotice = document.getElementById("authContextNotice");
+    const contextText = document.getElementById("authContextNoticeText");
     if (contextNotice) {
-        if (contextReason === "search_intercept") {
+        if (contextReason === "search_intercept" || contextReason === "signup_links") {
+            if (contextText) {
+                contextText.textContent = contextReason === "signup_links"
+                    ? "Sign up free in seconds to unblur direct company apply links (5+ day jobs free forever)."
+                    : "Sign in or create a free candidate account to run tailored searches.";
+            }
             contextNotice.classList.remove("hidden");
         } else {
             contextNotice.classList.add("hidden");
@@ -5428,6 +5489,7 @@ window.handleAuthSubmit = async function(e) {
         localStorage.setItem("almond_is_paid", data.is_paid ? "true" : "false");
 
         window.updateTopProfileBar();
+        if (typeof window.refreshUnlockedFeedsAfterAuth === "function") window.refreshUnlockedFeedsAfterAuth();
         window.closeProfileModal();
 
         // If user was intercepted when clicking search, immediately resume and execute!
@@ -5539,6 +5601,7 @@ window.handleVerifyOtpSubmit = async function() {
 
         // Update brand bar indicators immediately
         window.updateTopProfileBar();
+        if (typeof window.refreshUnlockedFeedsAfterAuth === "function") window.refreshUnlockedFeedsAfterAuth();
     } catch (err) {
         if (errBox && errText) {
             errText.textContent = err.message || "Verification failed.";
@@ -5669,6 +5732,7 @@ window.executeDirectSignupFallback = async function(email, password, fullName) {
 
         // Update brand bar indicators immediately
         window.updateTopProfileBar();
+        if (typeof window.refreshUnlockedFeedsAfterAuth === "function") window.refreshUnlockedFeedsAfterAuth();
 
         // Show celebratory in-app Welcome View
         const authFormView = document.getElementById("authFormView");
@@ -5813,6 +5877,7 @@ async function completeGoogleAuth(payload) {
         if (window.lucide) lucide.createIcons();
 
         window.updateTopProfileBar();
+        if (typeof window.refreshUnlockedFeedsAfterAuth === "function") window.refreshUnlockedFeedsAfterAuth();
     } catch (err) {
         if (errBox && errText) {
             errText.textContent = err.message || "Google authentication failed.";
@@ -5844,6 +5909,7 @@ window.handleLogout = function() {
     window.candidateUser = null;
 
     window.updateTopProfileBar();
+    if (typeof window.refreshUnlockedFeedsAfterAuth === "function") window.refreshUnlockedFeedsAfterAuth();
     window.closeProfileModal();
 
     // If currently viewing jobs on Page 3, re-render to enforce locked cards
@@ -6881,7 +6947,17 @@ function renderCuratedCards(items, total, sortBy = 'latest') {
         return;
     }
 
-    const freeNoticeHtml = (!isUserPaid() && sortBy !== 'free_jobs') ? `
+    const loggedIn = isUserLoggedIn();
+    const freeNoticeHtml = !loggedIn ? `
+        <div class="p-3 rounded-xl bg-violet-50/95 border border-violet-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <span class="text-slate-800 font-medium">
+                🔒 <strong>Sign up free</strong> to view direct apply links &bull; <strong>5+ day old jobs are 100% Free</strong> once signed in.
+            </span>
+            <button type="button" onclick="openSignupToUnlockLinksModal()" class="shrink-0 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold text-[11px] transition cursor-pointer">
+                Sign Up Free &rarr;
+            </button>
+        </div>
+    ` : ((!isUserPaid() && sortBy !== 'free_jobs') ? `
         <div class="p-3 rounded-xl bg-amber-50/90 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <span class="text-slate-800 font-medium">
                 🔓 <strong>Last 4 days</strong> need Pro to apply early &bull; Roles <strong>5+ days old are 100% Free</strong>.
@@ -6890,7 +6966,7 @@ function renderCuratedCards(items, total, sortBy = 'latest') {
                 View Free Jobs (5+ Days) &rarr;
             </button>
         </div>
-    ` : '';
+    ` : '');
 
     let html = `
         ${freeNoticeHtml}
@@ -6901,6 +6977,7 @@ function renderCuratedCards(items, total, sortBy = 'latest') {
     `;
 
     items.forEach((item) => {
+        const isAuthLocked = !loggedIn || Boolean(item.is_auth_locked);
         const isLocked = isJobLatestFeedLocked(item);
         const sponsorshipBadge = item.sponsorship === 'Visa Sponsored'
             ? `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-300 text-[10px] font-black">🛂 Visa Sponsored</span>`
@@ -6912,21 +6989,13 @@ function renderCuratedCards(items, total, sortBy = 'latest') {
             ? window.formatCompactLocationClient(item.location || 'Worldwide')
             : (item.location || 'Worldwide');
 
-        let actionBtn = '';
-        if (isLocked) {
-            actionBtn = `
-                <button type="button" onclick="openVipPassModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-xs transition cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap">
-                    <span>👑</span>
-                    <span>Unlock with Pro</span>
-                </button>
-            `;
-        } else {
-            actionBtn = `
-                <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl bg-slate-950 hover:bg-emerald-700 text-white font-black text-xs shadow-xs transition flex items-center gap-1.5 shrink-0 whitespace-nowrap">
-                    <span>Apply Direct &rarr;</span>
-                </a>
-            `;
-        }
+        const actionBtn = window.renderDirectApplyActionHtml({
+            isAuthLocked,
+            isVipLocked: isLocked,
+            safeUrl: item.url,
+            externalLabel: "Apply Direct &rarr;",
+            compact: true
+        });
 
         html += `
             <div class="curated-job-card p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:border-violet-300 hover:shadow-sm transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -7798,6 +7867,13 @@ window.buildExternalLinkedinCardHtml = function(ej) {
     const ejLoc = window.escapeClean(ej.location || "Remote / India");
     const ejDate = window.escapeClean(ej.date_posted_str || "Recent");
     const ejUrl = (ej.url && /^(https?:\/\/)/i.test(ej.url)) ? encodeURI(ej.url) : "#";
+    const isAuthLocked = !isUserLoggedIn() || Boolean(ej.is_auth_locked);
+    const actionEl = isAuthLocked
+        ? window.renderDirectApplyActionHtml({ isAuthLocked: true, isVipLocked: false, safeUrl: "#", compact: true })
+        : `<a href="${ejUrl}" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl bg-white hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 font-bold text-xs flex items-center justify-center gap-1.5 transition shrink-0 whitespace-nowrap">
+                <span>View on LinkedIn ↗</span>
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+           </a>`;
     return `
         <div class="w-full p-4 rounded-2xl bg-slate-50/90 border border-slate-200/90 hover:border-blue-300 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="min-w-0 space-y-1">
@@ -7809,10 +7885,7 @@ window.buildExternalLinkedinCardHtml = function(ej) {
                 <h4 class="text-sm font-black text-slate-900">${ejRole}</h4>
                 <div class="text-xs text-slate-600">📍 ${ejLoc}</div>
             </div>
-            <a href="${ejUrl}" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl bg-white hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 font-bold text-xs flex items-center justify-center gap-1.5 transition shrink-0 whitespace-nowrap">
-                <span>View on LinkedIn ↗</span>
-                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-            </a>
+            ${actionEl}
         </div>
     `;
 };
@@ -7980,6 +8053,7 @@ window.renderOmniResults = function(result, query, append) {
         let rawPkg = job.package_display || (job.package_inr_lpa ? `${job.package_inr_lpa} LPA Benchmark` : "Disclosed Corporate Band");
         rawPkg = String(rawPkg).replace(/[₹\u20b9]/g, "").trim();
         const pkgDisplay = window.escapeClean(rawPkg);
+        const isAuthLocked = !isUserLoggedIn() || Boolean(job.is_auth_locked);
         const isLocked = Boolean(job.is_locked);
         let rawProvider = job.portal_provider || job.source || (job.url && job.url.includes("greenhouse") ? "Greenhouse" : (job.url && job.url.includes("lever") ? "Lever" : (job.url && job.url.includes("ashby") ? "Ashby" : (job.url && job.url.includes("workday") ? "Workday" : "Direct Portal"))));
         rawProvider = String(rawProvider).replace(/\bATS\b/gi, "Portal").trim();
@@ -8017,18 +8091,12 @@ window.renderOmniResults = function(result, query, append) {
 
         const alreadySaved = window.isJobSavedInKanban(jobObj);
 
-        let applyActionHtml = "";
-        if (isLocked) {
-            applyActionHtml = `<button type="button" onclick="openUpgradeModal()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition whitespace-nowrap">
-                <span>👑</span>
-                <span>Unlock with Pro</span>
-            </button>`;
-        } else {
-            applyActionHtml = `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="omni-apply-btn w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-violet-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 transition whitespace-nowrap">
-                <span>Apply Direct ↗</span>
-                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-            </a>`;
-        }
+        const applyActionHtml = window.renderDirectApplyActionHtml({
+            isAuthLocked,
+            isVipLocked: isLocked,
+            safeUrl,
+            externalLabel: "Apply Direct ↗"
+        });
 
         const saveBtnClass = alreadySaved
             ? "omni-save-btn px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-300 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap"
@@ -8181,6 +8249,10 @@ window.renderOmniResults = function(result, query, append) {
 };
 
 window.exportOmniResults = async function(format = "csv") {
+    if (!isUserLoggedIn()) {
+        if (typeof window.openSignupToUnlockLinksModal === "function") window.openSignupToUnlockLinksModal();
+        return;
+    }
     const jobs = window.omniCurrentItems || [];
     if (jobs.length === 0) {
         alert("No matching jobs loaded yet to export.");

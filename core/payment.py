@@ -65,10 +65,19 @@ def get_job_age_days(job: dict, now_ts: float = None) -> int | None:
         return None
 
 
-def apply_vip_latest_feed_lock(jobs: list, user_is_paid: bool = False, max_days: int = VIP_LATEST_FEED_MAX_DAYS) -> list:
+def apply_vip_latest_feed_lock(
+    jobs: list,
+    user_is_paid: bool = False,
+    max_days: int = VIP_LATEST_FEED_MAX_DAYS,
+    user_is_logged_in: bool = True
+) -> list:
     """
-    Blur and lock latest postings (age <= max_days, i.e. Today through 4 days ago)
-    unless the user has an active VIP Pass. Keeps days-ago freshness visible.
+    Mask and lock application links:
+    - Unauthenticated guests (user_is_logged_in=False): mask ALL direct URLs with '#signup-required'
+      so visitors can browse/match resumes cleanly and sign up free to view direct job links.
+    - Authenticated Free candidates (user_is_logged_in=True, user_is_paid=False): blur/lock ONLY
+      latest postings (age <= max_days, Today through 4 days ago); 5+ day jobs stay unblurred.
+    - Active VIP Members: 100% unlocked.
     """
     if not jobs:
         return jobs
@@ -80,26 +89,33 @@ def apply_vip_latest_feed_lock(jobs: list, user_is_paid: bool = False, max_days:
         if age_days is not None:
             job["days_ago"] = age_days
 
-        if not user_is_paid and age_days is not None and age_days <= max_days:
-            job["is_locked"] = True
-            job["url"] = "#unlock-vip"
+        is_vip_window = (age_days is not None and age_days <= max_days)
+        job["is_latest_vip"] = bool(is_vip_window)
+        vip_locked = bool(not user_is_paid and is_vip_window)
+        auth_locked = not bool(user_is_logged_in)
+
+        job["is_auth_locked"] = auth_locked
+        job["is_locked"] = vip_locked
+
+        if auth_locked or vip_locked:
+            placeholder = "#signup-required" if auth_locked else "#unlock-vip"
+            job["url"] = placeholder
             if "apply_url" in job:
-                job["apply_url"] = "#unlock-vip"
+                job["apply_url"] = placeholder
             if "hn_url" in job:
-                job["hn_url"] = "#unlock-vip"
+                job["hn_url"] = placeholder
             if "founder_email" in job:
                 job["founder_email"] = ""
-            # KEEP BOTH COMPANY NAME AND ROLE TITLE VISIBLE; only lock the direct application URL & full text
-            if "summary" in job:
-                job["summary"] = "Unlock VIP Pass to view full designation details and direct application portal link."
-            if "full_text" in job:
-                job["full_text"] = ""
-            if "matched_skills" in job:
-                job["matched_skills"] = []
-            if "gap_skills" in job:
-                job["gap_skills"] = []
-        else:
-            job["is_locked"] = False
+            if vip_locked:
+                # KEEP BOTH COMPANY NAME AND ROLE TITLE VISIBLE; only lock the direct application URL & full text
+                if "summary" in job:
+                    job["summary"] = "Unlock VIP Pass to view full designation details and direct application portal link."
+                if "full_text" in job:
+                    job["full_text"] = ""
+                if "matched_skills" in job:
+                    job["matched_skills"] = []
+                if "gap_skills" in job:
+                    job["gap_skills"] = []
     return jobs
 
 

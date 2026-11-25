@@ -795,7 +795,8 @@ def query_curated_feed(
     sort_by: str = "latest",
     limit: int = 30,
     offset: int = 0,
-    user_is_paid: bool = False
+    user_is_paid: bool = False,
+    user_is_logged_in: bool = True
 ) -> Dict[str, Any]:
     """Search, filter, and paginate through verified direct feeds."""
     all_items = get_feed_data(feed_type)
@@ -904,7 +905,7 @@ def query_curated_feed(
 
         processed_items.append(item_copy)
 
-    apply_vip_latest_feed_lock(processed_items, user_is_paid=user_is_paid)
+    apply_vip_latest_feed_lock(processed_items, user_is_paid=user_is_paid, user_is_logged_in=user_is_logged_in)
 
     return {
         "total": total_count,
@@ -963,7 +964,8 @@ def omni_search_all_feeds(
     sort_by: str = "best_match",
     limit: int = 25,
     offset: int = 0,
-    user_is_paid: bool = False
+    user_is_paid: bool = False,
+    user_is_logged_in: bool = True
 ) -> Dict[str, Any]:
     """High-speed unified discovery engine querying across curated feeds and verified corporate postings
     with precision location filtering, compensation benchmarks, and resume skill matching.
@@ -1272,7 +1274,7 @@ def omni_search_all_feeds(
 
         processed_items.append(item_copy)
 
-    apply_vip_latest_feed_lock(processed_items, user_is_paid=user_is_paid)
+    apply_vip_latest_feed_lock(processed_items, user_is_paid=user_is_paid, user_is_logged_in=user_is_logged_in)
 
     # 7. Fetch external / LinkedIn postings when matching resume (or on initial search)
     external_jobs = []
@@ -1300,6 +1302,9 @@ def omni_search_all_feeds(
                 lj_copy["portal_provider"] = "LinkedIn (Unofficial)"
                 lj_copy["date_posted_str"] = lj_copy.get("posted_at") or "Recent"
                 lj_copy["is_locked"] = False
+                lj_copy["is_auth_locked"] = not bool(user_is_logged_in)
+                if not user_is_logged_in:
+                    lj_copy["url"] = "#signup-required"
                 external_jobs.append(lj_copy)
         except Exception as li_err:
             print(f"[OMNI] LinkedIn external fetch note: {li_err}")

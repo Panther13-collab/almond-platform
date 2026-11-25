@@ -2517,7 +2517,7 @@
     </div>
 
     <!-- 9. MODAL: CANDIDATE PROFILE & AUTHENTICATION DASHBOARD -->
-    <div id="profileModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div id="profileModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[60] flex items-center justify-center p-4">
         <div class="rounded-3xl max-w-md w-full p-6 sm:p-7 border border-slate-200/90 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 bg-white/95 backdrop-blur-2xl my-auto">
             
             <!-- Header -->
@@ -2537,6 +2537,10 @@
 
             <!-- VIEW 1: AUTHENTICATION FORM (Shown when guest / logged out) -->
             <div id="authFormView" class="space-y-4">
+                <div id="authContextNotice" class="hidden p-3 rounded-xl bg-violet-50 border border-violet-200 text-xs font-bold text-violet-900 flex items-center gap-2">
+                    <span>🔒</span>
+                    <span id="authContextNoticeText">Create a free candidate account to unlock direct company apply links (5+ day jobs free forever).</span>
+                </div>
                 <!-- 1. PRIMARY AUTH ACTION: Continue with Google -->
                 <a href="/api/auth/google/login" id="googleAuthBtn" class="w-full py-3.5 px-4 rounded-2xl border-2 border-slate-200 hover:border-violet-400 bg-white hover:bg-slate-50 text-slate-900 font-black text-xs sm:text-sm shadow-xs hover:shadow-md transition flex items-center justify-center gap-3 cursor-pointer group no-underline">
                     <svg class="w-4 h-4 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">

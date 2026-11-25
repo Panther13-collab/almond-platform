@@ -1373,8 +1373,27 @@ async def api_add_kanban(payload: dict = Body(...)):
     res = save_user_kanban_application(user_id, application)
     return JSONResponse(content={"status": "success", "result": res})
 
+def _is_request_authenticated(request: Optional[Request], user_id: str = "") -> bool:
+    """Verify whether the caller is a genuinely signed-in candidate (cookie, bearer token, or registered profile)."""
+    if request is not None:
+        sess_cookie = request.cookies.get("almond_session_token", "").strip()
+        if sess_cookie and verify_session_token(sess_cookie):
+            return True
+        auth_hdr = request.headers.get("authorization", "").strip()
+        if auth_hdr.lower().startswith("bearer "):
+            tok = auth_hdr[7:].strip()
+            if tok and verify_session_token(tok):
+                return True
+    uid = (user_id or "").strip()
+    if uid and not uid.startswith("cand_") and uid != "guest":
+        if get_user_profile(uid):
+            return True
+    return False
+
+
 @app.get("/api/omni-search")
 async def api_omni_search(
+    request: Request,
     q: str = Query(""),
     location: str = Query("all"),
     category: str = Query("All"),
@@ -1394,7 +1413,8 @@ async def api_omni_search(
     """Unified instant discovery query across internships, entry-level and AI/ML feeds."""
     skills_list = [s.strip().lower() for s in skills.split(",") if s.strip()] if skills else None
     effective_min_lpa = max(min_lpa, min_package_lpa or 0.0)
-    user_paid = is_user_paid(user_id) if user_id else False
+    user_logged_in = _is_request_authenticated(request, user_id or "")
+    user_paid = is_user_paid(user_id) if (user_logged_in and user_id) else False
 
     # Concurrency Caching: Sub-millisecond response for concurrent search traffic
     cache_key = (
@@ -1411,7 +1431,8 @@ async def api_omni_search(
         (sort_by or "best_match").strip().lower(),
         min(limit, 100),
         offset,
-        user_paid
+        user_paid,
+        user_logged_in
     )
     now = time.time()
     with _OMNI_SEARCH_CACHE_LOCK:
@@ -1434,7 +1455,8 @@ async def api_omni_search(
         sort_by=sort_by,
         limit=min(limit, 100),
         offset=offset,
-        user_is_paid=user_paid
+        user_is_paid=user_paid,
+        user_is_logged_in=user_logged_in
     )
 
     with _OMNI_SEARCH_CACHE_LOCK:
@@ -1448,10 +1470,11 @@ async def api_omni_search(
 
 
 @app.post("/api/find-jobs")
-async def find_jobs(payload: dict = Body(...)):
+async def find_jobs(request: Request, payload: dict = Body(...)):
     profile = payload.get("profile")
     preferences = payload.get("preferences", {})
     user_id = payload.get("user_id", "")
+    user_logged_in = _is_request_authenticated(request, user_id or "")
     if not profile:
         profile = {
             "name": "Direct Candidate",
@@ -1468,7 +1491,7 @@ async def find_jobs(payload: dict = Body(...)):
         )
 
     try:
-        user_is_paid = is_user_paid(user_id) if user_id else False
+        user_is_paid = is_user_paid(user_id) if (user_logged_in and user_id) else False
         cache_key = _get_skills_fingerprint(profile, preferences)
 
         ats_jobs = None
@@ -1504,10 +1527,10 @@ async def find_jobs(payload: dict = Body(...)):
                     }
                 }
 
-        # Latest feed gating (Today through 6 days ago requires active VIP Pass)
-        apply_vip_latest_feed_lock(ats_jobs, user_is_paid=user_is_paid)
-        apply_vip_latest_feed_lock(linkedin_jobs, user_is_paid=user_is_paid)
-        apply_vip_latest_feed_lock(founder_jobs, user_is_paid=user_is_paid)
+        # Latest feed gating (Today through 4 days ago requires active VIP Pass; guests sign up first)
+        apply_vip_latest_feed_lock(ats_jobs, user_is_paid=user_is_paid, user_is_logged_in=user_logged_in)
+        apply_vip_latest_feed_lock(linkedin_jobs, user_is_paid=user_is_paid, user_is_logged_in=user_logged_in)
+        apply_vip_latest_feed_lock(founder_jobs, user_is_paid=user_is_paid, user_is_logged_in=user_logged_in)
 
         return JSONResponse(content={
             "status": "success", 
@@ -1524,7 +1547,7 @@ async def find_jobs(payload: dict = Body(...)):
         release_search_slot()
 
 @app.post("/api/find-linkedin-jobs")
-async def find_linkedin_jobs(payload: dict = Body(...)):
+async def find_linkedin_jobs(request: Request, payload: dict = Body(...)):
     profile = payload.get("profile")
     preferences = payload.get("preferences", {})
     offset = int(payload.get("offset", 0))
@@ -1540,10 +1563,11 @@ async def find_linkedin_jobs(payload: dict = Body(...)):
 
     try:
         user_id = str(payload.get("user_id", "") or "")
-        user_is_paid = is_user_paid(user_id) if user_id else False
+        user_logged_in = _is_request_authenticated(request, user_id)
+        user_is_paid = is_user_paid(user_id) if (user_logged_in and user_id) else False
         li_jobs, has_more, total_found = fetch_linkedin_postings(profile, preferences, limit=limit, offset=offset)
         li_jobs = [dict(j) for j in li_jobs]
-        apply_vip_latest_feed_lock(li_jobs, user_is_paid=user_is_paid)
+        apply_vip_latest_feed_lock(li_jobs, user_is_paid=user_is_paid, user_is_logged_in=user_logged_in)
         return JSONResponse(content={
             "status": "success", 
             "total": total_found, 
@@ -1570,15 +1594,18 @@ async def get_cover_letter(payload: dict = Body(...)):
 
 @app.get("/api/omni-linkedin-more")
 async def api_omni_linkedin_more(
+    request: Request,
     q: str = Query(""),
     skills: Optional[str] = Query(None),
     target_role: Optional[str] = Query(None),
     location: str = Query("India"),
     offset: int = Query(0),
-    limit: int = Query(8)
+    limit: int = Query(8),
+    user_id: Optional[str] = Query(None)
 ):
     """Load additional unofficial LinkedIn postings for the bottom external section."""
     from core.job_engine import query_linkedin_jobs
+    user_logged_in = _is_request_authenticated(request, user_id or "")
     li_query = (target_role or "").strip()
     if not li_query and skills:
         li_query = " ".join([s.strip() for s in skills.split(",") if s.strip()][:2])
@@ -1603,6 +1630,9 @@ async def api_omni_linkedin_more(
         lj_copy["portal_provider"] = "LinkedIn (Unofficial)"
         lj_copy["date_posted_str"] = lj_copy.get("posted_at") or "Recent"
         lj_copy["is_locked"] = False
+        lj_copy["is_auth_locked"] = not user_logged_in
+        if not user_logged_in:
+            lj_copy["url"] = "#signup-required"
         external_jobs.append(lj_copy)
     return JSONResponse(content={
         "status": "success",
@@ -1612,7 +1642,7 @@ async def api_omni_linkedin_more(
     })
 
 @app.post("/api/find-founder-jobs")
-async def find_founder_jobs(payload: dict = Body(...)):
+async def find_founder_jobs(request: Request, payload: dict = Body(...)):
     profile = payload.get("profile")
     preferences = payload.get("preferences", {})
     if not profile:
@@ -1626,15 +1656,16 @@ async def find_founder_jobs(payload: dict = Body(...)):
 
     try:
         user_id = str(payload.get("user_id", "") or "")
-        user_is_paid = is_user_paid(user_id) if user_id else False
+        user_logged_in = _is_request_authenticated(request, user_id)
+        user_is_paid = is_user_paid(user_id) if (user_logged_in and user_id) else False
         founder_jobs = [dict(j) for j in fetch_hn_founder_jobs(profile, preferences)]
-        apply_vip_latest_feed_lock(founder_jobs, user_is_paid=user_is_paid)
+        apply_vip_latest_feed_lock(founder_jobs, user_is_paid=user_is_paid, user_is_logged_in=user_logged_in)
         return JSONResponse(content={"status": "success", "total": len(founder_jobs), "jobs": founder_jobs})
     finally:
         release_search_slot()
 
 @app.post("/api/download-dossier")
-async def download_dossier(payload: dict = Body(...)):
+async def download_dossier(request: Request, payload: dict = Body(...)):
     profile = payload.get("profile", {})
     jobs = payload.get("jobs", [])
     doc_format = payload.get("format", "pdf").lower()
@@ -1643,10 +1674,14 @@ async def download_dossier(payload: dict = Body(...)):
     if not jobs:
         raise HTTPException(status_code=400, detail="No jobs to export.")
 
-    # Determine entitlement: Free tier has latest 0-6d links locked with upgrade CTA
+    user_logged_in = _is_request_authenticated(request, str(user_id or ""))
+    if not user_logged_in:
+        raise HTTPException(status_code=401, detail="Please sign up or log in free to export job links.")
+
+    # Determine entitlement: Free tier has latest 0-4d links locked with upgrade CTA
     user_paid = is_user_paid(user_id) if user_id else bool(payload.get("is_paid"))
     # Server-side guard: enforce VIP lock on export jobs if user is not paid
-    jobs = apply_vip_latest_feed_lock([dict(x) for x in jobs], user_is_paid=user_paid)
+    jobs = apply_vip_latest_feed_lock([dict(x) for x in jobs], user_is_paid=user_paid, user_is_logged_in=True)
     cand_slug = (profile.get("name") or "Candidate").replace(" ", "_")
     
     if doc_format == "docx":
@@ -1674,6 +1709,7 @@ async def download_dossier(payload: dict = Body(...)):
 
 @app.get("/api/curated-feeds")
 async def get_curated_feeds(
+    request: Request,
     feed_type: str = Query("internships"),
     query: str = Query(""),
     category: str = Query("All"),
@@ -1685,7 +1721,8 @@ async def get_curated_feeds(
     user_id: Optional[str] = Query(None)
 ):
     """Retrieve filtered, high-freshness direct corporate feeds (Internships, Entry-Level, AI/ML Specialist)."""
-    user_paid = is_user_paid(user_id) if user_id else False
+    user_logged_in = _is_request_authenticated(request, user_id or "")
+    user_paid = is_user_paid(user_id) if (user_logged_in and user_id) else False
     res = query_curated_feed(
         feed_type=feed_type,
         query=query,
@@ -1695,7 +1732,8 @@ async def get_curated_feeds(
         sort_by=sort_by,
         limit=min(limit, 100),
         offset=offset,
-        user_is_paid=user_paid
+        user_is_paid=user_paid,
+        user_is_logged_in=user_logged_in
     )
     return JSONResponse(content={"status": "success", "result": res})
 
