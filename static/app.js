@@ -4546,8 +4546,8 @@ window.detectAndApplyUserCurrency = function(forceCurr = null) {
         const vipBtn = document.getElementById("vipCurrBtn_" + c);
         if (vipBtn) {
             vipBtn.className = (c === curr)
-                ? "vip-curr-tab px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-black cursor-pointer shadow-xs"
-                : "vip-curr-tab px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-950 cursor-pointer";
+                ? "vip-curr-tab px-2.5 py-1 rounded-lg bg-white text-slate-950 font-bold cursor-pointer"
+                : "vip-curr-tab px-2.5 py-1 rounded-lg text-zinc-300 hover:text-white cursor-pointer";
         }
         const upBtn = document.getElementById("vipUpCurrBtn_" + c);
         if (upBtn) {
@@ -4700,7 +4700,7 @@ window.updateVipPurchaseCardsUI = function() {
         btnLabel.textContent = `⚡ Continue with ${selData.name || "Pro"} — ${sym}${selPerMonth}/mo`;
     }
 
-    // Sync 2-Column SaaS Matrix elements
+    // Sync 2-Column Editorial SaaS Matrix elements
     const pills = {
         "1m": document.getElementById("proTierPill_1m"),
         "3m": document.getElementById("proTierPill_3m"),
@@ -4709,10 +4709,13 @@ window.updateVipPurchaseCardsUI = function() {
     Object.keys(pills).forEach(k => {
         const pill = pills[k];
         if (!pill) return;
+        const base = k === "1m"
+            ? "pro-tier-pill px-3.5 py-2 rounded-lg text-xs font-semibold cursor-pointer transition"
+            : "pro-tier-pill px-3.5 py-2 rounded-lg text-xs font-semibold cursor-pointer transition flex items-center gap-1.5";
         if (k === selTierKey) {
-            pill.className = "pro-tier-pill py-1.5 px-2 rounded-lg text-center font-bold text-xs cursor-pointer transition bg-slate-950 text-white shadow-xs";
+            pill.className = `${base} bg-white text-slate-950 shadow-xs`;
         } else {
-            pill.className = "pro-tier-pill py-1.5 px-2 rounded-lg text-center font-bold text-xs cursor-pointer transition text-slate-600 hover:text-slate-950";
+            pill.className = `${base} text-zinc-400 hover:text-white`;
         }
     });
 
@@ -4734,14 +4737,31 @@ window.updateVipPurchaseCardsUI = function() {
 
     const proDurationLabel = document.getElementById("proCheckoutDurationLabel");
     if (proDurationLabel) {
-        proDurationLabel.textContent = "/ month";
+        proDurationLabel.textContent = "/ mo";
     }
 
     const proBillingNote = document.getElementById("proCheckoutBillingNote");
     if (proBillingNote) {
-        if (selMonths === 1) proBillingNote.textContent = "1-Month plan • 30 days full direct access";
-        else if (selMonths === 6) proBillingNote.textContent = "6-Month plan • Save 35% vs monthly (180 days access)";
-        else proBillingNote.textContent = "3-Month plan • Save 30% vs monthly (90 days access)";
+        if (selMonths === 1) proBillingNote.textContent = "Billed monthly • 30 days full direct access";
+        else if (selMonths === 6) proBillingNote.textContent = "Billed every 6 months • 180 days access";
+        else proBillingNote.textContent = "Billed every 3 months • 90 days access";
+    }
+
+    const proSavingsNote = document.getElementById("proCheckoutSavingsNote");
+    if (proSavingsNote) {
+        if (selMonths === 1) {
+            proSavingsNote.textContent = "Flexible 30-day direct portal pass";
+            proSavingsNote.className = "text-[11px] text-zinc-400 font-medium mt-0.5";
+        } else {
+            const fullMonthlySum = Number(p1) * selMonths;
+            const savingsRaw = Math.max(0, fullMonthlySum - Number(selPrice));
+            const savingsDisp = curr === "INR" ? Math.round(savingsRaw).toLocaleString("en-IN") : savingsRaw.toFixed(2);
+            const pctLabel = selMonths === 6 ? "35%" : "30%";
+            proSavingsNote.textContent = savingsRaw > 0
+                ? `Save ${sym}${savingsDisp} (${pctLabel} off vs monthly)`
+                : `Save ${pctLabel} vs monthly plan`;
+            proSavingsNote.className = "text-[11px] text-emerald-400 font-medium mt-0.5";
+        }
     }
 
     const pillPrice1m = document.getElementById("vipPillPrice_1m");
@@ -5013,10 +5033,10 @@ window.openVipPassModal = function() {
         if (purchaseView) purchaseView.classList.remove("hidden");
         if (activeView) activeView.classList.add("hidden");
 
-        if (headerTitle) headerTitle.textContent = "Almond Jobs VIP Pass";
+        if (headerTitle) headerTitle.textContent = "Almond Jobs Pro";
         if (headerBadge) {
-            headerBadge.textContent = "Priority Early Access";
-            headerBadge.className = "text-[10px] font-black uppercase tracking-wider text-violet-900 bg-violet-100 px-2 py-0.5 rounded-full border border-violet-200";
+            headerBadge.textContent = "Direct Company Feeds";
+            headerBadge.className = "text-[10px] font-semibold text-zinc-300 bg-white/8 px-2 py-0.5 rounded-full border border-white/10";
         }
         if (headerSub) headerSub.textContent = "Direct Company Ingestion • Apply before public platforms saturate the applicant pool";
 
