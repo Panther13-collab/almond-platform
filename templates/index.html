@@ -2322,11 +2322,12 @@
 
                             <div>
                                 <div class="flex items-baseline gap-2 flex-wrap">
-                                    <span id="vipCardOriginalPrice" class="text-xs text-slate-400 line-through font-bold">&#8377;4,199</span>
-                                    <span id="proCheckoutPriceDisplay" class="text-2xl sm:text-3xl font-black text-slate-950">&#8377;2,799</span>
-                                    <span class="text-xs font-semibold text-slate-500" id="proCheckoutDurationLabel">for 180 days</span>
+                                    <span id="vipCardOriginalPrice" class="text-xs text-slate-400 line-through font-bold">&#8377;699/mo</span>
+                                    <span id="proCheckoutPriceDisplay" class="text-2xl sm:text-3xl font-black text-slate-950">&#8377;466</span>
+                                    <span class="text-xs font-extrabold text-slate-600" id="proCheckoutDurationLabel">/ month</span>
                                 </div>
-                                <p class="text-[11px] text-slate-600 mt-1">Unlock every fresh job posting immediately &mdash; apply before the crowd.</p>
+                                <p class="text-[11px] font-semibold text-amber-800 mt-0.5" id="proCheckoutBillingNote">6-Month plan &bull; 180 days full direct access</p>
+                                <p class="text-[11px] text-slate-600 mt-0.5">Unlock every fresh job posting immediately &mdash; apply before the crowd.</p>
                             </div>
 
                             <div class="space-y-2 pt-2 border-t border-amber-200/60 text-xs">
@@ -2355,8 +2356,8 @@
 
                         <div class="pt-2">
                             <button type="button" id="proTierCheckoutBtn" onclick="executeVipPassCheckout()" class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 active:scale-98 text-slate-950 font-black text-sm tracking-wide shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer transition">
-                                <span>🚀 Upgrade to Pro &mdash; </span>
-                                <span id="proCheckoutPriceLabel">&#8377;1,799</span>
+                                <span>🚀 Continue with Pro &mdash; </span>
+                                <span id="proCheckoutPriceLabel">&#8377;466/mo</span>
                             </button>
                         </div>
                     </div>
@@ -2508,7 +2509,7 @@
 
                     <!-- Upgrade CTA Button -->
                     <button type="button" id="vipUpgradeCheckoutBtn" onclick="executeVipUpgradeCheckout()" class="w-full py-3 px-5 rounded-xl bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-md transition cursor-pointer flex items-center justify-center gap-2">
-                        <span id="vipUpgradeCheckoutBtnLabel">🚀 Upgrade to 3-Month Sprint &mdash; ₹1,799</span>
+                        <span id="vipUpgradeCheckoutBtnLabel">🚀 Continue: 3-Month Sprint &mdash; &#8377;599/mo</span>
                     </button>
                     <p class="text-[10px] text-slate-400 text-center">New duration is seamlessly stacked onto your existing VIP expiration date.</p>
                 </div>

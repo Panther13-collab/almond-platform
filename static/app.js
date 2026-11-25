@@ -4641,6 +4641,16 @@ window.selectVipCurrency = function(curr) {
     window.detectAndApplyUserCurrency(curr);
 };
 
+window.computePerMonthPrice = function(totalPrice, monthsCount, curr) {
+    const num = Number(totalPrice) || 0;
+    const m = Math.max(1, Number(monthsCount) || 1);
+    const val = num / m;
+    if ((curr || "INR").toUpperCase() === "INR") {
+        return String(Math.floor(val));
+    }
+    return val.toFixed(2);
+};
+
 window.updateVipPurchaseCardsUI = function() {
     const curr = window.selectedVipCurrency || "INR";
     const sym = window.getCurrencySymbol(curr);
@@ -4652,43 +4662,42 @@ window.updateVipPurchaseCardsUI = function() {
 
     // 1m
     const p1 = curr === "INR" ? (t1.inr_price || 699) : (t1[`${curr.toLowerCase()}_price`] || t1.usd_price || 19.99);
+    const pm1 = window.computePerMonthPrice(p1, 1, curr);
     const price1El = document.getElementById("vipCardPrice_1m");
-    if (price1El) price1El.textContent = `${sym}${p1}`;
+    if (price1El) price1El.textContent = `${sym}${pm1}/mo`;
 
     // 3m
     const p3 = curr === "INR" ? (t3.inr_price || 1799) : (t3[`${curr.toLowerCase()}_price`] || t3.usd_price || 49.99);
+    const pm3 = window.computePerMonthPrice(p3, 3, curr);
     const o3 = curr === "INR" ? (t3.inr_original || 2599) : (t3[`${curr.toLowerCase()}_original`] || t3.usd_original || 69.99);
     const price3El = document.getElementById("vipCardPrice_3m");
     const orig3El = document.getElementById("vipCardOriginal_3m");
     const badge3El = document.getElementById("vipBadge_3m");
-    if (price3El) price3El.textContent = `${sym}${p3}`;
-    if (orig3El) orig3El.textContent = `${sym}${o3}`;
+    if (price3El) price3El.textContent = `${sym}${pm3}/mo`;
+    if (orig3El) orig3El.textContent = `${sym}${pm1}/mo`;
     if (badge3El && t3.discount_pct) badge3El.textContent = `${t3.discount_pct}% OFF`;
 
     // 6m
     const p6 = curr === "INR" ? (t6.inr_price || 2799) : (t6[`${curr.toLowerCase()}_price`] || t6.usd_price || 79.99);
+    const pm6 = window.computePerMonthPrice(p6, 6, curr);
     const o6 = curr === "INR" ? (t6.inr_original || 4299) : (t6[`${curr.toLowerCase()}_original`] || t6.usd_original || 119.99);
     const price6El = document.getElementById("vipCardPrice_6m");
     const orig6El = document.getElementById("vipCardOriginal_6m");
     const badge6El = document.getElementById("vipBadge_6m");
-    if (price6El) price6El.textContent = `${sym}${p6}`;
-    if (orig6El) orig6El.textContent = `${sym}${o6}`;
+    if (price6El) price6El.textContent = `${sym}${pm6}/mo`;
+    if (orig6El) orig6El.textContent = `${sym}${pm1}/mo`;
     if (badge6El && t6.discount_pct) badge6El.textContent = `${t6.discount_pct}% OFF`;
 
-    // Primary CTA Button
+    // Primary CTA Button & 2-Column Pro Header (per-month like ChatGPT/Gemini; full total appears at Razorpay checkout)
     const selTierKey = window.selectedVipPurchaseTierKey || "3m";
     const selData = tiers[selTierKey] || t3;
-    const selPrice = curr === "INR" ? (selData.inr_price || 1799) : (selData[`${curr.toLowerCase()}_price`] || selData.usd_price || 49.99);
-    const selOrig = curr === "INR" ? (selData.inr_original || 2599) : (selData[`${curr.toLowerCase()}_original`] || selData.usd_original || 69.99);
+    const selMonths = selTierKey === "1m" ? 1 : (selTierKey === "6m" ? 6 : 3);
+    const selPrice = curr === "INR" ? (selData.inr_price || (selMonths === 1 ? 699 : (selMonths === 6 ? 2799 : 1799))) : (selData[`${curr.toLowerCase()}_price`] || selData.usd_price || (selMonths === 1 ? 19.99 : (selMonths === 6 ? 79.99 : 49.99)));
+    const selPerMonth = window.computePerMonthPrice(selPrice, selMonths, curr);
 
     const btnLabel = document.getElementById("vipPassCheckoutBtnLabel");
     if (btnLabel) {
-        let text = `⚡ Unlock ${selData.name || "VIP Pass"} — ${sym}${selPrice}`;
-        if (selOrig > selPrice && curr === "INR") {
-            const savings = selOrig - selPrice;
-            text += ` (Save ₹${savings})`;
-        }
-        btnLabel.textContent = text;
+        btnLabel.textContent = `⚡ Continue with ${selData.name || "Pro"} — ${sym}${selPerMonth}/mo`;
     }
 
     // Sync 2-Column SaaS Matrix elements
@@ -4708,15 +4717,15 @@ window.updateVipPurchaseCardsUI = function() {
     });
 
     const proPriceDisplay = document.getElementById("proCheckoutPriceDisplay");
-    if (proPriceDisplay) proPriceDisplay.textContent = `${sym}${selPrice}`;
+    if (proPriceDisplay) proPriceDisplay.textContent = `${sym}${selPerMonth}`;
 
     const proPriceLabel = document.getElementById("proCheckoutPriceLabel");
-    if (proPriceLabel) proPriceLabel.textContent = `${sym}${selPrice}`;
+    if (proPriceLabel) proPriceLabel.textContent = `${sym}${selPerMonth}/mo`;
 
     const proOrigPrice = document.getElementById("vipCardOriginalPrice");
     if (proOrigPrice) {
-        if (selOrig > selPrice) {
-            proOrigPrice.textContent = `${sym}${selOrig}`;
+        if (selMonths > 1 && Number(pm1) > Number(selPerMonth)) {
+            proOrigPrice.textContent = `${sym}${pm1}/mo`;
             proOrigPrice.classList.remove("hidden");
         } else {
             proOrigPrice.classList.add("hidden");
@@ -4725,11 +4734,18 @@ window.updateVipPurchaseCardsUI = function() {
 
     const proDurationLabel = document.getElementById("proCheckoutDurationLabel");
     if (proDurationLabel) {
-        proDurationLabel.textContent = selTierKey === "1m" ? "for 30 days" : (selTierKey === "6m" ? "for 180 days" : "for 90 days");
+        proDurationLabel.textContent = "/ month";
+    }
+
+    const proBillingNote = document.getElementById("proCheckoutBillingNote");
+    if (proBillingNote) {
+        if (selMonths === 1) proBillingNote.textContent = "1-Month plan • 30 days full direct access";
+        else if (selMonths === 6) proBillingNote.textContent = "6-Month plan • Save 35% vs monthly (180 days access)";
+        else proBillingNote.textContent = "3-Month plan • Save 30% vs monthly (90 days access)";
     }
 
     const pillPrice1m = document.getElementById("vipPillPrice_1m");
-    if (pillPrice1m) pillPrice1m.textContent = `${sym}${p1}`;
+    if (pillPrice1m) pillPrice1m.textContent = `${sym}${pm1}/mo`;
 };
 
 window.openUpgradeModal = function() {
@@ -4838,43 +4854,46 @@ window.updateVipUpgradeLabels = function() {
         }
     });
 
-    // 3. Prices and Original MRPs
+    // 3. Prices and Original MRPs (display per-month rate in modal cards; full total shown at Razorpay checkout)
     const p1 = curr === "INR" ? (t1.inr_price || 699) : (t1[`${curr.toLowerCase()}_price`] || t1.usd_price || 19.99);
+    const pm1 = window.computePerMonthPrice(p1, 1, curr);
 
     const p3 = curr === "INR" ? (t3.inr_price || 1799) : (t3[`${curr.toLowerCase()}_price`] || t3.usd_price || 49.99);
-    const orig3 = curr === "INR" ? (t3.inr_original || 2599) : (t3[`${curr.toLowerCase()}_original`] || t3.usd_original || 71.99);
+    const pm3 = window.computePerMonthPrice(p3, 3, curr);
 
     const p6 = curr === "INR" ? (t6.inr_price || 2799) : (t6[`${curr.toLowerCase()}_price`] || t6.usd_price || 79.99);
-    const orig6 = curr === "INR" ? (t6.inr_original || 4399) : (t6[`${curr.toLowerCase()}_original`] || t6.usd_original || 124.99);
+    const pm6 = window.computePerMonthPrice(p6, 6, curr);
 
     const price1mEl = document.getElementById("vipUpgradePrice_1m");
-    if (price1mEl) price1mEl.textContent = `${sym}${p1}`;
+    if (price1mEl) price1mEl.textContent = `${sym}${pm1}/mo`;
 
     const price3mEl = document.getElementById("vipUpgradePrice_3m");
     const orig3mEl = document.getElementById("vipUpgradeOriginalPrice_3m");
     const badge3mEl = document.getElementById("vipUpgradeDiscountBadge_3m");
-    if (price3mEl) price3mEl.textContent = `${sym}${p3}`;
-    if (orig3mEl) orig3mEl.textContent = `${sym}${orig3}`;
+    if (price3mEl) price3mEl.textContent = `${sym}${pm3}/mo`;
+    if (orig3mEl) orig3mEl.textContent = `${sym}${pm1}/mo`;
     if (badge3mEl) badge3mEl.textContent = "30% OFF";
 
     const price6mEl = document.getElementById("vipUpgradePrice_6m");
     const orig6mEl = document.getElementById("vipUpgradeOriginalPrice_6m");
     const badge6mEl = document.getElementById("vipUpgradeDiscountBadge_6m");
-    if (price6mEl) price6mEl.textContent = `${sym}${p6}`;
-    if (orig6mEl) orig6mEl.textContent = `${sym}${orig6}`;
+    if (price6mEl) price6mEl.textContent = `${sym}${pm6}/mo`;
+    if (orig6mEl) orig6mEl.textContent = `${sym}${pm1}/mo`;
     if (badge6mEl) badge6mEl.textContent = "35% OFF";
 
     // 4. CTA button dynamic label
     const selTier = window.selectedVipUpgradeTierKey || "3m";
+    const selMonths = selTier === "1m" ? 1 : (selTier === "6m" ? 6 : 3);
     const tierData = tiers[selTier] || (selTier === "1m" ? t1 : (selTier === "6m" ? t6 : t3));
     const selPrice = curr === "INR" ? (tierData.inr_price || (selTier === "1m" ? 699 : (selTier === "6m" ? 2799 : 1799))) : (tierData[`${curr.toLowerCase()}_price`] || tierData.usd_price || (selTier === "1m" ? 19.99 : (selTier === "6m" ? 79.99 : 49.99)));
+    const selPerMonth = window.computePerMonthPrice(selPrice, selMonths, curr);
 
     const btnLabel = document.getElementById("vipUpgradeCheckoutBtnLabel");
     if (btnLabel) {
         let actionLabel = "3-Month Sprint";
         if (selTier === "1m") actionLabel = "1-Month Pass";
         if (selTier === "6m") actionLabel = "6-Month Dominance";
-        btnLabel.textContent = `🚀 Upgrade or Extend: ${actionLabel} — ${sym}${selPrice}`;
+        btnLabel.textContent = `🚀 Continue: ${actionLabel} — ${sym}${selPerMonth}/mo`;
     }
 };
 
