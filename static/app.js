@@ -7507,6 +7507,14 @@ window.clearOmniSearch = function() {
     window.omniMatchResumeMode = false;
 };
 
+window.omniSortMode = "best_match";
+
+window.setOmniSortMode = function(mode) {
+    window.omniSortMode = mode || "best_match";
+    window.omniCurrentOffset = 0;
+    window.executeOmniSearch(window.omniCurrentQuery, false);
+};
+
 window.setOmniCategoryFilter = function(category) {
     window.omniActiveCategory = category;
     const cats = ["All", "internships", "entrylevel", "aiml"];
@@ -7560,6 +7568,7 @@ window.executeOmniSearch = async function(query = "", append = false) {
             work_mode: window.omniActiveWorkMode || "all",
             contract_type: window.omniActiveContractType || "all",
             max_days: String(window.omniActiveMaxDays || 0),
+            sort_by: window.omniSortMode || "best_match",
             limit: "25",
             offset: String(window.omniCurrentOffset || 0)
         });
@@ -7834,7 +7843,19 @@ window.renderOmniResults = function(result, query, append) {
         const empType = job.feed_type === "internships" ? "Internship" : (job.feed_type === "aiml" ? "AI / ML" : "Full-Time");
         const dateBadge = window.formatCenterDateBadge(job);
 
-        const letter = window.escapeClean(compName.charAt(0).toUpperCase());
+        const formatCompanyLabel = (raw) => {
+            const s = String(raw || "Direct Corporate").trim();
+            if (/^[a-z0-9\s-]+$/.test(s)) {
+                return s.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+            }
+            return s;
+        };
+        const displayComp = window.escapeClean(formatCompanyLabel(compName));
+        const matchPct = (typeof job.match_score === "number" && job.match_score > 0) ? Math.min(99, Math.max(50, Math.round(job.match_score))) : 0;
+        const matchBadgeHtml = matchPct > 0
+            ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-violet-100 text-violet-900 border border-violet-200">🎯 ${matchPct}% Match</span>`
+            : "";
+        const letter = window.escapeClean(displayComp.charAt(0).toUpperCase());
         const safeUrl = (job.url && /^(https?:\/\/)/i.test(job.url)) ? encodeURI(job.url) : "#";
 
         const jobObj = {
@@ -7880,11 +7901,16 @@ window.renderOmniResults = function(result, query, append) {
                     ${letter}
                 </div>
                 <div class="min-w-0 flex-1 space-y-1.5">
-                    <h4 class="text-base sm:text-lg font-black text-slate-950 tracking-tight leading-tight group-hover:text-violet-700 transition">
-                        ${compName}
-                    </h4>
-                    <div class="text-xs sm:text-sm font-bold text-slate-700 leading-snug">
-                        ${roleName}
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h4 class="text-base sm:text-lg font-black text-slate-950 tracking-tight leading-tight group-hover:text-violet-700 transition flex items-center gap-1.5">
+                            <span>🏢</span>
+                            <span>${displayComp}</span>
+                        </h4>
+                        ${matchBadgeHtml}
+                    </div>
+                    <div class="text-xs sm:text-sm font-bold text-slate-800 leading-snug flex items-baseline gap-1.5">
+                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 shrink-0">Role:</span>
+                        <span>${roleName}</span>
                     </div>
                     <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-600 font-semibold pt-0.5">
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50/90 text-emerald-800 font-bold border border-emerald-200/70">💰 ${pkgDisplay}</span>
@@ -7994,7 +8020,7 @@ window.renderOmniResults = function(result, query, append) {
                 </div>
                 <div class="pt-2 text-center">
                     <button type="button" id="omniLoadMoreLinkedinBtn" onclick="loadMoreLinkedinResults()" class="px-5 py-2.5 rounded-full bg-white hover:bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200 shadow-2xs hover:shadow-xs transition cursor-pointer">
-                        Load more LinkedIn postings
+                        Show More LinkedIn Jobs
                     </button>
                 </div>
             `;
@@ -8044,7 +8070,7 @@ window.exportOmniResults = async function(format = "csv") {
 };
 
 window.loadMoreOmniResults = function() {
-    window.omniCurrentOffset += 21;
+    window.omniCurrentOffset += 25;
     window.executeOmniSearch(window.omniCurrentQuery, true);
 };
 
@@ -8604,6 +8630,9 @@ window.submitOmniCriteria = async function() {
     window.omniActiveWorkMode = workMode;
     window.omniActiveContractType = contractType;
     window.omniActiveMaxDays = maxDaysVal;
+    window.omniSortMode = "best_match";
+    const sortSel = document.getElementById("omniSortSelect");
+    if (sortSel) sortSel.value = "best_match";
     window.currentProfile = window.omniCurrentProfile || { name: "Candidate", role: role, skills: window.omniDerivedSkills || [] };
 
     // Do NOT restrict search query strictly to designation: role is optional criteria

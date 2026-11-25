@@ -886,6 +886,7 @@ def omni_search_all_feeds(
     match_resume: bool = False,
     target_role: Optional[str] = None,
     max_days: int = 0,
+    sort_by: str = "best_match",
     limit: int = 25,
     offset: int = 0,
     user_is_paid: bool = False
@@ -1055,7 +1056,7 @@ def omni_search_all_feeds(
                     item.get("company", ""),
                     item.get("feed_type", "")
                 )
-            if item_pkg < (min_package_lpa - 0.5):
+            if item_pkg < max(0.0, min_package_lpa - 1.0):
                 continue
 
         item_dict = dict(item)
@@ -1089,7 +1090,7 @@ def omni_search_all_feeds(
             if bm.get("url") not in seen_urls_fb:
                 seen_urls_fb.add(bm.get("url"))
                 filtered.append(bm)
-            if len(filtered) >= 25:
+            if len(filtered) >= 150:
                 break
 
     if not filtered:
@@ -1111,8 +1112,35 @@ def omni_search_all_feeds(
             if not filtered:
                 filtered = list(combined_items[:50])
 
-    # 5. Sort: primarily by match score if matching resume, then by recency
-    if match_resume:
+    # 5. Free Jobs Filter (older than 5 days so links are unlocked for free users) & Sorting
+    clean_sort = (sort_by or "best_match").strip().lower()
+    if clean_sort == "free_jobs":
+        free_filtered = []
+        for x in filtered:
+            pts = x.get("date_posted_ts", 0)
+            age_d = max(0, (now_ts - pts) // 86400) if (pts and pts > 100000) else 0
+            if age_d > 5:
+                free_filtered.append(x)
+        filtered = free_filtered
+
+    # Ensure package_inr_lpa is populated for package sorting
+    if clean_sort in ("package_desc", "package_asc"):
+        for x in filtered:
+            if x.get("package_inr_lpa") is None:
+                pv, _ = estimate_job_package(x.get("role", ""), x.get("company", ""), x.get("feed_type", ""))
+                x["package_inr_lpa"] = pv
+
+    if clean_sort == "latest":
+        filtered.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=True)
+    elif clean_sort == "oldest":
+        filtered.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=False)
+    elif clean_sort == "package_desc":
+        filtered.sort(key=lambda x: (float(x.get("package_inr_lpa") or 0), x.get("date_posted_ts", 0)), reverse=True)
+    elif clean_sort == "package_asc":
+        filtered.sort(key=lambda x: (float(x.get("package_inr_lpa") or 0), -x.get("date_posted_ts", 0)), reverse=False)
+    elif clean_sort == "free_jobs":
+        filtered.sort(key=lambda x: (x.get("_match_score", 0), x.get("date_posted_ts", 0)), reverse=True)
+    elif match_resume:
         filtered.sort(key=lambda x: (x.get("_match_score", 0), x.get("date_posted_ts", 0)), reverse=True)
     else:
         filtered.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=True)
@@ -1143,6 +1171,8 @@ def omni_search_all_feeds(
         diff_days = max(0, (now_ts - posted_ts) // 86400) if (posted_ts and posted_ts > 100000) else 0
         item_copy["date_posted_str"] = f"{diff_days}d ago" if diff_days > 0 else "Today"
         item_copy["days_ago"] = diff_days
+        raw_m = float(item_copy.get("_match_score") or 0)
+        item_copy["match_score"] = min(98, max(58, int(60 + raw_m * 0.6))) if (match_resume or raw_m > 0) else 75
 
         processed_items.append(item_copy)
 

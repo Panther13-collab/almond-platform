@@ -908,6 +908,17 @@
                                     <span>📄</span>
                                     <span>Export PDF</span>
                                 </button>
+                                <div class="relative">
+                                    <select id="omniSortSelect" onchange="setOmniSortMode(this.value)" class="pl-3 pr-7 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-bold text-xs shadow-2xs transition cursor-pointer appearance-none focus:border-violet-400 focus:outline-hidden">
+                                        <option value="best_match" selected>Sort: Best Match</option>
+                                        <option value="latest">Sort: Latest First</option>
+                                        <option value="oldest">Sort: Oldest First</option>
+                                        <option value="package_desc">Package: High to Low</option>
+                                        <option value="package_asc">Package: Low to High</option>
+                                        <option value="free_jobs">Free Jobs (6+ Days Old)</option>
+                                    </select>
+                                    <span class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[10px]">▼</span>
+                                </div>
                             </div>
 
                             <!-- Fast Category Filter Chips (Hidden in Resume Match Mode) -->
@@ -940,7 +951,7 @@
                         <!-- Load More Action -->
                         <div id="omniLoadMoreContainer" class="hidden mt-6 text-center">
                             <button type="button" id="omniLoadMoreBtn" onclick="loadMoreOmniResults()" class="px-5 py-2.5 rounded-full bg-white hover:bg-slate-50 text-slate-800 hover:text-violet-700 font-bold text-xs border border-slate-200 shadow-2xs hover:shadow-xs transition cursor-pointer">
-                                <span>Load more corporate openings</span>
+                                <span>Show More Direct Jobs</span>
                             </button>
                         </div>
                     </div>
@@ -3463,7 +3474,7 @@
                                 <option value="1">1 LPA (Entry / Intern)</option>
                                 <option value="3">3 LPA</option>
                                 <option value="5">5 LPA</option>
-                                <option value="7" selected>7 LPA (Default)</option>
+                                <option value="7" selected>7 LPA+ (Includes 6 LPA to Max)</option>
                                 <option value="10">10 LPA</option>
                                 <option value="12">12 LPA</option>
                                 <option value="15">15 LPA</option>

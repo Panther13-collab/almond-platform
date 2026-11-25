@@ -1331,6 +1331,7 @@ async def api_omni_search(
     match_resume: bool = Query(False),
     target_role: Optional[str] = Query(None),
     max_days: int = Query(0),
+    sort_by: str = Query("best_match"),
     limit: int = Query(25),
     offset: int = Query(0),
     user_id: Optional[str] = Query(None)
@@ -1352,6 +1353,7 @@ async def api_omni_search(
         match_resume,
         (target_role or "").strip().lower(),
         max_days,
+        (sort_by or "best_match").strip().lower(),
         min(limit, 100),
         offset,
         user_paid
@@ -1374,6 +1376,7 @@ async def api_omni_search(
         match_resume=match_resume,
         target_role=target_role,
         max_days=max_days,
+        sort_by=sort_by,
         limit=min(limit, 100),
         offset=offset,
         user_is_paid=user_paid
