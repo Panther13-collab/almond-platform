@@ -2144,7 +2144,7 @@ function isJobLatestFeedLocked(job) {
     if (isUserPaid()) return false;
     if (!job || typeof job !== "object") return false;
     if (typeof job.is_locked === "boolean") return job.is_locked;
-    if (typeof job.days_ago === "number") return job.days_ago <= 6;
+    if (typeof job.days_ago === "number") return job.days_ago <= 5;
     return false;
 }
 
@@ -2898,7 +2898,7 @@ async function openPitchModal(job) {
 
             body: JSON.stringify({
 
-                profile: currentProfile,
+                profile: (typeof currentProfile !== "undefined" && currentProfile) || window.currentProfile || window.omniCurrentProfile || { name: localStorage.getItem("almond_user_name") || "Candidate", role: (job && (job.role || job.title)) || "Candidate", skills: window.omniDerivedSkills || [] },
 
                 job: job
 
@@ -3020,7 +3020,7 @@ async function openCoverLetterModal(job) {
 
             body: JSON.stringify({
 
-                profile: currentProfile,
+                profile: (typeof currentProfile !== "undefined" && currentProfile) || window.currentProfile || window.omniCurrentProfile || { name: localStorage.getItem("almond_user_name") || "Candidate", role: (job && (job.role || job.title)) || "Candidate", skills: window.omniDerivedSkills || [] },
 
                 job: job
 
@@ -7590,6 +7590,133 @@ window.executeOmniSearch = async function(query = "", append = false) {
     }
 };
 
+window.isJobSavedInKanban = function(jobObj) {
+    try {
+        const data = typeof getKanbanData === "function" ? getKanbanData() : null;
+        if (!data || !Array.isArray(data.saved)) return false;
+        const jId = String(jobObj.id || "").toLowerCase();
+        const jComp = String(jobObj.company || "").toLowerCase().trim();
+        const jTitle = String(jobObj.title || jobObj.role || "").toLowerCase().trim();
+        return data.saved.some(item => {
+            const iId = String(item.id || "").toLowerCase();
+            if (jId && iId && iId === jId) return true;
+            return jComp && jTitle && String(item.company || "").toLowerCase().trim() === jComp && String(item.title || "").toLowerCase().trim() === jTitle;
+        });
+    } catch (_) {
+        return false;
+    }
+};
+
+window.toggleJobSaveInKanban = function(jobObj) {
+    try {
+        if (typeof getKanbanData !== "function" || typeof saveKanbanData !== "function") return false;
+        const data = getKanbanData();
+        if (!Array.isArray(data.saved)) data.saved = [];
+        const jId = String(jobObj.id || "").toLowerCase();
+        const jComp = String(jobObj.company || "").toLowerCase().trim();
+        const jTitle = String(jobObj.title || jobObj.role || "").toLowerCase().trim();
+
+        const existingIdx = data.saved.findIndex(item => {
+            const iId = String(item.id || "").toLowerCase();
+            if (jId && iId && iId === jId) return true;
+            return jComp && jTitle && String(item.company || "").toLowerCase().trim() === jComp && String(item.title || "").toLowerCase().trim() === jTitle;
+        });
+
+        let savedNow = false;
+        if (existingIdx !== -1) {
+            data.saved.splice(existingIdx, 1);
+            savedNow = false;
+        } else {
+            data.saved.unshift({
+                id: jobObj.id || (jComp + "_" + jTitle),
+                title: jobObj.title || jobObj.role || "Direct Opening",
+                company: jobObj.company || "Direct Corporate",
+                location: jobObj.location || "Remote / Hybrid",
+                url: jobObj.url || "#",
+                package_display: jobObj.package_display || "",
+                savedAt: new Date().toISOString()
+            });
+            savedNow = true;
+        }
+        saveKanbanData(data);
+        if (typeof updateKanbanBadges === "function") updateKanbanBadges();
+        if (typeof renderKanbanBoard === "function") renderKanbanBoard();
+        return savedNow;
+    } catch (e) {
+        console.warn("[Kanban] Save toggle error:", e);
+        return false;
+    }
+};
+
+window.buildExternalLinkedinCardHtml = function(ej) {
+    const ejComp = window.escapeClean(ej.company || "External Employer");
+    const ejRole = window.escapeClean(ej.role || ej.title || "Role Opening");
+    const ejLoc = window.escapeClean(ej.location || "Remote / India");
+    const ejDate = window.escapeClean(ej.date_posted_str || "Recent");
+    const ejUrl = (ej.url && /^(https?:\/\/)/i.test(ej.url)) ? encodeURI(ej.url) : "#";
+    return `
+        <div class="w-full p-4 rounded-2xl bg-slate-50/90 border border-slate-200/90 hover:border-blue-300 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="min-w-0 space-y-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-sm font-extrabold text-slate-900">${ejComp}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">LinkedIn (Unofficial)</span>
+                    <span class="text-[11px] text-slate-500">${ejDate}</span>
+                </div>
+                <h4 class="text-sm font-black text-slate-900">${ejRole}</h4>
+                <div class="text-xs text-slate-600">📍 ${ejLoc}</div>
+            </div>
+            <a href="${ejUrl}" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl bg-white hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 font-bold text-xs flex items-center justify-center gap-1.5 transition shrink-0 whitespace-nowrap">
+                <span>View on LinkedIn ↗</span>
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            </a>
+        </div>
+    `;
+};
+
+window.omniLinkedinOffset = 0;
+
+window.loadMoreLinkedinResults = async function() {
+    const btn = document.getElementById("omniLoadMoreLinkedinBtn");
+    const listEl = document.getElementById("omniExternalJobsList");
+    if (!btn || !listEl) return;
+    const origText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<span class="animate-spin mr-1">⌛</span> Loading more LinkedIn jobs...`;
+    try {
+        const params = new URLSearchParams({
+            q: window.omniCurrentQuery || "",
+            location: window.omniActiveLocation || "India",
+            offset: String(window.omniLinkedinOffset || 8),
+            limit: "8"
+        });
+        if (window.omniDerivedSkills && window.omniDerivedSkills.length > 0) {
+            params.append("skills", window.omniDerivedSkills.join(","));
+        }
+        if (window.omniTargetRole) {
+            params.append("target_role", window.omniTargetRole);
+        }
+        const resp = await fetch(`/api/omni-linkedin-more?${params.toString()}`);
+        if (!resp.ok) throw new Error("Failed to load more LinkedIn postings");
+        const data = await resp.json();
+        const moreJobs = data.external_jobs || [];
+        moreJobs.forEach(ej => {
+            const wrapper = document.createElement("div");
+            wrapper.innerHTML = window.buildExternalLinkedinCardHtml(ej);
+            if (wrapper.firstElementChild) listEl.appendChild(wrapper.firstElementChild);
+        });
+        window.omniLinkedinOffset = data.next_offset || (window.omniLinkedinOffset + moreJobs.length);
+        if (!data.has_more || moreJobs.length === 0) {
+            btn.classList.add("hidden");
+        }
+        if (window.lucide) window.lucide.createIcons();
+    } catch (err) {
+        console.warn("[LinkedIn LoadMore]", err);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = origText;
+    }
+};
+
 window.renderOmniResults = function(result, query, append) {
     const loadingEl = document.getElementById("omniResultsLoading");
     const gridEl = document.getElementById("omniResultsCardsGrid");
@@ -7613,6 +7740,7 @@ window.renderOmniResults = function(result, query, append) {
     if (!append) {
         gridEl.replaceChildren();
         window.omniCurrentItems = [];
+        window.omniLinkedinOffset = Array.isArray(result.external_jobs) ? result.external_jobs.length : 0;
     }
     window.omniCurrentItems = (window.omniCurrentItems || []).concat(items);
 
@@ -7651,7 +7779,8 @@ window.renderOmniResults = function(result, query, append) {
         rawProvider = String(rawProvider).replace(/\bATS\b/gi, "Portal").trim();
         const portalProvider = window.escapeClean(rawProvider);
         const dateStr = window.escapeClean(job.date_posted_str || "Today");
-        const empType = job.feed_type === "internships" ? "Internship" : (job.feed_type === "aiml" ? "AI / ML Full-Time" : "Full-Time");
+        const isFresh = dateStr.toLowerCase() === "today" || /^\d+d/.test(dateStr) && parseInt(dateStr, 10) <= 5;
+        const empType = job.feed_type === "internships" ? "Internship" : (job.feed_type === "aiml" ? "AI / ML" : "Full-Time");
 
         const letter = window.escapeClean(compName.charAt(0).toUpperCase());
         const safeUrl = (job.url && /^(https?:\/\/)/i.test(job.url)) ? encodeURI(job.url) : "#";
@@ -7669,61 +7798,70 @@ window.renderOmniResults = function(result, query, append) {
             is_locked: isLocked
         };
 
+        const alreadySaved = window.isJobSavedInKanban(jobObj);
+
         let applyActionHtml = "";
         if (isLocked) {
-            applyActionHtml = `<button type="button" onclick="openUpgradeModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition whitespace-nowrap">
+            applyActionHtml = `<button type="button" onclick="openUpgradeModal()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition whitespace-nowrap">
                 <span>👑</span>
                 <span>Unlock with Pro</span>
             </button>`;
         } else {
-            applyActionHtml = `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="omni-apply-btn px-4 py-2 rounded-xl bg-slate-900 hover:bg-violet-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 transition whitespace-nowrap">
+            applyActionHtml = `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="omni-apply-btn w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-violet-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 transition whitespace-nowrap">
                 <span>Apply Direct ↗</span>
                 <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
             </a>`;
         }
 
+        const saveBtnClass = alreadySaved
+            ? "omni-save-btn px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-300 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap"
+            : "omni-save-btn px-2.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-950 hover:bg-white border border-transparent hover:border-slate-200 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap";
+
+        const saveBtnHtml = alreadySaved
+            ? `<span>✓</span><span>Saved</span>`
+            : `<span>🔖</span><span>Save</span>`;
+
         card.innerHTML = `
+            <!-- Left Zone: Brand, Role & Clean Metadata Strip -->
             <div class="flex items-start gap-3.5 min-w-0 flex-1">
-                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 text-violet-800 font-black text-base flex items-center justify-center shrink-0 border border-violet-200/80">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 text-violet-800 font-black text-base flex items-center justify-center shrink-0 border border-violet-200/80 shadow-2xs">
                     ${letter}
                 </div>
                 <div class="min-w-0 flex-1 space-y-1.5">
                     <div class="flex items-center gap-2 flex-wrap">
-                        <span class="text-sm font-black text-slate-950">${compName}</span>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase">DIRECT &bull; ${portalProvider}</span>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">${dateStr}</span>
+                        <span class="text-sm font-black text-slate-950 tracking-tight">${compName}</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200/80 uppercase tracking-wide">Direct &bull; ${portalProvider}</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isFresh ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-slate-100 text-slate-600'}">${dateStr}</span>
                     </div>
                     <h4 class="text-sm sm:text-base font-extrabold text-slate-900 group-hover:text-violet-700 transition leading-snug">
                         ${roleName}
                     </h4>
-                    <div class="flex flex-wrap items-center gap-2 text-xs">
-                        <span class="px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 font-extrabold border border-emerald-200/80">
-                            💰 ${pkgDisplay}
-                        </span>
-                        <span class="px-2.5 py-0.5 rounded-lg bg-slate-50 text-slate-700 font-semibold border border-slate-200/70">
-                            📍 ${locName}
-                        </span>
-                        <span class="px-2.5 py-0.5 rounded-lg bg-violet-50 text-violet-800 font-bold border border-violet-200/70">
-                            ${empType}
-                        </span>
+                    <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-600 font-semibold">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50/80 text-emerald-800 font-bold border border-emerald-200/70">💰 ${pkgDisplay}</span>
+                        <span class="text-slate-300">&bull;</span>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-50 text-slate-700 border border-slate-200/70">📍 ${locName}</span>
+                        <span class="text-slate-300">&bull;</span>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-50/80 text-violet-800 font-bold border border-violet-200/60">${empType}</span>
                     </div>
                 </div>
             </div>
 
-            <div class="flex flex-wrap md:flex-nowrap items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
-                <button type="button" class="omni-pitch-btn px-3 py-2 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-950 text-xs font-black flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap">
-                    <span>✨</span>
-                    <span>AI Pitch</span>
-                </button>
-                <button type="button" class="omni-cl-btn px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap">
-                    <span>📝</span>
-                    <span>Cover Letter</span>
-                </button>
-                <button type="button" class="omni-save-btn px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap" title="Save to Job Tracker">
-                    <span>🔖</span>
-                    <span>Save</span>
-                </button>
+            <!-- Right Action Dock: Sleek 2-Tier Hierarchy -->
+            <div class="flex flex-col items-stretch sm:items-end gap-2 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-slate-100">
                 ${applyActionHtml}
+                <div class="inline-flex items-center justify-center sm:justify-end gap-1 p-1 rounded-xl bg-slate-50/90 border border-slate-200/80">
+                    <button type="button" class="omni-pitch-btn px-2.5 py-1.5 rounded-lg text-amber-900 hover:bg-amber-50 hover:text-amber-950 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap" title="Generate AI STAR Pitch">
+                        <span>✨</span><span>AI Pitch</span>
+                    </button>
+                    <span class="w-px h-3.5 bg-slate-200"></span>
+                    <button type="button" class="omni-cl-btn px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-white hover:text-violet-800 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap" title="Generate Tailored Cover Letter">
+                        <span>📝</span><span>Cover Letter</span>
+                    </button>
+                    <span class="w-px h-3.5 bg-slate-200"></span>
+                    <button type="button" class="${saveBtnClass}" title="${alreadySaved ? 'Click to unsave from Job Tracker' : 'Save to Job Tracker'}">
+                        ${saveBtnHtml}
+                    </button>
+                </div>
             </div>
         `;
         gridEl.appendChild(card);
@@ -7731,31 +7869,28 @@ window.renderOmniResults = function(result, query, append) {
         const pitchBtn = card.querySelector(".omni-pitch-btn");
         if (pitchBtn) {
             pitchBtn.addEventListener("click", () => {
-                if (typeof currentProfile === "undefined" || !currentProfile) {
-                    window.currentProfile = window.omniCurrentProfile || { name: "Candidate", skills: window.omniDerivedSkills || [], role: window.omniTargetRole || roleName };
-                }
                 if (typeof openPitchModal === "function") openPitchModal(jobObj);
             });
         }
         const clBtn = card.querySelector(".omni-cl-btn");
         if (clBtn) {
             clBtn.addEventListener("click", () => {
-                if (typeof currentProfile === "undefined" || !currentProfile) {
-                    window.currentProfile = window.omniCurrentProfile || { name: "Candidate", skills: window.omniDerivedSkills || [], role: window.omniTargetRole || roleName };
-                }
                 if (typeof openCoverLetterModal === "function") openCoverLetterModal(jobObj);
             });
         }
         const saveBtn = card.querySelector(".omni-save-btn");
         if (saveBtn) {
             saveBtn.addEventListener("click", () => {
-                if (typeof window.saveJobToKanban === "function") {
-                    window.saveJobToKanban(jobObj, "saved");
-                } else if (typeof window.trackJobApplication === "function") {
-                    window.trackJobApplication(jobObj);
+                const nowSaved = window.toggleJobSaveInKanban(jobObj);
+                if (nowSaved) {
+                    saveBtn.innerHTML = "<span>✓</span><span>Saved</span>";
+                    saveBtn.title = "Click to unsave from Job Tracker";
+                    saveBtn.className = "omni-save-btn px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-300 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap";
+                } else {
+                    saveBtn.innerHTML = "<span>🔖</span><span>Save</span>";
+                    saveBtn.title = "Save to Job Tracker";
+                    saveBtn.className = "omni-save-btn px-2.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-950 hover:bg-white border border-transparent hover:border-slate-200 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap";
                 }
-                saveBtn.innerHTML = "<span>✓</span><span>Saved</span>";
-                saveBtn.classList.add("bg-emerald-50", "text-emerald-800", "border-emerald-300");
             });
         }
         const applyBtn = card.querySelector(".omni-apply-btn");
@@ -7768,7 +7903,7 @@ window.renderOmniResults = function(result, query, append) {
         }
     });
 
-    // Render External / LinkedIn Unofficial Postings at bottom of matched results
+    // Render External / LinkedIn Unofficial Postings at bottom of matched results with Load More
     let extSection = document.getElementById("omniExternalJobsSection");
     if (!append) {
         if (extSection) extSection.remove();
@@ -7778,30 +7913,7 @@ window.renderOmniResults = function(result, query, append) {
             extSection.id = "omniExternalJobsSection";
             extSection.className = "mt-8 pt-6 border-t border-slate-200/90 space-y-3.5";
 
-            const cardsHtml = extJobs.map(ej => {
-                const ejComp = window.escapeClean(ej.company || "External Employer");
-                const ejRole = window.escapeClean(ej.role || ej.title || "Role Opening");
-                const ejLoc = window.escapeClean(ej.location || "Remote / India");
-                const ejDate = window.escapeClean(ej.date_posted_str || "Recent");
-                const ejUrl = (ej.url && /^(https?:\/\/)/i.test(ej.url)) ? encodeURI(ej.url) : "#";
-                return `
-                    <div class="w-full p-4 rounded-2xl bg-slate-50/90 border border-slate-200/90 hover:border-blue-300 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div class="min-w-0 space-y-1">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <span class="text-sm font-extrabold text-slate-900">${ejComp}</span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">LinkedIn (Unofficial)</span>
-                                <span class="text-[11px] text-slate-500">${ejDate}</span>
-                            </div>
-                            <h4 class="text-sm font-black text-slate-900">${ejRole}</h4>
-                            <div class="text-xs text-slate-600">📍 ${ejLoc}</div>
-                        </div>
-                        <a href="${ejUrl}" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl bg-white hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 font-bold text-xs flex items-center justify-center gap-1.5 transition shrink-0 whitespace-nowrap">
-                            <span>View on LinkedIn ↗</span>
-                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                        </a>
-                    </div>
-                `;
-            }).join("");
+            const cardsHtml = extJobs.map(ej => window.buildExternalLinkedinCardHtml(ej)).join("");
 
             extSection.innerHTML = `
                 <div class="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/90 flex items-start gap-3">
@@ -7813,8 +7925,13 @@ window.renderOmniResults = function(result, query, append) {
                         </p>
                     </div>
                 </div>
-                <div class="flex flex-col gap-3">
+                <div id="omniExternalJobsList" class="flex flex-col gap-3">
                     ${cardsHtml}
+                </div>
+                <div class="pt-2 text-center">
+                    <button type="button" id="omniLoadMoreLinkedinBtn" onclick="loadMoreLinkedinResults()" class="px-5 py-2.5 rounded-full bg-white hover:bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200 shadow-2xs hover:shadow-xs transition cursor-pointer">
+                        Load more LinkedIn postings
+                    </button>
                 </div>
             `;
             gridEl.parentElement.appendChild(extSection);

@@ -1498,17 +1498,53 @@ async def find_linkedin_jobs(payload: dict = Body(...)):
 
 @app.post("/api/get-pitch")
 async def get_pitch(payload: dict = Body(...)):
-    profile = payload.get("profile", {})
-    job = payload.get("job", {})
+    profile = payload.get("profile") or {}
+    job = payload.get("job") or {}
     pitch = generate_star_pitch(profile, job)
     return JSONResponse(content={"status": "success", "pitch": pitch})
 
 @app.post("/api/get-cover-letter")
 async def get_cover_letter(payload: dict = Body(...)):
-    profile = payload.get("profile", {})
-    job = payload.get("job", {})
+    profile = payload.get("profile") or {}
+    job = payload.get("job") or {}
     cover_letter = generate_tailored_cover_letter(profile, job)
     return JSONResponse(content={"status": "success", "cover_letter": cover_letter})
+
+@app.get("/api/omni-linkedin-more")
+async def api_omni_linkedin_more(
+    q: str = Query(""),
+    skills: Optional[str] = Query(None),
+    target_role: Optional[str] = Query(None),
+    location: str = Query("India"),
+    offset: int = Query(0),
+    limit: int = Query(8)
+):
+    """Load additional unofficial LinkedIn postings for the bottom external section."""
+    from core.job_engine import query_linkedin_jobs
+    li_query = (target_role or "").strip()
+    if not li_query and skills:
+        li_query = " ".join([s.strip() for s in skills.split(",") if s.strip()][:2])
+    if not li_query:
+        li_query = (q or "").strip() or "Software Engineer"
+    loc_list = [l.strip() for l in str(location or "").split(",") if l.strip() and l.strip().lower() not in ["all", "any", "worldwide"]]
+    li_loc = loc_list[0] if loc_list else "India"
+    # Fetch pool up to offset + limit + 1 to check has_more
+    pool = query_linkedin_jobs(li_query, location=li_loc, limit=offset + limit + 4)
+    sliced = pool[offset : offset + limit]
+    external_jobs = []
+    for lj in sliced:
+        lj_copy = dict(lj)
+        lj_copy["role"] = lj_copy.get("title") or "External Opening"
+        lj_copy["portal_provider"] = "LinkedIn (Unofficial)"
+        lj_copy["date_posted_str"] = lj_copy.get("posted_at") or "Recent"
+        lj_copy["is_locked"] = False
+        external_jobs.append(lj_copy)
+    return JSONResponse(content={
+        "status": "success",
+        "external_jobs": external_jobs,
+        "has_more": len(pool) > (offset + limit),
+        "next_offset": offset + len(external_jobs)
+    })
 
 @app.post("/api/find-founder-jobs")
 async def find_founder_jobs(payload: dict = Body(...)):
