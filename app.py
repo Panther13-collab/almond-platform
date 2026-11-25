@@ -37,7 +37,8 @@ from core.auth_db import (
     record_page_visit, get_analytics_summary, get_all_users_admin,
     parse_device_hardware, is_bot_or_scanner, get_dynamic_pricing, update_tier_pricing,
     save_candidate_feedback, get_all_candidate_feedback, reply_to_candidate_feedback, get_revenue_analytics, purge_dummy_candidates_admin,
-    get_meta_pixel_id, set_meta_pixel_id, record_funnel_event
+    get_meta_pixel_id, set_meta_pixel_id, record_funnel_event,
+    FREE_AI_GENERATION_LIMIT, get_ai_quota_status, consume_ai_generation_quota
 )
 from core.payment import apply_vip_latest_feed_lock, create_razorpay_order, verify_razorpay_signature
 from core.security import BotShieldMiddleware, validate_uploaded_file, acquire_search_slot, release_search_slot
@@ -117,6 +118,13 @@ app.add_middleware(
     expose_headers=["Content-Disposition", "X-Almond-Shield"],
 )
 
+def _extract_uid_from_token(tok_res) -> str:
+    """Normalize return value from verify_session_token (dict or string) to a user_id string."""
+    if isinstance(tok_res, dict):
+        return str(tok_res.get("user_id") or tok_res.get("id") or "").strip()
+    return str(tok_res or "").strip()
+
+
 def _resolve_request_client_and_user(request: Request) -> tuple:
     """Extract forwarded client IP, User-Agent, and authenticated session candidate identity."""
     client_ip = request.client.host if request.client else "127.0.0.1"
@@ -128,7 +136,7 @@ def _resolve_request_client_and_user(request: Request) -> tuple:
     vis_email = ""
     sess_cookie = request.cookies.get("almond_session_token", "").strip()
     if sess_cookie:
-        uid = verify_session_token(sess_cookie)
+        uid = _extract_uid_from_token(verify_session_token(sess_cookie))
         if uid:
             prof = get_user_profile(uid)
             if prof:
@@ -1578,19 +1586,74 @@ async def find_linkedin_jobs(request: Request, payload: dict = Body(...)):
     finally:
         release_search_slot()
 
+def _resolve_ai_caller(request: Request, user_id: str = "") -> tuple:
+    """Resolve authenticated account identity and Pro entitlement for AI tools & Pro-only exports."""
+    uid = (user_id or "").strip()
+    sess_cookie = request.cookies.get("almond_session_token", "").strip()
+    if sess_cookie:
+        tok_uid = _extract_uid_from_token(verify_session_token(sess_cookie))
+        if tok_uid:
+            uid = tok_uid
+    if not uid or uid.startswith("cand_") or uid == "guest":
+        return False, False, ""
+    prof = get_user_profile(uid)
+    if not prof:
+        return False, False, ""
+    email = (prof.get("email") or "").strip().lower()
+    acct_key = email or uid.lower()
+    paid = bool(prof.get("is_paid")) or is_user_paid(uid)
+    return True, paid, acct_key
+
+
+def _authorize_ai_tool_usage(request: Request, payload: dict, tool_type: str) -> dict:
+    """Enforce Free tier 10-per-account limit for AI Pitch & Cover Letter; Unlimited for Pro."""
+    user_id = str(payload.get("user_id", "") or "")
+    logged_in, paid, acct_key = _resolve_ai_caller(request, user_id)
+    if not logged_in:
+        raise HTTPException(
+            status_code=401,
+            detail="Please sign up free to generate up to 10 AI STAR Pitches & 10 Cover Letters per account."
+        )
+    if paid:
+        return {"is_paid": True, "quota": {"limit": None, "remaining": None, "unlimited": True}}
+
+    q = consume_ai_generation_quota(acct_key, tool_type, limit=FREE_AI_GENERATION_LIMIT)
+    if not q.get("allowed"):
+        label = "AI STAR Interview Pitches" if tool_type == "pitch" else "AI Tailored Cover Letters"
+        raise HTTPException(
+            status_code=403,
+            detail=f"You have used all {FREE_AI_GENERATION_LIMIT} free {label} on this account. Upgrade to Pro for unlimited access."
+        )
+    return {"is_paid": False, "quota": q}
+
+
+@app.get("/api/ai-quota")
+async def api_get_ai_quota(request: Request, user_id: Optional[str] = Query(None)):
+    """Return remaining Free tier AI generation quota (10 pitches, 10 cover letters) or Unlimited for Pro."""
+    logged_in, paid, acct_key = _resolve_ai_caller(request, user_id or "")
+    if not logged_in:
+        return {"status": "guest", "limit": FREE_AI_GENERATION_LIMIT, "is_paid": False}
+    if paid:
+        return {"status": "success", "is_paid": True, "unlimited": True}
+    return {"status": "success", "is_paid": False, "unlimited": False, **get_ai_quota_status(acct_key)}
+
+
 @app.post("/api/get-pitch")
-async def get_pitch(payload: dict = Body(...)):
+async def get_pitch(request: Request, payload: dict = Body(...)):
+    gate = _authorize_ai_tool_usage(request, payload, "pitch")
     profile = payload.get("profile") or {}
     job = payload.get("job") or {}
     pitch = generate_star_pitch(profile, job)
-    return JSONResponse(content={"status": "success", "pitch": pitch})
+    return JSONResponse(content={"status": "success", "pitch": pitch, "quota": gate["quota"], "is_paid": gate["is_paid"]})
+
 
 @app.post("/api/get-cover-letter")
-async def get_cover_letter(payload: dict = Body(...)):
+async def get_cover_letter(request: Request, payload: dict = Body(...)):
+    gate = _authorize_ai_tool_usage(request, payload, "cover_letter")
     profile = payload.get("profile") or {}
     job = payload.get("job") or {}
     cover_letter = generate_tailored_cover_letter(profile, job)
-    return JSONResponse(content={"status": "success", "cover_letter": cover_letter})
+    return JSONResponse(content={"status": "success", "cover_letter": cover_letter, "quota": gate["quota"], "is_paid": gate["is_paid"]})
 
 @app.get("/api/omni-linkedin-more")
 async def api_omni_linkedin_more(
@@ -1674,14 +1737,13 @@ async def download_dossier(request: Request, payload: dict = Body(...)):
     if not jobs:
         raise HTTPException(status_code=400, detail="No jobs to export.")
 
-    user_logged_in = _is_request_authenticated(request, str(user_id or ""))
+    user_logged_in, user_paid, _ = _resolve_ai_caller(request, str(user_id or ""))
     if not user_logged_in:
-        raise HTTPException(status_code=401, detail="Please sign up or log in free to export job links.")
+        raise HTTPException(status_code=401, detail="Please sign up and upgrade to Pro to export job links.")
+    if not user_paid:
+        raise HTTPException(status_code=403, detail="CSV Sheet, Word (.docx), and PDF exports are available exclusively on Almond Jobs Pro.")
 
-    # Determine entitlement: Free tier has latest 0-4d links locked with upgrade CTA
-    user_paid = is_user_paid(user_id) if user_id else bool(payload.get("is_paid"))
-    # Server-side guard: enforce VIP lock on export jobs if user is not paid
-    jobs = apply_vip_latest_feed_lock([dict(x) for x in jobs], user_is_paid=user_paid, user_is_logged_in=True)
+    jobs = apply_vip_latest_feed_lock([dict(x) for x in jobs], user_is_paid=True, user_is_logged_in=True)
     cand_slug = (profile.get("name") or "Candidate").replace(" ", "_")
     
     if doc_format == "docx":

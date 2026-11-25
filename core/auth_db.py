@@ -271,6 +271,16 @@ def init_db():
             );
         """)
 
+        # Per-Account Free AI Career Tool Quotas (10 AI STAR Pitches + 10 Cover Letters)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ai_usage_quotas (
+                account_key TEXT PRIMARY KEY,
+                pitch_count INTEGER DEFAULT 0,
+                cover_letter_count INTEGER DEFAULT 0,
+                updated_at REAL NOT NULL
+            );
+        """)
+
         # Retroactively classify historical vulnerability scanner and bot probes
         try:
             cursor.execute("""
@@ -4305,5 +4315,80 @@ def get_ad_funnel_summary() -> dict:
         reverse=True
     )[:15]
     return {"totals": totals, "campaigns": campaigns}
+
+
+FREE_AI_GENERATION_LIMIT = 10
+
+
+def get_ai_quota_status(account_key: str, limit: int = FREE_AI_GENERATION_LIMIT) -> dict:
+    """Return used and remaining free counts for AI STAR Pitch and AI Tailored Cover Letter."""
+    key = (account_key or "").strip().lower()
+    pitch_used = 0
+    cl_used = 0
+    if key:
+        try:
+            with get_db() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT pitch_count, cover_letter_count FROM ai_usage_quotas WHERE account_key = ? LIMIT 1;",
+                    (key,)
+                )
+                row = cursor.fetchone()
+                if row:
+                    pitch_used = int(row["pitch_count"] or 0)
+                    cl_used = int(row["cover_letter_count"] or 0)
+        except Exception as e:
+            print(f"[AI_QUOTA] Status check note: {e}")
+
+    return {
+        "limit": limit,
+        "pitch_used": pitch_used,
+        "pitch_remaining": max(0, limit - pitch_used),
+        "cover_letter_used": cl_used,
+        "cover_letter_remaining": max(0, limit - cl_used)
+    }
+
+
+def consume_ai_generation_quota(account_key: str, tool_type: str, limit: int = FREE_AI_GENERATION_LIMIT) -> dict:
+    """
+    Atomically increment per-account AI generation count up to `limit` for Free tier accounts.
+    Returns {allowed, used, remaining, limit}.
+    """
+    key = (account_key or "").strip().lower()
+    col = "pitch_count" if tool_type == "pitch" else "cover_letter_count"
+    if not key:
+        return {"allowed": False, "used": 0, "remaining": 0, "limit": limit}
+
+    now = time.time()
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO ai_usage_quotas (account_key, pitch_count, cover_letter_count, updated_at)
+                VALUES (?, 0, 0, ?)
+                ON CONFLICT(account_key) DO NOTHING;
+                """,
+                (key, now)
+            )
+            cursor.execute(
+                f"UPDATE ai_usage_quotas SET {col} = {col} + 1, updated_at = ? WHERE account_key = ? AND {col} < ?;",
+                (now, key, limit)
+            )
+            allowed = cursor.rowcount > 0
+            cursor.execute(f"SELECT {col} FROM ai_usage_quotas WHERE account_key = ? LIMIT 1;", (key,))
+            row = cursor.fetchone()
+            used = int(row[0] or 0) if row else limit
+            conn.commit()
+            return {
+                "allowed": allowed,
+                "used": used,
+                "remaining": max(0, limit - used),
+                "limit": limit
+            }
+    except Exception as e:
+        print(f"[AI_QUOTA] Consume error: {e}")
+        return {"allowed": True, "used": 0, "remaining": limit, "limit": limit}
+
 
 

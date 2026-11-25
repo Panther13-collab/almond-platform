@@ -2899,6 +2899,10 @@ function initModal() {
 }
 
 async function openPitchModal(job) {
+    if (!isUserLoggedIn()) {
+        if (typeof window.openSignupToUnlockLinksModal === "function") window.openSignupToUnlockLinksModal();
+        return;
+    }
 
     const modal = document.getElementById("pitchModal");
 
@@ -2924,6 +2928,8 @@ async function openPitchModal(job) {
 
             body: JSON.stringify({
 
+                user_id: getCandidateUserId(),
+
                 profile: (typeof currentProfile !== "undefined" && currentProfile) || window.currentProfile || window.omniCurrentProfile || { name: localStorage.getItem("almond_user_name") || "Candidate", role: (job && (job.role || job.title)) || "Candidate", skills: window.omniDerivedSkills || [] },
 
                 job: job
@@ -2932,9 +2938,24 @@ async function openPitchModal(job) {
 
         });
 
-        if (!resp.ok) throw new Error("Could not generate pitch.");
+        const data = await resp.json().catch(() => ({}));
 
-        const data = await resp.json();
+        if (resp.status === 401) {
+            modal.classList.add("hidden");
+            if (typeof window.openSignupToUnlockLinksModal === "function") window.openSignupToUnlockLinksModal();
+            return;
+        }
+        if (resp.status === 403) {
+            modal.classList.add("hidden");
+            alert(data.detail || "You have reached your 10 free AI STAR Pitches limit. Upgrade to Pro for unlimited access.");
+            if (typeof window.openVipPassModal === "function") window.openVipPassModal();
+            return;
+        }
+        if (!resp.ok) throw new Error(data.detail || "Could not generate pitch.");
+
+        if (data.quota && !data.quota.unlimited && typeof data.quota.remaining === "number") {
+            pitchSub.textContent = `Target: ${job.title} at ${job.company} • ${data.quota.remaining}/${data.quota.limit} free left`;
+        }
 
         pitchTextarea.value = data.pitch;
 
@@ -3021,6 +3042,10 @@ function initCoverLetterModal() {
 }
 
 async function openCoverLetterModal(job) {
+    if (!isUserLoggedIn()) {
+        if (typeof window.openSignupToUnlockLinksModal === "function") window.openSignupToUnlockLinksModal();
+        return;
+    }
 
     const modal = document.getElementById("coverLetterModal");
 
@@ -3046,6 +3071,8 @@ async function openCoverLetterModal(job) {
 
             body: JSON.stringify({
 
+                user_id: getCandidateUserId(),
+
                 profile: (typeof currentProfile !== "undefined" && currentProfile) || window.currentProfile || window.omniCurrentProfile || { name: localStorage.getItem("almond_user_name") || "Candidate", role: (job && (job.role || job.title)) || "Candidate", skills: window.omniDerivedSkills || [] },
 
                 job: job
@@ -3054,9 +3081,24 @@ async function openCoverLetterModal(job) {
 
         });
 
-        if (!resp.ok) throw new Error("Could not generate cover letter.");
+        const data = await resp.json().catch(() => ({}));
 
-        const data = await resp.json();
+        if (resp.status === 401) {
+            modal.classList.add("hidden");
+            if (typeof window.openSignupToUnlockLinksModal === "function") window.openSignupToUnlockLinksModal();
+            return;
+        }
+        if (resp.status === 403) {
+            modal.classList.add("hidden");
+            alert(data.detail || "You have reached your 10 free AI Cover Letters limit. Upgrade to Pro for unlimited access.");
+            if (typeof window.openVipPassModal === "function") window.openVipPassModal();
+            return;
+        }
+        if (!resp.ok) throw new Error(data.detail || "Could not generate cover letter.");
+
+        if (data.quota && !data.quota.unlimited && typeof data.quota.remaining === "number") {
+            sub.textContent = `Tailored for ${job.title} at ${job.company} • ${data.quota.remaining}/${data.quota.limit} free left`;
+        }
 
         textarea.value = data.cover_letter;
 
@@ -3887,6 +3929,10 @@ function initExports() {
     async function triggerExport(format, btn) {
         if (!isUserLoggedIn()) {
             if (typeof window.openSignupToUnlockLinksModal === "function") window.openSignupToUnlockLinksModal();
+            return;
+        }
+        if (!isUserPaid()) {
+            if (typeof window.openVipPassModal === "function") window.openVipPassModal();
             return;
         }
         const isLinkedinActive = document.getElementById("resultsLinkedinToggle")?.checked;
@@ -8290,6 +8336,10 @@ window.renderOmniResults = function(result, query, append) {
 window.exportOmniResults = async function(format = "csv") {
     if (!isUserLoggedIn()) {
         if (typeof window.openSignupToUnlockLinksModal === "function") window.openSignupToUnlockLinksModal();
+        return;
+    }
+    if (!isUserPaid()) {
+        if (typeof window.openVipPassModal === "function") window.openVipPassModal();
         return;
     }
     const jobs = window.omniCurrentItems || [];
