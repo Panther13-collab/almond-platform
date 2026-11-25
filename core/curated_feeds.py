@@ -851,6 +851,7 @@ def omni_search_all_feeds(
     skills: Optional[List[str]] = None,
     match_resume: bool = False,
     target_role: Optional[str] = None,
+    max_days: int = 0,
     limit: int = 25,
     offset: int = 0,
     user_is_paid: bool = False
@@ -926,14 +927,26 @@ def omni_search_all_feeds(
     clean_skills = [s.strip().lower() for s in skills if s and s.strip()] if skills else []
     role_tokens = [t.lower().strip() for t in target_role.split() if len(t.strip()) > 2] if target_role else []
 
-    has_specific_loc = bool(location and location.strip().lower() not in ["all", "any", "all locations", "all countries", "worldwide"])
+    loc_list = [l.strip() for l in str(location or "").split(",") if l.strip() and l.strip().lower() not in ["all", "any", "all locations", "all countries", "worldwide"]]
+    has_specific_loc = len(loc_list) > 0
+
+    def _matches_any_loc(item_obj):
+        return any(matches_country_filter(item_obj, loc_tok) for loc_tok in loc_list)
 
     # 3. Filter across combined items
     scored_items = []
     for item in combined_items:
-        # STRICT Location filter: never leak any outside geography when location is requested!
+        # Freshness / Date filter (Last 1, 2, 7, 10, 30 days)
+        if max_days and max_days > 0:
+            pts = item.get("date_posted_ts", 0)
+            if pts and pts > 100000:
+                age_d = max(0, (now_ts - pts) // 86400)
+                if age_d > max_days:
+                    continue
+
+        # Multi-Location filter: match ANY of the candidate's preferred cities/countries
         if has_specific_loc:
-            if not matches_country_filter(item, location):
+            if not _matches_any_loc(item):
                 continue
 
         haystack = f"{item.get('company', '')} {item.get('role', '')} {item.get('category', '')} {item.get('location', '')} {' '.join(item.get('skills', []))} {item.get('description', '')}".lower()
@@ -1027,6 +1040,10 @@ def omni_search_all_feeds(
             u = item.get("url")
             if not u or u in seen_urls_fb:
                 continue
+            if max_days and max_days > 0:
+                pts = item.get("date_posted_ts", 0)
+                if pts and pts > 100000 and ((now_ts - pts) // 86400) > max_days:
+                    continue
             haystack = f"{item.get('company', '')} {item.get('role', '')} {item.get('category', '')} {' '.join(item.get('skills', []))} {item.get('description', '')}".lower()
             s_hits = sum(1 for tok in match_pool if tok in haystack) if match_pool else 1
             if s_hits > 0 or not match_pool:
@@ -1043,8 +1060,8 @@ def omni_search_all_feeds(
 
     if not filtered:
         if has_specific_loc and not match_resume:
-            # Fallback ONLY within the requested location for manual location queries!
-            loc_pool = [it for it in combined_items if matches_country_filter(it, location)]
+            # Fallback ONLY within the requested locations for manual location queries!
+            loc_pool = [it for it in combined_items if _matches_any_loc(it)]
             if loc_pool:
                 filtered = list(loc_pool[:50])
             else:
@@ -1076,8 +1093,8 @@ def omni_search_all_feeds(
         loc = item_copy.get("location")
         if not loc and item_copy.get("locations_list"):
             loc = ", ".join([str(c).title() for c in item_copy.get("locations_list") if c])
-        if has_specific_loc and loc and not matches_country_filter({"location": loc, "locations_list": []}, location):
-            loc = f"{location.title()} / {loc}"
+        if has_specific_loc and loc and not _matches_any_loc({"location": loc, "locations_list": []}):
+            loc = f"{loc_list[0].title()} / {loc}"
         item_copy["location"] = loc or "Remote / Hybrid"
         pkg_val, pkg_disp = estimate_job_package(
             item_copy.get("role", ""),
@@ -1106,7 +1123,7 @@ def omni_search_all_feeds(
                 li_query = " ".join(clean_skills[:2])
             if not li_query:
                 li_query = (query or "").strip() or "Software Engineer"
-            li_loc = location if has_specific_loc else "India"
+            li_loc = loc_list[0] if has_specific_loc else "India"
             raw_li = query_linkedin_jobs(li_query, location=li_loc, limit=8)
             for lj in raw_li:
                 lj_copy = dict(lj)

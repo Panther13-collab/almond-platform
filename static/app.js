@@ -7542,14 +7542,25 @@ window.executeOmniSearch = async function(query = "", append = false) {
     }
 
     try {
+        const actionBar = document.getElementById("omniResumeActionBar");
+        const catBar = document.getElementById("omniCategoryChipsBar");
+        if (window.omniMatchResumeMode) {
+            if (actionBar) actionBar.classList.remove("hidden");
+            if (catBar) catBar.classList.add("hidden");
+        } else {
+            if (actionBar) actionBar.classList.add("hidden");
+            if (catBar) catBar.classList.remove("hidden");
+        }
+
         const params = new URLSearchParams({
             q: query,
-            category: window.omniActiveCategory || "All",
+            category: window.omniMatchResumeMode ? "All" : (window.omniActiveCategory || "All"),
             location: window.omniActiveLocation || "all",
             min_lpa: String(window.omniActiveMinPackage || 0),
             work_mode: window.omniActiveWorkMode || "all",
             contract_type: window.omniActiveContractType || "all",
-            limit: "21",
+            max_days: String(window.omniActiveMaxDays || 0),
+            limit: "25",
             offset: String(window.omniCurrentOffset || 0)
         });
         if (window.omniMatchResumeMode) {
@@ -7596,133 +7607,166 @@ window.renderOmniResults = function(result, query, append) {
         return;
     }
 
-    const items = result.items || [];
+    const items = result.items;
     const total = result.total || 0;
-
-    if (countBadge) {
-        if (window.omniMatchResumeMode && window.omniCurrentProfile && window.omniCurrentProfile.name) {
-            countBadge.textContent = `${total} Matched to your Resume`;
-            countBadge.className = "text-[11px] font-bold bg-violet-100 text-violet-800 px-2.5 py-0.5 rounded-full";
-        } else if (query) {
-            countBadge.textContent = `${total} matching "${query}"`;
-            countBadge.className = "text-[11px] font-bold bg-violet-100 text-violet-800 px-2.5 py-0.5 rounded-full";
-        } else {
-            countBadge.textContent = `${total}+ live corporate openings`;
-            countBadge.className = "text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full";
-        }
-    }
-
-    if (headerTitle) {
-        if (window.omniMatchResumeMode && window.omniCurrentProfile && window.omniCurrentProfile.name) {
-            headerTitle.textContent = `Matching Corporate Openings for ${window.omniCurrentProfile.name}`;
-        } else if (query) {
-            headerTitle.textContent = `Matching Corporate Openings`;
-        } else {
-            headerTitle.textContent = `Direct Corporate Openings`;
-        }
-    }
 
     if (!append) {
         gridEl.replaceChildren();
+        window.omniCurrentItems = [];
+    }
+    window.omniCurrentItems = (window.omniCurrentItems || []).concat(items);
+
+    if (headerTitle) {
+        if (window.omniMatchResumeMode) {
+            headerTitle.textContent = "Matching Corporate Openings (Verified Direct Portals)";
+        } else if (query && query.trim()) {
+            headerTitle.textContent = `Direct Corporate Results for "${query.trim()}"`;
+        } else {
+            headerTitle.textContent = "Live Direct Corporate Openings";
+        }
+    }
+
+    if (countBadge) {
+        countBadge.textContent = `${total.toLocaleString()} Direct Postings`;
     }
 
     if (items.length === 0 && !append) {
-        if (emptyEl) {
-            emptyEl.classList.remove("hidden");
-            const emptyTitle = document.getElementById("omniEmptyTitle");
-            if (emptyTitle) emptyTitle.textContent = query ? `No matching direct postings for "${query}"` : "No direct corporate openings found";
-        }
-        if (loadMoreContainer) loadMoreContainer.classList.add("hidden");
-        return;
+        if (emptyEl) emptyEl.classList.remove("hidden");
+    } else {
+        if (emptyEl) emptyEl.classList.add("hidden");
     }
-
-    if (emptyEl) emptyEl.classList.add("hidden");
 
     items.forEach(job => {
         const card = document.createElement("div");
-        card.className = "p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-violet-300 transition-all duration-200 flex flex-col justify-between group";
+        card.className = "w-full p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-violet-300 transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-4 group";
 
         const compName = window.escapeClean(job.company || "Direct Corporate");
-        const roleName = window.escapeClean(job.role || "Corporate Career Opening");
+        const roleName = window.escapeClean(job.role || job.title || "Corporate Career Opening");
         const locName = window.escapeClean(job.location || "Remote / Hybrid");
         let rawPkg = job.package_display || (job.package_inr_lpa ? `${job.package_inr_lpa} LPA Benchmark` : "Disclosed Corporate Band");
         rawPkg = String(rawPkg).replace(/[₹\u20b9]/g, "").trim();
         const pkgDisplay = window.escapeClean(rawPkg);
         const isLocked = Boolean(job.is_locked);
-        let rawProvider = job.portal_provider || (job.url && job.url.includes("greenhouse") ? "Greenhouse" : (job.url && job.url.includes("lever") ? "Lever" : (job.url && job.url.includes("ashby") ? "Ashby" : (job.url && job.url.includes("workday") ? "Workday" : "Direct Portal"))));
+        let rawProvider = job.portal_provider || job.source || (job.url && job.url.includes("greenhouse") ? "Greenhouse" : (job.url && job.url.includes("lever") ? "Lever" : (job.url && job.url.includes("ashby") ? "Ashby" : (job.url && job.url.includes("workday") ? "Workday" : "Direct Portal"))));
         rawProvider = String(rawProvider).replace(/\bATS\b/gi, "Portal").trim();
         const portalProvider = window.escapeClean(rawProvider);
         const dateStr = window.escapeClean(job.date_posted_str || "Today");
+        const empType = job.feed_type === "internships" ? "Internship" : (job.feed_type === "aiml" ? "AI / ML Full-Time" : "Full-Time");
 
         const letter = window.escapeClean(compName.charAt(0).toUpperCase());
         const safeUrl = (job.url && /^(https?:\/\/)/i.test(job.url)) ? encodeURI(job.url) : "#";
 
-        let actionBtnHtml = "";
+        const jobObj = {
+            id: job.id || (compName + "_" + roleName),
+            title: roleName,
+            role: roleName,
+            company: compName,
+            location: locName,
+            url: safeUrl,
+            source: portalProvider,
+            package_display: pkgDisplay,
+            comp_display: pkgDisplay,
+            is_locked: isLocked
+        };
+
+        let applyActionHtml = "";
         if (isLocked) {
-            actionBtnHtml = `<button type="button" onclick="openUpgradeModal()" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition">
+            applyActionHtml = `<button type="button" onclick="openUpgradeModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition whitespace-nowrap">
                 <span>👑</span>
                 <span>Unlock with Pro</span>
             </button>`;
         } else {
-            actionBtnHtml = `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="omni-apply-btn w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-violet-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 transition text-center group-hover:bg-violet-600">
-                <span>Apply Direct</span>
+            applyActionHtml = `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="omni-apply-btn px-4 py-2 rounded-xl bg-slate-900 hover:bg-violet-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 transition whitespace-nowrap">
+                <span>Apply Direct ↗</span>
                 <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
             </a>`;
         }
 
         card.innerHTML = `
-            <div>
-                <div class="flex items-start justify-between gap-2 mb-2.5">
-                    <div class="flex items-center gap-2.5 min-w-0">
-                        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-100 to-purple-100 text-violet-800 font-black text-xs flex items-center justify-center shrink-0 border border-violet-200/80">
-                            ${letter}
-                        </div>
-                        <div class="min-w-0">
-                            <span class="block text-xs font-extrabold text-slate-950 truncate">${compName}</span>
-                            <span class="block text-[10px] text-slate-500 font-medium truncate">${portalProvider} &bull; ${dateStr}</span>
-                        </div>
-                    </div>
-                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 shrink-0">
-                        ${job.feed_type === "internships" ? "🎓 Intern" : (job.feed_type === "aiml" ? "🤖 AI/ML" : "🚀 Full-Time")}
-                    </span>
+            <div class="flex items-start gap-3.5 min-w-0 flex-1">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 text-violet-800 font-black text-base flex items-center justify-center shrink-0 border border-violet-200/80">
+                    ${letter}
                 </div>
-                <h4 class="text-sm font-black text-slate-900 group-hover:text-violet-700 transition leading-snug line-clamp-2 mb-3">
-                    ${roleName}
-                </h4>
-                <div class="flex flex-wrap items-center gap-1.5 text-[11px] mb-4">
-                    <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-extrabold border border-emerald-200/80">
-                        💰 ${pkgDisplay}
-                    </span>
-                    <span class="px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 font-medium border border-slate-200/70 truncate max-w-[160px]">
-                        📍 ${locName}
-                    </span>
+                <div class="min-w-0 flex-1 space-y-1.5">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-sm font-black text-slate-950">${compName}</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200 uppercase">DIRECT &bull; ${portalProvider}</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">${dateStr}</span>
+                    </div>
+                    <h4 class="text-sm sm:text-base font-extrabold text-slate-900 group-hover:text-violet-700 transition leading-snug">
+                        ${roleName}
+                    </h4>
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <span class="px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 font-extrabold border border-emerald-200/80">
+                            💰 ${pkgDisplay}
+                        </span>
+                        <span class="px-2.5 py-0.5 rounded-lg bg-slate-50 text-slate-700 font-semibold border border-slate-200/70">
+                            📍 ${locName}
+                        </span>
+                        <span class="px-2.5 py-0.5 rounded-lg bg-violet-50 text-violet-800 font-bold border border-violet-200/70">
+                            ${empType}
+                        </span>
+                    </div>
                 </div>
             </div>
-            <div class="pt-2 border-t border-slate-100 mt-auto">
-                ${actionBtnHtml}
+
+            <div class="flex flex-wrap md:flex-nowrap items-center gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+                <button type="button" class="omni-pitch-btn px-3 py-2 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-950 text-xs font-black flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap">
+                    <span>✨</span>
+                    <span>AI Pitch</span>
+                </button>
+                <button type="button" class="omni-cl-btn px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap">
+                    <span>📝</span>
+                    <span>Cover Letter</span>
+                </button>
+                <button type="button" class="omni-save-btn px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap" title="Save to Job Tracker">
+                    <span>🔖</span>
+                    <span>Save</span>
+                </button>
+                ${applyActionHtml}
             </div>
         `;
         gridEl.appendChild(card);
+
+        const pitchBtn = card.querySelector(".omni-pitch-btn");
+        if (pitchBtn) {
+            pitchBtn.addEventListener("click", () => {
+                if (typeof currentProfile === "undefined" || !currentProfile) {
+                    window.currentProfile = window.omniCurrentProfile || { name: "Candidate", skills: window.omniDerivedSkills || [], role: window.omniTargetRole || roleName };
+                }
+                if (typeof openPitchModal === "function") openPitchModal(jobObj);
+            });
+        }
+        const clBtn = card.querySelector(".omni-cl-btn");
+        if (clBtn) {
+            clBtn.addEventListener("click", () => {
+                if (typeof currentProfile === "undefined" || !currentProfile) {
+                    window.currentProfile = window.omniCurrentProfile || { name: "Candidate", skills: window.omniDerivedSkills || [], role: window.omniTargetRole || roleName };
+                }
+                if (typeof openCoverLetterModal === "function") openCoverLetterModal(jobObj);
+            });
+        }
+        const saveBtn = card.querySelector(".omni-save-btn");
+        if (saveBtn) {
+            saveBtn.addEventListener("click", () => {
+                if (typeof window.saveJobToKanban === "function") {
+                    window.saveJobToKanban(jobObj, "saved");
+                } else if (typeof window.trackJobApplication === "function") {
+                    window.trackJobApplication(jobObj);
+                }
+                saveBtn.innerHTML = "<span>✓</span><span>Saved</span>";
+                saveBtn.classList.add("bg-emerald-50", "text-emerald-800", "border-emerald-300");
+            });
+        }
         const applyBtn = card.querySelector(".omni-apply-btn");
         if (applyBtn) {
             applyBtn.addEventListener("click", () => {
                 if (typeof window.trackJobApplication === "function") {
-                    window.trackJobApplication({
-                        id: job.id || (compName + "_" + roleName),
-                        title: roleName,
-                        company: compName,
-                        location: locName,
-                        url: safeUrl,
-                        package_display: pkgDisplay
-                    });
+                    window.trackJobApplication(jobObj);
                 }
             });
         }
     });
-
-    if (window.lucide && typeof window.lucide.createIcons === "function") {
-        window.lucide.createIcons();
-    }
 
     // Render External / LinkedIn Unofficial Postings at bottom of matched results
     let extSection = document.getElementById("omniExternalJobsSection");
@@ -7732,7 +7776,7 @@ window.renderOmniResults = function(result, query, append) {
         if (extJobs.length > 0 && gridEl.parentElement) {
             extSection = document.createElement("div");
             extSection.id = "omniExternalJobsSection";
-            extSection.className = "mt-8 pt-6 border-t border-slate-200/90 space-y-4";
+            extSection.className = "mt-8 pt-6 border-t border-slate-200/90 space-y-3.5";
 
             const cardsHtml = extJobs.map(ej => {
                 const ejComp = window.escapeClean(ej.company || "External Employer");
@@ -7741,21 +7785,18 @@ window.renderOmniResults = function(result, query, append) {
                 const ejDate = window.escapeClean(ej.date_posted_str || "Recent");
                 const ejUrl = (ej.url && /^(https?:\/\/)/i.test(ej.url)) ? encodeURI(ej.url) : "#";
                 return `
-                    <div class="p-4 rounded-2xl bg-slate-50/90 border border-slate-200/90 hover:border-blue-300 transition flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between gap-2 mb-2">
-                                <span class="text-xs font-extrabold text-slate-900 truncate">${ejComp}</span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200 shrink-0">LinkedIn</span>
+                    <div class="w-full p-4 rounded-2xl bg-slate-50/90 border border-slate-200/90 hover:border-blue-300 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="min-w-0 space-y-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-sm font-extrabold text-slate-900">${ejComp}</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">LinkedIn (Unofficial)</span>
+                                <span class="text-[11px] text-slate-500">${ejDate}</span>
                             </div>
-                            <h4 class="text-sm font-black text-slate-900 leading-snug line-clamp-2 mb-2">${ejRole}</h4>
-                            <div class="text-[11px] text-slate-500 flex items-center gap-2 mb-3">
-                                <span>📍 ${ejLoc}</span>
-                                <span>&bull;</span>
-                                <span>${ejDate}</span>
-                            </div>
+                            <h4 class="text-sm font-black text-slate-900">${ejRole}</h4>
+                            <div class="text-xs text-slate-600">📍 ${ejLoc}</div>
                         </div>
-                        <a href="${ejUrl}" target="_blank" rel="noopener noreferrer" class="w-full py-2 px-3 rounded-xl bg-white hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 font-bold text-xs flex items-center justify-center gap-1.5 transition text-center">
-                            <span>View on LinkedIn</span>
+                        <a href="${ejUrl}" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl bg-white hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 font-bold text-xs flex items-center justify-center gap-1.5 transition shrink-0 whitespace-nowrap">
+                            <span>View on LinkedIn ↗</span>
                             <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
                         </a>
                     </div>
@@ -7772,7 +7813,7 @@ window.renderOmniResults = function(result, query, append) {
                         </p>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="flex flex-col gap-3">
                     ${cardsHtml}
                 </div>
             `;
@@ -7790,6 +7831,39 @@ window.renderOmniResults = function(result, query, append) {
         } else {
             loadMoreContainer.classList.add("hidden");
         }
+    }
+};
+
+window.exportOmniResults = async function(format = "csv") {
+    const jobs = window.omniCurrentItems || [];
+    if (jobs.length === 0) {
+        alert("No matching jobs loaded yet to export.");
+        return;
+    }
+    const profile = window.omniCurrentProfile || {
+        name: "Candidate",
+        role: window.omniTargetRole || "Candidate",
+        skills: window.omniDerivedSkills || []
+    };
+    const userId = localStorage.getItem("almond_user_id") || "";
+    try {
+        const resp = await fetch("/api/download-dossier", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profile, jobs, format, user_id: userId })
+        });
+        if (!resp.ok) throw new Error("Export failed.");
+        const blob = await resp.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Almond_Matched_Jobs.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    } catch (err) {
+        alert("Export error: " + err.message);
     }
 };
 
@@ -8105,21 +8179,96 @@ window.filterOmniLocationList = function(q) {
     dropdown.classList.remove("hidden");
 };
 
+window.omniSelectedLocations = window.omniSelectedLocations || [];
+
+window.renderOmniLocationBadges = function() {
+    const container = document.getElementById("omniLocationsBadgesContainer");
+    const countBadge = document.getElementById("omniLocationsCountBadge");
+    const errEl = document.getElementById("omniLocationError");
+    if (!container) return;
+
+    const locs = window.omniSelectedLocations || [];
+    if (errEl && locs.length > 0) errEl.classList.add("hidden");
+
+    if (countBadge) {
+        if (locs.length > 0) {
+            countBadge.textContent = `${locs.length} Selected`;
+            countBadge.className = "text-[10px] font-black text-emerald-800 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-full";
+        } else {
+            countBadge.textContent = "Required • Add 1+";
+            countBadge.className = "text-[10px] font-black text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full";
+        }
+    }
+
+    container.replaceChildren();
+    if (locs.length === 0) {
+        const empty = document.createElement("span");
+        empty.className = "text-xs text-slate-400 font-medium";
+        empty.textContent = "Type a city or country below and press Enter to add...";
+        container.appendChild(empty);
+        return;
+    }
+
+    locs.forEach(loc => {
+        const badge = document.createElement("span");
+        badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-violet-200 text-violet-950 font-bold text-[11px] shadow-2xs";
+        const label = document.createElement("span");
+        label.textContent = "📍 " + loc;
+        badge.appendChild(label);
+
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "text-violet-400 hover:text-rose-600 hover:bg-rose-50 rounded-full w-4 h-4 flex items-center justify-center transition cursor-pointer text-xs leading-none font-bold";
+        removeBtn.title = "Remove location";
+        removeBtn.textContent = "×";
+        removeBtn.onclick = () => window.removeOmniLocation(loc);
+        badge.appendChild(removeBtn);
+        container.appendChild(badge);
+    });
+};
+
+window.addOmniLocation = function(locStr) {
+    const clean = String(locStr || "").trim();
+    if (!clean) return;
+    if (!window.omniSelectedLocations) window.omniSelectedLocations = [];
+    if (!window.omniSelectedLocations.some(l => l.toLowerCase() === clean.toLowerCase())) {
+        window.omniSelectedLocations.push(clean);
+        window.renderOmniLocationBadges();
+    }
+};
+
+window.removeOmniLocation = function(locToRemove) {
+    if (!window.omniSelectedLocations) return;
+    const lower = String(locToRemove || "").toLowerCase();
+    window.omniSelectedLocations = window.omniSelectedLocations.filter(l => l.toLowerCase() !== lower);
+    window.renderOmniLocationBadges();
+};
+
+window.addOmniLocationFromInput = function() {
+    const input = document.getElementById("omniCriteriaLocationInput");
+    const dropdown = document.getElementById("omniCriteriaLocationDropdown");
+    if (!input) return;
+    const val = input.value.trim();
+    if (val) {
+        window.addOmniLocation(val);
+        input.value = "";
+    }
+    if (dropdown) dropdown.classList.add("hidden");
+};
+
 window.selectOmniLocation = function(code, name) {
     const input = document.getElementById("omniCriteriaLocationInput");
-    const hidden = document.getElementById("omniCriteriaLocation");
     const dropdown = document.getElementById("omniCriteriaLocationDropdown");
-    if (input) input.value = name || code;
-    if (hidden) hidden.value = code || name;
+    window.addOmniLocation(code || name);
+    if (input) input.value = "";
     if (dropdown) dropdown.classList.add("hidden");
 };
 
 window.setOmniLocationPreset = function(loc) {
     const input = document.getElementById("omniCriteriaLocationInput");
-    const hidden = document.getElementById("omniCriteriaLocation");
     const dropdown = document.getElementById("omniCriteriaLocationDropdown");
-    if (input) input.value = loc;
-    if (hidden) hidden.value = loc;
+    window.addOmniLocation(loc);
+    if (input) input.value = "";
     if (dropdown) dropdown.classList.add("hidden");
 };
 
@@ -8214,12 +8363,13 @@ window.handleOmniResumeSelected = async function(event) {
             pkgField.value = "7 LPA";
         }
 
-        // 6. Preferred Location
+        // 6. Preferred Locations: ALWAYS start empty so candidate explicitly chooses cities/countries
         const locInput = document.getElementById("omniCriteriaLocationInput");
         const locHidden = document.getElementById("omniCriteriaLocation");
-        let initialLoc = profile.location && profile.location !== "Worldwide / Open to Relocation" ? profile.location : "Bengaluru";
-        if (locInput) locInput.value = initialLoc;
-        if (locHidden) locHidden.value = initialLoc;
+        if (locInput) locInput.value = "";
+        if (locHidden) locHidden.value = "";
+        window.omniSelectedLocations = [];
+        window.renderOmniLocationBadges();
 
         window.openOmniCriteriaModal(profile);
     } catch (err) {
@@ -8249,10 +8399,27 @@ window.submitOmniCriteria = async function() {
     const role = (document.getElementById("omniCriteriaTargetRole")?.value || "").trim();
     const pkgSelect = document.getElementById("omniCriteriaPackageSelect");
     const pkgVal = pkgSelect ? parseFloat(pkgSelect.value) || 0 : 7;
-    const locInput = (document.getElementById("omniCriteriaLocationInput")?.value || "").trim();
-    const locHidden = (document.getElementById("omniCriteriaLocation")?.value || "").trim();
-    const loc = locInput || locHidden || "Bengaluru";
+    const freshnessSelect = document.getElementById("omniCriteriaFreshnessSelect");
+    const maxDaysVal = freshnessSelect ? parseInt(freshnessSelect.value, 10) || 0 : 0;
 
+    // Auto-add any typed text still sitting in location input
+    const locInputEl = document.getElementById("omniCriteriaLocationInput");
+    const typedLoc = (locInputEl?.value || "").trim();
+    if (typedLoc) {
+        window.addOmniLocation(typedLoc);
+        if (locInputEl) locInputEl.value = "";
+    }
+
+    const selectedLocs = window.omniSelectedLocations || [];
+    const locErrEl = document.getElementById("omniLocationError");
+    if (selectedLocs.length === 0) {
+        if (locErrEl) locErrEl.classList.remove("hidden");
+        if (locInputEl) locInputEl.focus();
+        return;
+    }
+    if (locErrEl) locErrEl.classList.add("hidden");
+
+    const loc = selectedLocs.join(",");
     const workMode = document.querySelector('input[name="omni_work_mode"]:checked')?.value || "all";
     const contractType = document.querySelector('input[name="omni_contract_type"]:checked')?.value || "all";
 
@@ -8260,6 +8427,8 @@ window.submitOmniCriteria = async function() {
     window.omniActiveMinPackage = pkgVal;
     window.omniActiveWorkMode = workMode;
     window.omniActiveContractType = contractType;
+    window.omniActiveMaxDays = maxDaysVal;
+    window.currentProfile = window.omniCurrentProfile || { name: "Candidate", role: role, skills: window.omniDerivedSkills || [] };
 
     // Do NOT restrict search query strictly to designation: role is optional criteria
     window.omniTargetRole = role;

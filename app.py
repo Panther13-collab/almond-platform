@@ -1330,6 +1330,7 @@ async def api_omni_search(
     skills: Optional[str] = Query(None),
     match_resume: bool = Query(False),
     target_role: Optional[str] = Query(None),
+    max_days: int = Query(0),
     limit: int = Query(25),
     offset: int = Query(0),
     user_id: Optional[str] = Query(None)
@@ -1350,6 +1351,7 @@ async def api_omni_search(
         tuple(sorted(skills_list)) if skills_list else (),
         match_resume,
         (target_role or "").strip().lower(),
+        max_days,
         min(limit, 100),
         offset,
         user_paid
@@ -1371,6 +1373,7 @@ async def api_omni_search(
         skills=skills_list,
         match_resume=match_resume,
         target_role=target_role,
+        max_days=max_days,
         limit=min(limit, 100),
         offset=offset,
         user_is_paid=user_paid

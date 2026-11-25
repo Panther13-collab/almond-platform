@@ -883,7 +883,7 @@
 
                     <!-- DIRECT INLINE RESULTS STREAM (Directly below the search bar) -->
                     <div id="omniSearchResultsContainer" class="hidden w-full max-w-5xl mx-auto mb-10">
-                        <!-- Feed Header & Category Filters -->
+                        <!-- Feed Header & Resume Match Actions -->
                         <div class="flex items-center justify-between gap-3 mb-4 flex-wrap px-1">
                             <div class="flex items-center gap-2">
                                 <span class="relative flex h-2.5 w-2.5 shrink-0">
@@ -894,8 +894,24 @@
                                 <span id="omniResultsCountBadge" class="text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">Streaming live</span>
                             </div>
 
-                            <!-- Fast Category Filter Chips -->
-                            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+                            <!-- Resume Match Action Bar (Edit Inputs + Export CSV/PDF) -->
+                            <div id="omniResumeActionBar" class="hidden flex items-center gap-2 flex-wrap">
+                                <button type="button" onclick="openOmniCriteriaModal(window.omniCurrentProfile)" class="px-3 py-1.5 rounded-xl bg-white hover:bg-violet-50 text-violet-800 border border-violet-200 font-bold text-xs shadow-2xs transition cursor-pointer flex items-center gap-1.5">
+                                    <span>✏️</span>
+                                    <span>Edit Resume Inputs</span>
+                                </button>
+                                <button type="button" onclick="exportOmniResults('csv')" class="px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-xs shadow-2xs transition cursor-pointer flex items-center gap-1.5">
+                                    <span>📊</span>
+                                    <span>Export Sheet</span>
+                                </button>
+                                <button type="button" onclick="exportOmniResults('pdf')" class="px-3 py-1.5 rounded-xl bg-white hover:bg-rose-50 text-rose-800 border border-rose-200 font-bold text-xs shadow-2xs transition cursor-pointer flex items-center gap-1.5">
+                                    <span>📄</span>
+                                    <span>Export PDF</span>
+                                </button>
+                            </div>
+
+                            <!-- Fast Category Filter Chips (Hidden in Resume Match Mode) -->
+                            <div id="omniCategoryChipsBar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
                                 <button type="button" onclick="setOmniCategoryFilter('All')" id="omniCat_All" class="omni-cat-chip px-3 py-1 rounded-full text-xs font-bold bg-slate-950 text-white cursor-pointer shadow-xs transition">All</button>
                                 <button type="button" onclick="setOmniCategoryFilter('internships')" id="omniCat_internships" class="omni-cat-chip px-3 py-1 rounded-full text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer shadow-2xs transition">🎓 Internships</button>
                                 <button type="button" onclick="setOmniCategoryFilter('entrylevel')" id="omniCat_entrylevel" class="omni-cat-chip px-3 py-1 rounded-full text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer shadow-2xs transition">🚀 Entry-Level</button>
@@ -906,11 +922,11 @@
                         <!-- Live Loading Spinner -->
                         <div id="omniResultsLoading" class="hidden py-12 flex flex-col items-center justify-center gap-2">
                             <div class="w-8 h-8 border-3 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
-                            <span class="text-xs font-bold text-slate-500">Searching 3.3M+ direct corporate feeds...</span>
+                            <span class="text-xs font-bold text-slate-500">Searching direct corporate feeds...</span>
                         </div>
 
-                        <!-- Cards Grid Container -->
-                        <div id="omniResultsCardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 text-left">
+                        <!-- Full-Width Lengthy Horizontal Row Cards Container -->
+                        <div id="omniResultsCardsGrid" class="flex flex-col gap-3.5 text-left">
                             <!-- Populated dynamically via app.js -->
                         </div>
 
@@ -3415,57 +3431,110 @@
                     </div>
                 </div>
 
-                <!-- 3. Target Role -->
+                <!-- 3. Target Role (Type Custom or Select from Dropdown) -->
                 <div>
                     <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Target Role</label>
-                    <input type="text" id="omniCriteriaTargetRole" placeholder="Target role (optional)" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden">
+                    <input type="text" id="omniCriteriaTargetRole" list="omniTargetRoleList" placeholder="Select or type custom target role (e.g. Senior Design Engineer)..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden">
+                    <datalist id="omniTargetRoleList">
+                        <option value="Software Engineer">
+                        <option value="Senior Software Engineer">
+                        <option value="Full Stack Developer">
+                        <option value="Frontend Engineer">
+                        <option value="Backend Engineer">
+                        <option value="AI / ML Engineer">
+                        <option value="Data Scientist">
+                        <option value="DevOps / Cloud Engineer">
+                        <option value="Product Manager">
+                        <option value="Senior Design Engineer">
+                        <option value="Mechanical Design Engineer">
+                        <option value="Embedded Systems Engineer">
+                        <option value="UI/UX Designer">
+                        <option value="QA / Automation Engineer">
+                    </datalist>
                 </div>
 
-                <!-- 4. Minimum Expected Package (Standardized Dropdown) -->
-                <div>
-                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Minimum Expected Package</label>
-                    <div class="relative">
-                        <select id="omniCriteriaPackageSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden cursor-pointer appearance-none pr-8">
-                            <option value="0">No Minimum (Open to all verified bands)</option>
-                            <option value="1">1 LPA (Entry / Intern)</option>
-                            <option value="3">3 LPA</option>
-                            <option value="5">5 LPA</option>
-                            <option value="7" selected>7 LPA (Benchmark Default)</option>
-                            <option value="10">10 LPA</option>
-                            <option value="12">12 LPA</option>
-                            <option value="15">15 LPA</option>
-                            <option value="18">18 LPA</option>
-                            <option value="20">20 LPA</option>
-                            <option value="25">25 LPA</option>
-                            <option value="30">30 LPA</option>
-                            <option value="35">35+ LPA</option>
-                            <option value="50">50+ LPA</option>
-                        </select>
-                        <span class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">▼</span>
+                <!-- 4. Minimum Expected Package & Job Freshness Filter -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Minimum Expected Package</label>
+                        <div class="relative">
+                            <select id="omniCriteriaPackageSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden cursor-pointer appearance-none pr-8">
+                                <option value="0">No Minimum (All bands)</option>
+                                <option value="1">1 LPA (Entry / Intern)</option>
+                                <option value="3">3 LPA</option>
+                                <option value="5">5 LPA</option>
+                                <option value="7" selected>7 LPA (Default)</option>
+                                <option value="10">10 LPA</option>
+                                <option value="12">12 LPA</option>
+                                <option value="15">15 LPA</option>
+                                <option value="18">18 LPA</option>
+                                <option value="20">20 LPA</option>
+                                <option value="25">25 LPA</option>
+                                <option value="30">30+ LPA</option>
+                            </select>
+                            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">▼</span>
+                        </div>
+                        <input type="hidden" id="omniCriteriaExpectedPackage" value="7 LPA">
                     </div>
-                    <!-- Hidden alias for backward compatibility -->
-                    <input type="hidden" id="omniCriteriaExpectedPackage" value="7 LPA">
+
+                    <div>
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Job Posted Within</label>
+                        <div class="relative">
+                            <select id="omniCriteriaFreshnessSelect" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden cursor-pointer appearance-none pr-8">
+                                <option value="0" selected>Any Time (All Live Openings)</option>
+                                <option value="1">Latest 24 Hours (1 Day)</option>
+                                <option value="2">Last 2 Days</option>
+                                <option value="7">Last 7 Days (1 Week)</option>
+                                <option value="10">Last 10 Days</option>
+                                <option value="30">Last 30 Days (1 Month)</option>
+                            </select>
+                            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-xs">▼</span>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- 5. Preferred Location (Searchable Typeahead + Quick Preset Pills) -->
+                <!-- 5. Preferred Locations (Empty by Default, Mandatory *, Multi-Location Chips) -->
                 <div>
-                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Preferred Location (Global Cities &amp; Remote)</label>
-                    <div class="relative mb-2">
-                        <input type="text" id="omniCriteriaLocationInput" autocomplete="off" oninput="filterOmniLocationList(this.value)" onfocus="filterOmniLocationList(this.value)" placeholder="Type any city or country (Bengaluru, Austin, Ireland, London)..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-slate-50 focus:bg-white focus:border-violet-500 focus:outline-hidden">
-                        <div id="omniCriteriaLocationDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-44 overflow-y-auto z-50 text-slate-900 divide-y divide-slate-100"></div>
-                        <input type="hidden" id="omniCriteriaLocation" value="all">
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="text-[11px] font-black uppercase tracking-wider text-slate-700 block">
+                            Preferred Locations <span class="text-rose-600 font-black text-sm">*</span>
+                        </label>
+                        <span id="omniLocationsCountBadge" class="text-[10px] font-black text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">Required &bull; Add 1+</span>
                     </div>
+
+                    <!-- Selected Multi-Location Chips Container (Same style as Derived Skills) -->
+                    <div id="omniLocationsBadgesContainer" class="flex flex-wrap gap-1.5 min-h-[38px] max-h-24 overflow-y-auto p-2 bg-slate-50 border border-slate-200 rounded-xl mb-2">
+                        <span class="text-xs text-slate-400 font-medium">Type a city or country below and press Enter to add...</span>
+                    </div>
+
+                    <div class="relative mb-2 flex items-center gap-2">
+                        <div class="relative flex-1">
+                            <input type="text" id="omniCriteriaLocationInput" autocomplete="off"
+                                   oninput="filterOmniLocationList(this.value)"
+                                   onfocus="filterOmniLocationList(this.value)"
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault();addOmniLocationFromInput();}"
+                                   placeholder="Type city or country (e.g. Chennai, Hyderabad, Austin, Germany)..."
+                                   class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm font-bold text-slate-900 bg-white focus:border-violet-500 focus:outline-hidden">
+                            <div id="omniCriteriaLocationDropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-44 overflow-y-auto z-50 text-slate-900 divide-y divide-slate-100"></div>
+                        </div>
+                        <button type="button" onclick="addOmniLocationFromInput()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-violet-700 text-white font-bold text-xs shadow-2xs transition cursor-pointer shrink-0">
+                            + Add
+                        </button>
+                        <input type="hidden" id="omniCriteriaLocation" value="">
+                    </div>
+                    <p id="omniLocationError" class="hidden text-xs font-bold text-rose-600 mb-2">Please add at least one preferred location before matching jobs.</p>
+
                     <!-- Quick Preset Location Pills -->
                     <div class="flex flex-wrap gap-1.5">
-                        <button type="button" onclick="setOmniLocationPreset('Bengaluru')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">Bengaluru</button>
-                        <button type="button" onclick="setOmniLocationPreset('Chennai')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">Chennai</button>
-                        <button type="button" onclick="setOmniLocationPreset('Hyderabad')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">Hyderabad</button>
-                        <button type="button" onclick="setOmniLocationPreset('Pune')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">Pune</button>
-                        <button type="button" onclick="setOmniLocationPreset('India')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">🇮🇳 India</button>
-                        <button type="button" onclick="setOmniLocationPreset('Austin')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">Austin, TX</button>
-                        <button type="button" onclick="setOmniLocationPreset('Ireland')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">🇮🇪 Ireland</button>
-                        <button type="button" onclick="setOmniLocationPreset('United States')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">🇺🇸 USA</button>
-                        <button type="button" onclick="setOmniLocationPreset('Remote')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">🌐 Remote</button>
+                        <button type="button" onclick="setOmniLocationPreset('Bengaluru')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">+ Bengaluru</button>
+                        <button type="button" onclick="setOmniLocationPreset('Chennai')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">+ Chennai</button>
+                        <button type="button" onclick="setOmniLocationPreset('Hyderabad')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">+ Hyderabad</button>
+                        <button type="button" onclick="setOmniLocationPreset('Pune')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">+ Pune</button>
+                        <button type="button" onclick="setOmniLocationPreset('India')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">+ 🇮🇳 India</button>
+                        <button type="button" onclick="setOmniLocationPreset('Austin')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">+ Austin</button>
+                        <button type="button" onclick="setOmniLocationPreset('Germany')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">+ 🇩🇪 Germany</button>
+                        <button type="button" onclick="setOmniLocationPreset('United States')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">+ 🇺🇸 USA</button>
+                        <button type="button" onclick="setOmniLocationPreset('Remote')" class="omni-loc-pill text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-violet-100 hover:text-violet-900 text-slate-700 transition cursor-pointer">+ 🌐 Remote</button>
                     </div>
                 </div>
 
