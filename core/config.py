@@ -83,6 +83,7 @@ class Config:
     # Telemetry & Admin Key
     ADMIN_SECRET_KEY = os.getenv("ALMOND_ADMIN_KEY", "almond2026").strip()
     GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "").strip()
+    META_PIXEL_ID = os.getenv("META_PIXEL_ID", "").strip()
 
     @classmethod
     def is_supabase_configured(cls) -> bool:

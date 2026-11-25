@@ -242,6 +242,129 @@
                 </div>
             </div>
 
+            <!-- Paid Ad Funnel, Meta Pixel & Campaign ROI Tracker -->
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+                <!-- Left 2 Columns: 5-Stage Conversion Funnel & Campaign ROI Table -->
+                <div class="xl:col-span-2 card-surface p-5 rounded-2xl space-y-4 border-l-4 border-l-pink-500">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <span>&#127919;</span> Paid Ad Conversion Funnel &amp; Campaign ROI
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Tracks Instagram, Facebook &amp; social clicks from landing to Pro upgrade (even when In-App browsers hide Referrer)</p>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-pink-500/15 text-pink-300 border border-pink-500/30 self-start">UTM + fbclid + Pixel Ready</span>
+                    </div>
+
+                    {% set ft = (analytics.ad_funnel.totals if analytics.ad_funnel else {}) %}
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <div class="text-[10px] font-bold text-slate-400 uppercase">1. Ad Clicks / Visits</div>
+                            <div class="text-xl font-black text-white font-mono mt-0.5">{{ ft.visitors or 0 }}</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <div class="text-[10px] font-bold text-slate-400 uppercase">2. Resume Uploads</div>
+                            <div class="text-xl font-black text-sky-400 font-mono mt-0.5">{{ ft.resume_uploads or 0 }}</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <div class="text-[10px] font-bold text-slate-400 uppercase">3. Free Signups</div>
+                            <div class="text-xl font-black text-violet-400 font-mono mt-0.5">{{ ft.signups or 0 }}</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+                            <div class="text-[10px] font-bold text-slate-400 uppercase">4. Checkout Opens</div>
+                            <div class="text-xl font-black text-amber-400 font-mono mt-0.5">{{ ft.checkout_starts or 0 }}</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/90 border border-emerald-500/30">
+                            <div class="text-[10px] font-bold text-emerald-400 uppercase">5. Pro Purchases</div>
+                            <div class="text-xl font-black text-emerald-400 font-mono mt-0.5">{{ ft.purchases or 0 }} <span class="text-xs font-normal text-slate-300">(&#8377;{{ "%.0f"|format(ft.revenue_inr or 0) }})</span></div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar border border-slate-800/80 rounded-xl">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="border-b border-slate-800 bg-slate-900/90 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+                                    <th class="py-2.5 px-3">Source / Campaign</th>
+                                    <th class="py-2.5 px-3 text-right">Visitors</th>
+                                    <th class="py-2.5 px-3 text-right">Resumes</th>
+                                    <th class="py-2.5 px-3 text-right">Signups</th>
+                                    <th class="py-2.5 px-3 text-right">Checkouts</th>
+                                    <th class="py-2.5 px-3 text-right">Pro Sales</th>
+                                    <th class="py-2.5 px-3 text-right">Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800/60 font-mono">
+                                {% for row in (analytics.ad_funnel.campaigns if analytics.ad_funnel else []) %}
+                                <tr class="hover:bg-slate-800/40">
+                                    <td class="py-2 px-3 font-sans">
+                                        <span class="font-bold text-white capitalize">{{ row.source }}</span>
+                                        <span class="block text-[10px] text-slate-400 font-mono">{{ row.campaign }}</span>
+                                    </td>
+                                    <td class="py-2 px-3 text-right text-slate-200">{{ row.visitors }}</td>
+                                    <td class="py-2 px-3 text-right text-sky-400">{{ row.resume_uploads }}</td>
+                                    <td class="py-2 px-3 text-right text-violet-400">{{ row.signups }}</td>
+                                    <td class="py-2 px-3 text-right text-amber-400">{{ row.checkout_starts }}</td>
+                                    <td class="py-2 px-3 text-right font-bold text-emerald-400">{{ row.purchases }}</td>
+                                    <td class="py-2 px-3 text-right font-bold text-emerald-300">&#8377;{{ "%.0f"|format(row.revenue_inr or 0) }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="py-4 text-center text-xs text-slate-500 font-sans">
+                                        Use a UTM-tagged link in your Meta/Instagram ads to compare campaign performance here.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Right Column: Meta Pixel Setup & UTM Ad Link Builder -->
+                <div class="card-surface p-5 rounded-2xl space-y-4 border-l-4 border-l-indigo-500">
+                    <div>
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <span>&#9889;</span> Meta Pixel Setup (&#8377;0 Tool Cost)
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Paste your Meta Events Manager Pixel ID so Instagram/FB ads optimize automatically for Pro buyers.</p>
+                    </div>
+                    <form onsubmit="handleMetaPixelSave(event)" class="space-y-2.5">
+                        <label class="block text-[11px] font-semibold text-slate-300">Meta Pixel / Dataset ID</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="admin-meta-pixel-input" value="{{ meta_pixel_id or '' }}"
+                                   placeholder="e.g. 123456789012345"
+                                   class="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-indigo-400">
+                            <button type="submit" id="admin-meta-pixel-btn"
+                                    class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition cursor-pointer shrink-0">
+                                Save ID
+                            </button>
+                        </div>
+                        <p class="text-[11px] {% if meta_pixel_id %}text-emerald-400{% else %}text-slate-500{% endif %} font-mono">
+                            {% if meta_pixel_id %}&#10003; Active Pixel: {{ meta_pixel_id }} (PageView, Lead, Purchase){% else %}Not active yet — paste Pixel ID once created in Meta Events Manager.{% endif %}
+                        </p>
+                    </form>
+
+                    <div class="pt-3 border-t border-slate-800 space-y-2">
+                        <label class="block text-[11px] font-semibold text-slate-300">Ad Link Builder (For Instagram / FB Ads)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <select id="utm-src-select" onchange="updateAdUtmPreview()" class="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white">
+                                <option value="instagram">Instagram</option>
+                                <option value="facebook">Facebook</option>
+                                <option value="reddit">Reddit</option>
+                                <option value="peerlist">Peerlist</option>
+                            </select>
+                            <input type="text" id="utm-camp-input" value="fresher_test1" oninput="updateAdUtmPreview()" placeholder="campaign_name"
+                                   class="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono">
+                        </div>
+                        <div class="flex gap-1.5">
+                            <input type="text" id="utm-url-preview" readonly
+                                   value="https://almondjobs.com/?utm_source=instagram&utm_medium=paid_social&utm_campaign=fresher_test1"
+                                   class="flex-1 px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-[10px] text-emerald-300 font-mono">
+                            <button type="button" onclick="copyAdUtmPreview()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold shrink-0">Copy</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Marketing Acquisition Channels (Reddit, Peerlist, Direct, Search) -->
             <div class="card-surface p-5 rounded-2xl space-y-4">
                 <div class="flex items-center justify-between">
@@ -370,6 +493,8 @@
                                     <div class="flex items-center gap-1.5">
                                         <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold 
                                             {% if 'reddit' in v.referrer_channel|lower %}bg-amber-500/20 text-amber-300 border border-amber-500/40
+                                            {% elif 'instagram' in v.referrer_channel|lower or 'meta' in v.referrer_channel|lower %}bg-pink-500/20 text-pink-300 border border-pink-500/40
+                                            {% elif 'facebook' in v.referrer_channel|lower %}bg-blue-500/20 text-blue-300 border border-blue-500/40
                                             {% elif 'peerlist' in v.referrer_channel|lower %}bg-emerald-500/20 text-emerald-300 border border-emerald-500/40
                                             {% elif 'linkedin' in v.referrer_channel|lower %}bg-blue-500/20 text-blue-300 border border-blue-500/40
                                             {% elif 'google' in v.referrer_channel|lower %}bg-violet-500/20 text-violet-300 border border-violet-500/40
@@ -1674,6 +1799,56 @@
                 tableProbe?.classList.remove('hidden');
                 btnVer.className = 'px-3 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white bg-slate-800';
                 btnProbe.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950';
+            }
+        };
+
+        window.updateAdUtmPreview = function() {
+            const src = (document.getElementById('utm-src-select')?.value || 'instagram').trim();
+            const rawCamp = (document.getElementById('utm-camp-input')?.value || 'fresher_test1').trim();
+            const camp = encodeURIComponent(rawCamp.replace(/\s+/g, '_'));
+            const out = document.getElementById('utm-url-preview');
+            if (out) {
+                out.value = `https://almondjobs.com/?utm_source=${encodeURIComponent(src)}&utm_medium=paid_social&utm_campaign=${camp}`;
+            }
+        };
+
+        window.copyAdUtmPreview = function() {
+            const out = document.getElementById('utm-url-preview');
+            if (!out) return;
+            navigator.clipboard?.writeText(out.value).then(() => {
+                alert('Copied UTM ad link:\n' + out.value);
+            }).catch(() => {
+                out.select();
+                document.execCommand('copy');
+            });
+        };
+
+        window.handleMetaPixelSave = async function(e) {
+            e.preventDefault();
+            const input = document.getElementById('admin-meta-pixel-input');
+            const btn = document.getElementById('admin-meta-pixel-btn');
+            const pixelId = (input?.value || '').trim();
+            if (btn) btn.disabled = true;
+            try {
+                const resp = await fetch('/api/admin/meta-pixel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-admin-key': ADMIN_KEY
+                    },
+                    body: JSON.stringify({ pixel_id: pixelId, key: ADMIN_KEY })
+                });
+                const data = await resp.json().catch(() => ({}));
+                if (resp.ok && data.status === 'success') {
+                    alert(data.message || 'Meta Pixel updated.');
+                    window.location.reload();
+                } else {
+                    alert('Error saving Meta Pixel: ' + (data.detail || data.message || 'Invalid Pixel ID'));
+                }
+            } catch (err) {
+                alert('Network error saving Meta Pixel: ' + err.message);
+            } finally {
+                if (btn) btn.disabled = false;
             }
         };
     </script>

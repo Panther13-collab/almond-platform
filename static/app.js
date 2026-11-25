@@ -1,3 +1,71 @@
+// Capture Meta Ads / Social UTM & fbclid Attribution on Initial Landing
+(function initAdAttributionTracker() {
+    try {
+        const sp = new URLSearchParams(window.location.search || "");
+        const utmSource = (sp.get("utm_source") || "").trim();
+        const utmMedium = (sp.get("utm_medium") || "").trim();
+        const utmCampaign = (sp.get("utm_campaign") || "").trim();
+        const utmContent = (sp.get("utm_content") || "").trim();
+        const fbclid = (sp.get("fbclid") || "").trim();
+        if (utmSource || utmCampaign || fbclid) {
+            sessionStorage.setItem("almond_ad_attribution", JSON.stringify({
+                utm_source: utmSource || (fbclid ? "meta" : ""),
+                utm_medium: utmMedium,
+                utm_campaign: utmCampaign,
+                utm_content: utmContent,
+                fbclid: fbclid
+            }));
+        }
+    } catch (_) {}
+})();
+
+window.almondTrackFunnel = function(eventName, extras = {}) {
+    try {
+        let saved = {};
+        try {
+            saved = JSON.parse(sessionStorage.getItem("almond_ad_attribution") || "{}") || {};
+        } catch (_) {}
+
+        const payload = {
+            event_name: eventName,
+            utm_source: saved.utm_source || "",
+            utm_medium: saved.utm_medium || "",
+            utm_campaign: saved.utm_campaign || "",
+            utm_content: saved.utm_content || "",
+            fbclid: saved.fbclid || "",
+            user_name: extras.user_name || localStorage.getItem("almond_user_name") || "",
+            user_email: extras.user_email || localStorage.getItem("almond_user_email") || "",
+            amount_inr: extras.amount_inr || 0,
+            meta: extras.meta || {}
+        };
+
+        fetch("/api/telemetry/event", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            keepalive: true,
+            body: JSON.stringify(payload)
+        }).catch(() => {});
+
+        if (typeof window.fbq === "function") {
+            const fbMap = {
+                resume_upload: ["Lead", { content_name: "Resume Upload" }],
+                signup: ["CompleteRegistration", { content_name: "Candidate Account" }],
+                checkout_start: ["InitiateCheckout", { currency: extras.currency || "INR", value: extras.amount_inr || 0 }],
+                purchase: ["Purchase", { currency: extras.currency || "INR", value: extras.amount_inr || 0 }]
+            };
+            const spec = fbMap[eventName];
+            if (spec) window.fbq("track", spec[0], spec[1]);
+        }
+        if (typeof window.gtag === "function") {
+            window.gtag("event", eventName, {
+                utm_source: payload.utm_source,
+                utm_campaign: payload.utm_campaign,
+                value: payload.amount_inr || 0
+            });
+        }
+    } catch (_) {}
+};
+
 // Curated Feeds Searchable Country/Location Filter Controller
 const CURATED_WORLD_COUNTRIES = [
     { code: "all", name: "All Locations / Worldwide", flag: "🌐", keywords: "all worldwide global any remote" },
@@ -5442,6 +5510,9 @@ window.handleVerifyOtpSubmit = async function() {
         if (data.email) localStorage.setItem("almond_user_email", data.email);
         if (data.full_name) localStorage.setItem("almond_user_name", data.full_name);
         localStorage.setItem("almond_is_paid", data.is_paid ? "true" : "false");
+        if (typeof window.almondTrackFunnel === "function") {
+            window.almondTrackFunnel("signup", { user_email: data.email || email, user_name: data.full_name || fullName });
+        }
 
         if (window._resendOtpInterval) {
             clearInterval(window._resendOtpInterval);
@@ -5587,6 +5658,9 @@ window.executeDirectSignupFallback = async function(email, password, fullName) {
         if (data.email) localStorage.setItem("almond_user_email", data.email);
         if (data.full_name) localStorage.setItem("almond_user_name", data.full_name);
         localStorage.setItem("almond_is_paid", data.is_paid ? "true" : "false");
+        if (typeof window.almondTrackFunnel === "function") {
+            window.almondTrackFunnel("signup", { user_email: data.email || email, user_name: data.full_name || fullName });
+        }
 
         if (window._resendOtpInterval) {
             clearInterval(window._resendOtpInterval);
@@ -5992,6 +6066,14 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Alm
             throw new Error(orderData.message || orderData.detail || "Failed to generate checkout order.");
         }
 
+        if (typeof window.almondTrackFunnel === "function") {
+            window.almondTrackFunnel("checkout_start", {
+                amount_inr: finalAmount,
+                currency: selectedCurr,
+                meta: { plan_name: planName, purchase_type: purchaseType }
+            });
+        }
+
         // 2. Launch Razorpay Checkout Modal
         const options = {
             key: orderData.key_id,
@@ -6041,6 +6123,13 @@ window.triggerRazorpayCheckout = async function(amountInr = 699, planName = 'Alm
 
                     const verifyData = await verifyResp.json().catch(() => ({}));
                     if (verifyResp.ok && verifyData.status === "success") {
+                        if (typeof window.almondTrackFunnel === "function") {
+                            window.almondTrackFunnel("purchase", {
+                                amount_inr: finalAmount,
+                                currency: selectedCurr,
+                                meta: { plan_name: planName, purchase_type: purchaseType }
+                            });
+                        }
                         if (verifyData.purchase_type === "contribution" || purchaseType === "contribution") {
                             if (typeof window.closeCoffeeCheckoutModal === "function") window.closeCoffeeCheckoutModal();
                             if (typeof window.closeVipPricingModal === "function") window.closeVipPricingModal();
@@ -8572,6 +8661,12 @@ window.handleOmniResumeSelected = async function(event) {
         const data = await resp.json();
         const profile = data.profile || {};
         window.omniCurrentProfile = profile;
+        if (typeof window.almondTrackFunnel === "function") {
+            window.almondTrackFunnel("resume_upload", {
+                user_name: profile.name || "",
+                meta: { target_role: profile.current_role || "" }
+            });
+        }
 
         // 1. Identified Candidate Name & Avatar
         const nameEl = document.getElementById("omniProfileName");

@@ -36,7 +36,8 @@ from core.auth_db import (
     send_signup_otp, verify_otp_and_signup, login_or_signup_google_user,
     record_page_visit, get_analytics_summary, get_all_users_admin,
     parse_device_hardware, is_bot_or_scanner, get_dynamic_pricing, update_tier_pricing,
-    save_candidate_feedback, get_all_candidate_feedback, reply_to_candidate_feedback, get_revenue_analytics, purge_dummy_candidates_admin
+    save_candidate_feedback, get_all_candidate_feedback, reply_to_candidate_feedback, get_revenue_analytics, purge_dummy_candidates_admin,
+    get_meta_pixel_id, set_meta_pixel_id, record_funnel_event
 )
 from core.payment import apply_vip_latest_feed_lock, create_razorpay_order, verify_razorpay_signature
 from core.security import BotShieldMiddleware, validate_uploaded_file, acquire_search_slot, release_search_slot
@@ -116,6 +117,26 @@ app.add_middleware(
     expose_headers=["Content-Disposition", "X-Almond-Shield"],
 )
 
+def _resolve_request_client_and_user(request: Request) -> tuple:
+    """Extract forwarded client IP, User-Agent, and authenticated session candidate identity."""
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        client_ip = forwarded.split(",")[0].strip()
+    user_agent = request.headers.get("user-agent", "")
+    vis_name = ""
+    vis_email = ""
+    sess_cookie = request.cookies.get("almond_session_token", "").strip()
+    if sess_cookie:
+        uid = verify_session_token(sess_cookie)
+        if uid:
+            prof = get_user_profile(uid)
+            if prof:
+                vis_name = prof.get("full_name", "")
+                vis_email = prof.get("email", "")
+    return client_ip, user_agent, vis_name, vis_email
+
+
 @app.middleware("http")
 async def add_performance_cache_headers(request: Request, call_next):
     path = request.url.path
@@ -128,11 +149,7 @@ async def add_performance_cache_headers(request: Request, call_next):
         and path not in ["/favicon.ico", "/health", "/ping", "/robots.txt", "/sitemap.xml", "/llms.txt", "/manifest.json", "/manifest.webmanifest", "/sw.js"]
     ):
         try:
-            client_ip = request.client.host if request.client else "127.0.0.1"
-            forwarded = request.headers.get("x-forwarded-for")
-            if forwarded:
-                client_ip = forwarded.split(",")[0].strip()
-            user_agent = request.headers.get("user-agent", "")
+            client_ip, user_agent, vis_name, vis_email = _resolve_request_client_and_user(request)
             referrer = request.headers.get("referer", "")
             model_hint = request.headers.get("sec-ch-ua-model", "").strip('"')
             plat_hint = request.headers.get("sec-ch-ua-platform", "").strip('"')
@@ -149,24 +166,18 @@ async def add_performance_cache_headers(request: Request, call_next):
             loc_parts = [p for p in [cf_city, cf_region, cf_country] if p and p.upper() != "XX"]
             proxy_location = ", ".join(loc_parts)
 
-            # Identify authenticated candidate if session cookie is present
-            vis_name = ""
-            vis_email = ""
-            sess_cookie = request.cookies.get("almond_session_token", "").strip()
-            if sess_cookie:
-                uid = verify_session_token(sess_cookie)
-                if uid:
-                    prof = get_user_profile(uid)
-                    if prof:
-                        vis_name = prof.get("full_name", "")
-                        vis_email = prof.get("email", "")
-
+            q = request.query_params
             record_page_visit(
                 path, client_ip, user_agent, referrer,
                 client_hints=client_hints,
                 location=proxy_location,
                 user_name=vis_name,
-                user_email=vis_email
+                user_email=vis_email,
+                utm_source=q.get("utm_source", ""),
+                utm_medium=q.get("utm_medium", ""),
+                utm_campaign=q.get("utm_campaign", ""),
+                utm_content=q.get("utm_content", ""),
+                fbclid=q.get("fbclid", "")
             )
         except Exception:
             pass
@@ -410,6 +421,9 @@ async def serve_index(request: Request):
             content = f.read()
             if Config.GA_MEASUREMENT_ID:
                 content = content.replace('window.__ALMOND_GA_ID__ || ""', f'"{Config.GA_MEASUREMENT_ID}"')
+            pixel_id = get_meta_pixel_id()
+            if pixel_id:
+                content = content.replace('window.__ALMOND_META_PIXEL_ID__ || ""', f'"{pixel_id}"')
             
             # Resolve real IP geolocation from Cloudflare CF-IPCountry header
             cf_country = (
@@ -515,7 +529,8 @@ async def serve_admin_dashboard(
             pricing_tiers=get_dynamic_pricing(),
             contributions=get_recent_contributions(limit=50),
             feedback_items=get_all_candidate_feedback(),
-            revenue_analytics=get_revenue_analytics()
+            revenue_analytics=get_revenue_analytics(),
+            meta_pixel_id=get_meta_pixel_id()
         )
         response = HTMLResponse(content=rendered)
         # Store secure session cookie for convenience so user stays logged in
@@ -533,7 +548,8 @@ async def serve_admin_dashboard(
             admin_key="",
             auth_error=bool(provided_key),
             analytics={},
-            candidates=[]
+            candidates=[],
+            meta_pixel_id=""
         )
         return HTMLResponse(content=rendered)
 
@@ -560,6 +576,45 @@ async def get_admin_metrics(request: Request, key: Optional[str] = Query(None)):
         "analytics": get_analytics_summary(),
         "candidates": get_all_users_admin()
     }
+
+
+@app.post("/api/telemetry/event")
+async def api_record_telemetry_event(request: Request, payload: dict = Body(...)):
+    """Record client-side candidate conversion funnel milestones with preserved UTM attribution."""
+    event_name = str(payload.get("event_name", "") or "").strip().lower()
+    if not event_name:
+        raise HTTPException(status_code=400, detail="Missing event_name.")
+    client_ip, user_agent, vis_name, vis_email = _resolve_request_client_and_user(request)
+    recorded = record_funnel_event(
+        event_name=event_name,
+        client_ip=client_ip,
+        user_agent=user_agent,
+        utm_source=str(payload.get("utm_source", "") or ""),
+        utm_medium=str(payload.get("utm_medium", "") or ""),
+        utm_campaign=str(payload.get("utm_campaign", "") or ""),
+        utm_content=str(payload.get("utm_content", "") or ""),
+        fbclid=str(payload.get("fbclid", "") or ""),
+        user_name=str(payload.get("user_name", "") or "") or vis_name,
+        user_email=str(payload.get("user_email", "") or "") or vis_email,
+        amount_inr=payload.get("amount_inr", 0) or 0,
+        meta=payload.get("meta") if isinstance(payload.get("meta"), dict) else None
+    )
+    return {"status": "success" if recorded else "ignored", "event_name": event_name}
+
+
+@app.post("/api/admin/meta-pixel")
+async def api_admin_save_meta_pixel(request: Request, payload: dict = Body(...)):
+    """Admin endpoint to activate or update Meta Pixel ID dynamically at zero cost."""
+    cookie_key = request.cookies.get("almond_admin_key")
+    header_key = request.headers.get("x-admin-key")
+    query_key = payload.get("key")
+    provided_key = (query_key or cookie_key or header_key or "").strip()
+    if not _is_valid_admin_key(provided_key):
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin secret key.")
+    res = set_meta_pixel_id(str(payload.get("pixel_id", "") or ""))
+    if res.get("status") == "error":
+        raise HTTPException(status_code=400, detail=res.get("message"))
+    return res
 
 @app.get("/api/admin/export-users")
 async def export_candidates_csv(request: Request, key: Optional[str] = Query(None)):

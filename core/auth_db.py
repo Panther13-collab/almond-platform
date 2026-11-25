@@ -1,5 +1,6 @@
 import re
 import os
+import json
 import sqlite3
 import hashlib
 import hmac
@@ -228,6 +229,47 @@ def init_db():
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_traffic_is_bot ON site_traffic (is_bot);")
         except Exception:
             pass
+        for col_def in [
+            "utm_source TEXT DEFAULT ''",
+            "utm_medium TEXT DEFAULT ''",
+            "utm_campaign TEXT DEFAULT ''",
+            "utm_content TEXT DEFAULT ''",
+            "fbclid TEXT DEFAULT ''",
+        ]:
+            try:
+                cursor.execute(f"ALTER TABLE site_traffic ADD COLUMN {col_def};")
+            except Exception:
+                pass
+
+        # Persistent Funnel Conversion Events (visit -> resume_upload -> signup -> checkout_start -> purchase)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS funnel_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                visitor_hash TEXT NOT NULL,
+                event_name TEXT NOT NULL,
+                utm_source TEXT DEFAULT '',
+                utm_medium TEXT DEFAULT '',
+                utm_campaign TEXT DEFAULT '',
+                utm_content TEXT DEFAULT '',
+                fbclid TEXT DEFAULT '',
+                user_name TEXT DEFAULT '',
+                user_email TEXT DEFAULT '',
+                amount_inr REAL DEFAULT 0,
+                meta_json TEXT DEFAULT '',
+                timestamp REAL NOT NULL
+            );
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_funnel_event_name ON funnel_events (event_name);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_funnel_utm_source ON funnel_events (utm_source);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_funnel_timestamp ON funnel_events (timestamp);")
+
+        # Key-Value Local Settings Fallback (synced with Supabase system_store when online)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS kv_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT DEFAULT ''
+            );
+        """)
 
         # Retroactively classify historical vulnerability scanner and bot probes
         try:
@@ -2836,6 +2878,32 @@ def _resolve_ip_location_bg(row_id: int, ip: str):
     except Exception:
         pass
 
+def _compute_visitor_hash(client_ip: str, user_agent: str = "", ts: float = None) -> tuple:
+    """Compute anonymized daily visitor hash alongside UTC timestamp and date string."""
+    now = ts if ts is not None else time.time()
+    date_str = time.strftime("%Y-%m-%d", time.gmtime(now))
+    ua_clean = (user_agent or "").lower()[:60]
+    hash_input = f"{client_ip}:{ua_clean}:{date_str}:{AUTH_SECRET_KEY}"
+    visitor_hash = hashlib.sha256(hash_input.encode("utf-8")).hexdigest()[:16]
+    return visitor_hash, date_str, now
+
+
+def _normalize_utm_source(utm_source: str = "", referrer: str = "", fbclid: str = "") -> str:
+    """Normalize UTM source, inferring Meta/Instagram/Facebook from click IDs or referrers when omitted."""
+    src = (utm_source or "").strip().lower()[:80]
+    if src:
+        aliases = {"ig": "instagram", "fb": "facebook", "meta_ads": "meta"}
+        return aliases.get(src, src)
+    ref_low = (referrer or "").lower()
+    if "instagram.com" in ref_low:
+        return "instagram"
+    if "facebook.com" in ref_low or "fb.com" in ref_low:
+        return "facebook"
+    if (fbclid or "").strip():
+        return "meta"
+    return ""
+
+
 def record_page_visit(
     path: str,
     client_ip: str,
@@ -2845,12 +2913,18 @@ def record_page_visit(
     device_model: str = "",
     location: str = "",
     user_name: str = "",
-    user_email: str = ""
+    user_email: str = "",
+    utm_source: str = "",
+    utm_medium: str = "",
+    utm_campaign: str = "",
+    utm_content: str = "",
+    fbclid: str = ""
 ) -> bool:
     """
     Record an anonymous, privacy-compliant page visit in SQLite.
     Classifies bot / vulnerability scanners vs real candidate visits,
-    identifies hardware device models, geographic location, and authenticated user identity.
+    identifies hardware device models, geographic location, UTM/Meta Ad attribution,
+    and authenticated user identity.
     """
     try:
         clean_path = (path or "/").split("?")[0].strip()
@@ -2882,27 +2956,35 @@ def record_page_visit(
         final_model = device_model.strip() or dev_info.get("model", "")
         brand_name = dev_info.get("brand", "")
 
-        now = time.time()
-        date_str = time.strftime("%Y-%m-%d", time.gmtime(now))
-        # Anonymized salted visitor hash
-        ua_clean = (user_agent or "").lower()[:60]
-        hash_input = f"{client_ip}:{ua_clean}:{date_str}:{AUTH_SECRET_KEY}"
-        visitor_hash = hashlib.sha256(hash_input.encode("utf-8")).hexdigest()[:16]
+        visitor_hash, date_str, now = _compute_visitor_hash(client_ip, user_agent)
 
         clean_ref = (referrer or "")[:255]
         clean_loc = (location or "").strip() or _IP_GEO_CACHE.get(client_ip, "")
         clean_uname = (user_name or "").strip()[:120]
         clean_uemail = (user_email or "").strip().lower()[:160]
+        clean_fbclid = (fbclid or "").strip()[:120]
+        clean_utm_source = _normalize_utm_source(utm_source, clean_ref, clean_fbclid)
+        clean_utm_medium = (utm_medium or "").strip().lower()[:80]
+        clean_utm_campaign = (utm_campaign or "").strip()[:120]
+        clean_utm_content = (utm_content or "").strip()[:120]
 
         row_id = None
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO site_traffic (date, path, visitor_hash, device, device_model, device_brand, is_bot, referrer, location, user_name, user_email, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO site_traffic (
+                    date, path, visitor_hash, device, device_model, device_brand, is_bot,
+                    referrer, location, user_name, user_email,
+                    utm_source, utm_medium, utm_campaign, utm_content, fbclid, timestamp
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (date_str, clean_path, visitor_hash, device_type, final_model, brand_name, is_bot, clean_ref, clean_loc, clean_uname, clean_uemail, now)
+                (
+                    date_str, clean_path, visitor_hash, device_type, final_model, brand_name, is_bot,
+                    clean_ref, clean_loc, clean_uname, clean_uemail,
+                    clean_utm_source, clean_utm_medium, clean_utm_campaign, clean_utm_content, clean_fbclid, now
+                )
             )
             row_id = cursor.lastrowid
             conn.commit()
@@ -2917,8 +2999,34 @@ def record_page_visit(
         print(f"[TRAFFIC_TRACKER] Visit record note: {e}")
         return False
 
-def parse_referrer_info(referrer: str) -> dict:
-    """Extract clean domain, channel name, subreddit/path, and badge color from raw referrer URL."""
+def parse_referrer_info(referrer: str, utm_source: str = "", utm_campaign: str = "", fbclid: str = "") -> dict:
+    """Extract clean domain, UTM campaign channel, and badge metadata from referrer and UTM params."""
+    utm_src = _normalize_utm_source(utm_source, referrer, fbclid)
+    camp = (utm_campaign or "").strip()
+
+    if utm_src:
+        utm_meta = {
+            "instagram": ("Instagram", "Instagram Ads" if camp else "Instagram", "pink", "📸"),
+            "facebook": ("Facebook", "Facebook Ads" if camp else "Facebook", "blue", "📘"),
+            "meta": ("Meta Ads", "Meta Click ID (fbclid)", "pink", "🎯"),
+            "reddit": ("Reddit", "Reddit Post / Ad", "amber", "🔴"),
+            "peerlist": ("Peerlist", "Peerlist Launch", "emerald", "🟢"),
+            "linkedin": ("LinkedIn", "LinkedIn Campaign", "blue", "💼"),
+            "google": ("Google Search", "Google Campaign", "violet", "🔍"),
+            "whatsapp": ("WhatsApp", "WhatsApp Share", "emerald", "💬"),
+            "telegram": ("Telegram", "Telegram Channel", "sky", "✈️"),
+        }
+        ch, default_src, color, icon = utm_meta.get(
+            utm_src, (utm_src.title(), utm_src.title(), "indigo", "📣")
+        )
+        return {
+            "channel": ch,
+            "source": default_src,
+            "detail": f"Campaign: {camp}" if camp else (f"Meta Click ({utm_src})" if fbclid else f"UTM: {utm_src}"),
+            "badge_color": color,
+            "icon": icon
+        }
+
     ref = (referrer or "").strip()
     if not ref:
         return {
@@ -3041,6 +3149,9 @@ def get_recent_visitors(limit: int = 50, bots_only: bool = False) -> list:
                        COALESCE(location, '') as location,
                        COALESCE(user_name, '') as user_name,
                        COALESCE(user_email, '') as user_email,
+                       COALESCE(utm_source, '') as utm_source,
+                       COALESCE(utm_campaign, '') as utm_campaign,
+                       COALESCE(fbclid, '') as fbclid,
                        timestamp
                 FROM site_traffic
                 WHERE is_bot = ? AND path NOT LIKE '/admin%' AND path NOT LIKE '/api/admin%'
@@ -3063,6 +3174,9 @@ def get_recent_visitors(limit: int = 50, bots_only: bool = False) -> list:
                     "best_loc": (r["location"] or "").strip(),
                     "best_name": (r["user_name"] or "").strip(),
                     "best_email": (r["user_email"] or "").strip(),
+                    "best_utm_source": (r["utm_source"] or "").strip(),
+                    "best_utm_campaign": (r["utm_campaign"] or "").strip(),
+                    "best_fbclid": (r["fbclid"] or "").strip(),
                 }
                 order.append(vh)
             else:
@@ -3079,6 +3193,12 @@ def get_recent_visitors(limit: int = 50, bots_only: bool = False) -> list:
                 if not g["best_email"] and (r["user_email"] or "").strip():
                     g["best_email"] = (r["user_email"] or "").strip()
                     g["best_name"] = (r["user_name"] or "").strip()
+                if not g["best_utm_source"] and (r["utm_source"] or "").strip():
+                    g["best_utm_source"] = (r["utm_source"] or "").strip()
+                if not g["best_utm_campaign"] and (r["utm_campaign"] or "").strip():
+                    g["best_utm_campaign"] = (r["utm_campaign"] or "").strip()
+                if not g["best_fbclid"] and (r["fbclid"] or "").strip():
+                    g["best_fbclid"] = (r["fbclid"] or "").strip()
 
         for vh in order[:limit]:
             g = grouped[vh]
@@ -3099,7 +3219,12 @@ def get_recent_visitors(limit: int = 50, bots_only: bool = False) -> list:
                 time_ago = time.strftime("%b %d, %H:%M", time.localtime(ts))
 
             time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
-            ref_meta = parse_referrer_info(g["best_ref"])
+            ref_meta = parse_referrer_info(
+                g["best_ref"],
+                utm_source=g["best_utm_source"],
+                utm_campaign=g["best_utm_campaign"],
+                fbclid=g["best_fbclid"],
+            )
 
             model = (r["device_model"] or "").strip()
             brand = (r["device_brand"] or "").strip()
@@ -3125,6 +3250,8 @@ def get_recent_visitors(limit: int = 50, bots_only: bool = False) -> list:
                 "location": g["best_loc"] or "Location Pending / Direct",
                 "user_name": g["best_name"],
                 "user_email": g["best_email"],
+                "utm_source": g["best_utm_source"],
+                "utm_campaign": g["best_utm_campaign"],
                 "is_bot": bool(r["is_bot"]),
                 "referrer": g["best_ref"],
                 "referrer_channel": ref_meta["channel"],
@@ -3168,15 +3295,18 @@ def get_traffic_source_breakdown() -> list:
             cursor.execute("""
                 SELECT 
                     CASE 
-                        WHEN LOWER(referrer) LIKE '%reddit.com%' THEN 'Reddit'
-                        WHEN LOWER(referrer) LIKE '%peerlist.io%' THEN 'Peerlist'
-                        WHEN LOWER(referrer) LIKE '%linkedin.com%' THEN 'LinkedIn'
+                        WHEN LOWER(COALESCE(utm_source, '')) IN ('instagram', 'ig') OR LOWER(referrer) LIKE '%instagram.com%' THEN 'Instagram'
+                        WHEN LOWER(COALESCE(utm_source, '')) IN ('facebook', 'fb') OR LOWER(referrer) LIKE '%facebook.com%' OR LOWER(referrer) LIKE '%fb.com%' THEN 'Facebook'
+                        WHEN LOWER(COALESCE(utm_source, '')) IN ('meta', 'meta_ads') OR COALESCE(fbclid, '') != '' THEN 'Meta Ads'
+                        WHEN LOWER(COALESCE(utm_source, '')) = 'reddit' OR LOWER(referrer) LIKE '%reddit.com%' THEN 'Reddit'
+                        WHEN LOWER(COALESCE(utm_source, '')) = 'peerlist' OR LOWER(referrer) LIKE '%peerlist.io%' THEN 'Peerlist'
+                        WHEN LOWER(COALESCE(utm_source, '')) = 'linkedin' OR LOWER(referrer) LIKE '%linkedin.com%' THEN 'LinkedIn'
                         WHEN LOWER(referrer) LIKE '%twitter.com%' OR LOWER(referrer) LIKE '%t.co%' OR LOWER(referrer) LIKE '%x.com%' THEN 'Twitter / X'
-                        WHEN LOWER(referrer) LIKE '%google.%' THEN 'Google Search'
-                        WHEN LOWER(referrer) LIKE '%whatsapp%' THEN 'WhatsApp'
-                        WHEN LOWER(referrer) LIKE '%telegram%' OR LOWER(referrer) LIKE '%t.me%' THEN 'Telegram'
+                        WHEN LOWER(COALESCE(utm_source, '')) IN ('google', 'google_ads') OR LOWER(referrer) LIKE '%google.%' THEN 'Google Search'
+                        WHEN LOWER(COALESCE(utm_source, '')) = 'whatsapp' OR LOWER(referrer) LIKE '%whatsapp%' THEN 'WhatsApp'
+                        WHEN LOWER(COALESCE(utm_source, '')) = 'telegram' OR LOWER(referrer) LIKE '%telegram%' OR LOWER(referrer) LIKE '%t.me%' THEN 'Telegram'
                         WHEN LOWER(referrer) LIKE '%almondjobs.com%' OR LOWER(referrer) LIKE '%localhost%' THEN 'On-Site / Refresh'
-                        WHEN referrer = '' OR referrer IS NULL THEN 'Direct / In-App'
+                        WHEN (referrer = '' OR referrer IS NULL) AND COALESCE(utm_source, '') = '' THEN 'Direct / In-App'
                         ELSE 'Other Websites'
                     END as channel,
                     COUNT(*) as hits,
@@ -3192,6 +3322,9 @@ def get_traffic_source_breakdown() -> list:
         rows = []
         
     badge_colors = {
+        "Instagram": "pink",
+        "Facebook": "blue",
+        "Meta Ads": "pink",
         "Reddit": "amber",
         "Peerlist": "emerald",
         "LinkedIn": "blue",
@@ -3203,6 +3336,9 @@ def get_traffic_source_breakdown() -> list:
         "Other Websites": "indigo"
     }
     icons = {
+        "Instagram": "📸",
+        "Facebook": "📘",
+        "Meta Ads": "🎯",
         "Reddit": "🔴",
         "Peerlist": "🟢",
         "LinkedIn": "💼",
@@ -3387,7 +3523,9 @@ def get_analytics_summary() -> dict:
         "recent_visitors": get_recent_visitors(limit=50, bots_only=False),
         "recent_bot_probes": get_recent_visitors(limit=20, bots_only=True),
         "traffic_sources": get_traffic_source_breakdown(),
-        "location_breakdown": get_location_breakdown()
+        "location_breakdown": get_location_breakdown(),
+        "ad_funnel": get_ad_funnel_summary(),
+        "meta_pixel_id": get_meta_pixel_id()
     }
 
 def get_all_users_admin() -> list:
@@ -3952,4 +4090,220 @@ def get_revenue_analytics() -> dict:
         "daily_trends": sorted_trends,
         "transactions": transactions[:100]
     }
+
+
+# ============================================================================
+# Meta Pixel Governance & Paid Ad Conversion Funnel Telemetry
+# ============================================================================
+
+_VALID_FUNNEL_EVENTS = {"resume_upload", "signup", "checkout_start", "purchase"}
+
+
+def get_meta_pixel_id() -> str:
+    """Resolve active Meta Pixel ID from SQLite kv_settings, Supabase system_store, or Config env."""
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT value FROM kv_settings WHERE key = 'meta_pixel_id' LIMIT 1;")
+            row = cursor.fetchone()
+            if row and row["value"] is not None:
+                val = str(row["value"]).strip()
+                if val.isdigit():
+                    return val
+                if val == "__DISABLED__":
+                    return ""
+    except Exception:
+        pass
+
+    cloud_val = str(_get_system_store().get("meta_pixel_id") or "").strip()
+    if cloud_val.isdigit():
+        return cloud_val
+    if cloud_val == "__DISABLED__":
+        return ""
+
+    env_val = str(getattr(Config, "META_PIXEL_ID", "") or "").strip()
+    return env_val if env_val.isdigit() else ""
+
+
+def set_meta_pixel_id(pixel_id: str) -> dict:
+    """Persist numeric Meta Pixel ID (or empty string to disable) to SQLite and Supabase system_store."""
+    cleaned = (pixel_id or "").strip()
+    if cleaned and not cleaned.isdigit():
+        return {"status": "error", "message": "Meta Pixel ID must contain only numeric digits (e.g. 123456789012345)."}
+
+    stored_val = cleaned if cleaned else "__DISABLED__"
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO kv_settings (key, value) VALUES ('meta_pixel_id', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value;",
+                (stored_val,)
+            )
+            conn.commit()
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+    _update_system_store({"meta_pixel_id": stored_val})
+    return {
+        "status": "success",
+        "pixel_id": cleaned,
+        "message": f"Meta Pixel {cleaned} activated site-wide." if cleaned else "Meta Pixel disabled."
+    }
+
+
+def record_funnel_event(
+    event_name: str,
+    client_ip: str,
+    user_agent: str = "",
+    utm_source: str = "",
+    utm_medium: str = "",
+    utm_campaign: str = "",
+    utm_content: str = "",
+    fbclid: str = "",
+    user_name: str = "",
+    user_email: str = "",
+    amount_inr: float = 0.0,
+    meta: dict = None
+) -> bool:
+    """Record a candidate conversion milestone with full UTM & Meta click attribution."""
+    ev = (event_name or "").strip().lower()
+    if ev not in _VALID_FUNNEL_EVENTS:
+        return False
+
+    try:
+        visitor_hash, _, now = _compute_visitor_hash(client_ip, user_agent)
+        clean_fbclid = (fbclid or "").strip()[:120]
+        clean_src = _normalize_utm_source(utm_source, "", clean_fbclid)
+        clean_med = (utm_medium or "").strip().lower()[:80]
+        clean_camp = (utm_campaign or "").strip()[:120]
+        clean_cont = (utm_content or "").strip()[:120]
+        clean_name = (user_name or "").strip()[:120]
+        clean_email = (user_email or "").strip().lower()[:160]
+        try:
+            amt = max(0.0, float(amount_inr or 0.0))
+        except (TypeError, ValueError):
+            amt = 0.0
+        meta_str = json.dumps(meta)[:500] if isinstance(meta, dict) else ""
+
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO funnel_events (
+                    visitor_hash, event_name, utm_source, utm_medium, utm_campaign, utm_content,
+                    fbclid, user_name, user_email, amount_inr, meta_json, timestamp
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    visitor_hash, ev, clean_src, clean_med, clean_camp, clean_cont,
+                    clean_fbclid, clean_name, clean_email, amt, meta_str, now
+                )
+            )
+            conn.commit()
+        return True
+    except Exception as e:
+        print(f"[FUNNEL_TRACKER] Event record note: {e}")
+        return False
+
+
+def get_ad_funnel_summary() -> dict:
+    """
+    Aggregate full 5-stage conversion funnel (Visitors -> Resume Uploads -> Signups -> Checkouts -> Paid Pro)
+    broken down by acquisition source and campaign so founder can measure ₹1,000 ad ROI directly.
+    """
+    totals = {
+        "visitors": 0,
+        "resume_uploads": 0,
+        "signups": 0,
+        "checkout_starts": 0,
+        "purchases": 0,
+        "revenue_inr": 0.0
+    }
+    campaigns_map = {}
+
+    def _bucket(src: str, camp: str) -> dict:
+        s = (src or "").strip().lower() or "organic_direct"
+        c = (camp or "").strip() or "(untagged)"
+        key = (s, c)
+        if key not in campaigns_map:
+            campaigns_map[key] = {
+                "source": s,
+                "campaign": c,
+                "visitors": 0,
+                "resume_uploads": 0,
+                "signups": 0,
+                "checkout_starts": 0,
+                "purchases": 0,
+                "revenue_inr": 0.0
+            }
+        return campaigns_map[key]
+
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT
+                    CASE
+                        WHEN COALESCE(utm_source, '') != '' THEN LOWER(utm_source)
+                        WHEN COALESCE(fbclid, '') != '' THEN 'meta'
+                        WHEN LOWER(referrer) LIKE '%reddit.com%' THEN 'reddit'
+                        WHEN LOWER(referrer) LIKE '%peerlist.io%' THEN 'peerlist'
+                        ELSE 'organic_direct'
+                    END as src_key,
+                    COALESCE(utm_campaign, '') as camp_key,
+                    COUNT(DISTINCT visitor_hash) as uniques
+                FROM site_traffic
+                WHERE is_bot = 0 AND path NOT LIKE '/admin%' AND path NOT LIKE '/api/admin%'
+                GROUP BY src_key, camp_key;
+            """)
+            for r in cursor.fetchall():
+                b = _bucket(r["src_key"], r["camp_key"])
+                b["visitors"] += int(r["uniques"] or 0)
+                totals["visitors"] += int(r["uniques"] or 0)
+
+            cursor.execute("""
+                SELECT
+                    CASE
+                        WHEN COALESCE(utm_source, '') != '' THEN LOWER(utm_source)
+                        WHEN COALESCE(fbclid, '') != '' THEN 'meta'
+                        ELSE 'organic_direct'
+                    END as src_key,
+                    COALESCE(utm_campaign, '') as camp_key,
+                    event_name,
+                    COUNT(DISTINCT visitor_hash) as uniq_ev,
+                    COUNT(*) as raw_ev,
+                    COALESCE(SUM(amount_inr), 0) as rev_sum
+                FROM funnel_events
+                GROUP BY src_key, camp_key, event_name;
+            """)
+            for r in cursor.fetchall():
+                b = _bucket(r["src_key"], r["camp_key"])
+                ev = r["event_name"]
+                uniq_n = int(r["uniq_ev"] or 0)
+                raw_n = int(r["raw_ev"] or 0)
+                if ev == "resume_upload":
+                    b["resume_uploads"] += uniq_n
+                    totals["resume_uploads"] += uniq_n
+                elif ev == "signup":
+                    b["signups"] += uniq_n
+                    totals["signups"] += uniq_n
+                elif ev == "checkout_start":
+                    b["checkout_starts"] += uniq_n
+                    totals["checkout_starts"] += uniq_n
+                elif ev == "purchase":
+                    b["purchases"] += raw_n
+                    b["revenue_inr"] += float(r["rev_sum"] or 0.0)
+                    totals["purchases"] += raw_n
+                    totals["revenue_inr"] += float(r["rev_sum"] or 0.0)
+    except Exception as e:
+        print(f"[FUNNEL_TRACKER] Summary error: {e}")
+
+    campaigns = sorted(
+        campaigns_map.values(),
+        key=lambda x: (x["purchases"], x["signups"], x["resume_uploads"], x["visitors"]),
+        reverse=True
+    )[:15]
+    return {"totals": totals, "campaigns": campaigns}
+
 
