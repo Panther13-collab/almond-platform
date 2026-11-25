@@ -8,7 +8,7 @@ from core.config import Config
 from core.auth_db import record_contribution_payment, record_successful_payment, get_user_profile
 
 MIN_ORDER_AMOUNT_PAISE = 100
-VIP_LATEST_FEED_MAX_DAYS = 5
+VIP_LATEST_FEED_MAX_DAYS = 4
 razorpay_client = None
 
 if Config.is_razorpay_configured():
@@ -67,7 +67,7 @@ def get_job_age_days(job: dict, now_ts: float = None) -> int | None:
 
 def apply_vip_latest_feed_lock(jobs: list, user_is_paid: bool = False, max_days: int = VIP_LATEST_FEED_MAX_DAYS) -> list:
     """
-    Blur and lock latest postings (age <= max_days, i.e. Today through 5 days ago)
+    Blur and lock latest postings (age <= max_days, i.e. Today through 4 days ago)
     unless the user has an active VIP Pass. Keeps days-ago freshness visible.
     """
     if not jobs:

@@ -850,7 +850,13 @@ def query_curated_feed(
 
         filtered.append(item)
 
-    if sort_by == "oldest":
+    if sort_by == "free_jobs":
+        filtered = [
+            x for x in filtered
+            if (x.get("date_posted_ts", 0) and ((now_ts - x.get("date_posted_ts", 0)) // 86400) > 4)
+        ]
+        filtered.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=True)
+    elif sort_by == "oldest":
         filtered.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=False)
     elif sort_by == "package_desc":
         filtered.sort(key=lambda x: (x.get("package_inr_lpa") or estimate_job_package(x.get("role", ""), x.get("company", ""), x.get("feed_type", feed_type))[0]), reverse=True)
@@ -858,6 +864,28 @@ def query_curated_feed(
         filtered.sort(key=lambda x: (x.get("package_inr_lpa") or estimate_job_package(x.get("role", ""), x.get("company", ""), x.get("feed_type", feed_type))[0]), reverse=False)
     else:
         filtered.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=True)
+
+    # Founder Growth Interleaving for Curated Modals: on initial view (offset=0, sort=latest, time=all),
+    # mix fresh 0-4d Pro cards with unlocked 5+ day Free cards so free users immediately see working direct portals!
+    if not user_is_paid and sort_by == "latest" and (time_filter in ("all", "30d")) and len(filtered) > 10:
+        first_batch = filtered[:limit]
+        free_in_batch = sum(1 for x in first_batch if (now_ts - float(x.get("date_posted_ts") or now_ts)) // 86400 > 4)
+        if free_in_batch < 6:
+            fresh_pool = [x for x in filtered if (now_ts - float(x.get("date_posted_ts") or now_ts)) // 86400 <= 4]
+            free_pool = [x for x in filtered if (now_ts - float(x.get("date_posted_ts") or now_ts)) // 86400 > 4]
+            if free_pool:
+                mixed = []
+                fi, ri = 0, 0
+                while len(mixed) < len(filtered) and (fi < len(fresh_pool) or ri < len(free_pool)):
+                    for _ in range(2):
+                        if fi < len(fresh_pool):
+                            mixed.append(fresh_pool[fi])
+                            fi += 1
+                    for _ in range(2):
+                        if ri < len(free_pool):
+                            mixed.append(free_pool[ri])
+                            ri += 1
+                filtered = mixed
 
     total_count = len(filtered)
     page_slice = filtered[offset : offset + limit]
@@ -1165,7 +1193,7 @@ def omni_search_all_feeds(
         for x in filtered:
             pts = x.get("date_posted_ts", 0)
             age_d = max(0, (now_ts - pts) // 86400) if (pts and pts > 100000) else 0
-            if age_d > 5:
+            if age_d > 4:
                 free_filtered.append(x)
         filtered = free_filtered
 
@@ -1190,6 +1218,28 @@ def omni_search_all_feeds(
         filtered.sort(key=lambda x: (x.get("_match_score", 0), x.get("date_posted_ts", 0)), reverse=True)
     else:
         filtered.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=True)
+
+    # Founder Growth Interleaving: For free users on 'best_match' Page 1, ensure a healthy mix of
+    # fresh Pro roles AND unlocked 5+ day free roles so candidates immediately verify real direct links work!
+    if not user_is_paid and clean_sort == "best_match" and (max_days == 0 or max_days > 4) and len(filtered) > 10:
+        first_batch = filtered[:limit]
+        free_in_batch = sum(1 for x in first_batch if (now_ts - float(x.get("date_posted_ts") or now_ts)) // 86400 > 4)
+        if free_in_batch < 6:
+            fresh_pool = [x for x in filtered if (now_ts - float(x.get("date_posted_ts") or now_ts)) // 86400 <= 4]
+            free_pool = [x for x in filtered if (now_ts - float(x.get("date_posted_ts") or now_ts)) // 86400 > 4]
+            if free_pool:
+                mixed = []
+                fi, ri = 0, 0
+                while len(mixed) < len(filtered) and (fi < len(fresh_pool) or ri < len(free_pool)):
+                    for _ in range(2):
+                        if fi < len(fresh_pool):
+                            mixed.append(fresh_pool[fi])
+                            fi += 1
+                    for _ in range(2):
+                        if ri < len(free_pool):
+                            mixed.append(free_pool[ri])
+                            ri += 1
+                filtered = mixed
 
     total_count = len(filtered)
     page_slice = filtered[offset : offset + limit]

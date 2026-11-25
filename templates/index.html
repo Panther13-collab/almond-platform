@@ -918,7 +918,7 @@
                                         <option value="oldest">Sort: Oldest First</option>
                                         <option value="package_desc">Package: High to Low</option>
                                         <option value="package_asc">Package: Low to High</option>
-                                        <option value="free_jobs">Free Jobs (6+ Days Old)</option>
+                                        <option value="free_jobs">Free Jobs (5+ Days Old)</option>
                                     </select>
                                     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[10px]">▼</span>
                                 </div>
@@ -950,6 +950,19 @@
                                 <div class="h-20 rounded-2xl bg-white/80 border border-slate-200/80 p-4 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-11 h-11 rounded-xl bg-slate-200"></div><div class="space-y-2"><div class="w-40 h-4 bg-slate-200 rounded"></div><div class="w-64 h-3 bg-slate-100 rounded"></div></div></div><div class="w-28 h-8 bg-slate-200 rounded-xl"></div></div>
                                 <div class="h-20 rounded-2xl bg-white/80 border border-slate-200/80 p-4 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-11 h-11 rounded-xl bg-slate-200"></div><div class="space-y-2"><div class="w-48 h-4 bg-slate-200 rounded"></div><div class="w-56 h-3 bg-slate-100 rounded"></div></div></div><div class="w-28 h-8 bg-slate-200 rounded-xl"></div></div>
                             </div>
+                        </div>
+
+                        <!-- Founder Conversion & Free Access Guide Banner (Shown to Free/Guest Users) -->
+                        <div id="omniFreeAccessStrip" class="hidden mb-3.5 p-3.5 rounded-2xl bg-gradient-to-r from-amber-50/90 via-white to-emerald-50/90 border border-amber-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-left">
+                            <div class="flex items-center gap-2.5 text-xs text-slate-800">
+                                <span class="text-base shrink-0">🔓</span>
+                                <span>
+                                    <strong>Fresh (Last 4 Days)</strong> unlock with Pro for early apply &bull; Roles <strong>5+ days old are 100% Free</strong> to apply directly.
+                                </span>
+                            </div>
+                            <button type="button" onclick="const s=document.getElementById('omniSortSelect'); if(s){s.value='free_jobs';} setOmniSortMode('free_jobs');" class="shrink-0 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-2xs transition cursor-pointer whitespace-nowrap">
+                                Show Only Free Jobs (5+ Days) &rarr;
+                            </button>
                         </div>
 
                         <!-- Full-Width Lengthy Horizontal Row Cards Container -->
@@ -1128,7 +1141,7 @@
                         </div>
 
                         <!-- CARD 4: 0% Recruiter Spread -->
-                        <div onclick="openHeroInfoModal('middlemen')" class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg hover:border-violet-300 transition cursor-pointer group flex flex-col justify-between">
+                        <div onclick="openHeroInfoModal('ingestion')" class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg hover:border-violet-300 transition cursor-pointer group flex flex-col justify-between">
                             <div>
                                 <div class="flex items-center gap-1.5 mb-1.5 text-xs font-black uppercase tracking-wider text-violet-700">
                                     <span class="w-2 h-2 rounded-full bg-violet-600"></span>
@@ -1148,7 +1161,7 @@
                         </div>
 
                         <!-- CARD 5: Verified Compensation -->
-                        <div onclick="openHeroInfoModal('brokers')" class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg hover:border-emerald-300 transition cursor-pointer group flex flex-col justify-between">
+                        <div onclick="openHeroInfoModal('salary')" class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg hover:border-emerald-300 transition cursor-pointer group flex flex-col justify-between">
                             <div>
                                 <div class="flex items-center gap-1.5 mb-1.5 text-xs font-black uppercase tracking-wider text-emerald-700">
                                     <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
@@ -1168,7 +1181,7 @@
                         </div>
 
                         <!-- CARD 6: Founder Direct Access -->
-                        <div onclick="openHeroInfoModal('deadposts')" class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg hover:border-indigo-300 transition cursor-pointer group flex flex-col justify-between">
+                        <div onclick="openHeroInfoModal('routing')" class="bg-white/95 rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-md shadow-slate-200/50 hover:shadow-lg hover:border-indigo-300 transition cursor-pointer group flex flex-col justify-between">
                             <div>
                                 <div class="flex items-center gap-1.5 mb-1.5 text-xs font-black uppercase tracking-wider text-indigo-700">
                                     <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
@@ -1574,19 +1587,19 @@
                 <button type="button" id="closeHeroInfoModal" onclick="closeHeroInfoModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-900 flex items-center justify-center transition cursor-pointer font-bold text-sm">✕</button>
             </div>
 
-            <!-- 4 Nav Tabs Inside Modal -->
+            <!-- 4 Clear Student-Friendly Nav Tabs Inside Modal -->
             <div class="flex items-center space-x-1 sm:space-x-2 border-b border-slate-100 pb-3 mb-3.5 overflow-x-auto text-xs font-black shrink-0">
-                <button type="button" onclick="switchHeroModalTab('brokers')" id="tabBrokers" class="hero-modal-tab px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1">
-                    <span>✕ No Brokers</span>
+                <button type="button" onclick="switchHeroModalTab('ingestion')" id="tabIngestion" class="hero-modal-tab px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1 shrink-0">
+                    <span>⚡ Direct Job Feed</span>
                 </button>
-                <button type="button" onclick="switchHeroModalTab('middlemen')" id="tabMiddlemen" class="hero-modal-tab px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1">
-                    <span>✕ No Middlemen</span>
+                <button type="button" onclick="switchHeroModalTab('salary')" id="tabSalary" class="hero-modal-tab px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1 shrink-0">
+                    <span>💰 Salary Ranges</span>
                 </button>
-                <button type="button" onclick="switchHeroModalTab('deadposts')" id="tabDeadposts" class="hero-modal-tab px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1">
-                    <span>✕ No Dead Posts</span>
+                <button type="button" onclick="switchHeroModalTab('routing')" id="tabRouting" class="hero-modal-tab px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1 shrink-0">
+                    <span>🎯 Direct Hiring</span>
                 </button>
-                <button type="button" onclick="switchHeroModalTab('about')" id="tabAbout" class="hero-modal-tab px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1">
-                    <span>Who We Are?</span>
+                <button type="button" onclick="switchHeroModalTab('about')" id="tabAbout" class="hero-modal-tab px-3 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1 shrink-0">
+                    <span>🛡️ Who We Are</span>
                 </button>
             </div>
 
@@ -2239,7 +2252,7 @@
                                 </div>
                                 <div class="flex items-start gap-2 text-slate-700">
                                     <span class="text-emerald-600 font-bold">✓</span>
-                                    <span>Full apply links for jobs posted 6+ days ago</span>
+                                    <span>Full apply links for jobs posted 5+ days ago</span>
                                 </div>
                                 <div class="flex items-start gap-2 text-slate-700">
                                     <span class="text-emerald-600 font-bold">✓</span>
@@ -2247,7 +2260,7 @@
                                 </div>
                                 <div class="flex items-start gap-2 text-slate-400">
                                     <span class="text-slate-300 font-bold">✗</span>
-                                    <span>Latest jobs (Posted Today &ndash; 5 days) are blurred</span>
+                                    <span>Latest jobs (Posted Today &ndash; 4 days) are blurred</span>
                                 </div>
                                 <div class="flex items-start gap-2 text-slate-400">
                                     <span class="text-slate-300 font-bold">✗</span>
@@ -2301,7 +2314,7 @@
                             <div class="space-y-2 pt-2 border-t border-amber-200/60 text-xs">
                                 <div class="flex items-start gap-2 text-slate-900 font-semibold">
                                     <span class="text-amber-500 font-black">⚡</span>
-                                    <span><strong>Unlock Latest Jobs:</strong> Instant access to roles posted Today &ndash; 5 days ago</span>
+                                    <span><strong>Unlock Latest Jobs:</strong> Instant access to roles posted Today &ndash; 4 days ago</span>
                                 </div>
                                 <div class="flex items-start gap-2 text-slate-900 font-semibold">
                                     <span class="text-emerald-600 font-black">🎯</span>
@@ -2924,6 +2937,7 @@
                         <!-- Flipkart / Amazon Style Sort Option -->
                         <select id="curatedSortSelect" onchange="handleCuratedFilterChange()" class="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-violet-500 shadow-2xs cursor-pointer" title="Sort verified job openings">
                             <option value="latest">Sort: Latest (New to Old)</option>
+                            <option value="free_jobs">Free Jobs (5+ Days Old)</option>
                             <option value="oldest">Sort: Oldest (Old to New)</option>
                             <option value="package_desc">Sort: Package (High to Low)</option>
                             <option value="package_asc">Sort: Package (Low to High)</option>

@@ -975,210 +975,167 @@ function initAddSkillControls() {
 
 // High-Contrast Light Theme Educational Value Modal (No Brokers, No Middlemen, No Dead Posts, 100% Direct Corporate)
 const HERO_MODAL_DATA = {
-    brokers: {
-        badge: "✕ NO BROKERS",
-        icon: "user-x",
-        iconClass: "text-rose-700",
-        iconBg: "bg-rose-100 border border-rose-300 text-rose-700 shadow-xs",
-        activeTabClass: "bg-rose-600 text-white font-black shadow-md border-rose-600 ring-2 ring-rose-300",
-        title: "What are Job Brokers & Why Avoid Them?",
-        subtitle: "Third-Party Headhunters • Contingency Recruitment Agencies",
+    ingestion: {
+        badge: "⚡ DIRECT JOB FEED",
+        icon: "zap",
+        iconClass: "text-violet-700",
+        iconBg: "bg-violet-100 border border-violet-300 text-violet-800 shadow-xs",
+        activeTabClass: "bg-violet-600 text-white font-black shadow-md border-violet-600 ring-2 ring-violet-300",
+        title: "Direct Corporate Ingestion",
+        subtitle: "How jobs reach you straight from company websites — fast & real",
         sections: [
             {
-                heading: "What Brokers Usually Do",
-                headingColor: "text-rose-950 font-black",
-                dotColor: "bg-rose-600",
-                cardBorder: "border-2 border-rose-200/90",
-                accentBorder: "border-l-rose-500",
-                cardBg: "bg-white",
-                desc: "Third-party recruitment brokers and contingency headhunters scrape open job posts or intercept hiring pipelines. They do not work inside the employer company. Instead, they hoard candidate resumes and pitch them to companies with a heavy sales commission contract."
+                heading: "1. Pulled Straight From Official Career Pages",
+                headingColor: "text-violet-950 font-black",
+                dotColor: "bg-violet-600",
+                cardBorder: "border border-violet-200",
+                accentBorder: "border-l-4 border-l-violet-600",
+                cardBg: "bg-violet-50/40",
+                desc: "Every job on Almond Jobs comes directly from official company career portals like Workday, Greenhouse, and Ashby — the exact same pages companies post to first."
             },
             {
-                heading: "The 20% to 35% Salary Siphon",
-                headingColor: "text-rose-950 font-black",
-                dotColor: "bg-rose-600",
-                cardBorder: "border-2 border-rose-200/90",
-                accentBorder: "border-l-rose-600",
-                cardBg: "bg-rose-50/50",
-                desc: "When a broker gets you hired, the employer pays them a mandatory agency fee equal to <span class=\"bg-rose-100 text-rose-950 font-black px-1.5 py-0.5 rounded border border-rose-200\">20% to 35% of your negotiated first-year CTC</span>. If your offer is ₹20 LPA ($120k), the company shells out ₹4L–₹7L+ ($25k–$40k) directly to the broker. Employers deduct this fee from your total compensation pool—resulting in lower base pay, slashed sign-on bonuses, and diminished equity."
-            },
-            {
-                heading: "Candidate Troubles & Commission-Biased Matching",
-                headingColor: "text-amber-950 font-black",
-                dotColor: "bg-amber-600",
-                cardBorder: "border-2 border-amber-200/90",
-                accentBorder: "border-l-amber-500",
-                cardBg: "bg-white",
-                desc: "Because brokers are paid solely on commission bounties, they frequently push candidates toward companies offering the biggest payout rather than the role best suited for their skills, tech stack, and career growth. Furthermore, uncoordinated duplicate resume submissions by brokers frequently cause candidates to be disqualified by corporate HR systems."
-            },
-            {
-                heading: "The Almond Direct Feed Solution",
+                heading: "2. Zero Recruiter Agencies or Middlemen",
                 headingColor: "text-emerald-950 font-black",
                 dotColor: "bg-emerald-600",
-                cardBorder: "border-2 border-emerald-300",
-                accentBorder: "border-l-emerald-600",
-                cardBg: "bg-emerald-50/70",
-                desc: "<span class=\"bg-emerald-100 text-emerald-950 font-black px-1.5 py-0.5 rounded border border-emerald-200\">0% Recruiter Spread.</span> Almond routes you directly to verified corporate portal feeds. Employers incur zero agency commission fees, giving you full negotiation leverage to claim maximum base pay and bonuses."
+                cardBorder: "border border-emerald-200",
+                accentBorder: "border-l-4 border-l-emerald-600",
+                cardBg: "bg-emerald-50/40",
+                desc: "You never have to talk to third-party consultancies asking for a cut of your salary, calling repeatedly, or forwarding your resume without permission."
+            },
+            {
+                heading: "3. Real Active Openings Only",
+                headingColor: "text-slate-950 font-black",
+                dotColor: "bg-slate-700",
+                cardBorder: "border border-slate-200",
+                accentBorder: "border-l-4 border-l-slate-700",
+                cardBg: "bg-white",
+                desc: "When a company closes a role on their career page, our sync removes it automatically so students and job seekers don't waste hours applying to expired links."
             }
         ]
     },
-    middlemen: {
-        badge: "✕ NO MIDDLEMEN",
-        icon: "git-fork",
-        iconClass: "text-amber-700",
-        iconBg: "bg-amber-100 border border-amber-300 text-amber-800 shadow-xs",
-        activeTabClass: "bg-amber-600 text-white font-black shadow-md border-amber-600 ring-2 ring-amber-300",
-        title: "What are Staffing Middlemen & Body Shops?",
-        subtitle: "Multi-Tier Sub-Contractors • Margin-Slicing Staffing Body Shops",
+    salary: {
+        badge: "💰 SALARY RANGES",
+        icon: "badge-check",
+        iconClass: "text-emerald-700",
+        iconBg: "bg-emerald-100 border border-emerald-300 text-emerald-800 shadow-xs",
+        activeTabClass: "bg-emerald-600 text-white font-black shadow-md border-emerald-600 ring-2 ring-emerald-300",
+        title: "Disclosed Salary & Stipend Bands",
+        subtitle: "Know expected pay upfront before spending time applying",
         sections: [
             {
-                heading: "What Middlemen Actually Do",
-                headingColor: "text-amber-950 font-black",
-                dotColor: "bg-amber-600",
-                cardBorder: "border-2 border-amber-200/90",
-                accentBorder: "border-l-amber-500",
-                cardBg: "bg-white",
-                desc: "Middlemen create an artificial chain of subcontracting between you and the actual engineering team. A client hires a prime vendor, who subcontracts to a tier-2 vendor, who delegates to an agency recruiter who finally contacts you."
-            },
-            {
-                heading: "Predatory Margin Shaving",
-                headingColor: "text-amber-950 font-black",
-                dotColor: "bg-amber-600",
-                cardBorder: "border-2 border-amber-200/90",
-                accentBorder: "border-l-amber-600",
-                cardBg: "bg-amber-50/50",
-                desc: "Every tier of middlemen slices off a thick slice of your compensation. If the client company bills $90/hr (or ₹25 LPA) for an engineer, multi-tier body shops often hand the candidate only $35/hr (or ₹10 LPA)—<span class=\"bg-amber-100 text-amber-950 font-black px-1.5 py-0.5 rounded border border-amber-200\">pocketing over 50% of the candidate's true market value</span> month after month."
-            },
-            {
-                heading: "Candidate Troubles: Resume Manipulation & Delays",
-                headingColor: "text-amber-950 font-black",
-                dotColor: "bg-amber-600",
-                cardBorder: "border-2 border-amber-200/90",
-                accentBorder: "border-l-amber-500",
-                cardBg: "bg-white",
-                desc: "Middlemen frequently tamper with or exaggerate your resume to clear vendor scorecard hurdles without your approval, leading to disastrous, misaligned technical interviews. Communication, interview feedback, and contract terms are chronically delayed through games of corporate telephone."
-            },
-            {
-                heading: "The Almond Direct Feed Solution",
+                heading: "1. Clear Pay & Stipend Estimates",
                 headingColor: "text-emerald-950 font-black",
                 dotColor: "bg-emerald-600",
-                cardBorder: "border-2 border-emerald-300",
-                accentBorder: "border-l-emerald-600",
-                cardBg: "bg-emerald-50/70",
-                desc: "<span class=\"bg-emerald-100 text-emerald-950 font-black px-1.5 py-0.5 rounded border border-emerald-200\">Direct Internal Connection.</span> Almond eliminates every intermediary vendor layer. You interface directly with internal engineering leadership and corporate HR talent acquisition teams."
+                cardBorder: "border border-emerald-200",
+                accentBorder: "border-l-4 border-l-emerald-600",
+                cardBg: "bg-emerald-50/40",
+                desc: "For every internship and full-time job, Almond displays either the company's official disclosed salary range or an accurate industry benchmark (in ₹ LPA or monthly intern stipend)."
+            },
+            {
+                heading: "2. Filter by Your Minimum Expectation",
+                headingColor: "text-violet-950 font-black",
+                dotColor: "bg-violet-600",
+                cardBorder: "border border-violet-200",
+                accentBorder: "border-l-4 border-l-violet-600",
+                cardBg: "bg-violet-50/40",
+                desc: "Choose 3 LPA, 7 LPA, 15 LPA, or any band in your Profile Vector. Selecting 7 LPA automatically includes 6 LPA all the way up to 30+ LPA roles so you never miss great offers."
+            },
+            {
+                heading: "3. Better Offer Leverage",
+                headingColor: "text-slate-950 font-black",
+                dotColor: "bg-slate-700",
+                cardBorder: "border border-slate-200",
+                accentBorder: "border-l-4 border-l-slate-700",
+                cardBg: "bg-white",
+                desc: "Because companies don't pay 20% agency broker commissions when you apply directly through their portal, they have full budget flexibility for your final offer."
             }
         ]
     },
-    deadposts: {
-        badge: "✕ NO DEAD POSTS",
-        icon: "file-x",
-        iconClass: "text-red-700",
-        iconBg: "bg-red-100 border border-red-300 text-red-700 shadow-xs",
-        activeTabClass: "bg-red-600 text-white font-black shadow-md border-red-600 ring-2 ring-red-300",
-        title: "What are Dead Posts & Ghost Jobs?",
-        subtitle: "Expired Requisitions • Resume-Harvesting Phantom Listings",
+    routing: {
+        badge: "🎯 DIRECT HIRING",
+        icon: "send",
+        iconClass: "text-indigo-700",
+        iconBg: "bg-indigo-100 border border-indigo-300 text-indigo-800 shadow-xs",
+        activeTabClass: "bg-indigo-600 text-white font-black shadow-md border-indigo-600 ring-2 ring-indigo-300",
+        title: "Direct Hiring Team Routing",
+        subtitle: "Your application goes straight to the company's actual recruiters",
         sections: [
             {
-                heading: "What Dead Posts Mean",
-                headingColor: "text-red-950 font-black",
-                dotColor: "bg-red-600",
-                cardBorder: "border-2 border-red-200/90",
-                accentBorder: "border-l-red-500",
-                cardBg: "bg-white",
-                desc: "Dead posts and 'ghost jobs' are listings left active on legacy job boards (LinkedIn, Indeed, third-party aggregators) long after the position was filled, cancelled, or placed on indefinite hiring freeze. Many legacy platforms refuse to take them down because high post counts boost their SEO traffic."
+                heading: "1. One Click to Official Application Page",
+                headingColor: "text-indigo-950 font-black",
+                dotColor: "bg-indigo-600",
+                cardBorder: "border border-indigo-200",
+                accentBorder: "border-l-4 border-l-indigo-600",
+                cardBg: "bg-indigo-50/40",
+                desc: "Clicking Apply Direct opens the hiring company's official portal in a new tab — no middleman signup walls or spam redirects."
             },
             {
-                heading: "40+ Hours of Wasted Candidate Time",
-                headingColor: "text-red-950 font-black",
-                dotColor: "bg-red-600",
-                cardBorder: "border-2 border-red-200/90",
-                accentBorder: "border-l-red-600",
-                cardBg: "bg-red-50/50",
-                desc: "Candidates spend <span class=\"bg-red-100 text-red-950 font-black px-1.5 py-0.5 rounded border border-red-200\">40+ hours</span> customizing resumes, writing STAR-format cover letters, and completing take-home assignments for positions that have no active headcount. This creates massive candidate fatigue and demotivation."
-            },
-            {
-                heading: "Data Harvesting & Telemarketing Spam",
+                heading: "2. Beat the 1,000+ Applicant Crowd",
                 headingColor: "text-amber-950 font-black",
                 dotColor: "bg-amber-600",
-                cardBorder: "border-2 border-amber-200/90",
-                accentBorder: "border-l-amber-500",
-                cardBg: "bg-white",
-                desc: "Many phantom listings exist exclusively to harvest active candidate phone numbers and email addresses to sell to marketing lists, predatory coding bootcamps, and resume-writing services without candidate consent."
+                cardBorder: "border border-amber-200",
+                accentBorder: "border-l-4 border-l-amber-500",
+                cardBg: "bg-amber-50/40",
+                desc: "Most jobs reach LinkedIn days after opening, where 800+ people apply within hours. Applying directly right after opening puts your resume at the top of the company's review queue."
             },
             {
-                heading: "The Almond Direct Feed Solution",
+                heading: "3. Built-In AI Pitch & Job Tracker",
                 headingColor: "text-emerald-950 font-black",
                 dotColor: "bg-emerald-600",
-                cardBorder: "border-2 border-emerald-300",
-                accentBorder: "border-l-emerald-600",
-                cardBg: "bg-emerald-50/70",
-                desc: "<span class=\"bg-emerald-100 text-emerald-950 font-black px-1.5 py-0.5 rounded border border-emerald-200\">Live Feed Synchronization.</span> Almond monitors live API & webhook events on Ashby, Greenhouse, Lever, and Workday. As soon as a requisition is filled or closed, it vanishes from Almond. You only apply to actively hiring roles."
+                cardBorder: "border border-emerald-200",
+                accentBorder: "border-l-4 border-l-emerald-600",
+                cardBg: "bg-white",
+                desc: "Generate a tailored AI Pitch or Cover Letter for each role and save roles to your personal Kanban tracker so you stay organized from application to offer."
             }
         ]
     },
     about: {
-        // Corporate Company Portal Architecture
-
-        badge: "✓ WHO WE ARE",
+        badge: "🛡️ WHO WE ARE",
         icon: "shield-check",
         iconClass: "text-emerald-700",
         iconBg: "bg-emerald-100 border border-emerald-300 text-emerald-800 shadow-xs",
         activeTabClass: "bg-emerald-600 text-white font-black shadow-md border-emerald-600 ring-2 ring-emerald-300",
-        title: "Who We Are",
-        subtitle: "Direct Corporate Feeds • Our Philosophy & Mission",
+        title: "About Almond Jobs",
+        subtitle: "Built to help students & engineers skip spam and apply directly",
         sections: [
             {
-                heading: "Our Direct Feed Philosophy",
+                heading: "Why We Built Almond Jobs",
                 headingColor: "text-emerald-950 font-black",
                 dotColor: "bg-emerald-600",
-                cardBorder: "border-2 border-emerald-200/90",
-                accentBorder: "border-l-emerald-500",
-                cardBg: "bg-white",
-                desc: "Almond Jobs is a candidate-first career intelligence platform designed to bypass recruitment agencies, body shops, and ghost jobs. We connect talented professionals straight to verified corporate pipelines."
+                cardBorder: "border border-emerald-200",
+                accentBorder: "border-l-4 border-l-emerald-600",
+                cardBg: "bg-emerald-50/40",
+                desc: "Students and developers waste too much time applying to closed listings and 1,000+ applicant crowds. Almond Jobs solves this by connecting you straight to verified company career portals."
             },
             {
-                heading: "Direct Review by Engineering Teams",
-                headingColor: "text-emerald-950 font-black",
-                dotColor: "bg-emerald-600",
-                cardBorder: "border-2 border-emerald-200/90",
-                accentBorder: "border-l-emerald-500",
-                cardBg: "bg-white",
-                desc: "When you submit directly through verified corporate portals, your resume lands straight into the internal dashboard of the engineering hiring manager and company talent team. It bypasses external spam filters and untrusted aggregators entirely."
-            },
-            {
-                heading: "Maximum Compensation Negotiation Power",
-                headingColor: "text-emerald-950 font-black",
-                dotColor: "bg-emerald-600",
-                cardBorder: "border-2 border-emerald-300",
-                accentBorder: "border-l-emerald-600",
-                cardBg: "bg-emerald-50/70",
-                desc: "Because you apply directly through private company pipelines, the hiring company saves <span class=\"bg-emerald-100 text-emerald-950 font-black px-1.5 py-0.5 rounded border border-emerald-200\">$10,000–$30,000 in agency headhunter fees</span>. This unencumbered budget gives you stronger leverage during final salary negotiations."
-            },
-            {
-                heading: "Almond's Verified Feed Network",
+                heading: "Free for Everyone (5+ Days) & Pro for Early Access",
                 headingColor: "text-violet-950 font-black",
                 dotColor: "bg-violet-600",
-                cardBorder: "border-2 border-violet-200",
-                accentBorder: "border-l-violet-600",
-                cardBg: "bg-violet-50/50",
-                desc: "Almond indexes 3,315,000+ live verified corporate postings worldwide, enabling engineers to discover fresh roles within minutes of opening and apply directly with 0% recruiter markup."
+                cardBorder: "border border-violet-200",
+                accentBorder: "border-l-4 border-l-violet-600",
+                cardBg: "bg-violet-50/40",
+                desc: "Every role posted 5+ days ago is 100% free to search, match, and apply. Optional Pro unlocks brand-new roles posted in the last 4 days so early applicants can move first."
             }
         ]
     }
 };
+HERO_MODAL_DATA.middlemen = HERO_MODAL_DATA.ingestion;
+HERO_MODAL_DATA.brokers = HERO_MODAL_DATA.salary;
+HERO_MODAL_DATA.deadposts = HERO_MODAL_DATA.routing;
 
 function switchHeroModalTab(tabKey) {
-    const key = HERO_MODAL_DATA[tabKey] ? tabKey : (HERO_MODAL_DATA['about'] ? 'about' : 'ats');
+    const aliasMap = { brokers: 'salary', middlemen: 'ingestion', deadposts: 'routing' };
+    const resolvedKey = aliasMap[tabKey] || tabKey;
+    const key = HERO_MODAL_DATA[resolvedKey] ? resolvedKey : 'ingestion';
     const data = HERO_MODAL_DATA[key];
     const modal = document.getElementById('heroInfoModal');
     if (!modal) return;
 
-    // Update tab button styles
-    const tabKeys = ['brokers', 'middlemen', 'deadposts', 'about', 'ats'];
+    const tabKeys = ['ingestion', 'salary', 'routing', 'about'];
     tabKeys.forEach(t => {
         const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
         if (btn) {
-            btn.className = 'hero-modal-tab px-3.5 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1 text-xs ';
+            btn.className = 'hero-modal-tab px-3.5 py-1.5 rounded-xl border transition cursor-pointer flex items-center gap-1 text-xs shrink-0 ';
             if (t === key) {
                 btn.className += data.activeTabClass;
             } else {
@@ -1187,7 +1144,6 @@ function switchHeroModalTab(tabKey) {
         }
     });
 
-    // Update Header Icon, Title & Subtitle
     const iconContainer = document.getElementById('heroModalIcon');
     if (iconContainer) {
         iconContainer.className = 'w-10 h-10 rounded-2xl flex items-center justify-center transition-all ' + data.iconBg;
@@ -1200,16 +1156,15 @@ function switchHeroModalTab(tabKey) {
     const subtitleEl = document.getElementById('heroModalSubtitle');
     if (subtitleEl) subtitleEl.textContent = data.subtitle;
 
-    // Populate Body Sections with 100% High-Contrast, Crystal-Clear Cards
     const bodyEl = document.getElementById('heroModalBody');
     if (bodyEl) {
-        bodyEl.innerHTML = data.sections.map(sec => 
-            '<div class="p-4 sm:p-5 rounded-2xl ' + sec.cardBorder + ' ' + sec.cardBg + ' transition-all shadow-xs border-l-4 ' + (sec.accentBorder || '') + '">' +
-                '<div class="flex items-center space-x-2 mb-2">' +
-                    '<span class="w-2.5 h-2.5 rounded-full ' + sec.dotColor + ' shrink-0"></span>' +
-                    '<span class="text-xs sm:text-sm font-black uppercase tracking-wider ' + sec.headingColor + '">' + sec.heading + '</span>' +
+        bodyEl.innerHTML = data.sections.map(sec =>
+            '<div class="p-4 rounded-2xl ' + sec.cardBorder + ' ' + sec.cardBg + ' transition-all shadow-2xs ' + (sec.accentBorder || '') + '">' +
+                '<div class="flex items-center space-x-2 mb-1.5">' +
+                    '<span class="w-2 h-2 rounded-full ' + sec.dotColor + ' shrink-0"></span>' +
+                    '<span class="text-xs sm:text-sm font-black ' + sec.headingColor + '">' + sec.heading + '</span>' +
                 '</div>' +
-                '<p class="text-xs sm:text-[13px] text-slate-900 leading-relaxed font-semibold">' + sec.desc + '</p>' +
+                '<p class="text-xs sm:text-[13px] text-slate-700 leading-relaxed font-medium">' + sec.desc + '</p>' +
             '</div>'
         ).join('');
     }
@@ -2144,7 +2099,7 @@ function isJobLatestFeedLocked(job) {
     if (isUserPaid()) return false;
     if (!job || typeof job !== "object") return false;
     if (typeof job.is_locked === "boolean") return job.is_locked;
-    if (typeof job.days_ago === "number") return job.days_ago <= 5;
+    if (typeof job.days_ago === "number") return job.days_ago <= 4;
     return false;
 }
 
@@ -6732,7 +6687,15 @@ window.handleCuratedFilterChange = function() {
     loadCuratedFeeds(false);
 };
 
-async function loadCuratedFeeds(withBespokeCuration = false) {
+window.curatedCurrentOffset = 0;
+window.curatedCurrentItems = [];
+window.curatedTotalCount = 0;
+
+window.loadMoreCuratedFeeds = function() {
+    loadCuratedFeeds(false, true);
+};
+
+async function loadCuratedFeeds(withBespokeCuration = false, append = false) {
     const container = document.getElementById('curatedCardsContainer');
     if (!container) return;
 
@@ -6743,15 +6706,25 @@ async function loadCuratedFeeds(withBespokeCuration = false) {
     const sortBy = document.getElementById('curatedSortSelect')?.value || 'latest';
     const userId = getCandidateUserId();
 
-    if (withBespokeCuration) {
-        showCuratedLoadingScreen(`Curating latest special ${currentCuratedFeedType === 'internships' ? 'intern' : (currentCuratedFeedType === 'aiml' ? 'AI/ML' : 'entry-level')} jobs for you...`);
+    if (!append) {
+        window.curatedCurrentOffset = 0;
+        window.curatedCurrentItems = [];
+        if (withBespokeCuration) {
+            showCuratedLoadingScreen(`Curating ${currentCuratedFeedType === 'internships' ? 'internships' : (currentCuratedFeedType === 'aiml' ? 'AI/ML roles' : 'entry-level roles')}...`);
+        } else {
+            container.innerHTML = `
+                <div class="py-12 flex flex-col items-center justify-center space-y-3">
+                    <span class="w-7 h-7 rounded-full border-2 border-emerald-600 border-t-transparent animate-spin"></span>
+                    <p class="text-xs font-bold text-slate-500">Searching matching direct corporate openings...</p>
+                </div>
+            `;
+        }
     } else {
-        container.innerHTML = `
-            <div class="py-12 flex flex-col items-center justify-center space-y-3">
-                <span class="w-7 h-7 rounded-full border-2 border-emerald-600 border-t-transparent animate-spin"></span>
-                <p class="text-xs font-bold text-slate-500">Querying live direct feed index...</p>
-            </div>
-        `;
+        const moreBtn = document.getElementById('curatedShowMoreBtn');
+        if (moreBtn) {
+            moreBtn.disabled = true;
+            moreBtn.innerHTML = '<span class="animate-spin mr-1">⌛</span> Loading more jobs...';
+        }
     }
 
     try {
@@ -6763,7 +6736,7 @@ async function loadCuratedFeeds(withBespokeCuration = false) {
             time_filter: timeFilter,
             sort_by: sortBy,
             limit: 30,
-            offset: 0
+            offset: window.curatedCurrentOffset
         });
         if (userId) params.append('user_id', userId);
 
@@ -6773,9 +6746,8 @@ async function loadCuratedFeeds(withBespokeCuration = false) {
         });
 
         let data;
-        if (withBespokeCuration) {
-            // 2.5s perceived value curated loading duration
-            const delayPromise = new Promise(resolve => setTimeout(resolve, 2500));
+        if (withBespokeCuration && !append) {
+            const delayPromise = new Promise(resolve => setTimeout(resolve, 1200));
             const [respData] = await Promise.all([fetchPromise, delayPromise]);
             data = respData;
             hideCuratedLoadingScreen();
@@ -6784,62 +6756,85 @@ async function loadCuratedFeeds(withBespokeCuration = false) {
         }
 
         const result = data.result || {};
-        renderCuratedCards(result.items || [], result.total || 0);
+        const batch = result.items || [];
+        window.curatedTotalCount = result.total || 0;
+        if (!append) {
+            window.curatedCurrentItems = batch;
+        } else {
+            window.curatedCurrentItems = window.curatedCurrentItems.concat(batch);
+        }
+        window.curatedCurrentOffset = window.curatedCurrentItems.length;
+        renderCuratedCards(window.curatedCurrentItems, window.curatedTotalCount, sortBy);
     } catch (err) {
         hideCuratedLoadingScreen();
-        container.innerHTML = `
-            <div class="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
-                <p class="text-xs font-bold text-rose-600">Failed to load direct feeds: ${err.message}</p>
-                <button type="button" onclick="loadCuratedFeeds(true)" class="mt-3 px-4 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold cursor-pointer">Retry</button>
-            </div>
-        `;
+        if (!append) {
+            container.innerHTML = `
+                <div class="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
+                    <p class="text-xs font-bold text-rose-600">Failed to load direct feeds: ${err.message}</p>
+                    <button type="button" onclick="loadCuratedFeeds(true)" class="mt-3 px-4 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold cursor-pointer">Retry</button>
+                </div>
+            `;
+        }
     }
 }
 
-function renderCuratedCards(items, total) {
+function renderCuratedCards(items, total, sortBy = 'latest') {
     const container = document.getElementById('curatedCardsContainer');
     if (!container) return;
 
     if (!items || items.length === 0) {
         container.innerHTML = `
             <div class="p-10 text-center bg-slate-50 rounded-2xl border border-slate-200">
-                <p class="text-sm font-black text-slate-800">No matching direct portals found with current filters.</p>
-                <p class="text-xs text-slate-500 mt-1">Try clearing the search box or selecting "All Categories".</p>
+                <p class="text-sm font-black text-slate-800">No matching direct openings found with current filters.</p>
+                <p class="text-xs text-slate-500 mt-1">Try clearing the search box or choosing another filter.</p>
             </div>
         `;
         return;
     }
 
+    const freeNoticeHtml = (!isUserPaid() && sortBy !== 'free_jobs') ? `
+        <div class="p-3 rounded-xl bg-amber-50/90 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <span class="text-slate-800 font-medium">
+                🔓 <strong>Last 4 days</strong> need Pro to apply early &bull; Roles <strong>5+ days old are 100% Free</strong>.
+            </span>
+            <button type="button" onclick="const s=document.getElementById('curatedSortSelect'); if(s){s.value='free_jobs';} handleCuratedFilterChange();" class="shrink-0 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition cursor-pointer">
+                View Free Jobs (5+ Days) &rarr;
+            </button>
+        </div>
+    ` : '';
+
     let html = `
+        ${freeNoticeHtml}
         <div class="flex items-center justify-between pb-1 text-xs font-bold text-slate-500">
-            <span>Showing ${items.length} of ${total.toLocaleString()} Verified Portals</span>
-            <span class="text-emerald-700">✓ 100% Direct Corporate Links</span>
+            <span>Showing ${items.length} of ${total.toLocaleString()} Verified Roles</span>
+            <span class="text-emerald-700">✓ Direct Corporate Links</span>
         </div>
     `;
 
-    items.forEach((item, idx) => {
+    items.forEach((item) => {
         const isLocked = isJobLatestFeedLocked(item);
-        const cardBlurCls = isLocked ? "blur-[5px] select-none pointer-events-none opacity-75" : "";
-        const provider = item.provider || 'Direct Portal';
         const sponsorshipBadge = item.sponsorship === 'Visa Sponsored'
             ? `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-300 text-[10px] font-black">🛂 Visa Sponsored</span>`
             : '';
         const pkgBadge = item.package_display
-            ? `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-300 text-[10px] font-black shadow-2xs">💰 ${item.package_display}</span>`
+            ? `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-300 text-[10px] font-black shadow-2xs">💰 ${String(item.package_display).replace(/[₹\u20b9]/g, '')}</span>`
             : '';
+        const compactLoc = typeof window.formatCompactLocationClient === 'function'
+            ? window.formatCompactLocationClient(item.location || 'Worldwide')
+            : (item.location || 'Worldwide');
 
         let actionBtn = '';
         if (isLocked) {
             actionBtn = `
-                <button type="button" onclick="openVipPassModal()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black text-xs shadow-xs hover:scale-105 active:scale-95 transition cursor-pointer flex items-center gap-1.5 shrink-0">
-                    <i data-lucide="lock" class="w-3.5 h-3.5"></i>
-                    <span>Unlock VIP for Latest Feed</span>
+                <button type="button" onclick="openVipPassModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-xs transition cursor-pointer flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+                    <span>👑</span>
+                    <span>Unlock with Pro</span>
                 </button>
             `;
         } else {
             actionBtn = `
-                <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-xs hover:scale-105 active:scale-95 transition flex items-center gap-1.5 shrink-0">
-                    <span>Direct Application Portal &rarr;</span>
+                <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl bg-slate-950 hover:bg-emerald-700 text-white font-black text-xs shadow-xs transition flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+                    <span>Apply Direct &rarr;</span>
                 </a>
             `;
         }
@@ -6848,31 +6843,32 @@ function renderCuratedCards(items, total) {
             <div class="curated-job-card p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:border-violet-300 hover:shadow-sm transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="space-y-1.5 min-w-0 flex-1">
                     <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-sm font-black text-slate-950 flex items-center gap-1">🏢 ${window.escapeClean(item.company)}</span>
                         <span class="px-2 py-0.5 rounded-md ${isLocked ? 'bg-amber-100 text-amber-950 border border-amber-300 font-black' : 'bg-slate-100 text-slate-600 font-semibold'} text-[10px]">${item.date_posted_str || 'Recent'}</span>
-                        ${isLocked ? `<span class="text-[10px] font-black text-violet-800 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded-md">🔒 VIP Latest Feed</span>` : ''}
                     </div>
-                    <div class="space-y-1">
-                        <!-- Unblurred Company Name, Package, & Sponsorship -->
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span class="text-xs font-black text-slate-950 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">@ ${item.company}</span>
-                            <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-bold uppercase tracking-wide">DIRECT FEED • ${provider.toUpperCase()}</span>
-                            ${pkgBadge}
-                            ${sponsorshipBadge}
-                        </div>
-                        <!-- Designation / Role is Blurred when Locked -->
-                        <h4 class="text-sm font-extrabold text-slate-950 truncate ${cardBlurCls}">${item.role}</h4>
-                        <!-- Unblurred Location & Category -->
-                        <div class="flex items-center gap-2 text-xs text-slate-600 font-medium">
-                            <span class="font-bold text-slate-700">📍 ${item.location}</span>
-                            <span>•</span>
-                            <span class="text-violet-700 font-bold">${item.category}</span>
-                        </div>
+                    <h4 class="text-xs sm:text-sm font-bold text-slate-800"><span class="text-[10px] font-extrabold uppercase text-slate-400 mr-1">Role:</span>${window.escapeClean(item.role)}</h4>
+                    <div class="flex items-center gap-2 flex-wrap text-xs text-slate-600 font-medium">
+                        ${pkgBadge}
+                        <span class="px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-slate-700 text-[11px]">📍 ${window.escapeClean(compactLoc)}</span>
+                        ${sponsorshipBadge}
                     </div>
                 </div>
-                ${actionBtn}
+                <div class="flex items-center justify-end shrink-0">
+                    ${actionBtn}
+                </div>
             </div>
         `;
     });
+
+    if (items.length < total) {
+        html += `
+            <div class="pt-3 pb-2 text-center">
+                <button type="button" id="curatedShowMoreBtn" onclick="loadMoreCuratedFeeds()" class="px-6 py-2.5 rounded-full bg-white hover:bg-violet-50 text-violet-800 border border-violet-300 font-extrabold text-xs shadow-xs transition cursor-pointer">
+                    Show More (${(total - items.length).toLocaleString()} remaining)
+                </button>
+            </div>
+        `;
+    }
 
     container.innerHTML = html;
     if (window.lucide && typeof lucide.createIcons === 'function') {
@@ -7869,6 +7865,14 @@ window.renderOmniResults = function(result, query, append) {
 
     if (countBadge) {
         countBadge.textContent = `${total.toLocaleString()} Direct Postings`;
+    }
+    const freeStrip = document.getElementById("omniFreeAccessStrip");
+    if (freeStrip) {
+        if (!isUserPaid() && items.length > 0 && window.omniSortMode !== "free_jobs") {
+            freeStrip.classList.remove("hidden");
+        } else {
+            freeStrip.classList.add("hidden");
+        }
     }
 
     if (items.length === 0 && !append) {
