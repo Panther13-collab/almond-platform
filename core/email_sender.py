@@ -189,11 +189,11 @@ def send_otp_email(to_email: str, otp_code: str) -> dict:
         # Connect and send via SSL or STARTTLS
         context = ssl.create_default_context()
         if Config.SMTP_PORT == 465:
-            with smtplib.SMTP_SSL(Config.SMTP_HOST, Config.SMTP_PORT, context=context, timeout=15) as server:
+            with smtplib.SMTP_SSL(Config.SMTP_HOST, Config.SMTP_PORT, context=context, timeout=4) as server:
                 server.login(Config.SMTP_USER, Config.SMTP_PASS)
                 server.send_message(msg_root)
         else:
-            with smtplib.SMTP(Config.SMTP_HOST, Config.SMTP_PORT, timeout=15) as server:
+            with smtplib.SMTP(Config.SMTP_HOST, Config.SMTP_PORT, timeout=4) as server:
                 server.ehlo()
                 server.starttls(context=context)
                 server.ehlo()

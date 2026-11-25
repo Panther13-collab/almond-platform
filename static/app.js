@@ -4972,7 +4972,7 @@ window.openVipPassModal = function() {
         }
         if (headerSub) headerSub.textContent = "Direct Company Ingestion • Apply before public platforms saturate the applicant pool";
 
-        window.selectVipPurchaseTier(window.selectedVipPurchaseTierKey || "3m");
+        window.selectVipPurchaseTier("6m");
         if (typeof window.updateVipPurchaseCardsUI === "function") window.updateVipPurchaseCardsUI();
     }
 
@@ -5072,9 +5072,14 @@ window.openProfileModal = function(contextReason = "") {
     const avatarInitials = document.getElementById("modalUserAvatarInitials");
     const avatarIcon = document.getElementById("modalUserAvatarIcon");
 
+    const contribFooter = document.getElementById("profileBottomContributeSection");
+    const humanCheck = document.getElementById("authHumanCheckbox");
+    if (humanCheck) humanCheck.checked = false;
+
     if (isUserLoggedIn()) {
         if (authFormView) authFormView.classList.add("hidden");
         if (authProfileView) authProfileView.classList.remove("hidden");
+        if (contribFooter) contribFooter.classList.remove("hidden");
 
         const name = getCandidateUserName() || "Candidate";
         const email = getCandidateUserEmail();
@@ -5150,6 +5155,7 @@ window.openProfileModal = function(contextReason = "") {
     } else {
         if (authFormView) authFormView.classList.remove("hidden");
         if (authProfileView) authProfileView.classList.add("hidden");
+        if (contribFooter) contribFooter.classList.add("hidden");
         if (modalTitle) modalTitle.textContent = "Candidate Account";
         if (modalSub) modalSub.textContent = "Sign in or create free account";
         if (avatarInitials) avatarInitials.classList.add("hidden");
@@ -5252,6 +5258,16 @@ window.handleAuthSubmit = async function(e) {
     const fullName = (nameInput?.value || "").trim();
 
     if (errBox) errBox.classList.add("hidden");
+
+    // Human / Anti-Bot Checkbox Check (Required for both Login & Sign Up)
+    const humanCheckbox = document.getElementById("authHumanCheckbox");
+    if (humanCheckbox && !humanCheckbox.checked) {
+        if (errBox && errText) {
+            errText.textContent = "Please check the 'I am human (Verify not a robot)' box to continue.";
+            errBox.classList.remove("hidden");
+        }
+        return;
+    }
 
     // Strict personal email validation
     const emailRegex = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
@@ -5491,6 +5507,8 @@ window.handleVerifyOtpSubmit = async function() {
         if (modalSubtitleText) modalSubtitleText.textContent = "Account Verified & Active";
         if (welcomeUserName) welcomeUserName.textContent = data.full_name || "Candidate";
         if (authWelcomeView) authWelcomeView.classList.remove("hidden");
+        const contribFtr = document.getElementById("profileBottomContributeSection");
+        if (contribFtr) contribFtr.classList.add("hidden");
         if (window.lucide) lucide.createIcons();
 
         // Update brand bar indicators immediately
@@ -5637,6 +5655,8 @@ window.executeDirectSignupFallback = async function(email, password, fullName) {
         if (modalSubtitleText) modalSubtitleText.textContent = "Account Active & Ready";
         if (welcomeUserName) welcomeUserName.textContent = data.full_name || "Candidate";
         if (authWelcomeView) authWelcomeView.classList.remove("hidden");
+        const contribFtr = document.getElementById("profileBottomContributeSection");
+        if (contribFtr) contribFtr.classList.add("hidden");
         if (window.lucide) lucide.createIcons();
 
         // If candidate was intercepted while clicking search, immediately resume search!
@@ -5759,6 +5779,8 @@ async function completeGoogleAuth(payload) {
         if (modalSubtitleText) modalSubtitleText.textContent = "Signed in with Google";
         if (welcomeUserName) welcomeUserName.textContent = data.full_name || "Candidate";
         if (authWelcomeView) authWelcomeView.classList.remove("hidden");
+        const contribFtr = document.getElementById("profileBottomContributeSection");
+        if (contribFtr) contribFtr.classList.add("hidden");
         if (window.lucide) lucide.createIcons();
 
         window.updateTopProfileBar();
@@ -7697,6 +7719,66 @@ window.renderOmniResults = function(result, query, append) {
             });
         }
     });
+
+    if (window.lucide && typeof window.lucide.createIcons === "function") {
+        window.lucide.createIcons();
+    }
+
+    // Render External / LinkedIn Unofficial Postings at bottom of matched results
+    let extSection = document.getElementById("omniExternalJobsSection");
+    if (!append) {
+        if (extSection) extSection.remove();
+        const extJobs = Array.isArray(result.external_jobs) ? result.external_jobs : [];
+        if (extJobs.length > 0 && gridEl.parentElement) {
+            extSection = document.createElement("div");
+            extSection.id = "omniExternalJobsSection";
+            extSection.className = "mt-8 pt-6 border-t border-slate-200/90 space-y-4";
+
+            const cardsHtml = extJobs.map(ej => {
+                const ejComp = window.escapeClean(ej.company || "External Employer");
+                const ejRole = window.escapeClean(ej.role || ej.title || "Role Opening");
+                const ejLoc = window.escapeClean(ej.location || "Remote / India");
+                const ejDate = window.escapeClean(ej.date_posted_str || "Recent");
+                const ejUrl = (ej.url && /^(https?:\/\/)/i.test(ej.url)) ? encodeURI(ej.url) : "#";
+                return `
+                    <div class="p-4 rounded-2xl bg-slate-50/90 border border-slate-200/90 hover:border-blue-300 transition flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <span class="text-xs font-extrabold text-slate-900 truncate">${ejComp}</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200 shrink-0">LinkedIn</span>
+                            </div>
+                            <h4 class="text-sm font-black text-slate-900 leading-snug line-clamp-2 mb-2">${ejRole}</h4>
+                            <div class="text-[11px] text-slate-500 flex items-center gap-2 mb-3">
+                                <span>📍 ${ejLoc}</span>
+                                <span>&bull;</span>
+                                <span>${ejDate}</span>
+                            </div>
+                        </div>
+                        <a href="${ejUrl}" target="_blank" rel="noopener noreferrer" class="w-full py-2 px-3 rounded-xl bg-white hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 font-bold text-xs flex items-center justify-center gap-1.5 transition text-center">
+                            <span>View on LinkedIn</span>
+                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                        </a>
+                    </div>
+                `;
+            }).join("");
+
+            extSection.innerHTML = `
+                <div class="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/90 flex items-start gap-3">
+                    <span class="text-lg shrink-0">⚠️</span>
+                    <div class="space-y-0.5">
+                        <h4 class="text-xs font-black uppercase tracking-wider text-amber-950">External Platforms &amp; LinkedIn Listings (Unofficial)</h4>
+                        <p class="text-xs text-amber-900/90 leading-relaxed">
+                            <strong>Disclaimer:</strong> These postings are sourced from third-party public platforms like LinkedIn rather than official company career portals. Some third-party links may occasionally be expired, closed, or have high applicant volume.
+                        </p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    ${cardsHtml}
+                </div>
+            `;
+            gridEl.parentElement.appendChild(extSection);
+        }
+    }
 
     if (window.lucide && typeof window.lucide.createIcons === "function") {
         window.lucide.createIcons();

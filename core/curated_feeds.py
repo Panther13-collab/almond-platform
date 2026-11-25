@@ -1017,10 +1017,33 @@ def omni_search_all_feeds(
 
     filtered = scored_items
 
-    # 4. Fallback pipeline: strictly preserve requested location WITHOUT leaking other geographies!
+    # 4. Fallback & Resume Enrichment pipeline
+    if match_resume and len(filtered) < 12:
+        # When matching a candidate's resume, broaden beyond strict city/salary if < 12 matches
+        seen_urls_fb = {it.get("url") for it in filtered if it.get("url")}
+        match_pool = clean_skills or role_tokens or q_tokens
+        broad_matches = []
+        for item in combined_items:
+            u = item.get("url")
+            if not u or u in seen_urls_fb:
+                continue
+            haystack = f"{item.get('company', '')} {item.get('role', '')} {item.get('category', '')} {' '.join(item.get('skills', []))} {item.get('description', '')}".lower()
+            s_hits = sum(1 for tok in match_pool if tok in haystack) if match_pool else 1
+            if s_hits > 0 or not match_pool:
+                it_copy = dict(item)
+                it_copy["_match_score"] = s_hits * 15
+                broad_matches.append(it_copy)
+        broad_matches.sort(key=lambda x: (x.get("_match_score", 0), x.get("date_posted_ts", 0)), reverse=True)
+        for bm in broad_matches:
+            if bm.get("url") not in seen_urls_fb:
+                seen_urls_fb.add(bm.get("url"))
+                filtered.append(bm)
+            if len(filtered) >= 25:
+                break
+
     if not filtered:
-        if has_specific_loc:
-            # Fallback ONLY within the requested location!
+        if has_specific_loc and not match_resume:
+            # Fallback ONLY within the requested location for manual location queries!
             loc_pool = [it for it in combined_items if matches_country_filter(it, location)]
             if loc_pool:
                 filtered = list(loc_pool[:50])
@@ -1073,9 +1096,32 @@ def omni_search_all_feeds(
 
     apply_vip_latest_feed_lock(processed_items, user_is_paid=user_is_paid)
 
+    # 7. Fetch external / LinkedIn postings when matching resume (or on initial search)
+    external_jobs = []
+    if match_resume and offset == 0:
+        try:
+            from core.job_engine import query_linkedin_jobs
+            li_query = (target_role or "").strip()
+            if not li_query and clean_skills:
+                li_query = " ".join(clean_skills[:2])
+            if not li_query:
+                li_query = (query or "").strip() or "Software Engineer"
+            li_loc = location if has_specific_loc else "India"
+            raw_li = query_linkedin_jobs(li_query, location=li_loc, limit=8)
+            for lj in raw_li:
+                lj_copy = dict(lj)
+                lj_copy["role"] = lj_copy.get("title") or "External Opening"
+                lj_copy["portal_provider"] = "LinkedIn (Unofficial)"
+                lj_copy["date_posted_str"] = lj_copy.get("posted_at") or "Recent"
+                lj_copy["is_locked"] = False
+                external_jobs.append(lj_copy)
+        except Exception as li_err:
+            print(f"[OMNI] LinkedIn external fetch note: {li_err}")
+
     return {
         "total": total_count,
         "items": processed_items,
+        "external_jobs": external_jobs,
         "limit": limit,
         "offset": offset,
         "query": query,

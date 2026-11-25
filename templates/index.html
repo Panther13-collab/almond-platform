@@ -665,16 +665,11 @@
                     <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
                     <span>Who We Are?</span>
                 </button>
-                <button type="button" id="topUpgradeBtn" onclick="openUpgradeModal()" class="flex bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-[11px] sm:text-xs px-3 sm:px-4 py-1.5 sm:py-2 rounded-full shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer whitespace-nowrap items-center gap-1.5">
-                    <span>✨</span>
-                    <span id="topUpgradeLabel">Upgrade</span>
-                    <span style="display:none;"><span id="topVipPassLabel">VIP Pass</span></span>
-                </button>
-                <button type="button" id="topProfileBtn" onclick="openProfileModal()" class="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 hover:bg-violet-50 border border-slate-300 hover:border-violet-300 text-slate-700 hover:text-violet-700 flex items-center justify-center transition shadow-2xs cursor-pointer group shrink-0" title="Candidate Profile & Settings" aria-label="Candidate Profile">
+                <button type="button" id="topProfileBtn" onclick="openProfileModal()" class="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-100 hover:bg-violet-50 border border-slate-300 hover:border-violet-300 text-slate-700 hover:text-violet-700 flex items-center justify-center transition shadow-2xs cursor-pointer group shrink-0" title="Candidate Profile & Settings" aria-label="Candidate Profile">
                     <i id="topProfileIcon" data-lucide="user" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
                     <span id="topProfileInitials" class="hidden text-[10px] font-black text-violet-800 uppercase">CA</span>
                     <span id="topProfileVipCrown" class="hidden absolute -top-2 -right-1 text-xs select-none">👑</span>
-                    <span id="topProfileVipBadge" class="hidden absolute -bottom-1 -right-1 px-1 py-0.2 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black text-[8px] rounded-full border border-white shadow-2xs leading-tight">VIP</span>
+                    <span id="topProfileVipBadge" class="hidden absolute -bottom-1 -right-1.5 px-1.5 py-0.2 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black text-[8px] rounded-full border border-white shadow-2xs leading-tight">PRO</span>
                     <span id="profileActiveIndicator" class="hidden absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white shadow-xs"></span>
                 </button>
             </div>
@@ -2188,36 +2183,32 @@
                         <div class="space-y-3">
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-black uppercase tracking-wider text-slate-500">Free Tier</span>
-                                <span class="text-[10px] font-bold bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full">Public Access</span>
+                                <span class="text-[10px] font-bold bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full">Basic Access</span>
                             </div>
                             <div>
                                 <div class="text-2xl sm:text-3xl font-black text-slate-950">&#8377;0 <span class="text-xs font-semibold text-slate-500">/ forever</span></div>
-                                <p class="text-[11px] text-slate-500 mt-1">Standard public discovery directory across corporate openings.</p>
+                                <p class="text-[11px] text-slate-500 mt-1">Great for browsing older openings and testing resume matching.</p>
                             </div>
                             <div class="space-y-2 pt-2 border-t border-slate-200 text-xs">
                                 <div class="flex items-start gap-2 text-slate-700">
                                     <span class="text-emerald-600 font-bold">✓</span>
-                                    <span>Search 3.3M+ direct corporate openings</span>
+                                    <span>Upload resume &amp; match jobs to your skills</span>
                                 </div>
                                 <div class="flex items-start gap-2 text-slate-700">
                                     <span class="text-emerald-600 font-bold">✓</span>
-                                    <span>Direct links to corporate company portals</span>
+                                    <span>Full apply links for jobs posted 7+ days ago</span>
                                 </div>
                                 <div class="flex items-start gap-2 text-slate-700">
                                     <span class="text-emerald-600 font-bold">✓</span>
-                                    <span>Standard role and skill keyword matching</span>
+                                    <span>Personal job tracker (Saved / Applied / Interview)</span>
                                 </div>
                                 <div class="flex items-start gap-2 text-slate-400">
                                     <span class="text-slate-300 font-bold">✗</span>
-                                    <span>First-wave internal crawl (48h advance)</span>
+                                    <span>Latest jobs (Posted Today &ndash; 6 days) are blurred</span>
                                 </div>
                                 <div class="flex items-start gap-2 text-slate-400">
                                     <span class="text-slate-300 font-bold">✗</span>
-                                    <span>Unredacted hiring manager signals &amp; bands</span>
-                                </div>
-                                <div class="flex items-start gap-2 text-slate-400">
-                                    <span class="text-slate-300 font-bold">✗</span>
-                                    <span>Unlimited 1-click dossier PDF exports</span>
+                                    <span>Direct company portal links for fresh roles</span>
                                 </div>
                             </div>
                         </div>
@@ -2231,12 +2222,12 @@
                     <!-- COLUMN 2: PRO TIER (HIGHLIGHTED) -->
                     <div id="proTierColumn" class="rounded-2xl p-5 bg-gradient-to-b from-amber-50/40 via-white to-amber-50/20 border-2 border-amber-400 shadow-lg shadow-amber-400/10 flex flex-col justify-between space-y-4 relative">
                         <div class="absolute -top-3 right-4 bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black text-[10px] uppercase tracking-wider px-3 py-0.5 rounded-full shadow-xs">
-                            👑 Recommended
+                            👑 6 Months Recommended
                         </div>
                         <div class="space-y-3">
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-black uppercase tracking-wider text-amber-800">Pro Tier</span>
-                                <span class="text-[10px] font-black bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full">Zero Spread</span>
+                                <span class="text-[10px] font-black bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full">Full Unlock</span>
                             </div>
                             
                             <!-- Duration Selector Pills (1m, 3m [30% off], 6m [35% off]) -->
@@ -2245,45 +2236,45 @@
                                     <span class="block font-black text-xs">1 Month</span>
                                     <span class="block text-[10px] text-slate-500" id="vipPillPrice_1m">&#8377;699</span>
                                 </button>
-                                <button type="button" id="proTierPill_3m" onclick="selectVipPurchaseTier('3m')" class="pro-tier-pill py-1.5 px-2 rounded-lg text-center font-bold text-xs cursor-pointer transition bg-slate-950 text-white shadow-xs">
+                                <button type="button" id="proTierPill_3m" onclick="selectVipPurchaseTier('3m')" class="pro-tier-pill py-1.5 px-2 rounded-lg text-center font-bold text-xs cursor-pointer transition text-slate-600 hover:text-slate-950">
                                     <span class="block font-black text-xs">3 Months</span>
-                                    <span class="block text-[9px] font-black text-amber-400" id="vipPillBadge_3m">30% OFF</span>
+                                    <span class="block text-[9px] font-black text-amber-600" id="vipPillBadge_3m">30% OFF</span>
                                 </button>
-                                <button type="button" id="proTierPill_6m" onclick="selectVipPurchaseTier('6m')" class="pro-tier-pill py-1.5 px-2 rounded-lg text-center font-bold text-xs cursor-pointer transition text-slate-600 hover:text-slate-950">
+                                <button type="button" id="proTierPill_6m" onclick="selectVipPurchaseTier('6m')" class="pro-tier-pill py-1.5 px-2 rounded-lg text-center font-bold text-xs cursor-pointer transition bg-slate-950 text-white shadow-xs">
                                     <span class="block font-black text-xs">6 Months</span>
-                                    <span class="block text-[9px] font-black text-violet-600" id="vipPillBadge_6m">35% OFF</span>
+                                    <span class="block text-[9px] font-black text-amber-400" id="vipPillBadge_6m">35% OFF</span>
                                 </button>
                             </div>
 
                             <div>
                                 <div class="flex items-baseline gap-2 flex-wrap">
-                                    <span id="vipCardOriginalPrice" class="text-xs text-slate-400 line-through font-bold">&#8377;2,599</span>
-                                    <span id="proCheckoutPriceDisplay" class="text-2xl sm:text-3xl font-black text-slate-950">&#8377;1,799</span>
-                                    <span class="text-xs font-semibold text-slate-500" id="proCheckoutDurationLabel">for 90 days</span>
+                                    <span id="vipCardOriginalPrice" class="text-xs text-slate-400 line-through font-bold">&#8377;4,199</span>
+                                    <span id="proCheckoutPriceDisplay" class="text-2xl sm:text-3xl font-black text-slate-950">&#8377;2,799</span>
+                                    <span class="text-xs font-semibold text-slate-500" id="proCheckoutDurationLabel">for 180 days</span>
                                 </div>
-                                <p class="text-[11px] text-slate-600 mt-1">Uninterrupted direct career cycle with continuous first-wave ingestion.</p>
+                                <p class="text-[11px] text-slate-600 mt-1">Unlock every fresh job posting immediately &mdash; apply before the crowd.</p>
                             </div>
 
                             <div class="space-y-2 pt-2 border-t border-amber-200/60 text-xs">
                                 <div class="flex items-start gap-2 text-slate-900 font-semibold">
                                     <span class="text-amber-500 font-black">⚡</span>
-                                    <span><strong>First-Wave Ingestion:</strong> Apply before candidates flood public job boards</span>
+                                    <span><strong>Unlock Latest Jobs:</strong> Instant access to roles posted Today &ndash; 6 days ago</span>
                                 </div>
                                 <div class="flex items-start gap-2 text-slate-900 font-semibold">
                                     <span class="text-emerald-600 font-black">🎯</span>
-                                    <span><strong>0% Recruiter Spread:</strong> Official Greenhouse, Lever, Ashby &amp; Workday links</span>
+                                    <span><strong>Direct Company Links:</strong> Apply straight on official Workday, Greenhouse &amp; Ashby pages</span>
                                 </div>
                                 <div class="flex items-start gap-2 text-slate-900 font-semibold">
-                                    <span class="text-violet-600 font-black">🔍</span>
-                                    <span><strong>Unredacted Signals:</strong> Disclosed compensation bands &amp; hiring lead titles</span>
+                                    <span class="text-violet-600 font-black">🤖</span>
+                                    <span><strong>AI Resume &amp; Pitch Tools:</strong> Unlimited resume skill matching, STAR pitches &amp; cover letters</span>
                                 </div>
                                 <div class="flex items-start gap-2 text-slate-900 font-semibold">
-                                    <span class="text-indigo-600 font-black">📑</span>
-                                    <span><strong>Unlimited Exports:</strong> Clickable 1-page dossiers &amp; full Kanban tracking</span>
+                                    <span class="text-indigo-600 font-black">📱</span>
+                                    <span><strong>Use Anywhere:</strong> Sign in on phone or laptop with one Pro account</span>
                                 </div>
                                 <div class="flex items-start gap-2 text-slate-900 font-semibold">
-                                    <span class="text-emerald-600 font-black">🚀</span>
-                                    <span><strong>Continuous Coverage:</strong> Live automated crawl alerts to your inbox</span>
+                                    <span class="text-emerald-600 font-black">🚫</span>
+                                    <span><strong>Zero Recruiter Spam:</strong> No agencies or consultancy middlemen</span>
                                 </div>
                             </div>
                         </div>
@@ -2544,6 +2535,12 @@
                         </div>
                     </div>
 
+                    <!-- Human / Anti-Bot Verification Checkbox (Required for Login & Sign Up) -->
+                    <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:border-violet-400 transition select-none">
+                        <input type="checkbox" id="authHumanCheckbox" class="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 cursor-pointer">
+                        <span class="text-xs font-bold text-slate-700">I am human (Verify not a robot)</span>
+                    </label>
+
                     <button type="submit" id="authSubmitBtn" class="w-full mt-2 py-3 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md shadow-violet-600/25 transition transform active:scale-98 cursor-pointer flex items-center justify-center gap-2">
                         <span id="authSubmitBtnText">Log In to Almond Jobs</span>
                         <i data-lucide="arrow-right" class="w-4 h-4 text-white"></i>
@@ -2730,8 +2727,8 @@
                 </button>
             </div>
 
-            <!-- Profile Bottom Section: Voluntary Support / Contribute -->
-            <div class="mt-5 pt-3.5 border-t border-slate-200/80 flex items-center justify-between gap-3">
+            <!-- Profile Bottom Section: Voluntary Support / Contribute (Only shown in Profile Dashboard, NOT Welcome/Signup) -->
+            <div id="profileBottomContributeSection" class="hidden mt-5 pt-3.5 border-t border-slate-200/80 flex items-center justify-between gap-3">
                 <div class="text-left min-w-0">
                     <div class="text-[11px] font-black text-slate-800">Support Almond Jobs</div>
                     <div class="text-[10px] text-slate-500 font-medium truncate">Voluntary reward (separate from VIP Pass)</div>

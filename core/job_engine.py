@@ -665,7 +665,7 @@ def search_matching_jobs(candidate_profile, preferences):
     pref_locations = preferences.get("locations", ["Worldwide Remote"])
     pref_work_mode = preferences.get("work_mode", "all")
     pref_employment_type = preferences.get("employment_type", "all")
-    include_linkedin = bool(preferences.get("include_linkedin", False))
+    include_linkedin = bool(preferences.get("include_linkedin", True))
 
     # Generate dynamic queries matching the candidate's exact resume and locations
     search_queries = generate_dynamic_search_queries(candidate_profile, pref_locations)
@@ -720,6 +720,60 @@ def search_matching_jobs(candidate_profile, preferences):
         j["employment_type_tag"] = type_tag
         j["is_linkedin"] = False
         verified_results.append(j)
+
+    # Supplement from Almond's local curated Direct Corporate ATS Database if external crawl returned < 15 matches
+    if len(verified_results) < 15:
+        try:
+            from core.curated_feeds import omni_search_all_feeds
+            cand_skills = [str(s).strip() for s in (candidate_profile.get("skills") or []) if str(s).strip()]
+            cand_role = str(candidate_profile.get("role") or "").strip()
+            existing_urls = {(j.get("url") or "").strip().lower() for j in verified_results}
+
+            # Query curated feeds with skills + role
+            local_res = omni_search_all_feeds(
+                query=cand_role if cand_role and cand_role.lower() != "software engineer / professional" else "",
+                skills=cand_skills[:8] if cand_skills else None,
+                match_resume=True,
+                target_role=cand_role,
+                limit=30,
+                offset=0,
+                user_is_paid=True
+            )
+            local_items = local_res.get("items") or local_res.get("jobs") or []
+            # If strict role query returned few, broaden to skills/general direct ATS jobs
+            if len(local_items) < 10:
+                broad_res = omni_search_all_feeds(
+                    query="",
+                    skills=cand_skills[:5] if cand_skills else None,
+                    limit=30,
+                    offset=0,
+                    user_is_paid=True
+                )
+                local_items.extend(broad_res.get("items") or broad_res.get("jobs") or [])
+
+            for lj in local_items:
+                l_url = (lj.get("url") or "").strip()
+                if not l_url or l_url.lower() in existing_urls:
+                    continue
+                existing_urls.add(l_url.lower())
+                item_copy = dict(lj)
+                if "title" not in item_copy and "role" in item_copy:
+                    item_copy["title"] = item_copy["role"]
+                if "source" not in item_copy and "portal_provider" in item_copy:
+                    item_copy["source"] = item_copy["portal_provider"]
+                score, m_skills, g_skills = calculate_cvmatch_score(item_copy, candidate_profile)
+                item_copy["cvmatch_score"] = max(score, 55)
+                item_copy["matched_skills"] = m_skills or cand_skills[:3]
+                item_copy["gap_skills"] = g_skills
+                item_copy["location_tag"] = item_copy.get("location") or "Remote / Hybrid"
+                item_copy["comp_display"] = item_copy.get("package_display") or "Disclosed Corporate Band"
+                item_copy["employment_type_tag"] = "Internship" if item_copy.get("feed_type") == "internships" else "Full-Time"
+                item_copy["is_linkedin"] = False
+                verified_results.append(item_copy)
+                if len(verified_results) >= 25:
+                    break
+        except Exception as sup_err:
+            print(f"[SEARCH] Curated supplement note: {sup_err}")
 
     verified_results.sort(key=lambda x: (x.get("cvmatch_score", 0), x.get("posted_at") or ""), reverse=True)
 
