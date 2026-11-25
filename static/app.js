@@ -2947,14 +2947,24 @@ async function openPitchModal(job) {
         }
         if (resp.status === 403) {
             modal.classList.add("hidden");
-            alert(data.detail || "You have reached your 10 free AI STAR Pitches limit. Upgrade to Pro for unlimited access.");
-            if (typeof window.openVipPassModal === "function") window.openVipPassModal();
+            window.almondAiQuota.pitch_remaining = 0;
+            window.syncAiQuotaDisplay();
+            window.openProFeatureGateModal(
+                "Free AI STAR Pitch limit reached (10/10)",
+                data.detail || "You have used all 10 free AI STAR Pitches on this account. Upgrade to Pro for unlimited AI career tools and fresh job links."
+            );
             return;
         }
         if (!resp.ok) throw new Error(data.detail || "Could not generate pitch.");
 
-        if (data.quota && !data.quota.unlimited && typeof data.quota.remaining === "number") {
-            pitchSub.textContent = `Target: ${job.title} at ${job.company} • ${data.quota.remaining}/${data.quota.limit} free left`;
+        if (data.quota) {
+            if (data.quota.unlimited) {
+                window.almondAiQuota.unlimited = true;
+            } else if (typeof data.quota.remaining === "number") {
+                window.almondAiQuota.pitch_remaining = data.quota.remaining;
+                window.almondAiQuota.limit = data.quota.limit || 10;
+            }
+            window.syncAiQuotaDisplay();
         }
 
         pitchTextarea.value = data.pitch;
@@ -3090,14 +3100,24 @@ async function openCoverLetterModal(job) {
         }
         if (resp.status === 403) {
             modal.classList.add("hidden");
-            alert(data.detail || "You have reached your 10 free AI Cover Letters limit. Upgrade to Pro for unlimited access.");
-            if (typeof window.openVipPassModal === "function") window.openVipPassModal();
+            window.almondAiQuota.cover_letter_remaining = 0;
+            window.syncAiQuotaDisplay();
+            window.openProFeatureGateModal(
+                "Free AI Cover Letter limit reached (10/10)",
+                data.detail || "You have used all 10 free AI Tailored Cover Letters on this account. Upgrade to Pro for unlimited cover letters and fresh job links."
+            );
             return;
         }
         if (!resp.ok) throw new Error(data.detail || "Could not generate cover letter.");
 
-        if (data.quota && !data.quota.unlimited && typeof data.quota.remaining === "number") {
-            sub.textContent = `Tailored for ${job.title} at ${job.company} • ${data.quota.remaining}/${data.quota.limit} free left`;
+        if (data.quota) {
+            if (data.quota.unlimited) {
+                window.almondAiQuota.unlimited = true;
+            } else if (typeof data.quota.remaining === "number") {
+                window.almondAiQuota.cover_letter_remaining = data.quota.remaining;
+                window.almondAiQuota.limit = data.quota.limit || 10;
+            }
+            window.syncAiQuotaDisplay();
         }
 
         textarea.value = data.cover_letter;
@@ -3932,7 +3952,11 @@ function initExports() {
             return;
         }
         if (!isUserPaid()) {
-            if (typeof window.openVipPassModal === "function") window.openVipPassModal();
+            const labelMap = { pdf: "Export PDF", csv: "Export Sheet (CSV)", docx: "Export Word (.docx)" };
+            window.openProFeatureGateModal(
+                labelMap[format] || "Job Export",
+                `You need Almond Jobs Pro to download ${labelMap[format] || "job reports"}. Upgrade to unlock CSV Sheet, Word, and PDF exports along with today's latest job links.`
+            );
             return;
         }
         const isLinkedinActive = document.getElementById("resultsLinkedinToggle")?.checked;
@@ -4814,6 +4838,118 @@ window.updateVipPurchaseCardsUI = function() {
     if (pillPrice1m) pillPrice1m.textContent = `${sym}${pm1}/mo`;
 };
 
+window.almondAiQuota = { limit: 10, pitch_remaining: 10, cover_letter_remaining: 10, unlimited: false };
+
+window.syncAiQuotaDisplay = function() {
+    const q = window.almondAiQuota || {};
+    const loggedIn = isUserLoggedIn();
+    const paid = isUserPaid() || Boolean(q.unlimited);
+    const bar = document.getElementById("omniAiQuotaBar");
+    const pitchLeft = typeof q.pitch_remaining === "number" ? q.pitch_remaining : 10;
+    const clLeft = typeof q.cover_letter_remaining === "number" ? q.cover_letter_remaining : 10;
+    const lim = q.limit || 10;
+
+    if (bar) {
+        if (loggedIn && !paid) {
+            bar.classList.remove("hidden");
+            const pEl = document.getElementById("omniPitchLeftVal");
+            const cEl = document.getElementById("omniClLeftVal");
+            if (pEl) pEl.textContent = String(pitchLeft);
+            if (cEl) cEl.textContent = String(clLeft);
+        } else {
+            bar.classList.add("hidden");
+        }
+    }
+
+    const updateModalBadge = (elId, rem) => {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        if (!loggedIn) {
+            el.classList.add("hidden");
+            return;
+        }
+        el.classList.remove("hidden");
+        if (paid) {
+            el.textContent = "Pro • Unlimited";
+            el.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200";
+        } else {
+            el.textContent = `${rem} of ${lim} free left`;
+            el.className = rem <= 2
+                ? "px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200"
+                : "px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-800 border border-violet-200";
+        }
+    };
+    updateModalBadge("pitchModalQuotaBadge", pitchLeft);
+    updateModalBadge("coverLetterQuotaBadge", clLeft);
+
+    document.querySelectorAll(".omni-pitch-count-pill").forEach(el => {
+        if (loggedIn && !paid) {
+            el.textContent = `(${pitchLeft}/${lim})`;
+            el.classList.remove("hidden");
+        } else {
+            el.classList.add("hidden");
+        }
+    });
+    document.querySelectorAll(".omni-cl-count-pill").forEach(el => {
+        if (loggedIn && !paid) {
+            el.textContent = `(${clLeft}/${lim})`;
+            el.classList.remove("hidden");
+        } else {
+            el.classList.add("hidden");
+        }
+    });
+};
+
+window.fetchAiQuotaStatus = async function() {
+    if (!isUserLoggedIn()) {
+        window.syncAiQuotaDisplay();
+        return;
+    }
+    try {
+        const uid = getCandidateUserId();
+        const resp = await fetch(`/api/ai-quota?user_id=${encodeURIComponent(uid || "")}`);
+        if (!resp.ok) return;
+        const data = await resp.json().catch(() => ({}));
+        if (data.status === "success") {
+            window.almondAiQuota = {
+                limit: data.limit || 10,
+                pitch_remaining: typeof data.pitch_remaining === "number" ? data.pitch_remaining : 10,
+                cover_letter_remaining: typeof data.cover_letter_remaining === "number" ? data.cover_letter_remaining : 10,
+                unlimited: Boolean(data.unlimited || data.is_paid)
+            };
+            window.syncAiQuotaDisplay();
+        }
+    } catch (_) {}
+};
+
+window.openProFeatureGateModal = function(featureLabel = "This feature", description = "") {
+    const modal = document.getElementById("proFeatureGateModal");
+    if (!modal) {
+        window.openVipPassModal();
+        return;
+    }
+    const titleEl = document.getElementById("proGateModalTitle");
+    const descEl = document.getElementById("proGateModalDesc");
+    if (titleEl) titleEl.textContent = `${featureLabel} is locked on the Free plan`;
+    if (descEl) {
+        descEl.textContent = description || "Downloading matched jobs as PDF, CSV Sheet, or Word reports is locked on the Free plan. Upgrade to Almond Jobs Pro to unlock exports, unlimited AI career tools, and today's fresh openings.";
+    }
+    modal.classList.remove("hidden");
+    modal.style.display = "flex";
+};
+
+window.closeProFeatureGateModal = function() {
+    const modal = document.getElementById("proFeatureGateModal");
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.style.display = "none";
+};
+
+window.proceedFromGateToPricing = function() {
+    window.closeProFeatureGateModal();
+    if (typeof window.openVipPassModal === "function") window.openVipPassModal();
+};
+
 window.openUpgradeModal = function() {
     window.openVipPassModal();
 };
@@ -5174,6 +5310,9 @@ window.openSignupToUnlockLinksModal = function() {
 
 window.refreshUnlockedFeedsAfterAuth = function() {
     try {
+        if (typeof window.fetchAiQuotaStatus === "function") {
+            window.fetchAiQuotaStatus();
+        }
         if (window.omniCurrentItems && window.omniCurrentItems.length > 0 && typeof window.executeOmniSearch === "function") {
             window.executeOmniSearch(window.omniCurrentQuery || "", false);
         }
@@ -6117,6 +6256,9 @@ window.initAuthSession = async function() {
                 if (data.paid_until) localStorage.setItem("almond_paid_until", String(data.paid_until));
                 localStorage.setItem("almond_is_paid", data.is_paid ? "true" : "false");
                 window.updateTopProfileBar();
+                if (typeof window.fetchAiQuotaStatus === "function") {
+                    window.fetchAiQuotaStatus();
+                }
                 if (typeof window.fetchKanbanFromCloud === "function") {
                     window.fetchKanbanFromCloud();
                 }
@@ -7036,20 +7178,17 @@ function renderCuratedCards(items, total, sortBy = 'latest') {
     const freeNoticeHtml = !loggedIn ? `
         <div class="p-3 rounded-xl bg-violet-50/95 border border-violet-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <span class="text-slate-800 font-medium">
-                🔒 <strong>Sign up free</strong> to view direct apply links &bull; <strong>5+ day old jobs are 100% Free</strong> once signed in.
+                🔒 <strong>Sign up free</strong> to view direct apply links. Jobs posted <strong>5+ days ago are 100% Free</strong> once signed in.
             </span>
             <button type="button" onclick="openSignupToUnlockLinksModal()" class="shrink-0 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold text-[11px] transition cursor-pointer">
                 Sign Up Free &rarr;
             </button>
         </div>
-    ` : ((!isUserPaid() && sortBy !== 'free_jobs') ? `
-        <div class="p-3 rounded-xl bg-amber-50/90 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+    ` : (!isUserPaid() ? `
+        <div class="p-3 rounded-xl bg-amber-50/90 border border-amber-200 text-xs">
             <span class="text-slate-800 font-medium">
-                🔓 <strong>Last 4 days</strong> need Pro to apply early &bull; Roles <strong>5+ days old are 100% Free</strong>.
+                ℹ️ <strong>Free Plan Access:</strong> Jobs posted in the last 4 days are for Pro members so you can apply early before crowds form. Scroll down or use the <strong>Sort</strong> menu above to browse <strong>100% Free</strong> jobs posted 5+ days ago.
             </span>
-            <button type="button" onclick="const s=document.getElementById('curatedSortSelect'); if(s){s.value='free_jobs';} handleCuratedFilterChange();" class="shrink-0 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition cursor-pointer">
-                View Free Jobs (5+ Days) &rarr;
-            </button>
         </div>
     ` : '');
 
@@ -8115,7 +8254,7 @@ window.renderOmniResults = function(result, query, append) {
     }
     const freeStrip = document.getElementById("omniFreeAccessStrip");
     if (freeStrip) {
-        if (!isUserPaid() && items.length > 0 && window.omniSortMode !== "free_jobs") {
+        if (!isUserPaid() && items.length > 0) {
             freeStrip.classList.remove("hidden");
         } else {
             freeStrip.classList.add("hidden");
@@ -8230,11 +8369,11 @@ window.renderOmniResults = function(result, query, append) {
                 ${applyActionHtml}
                 <div class="inline-flex items-center justify-center sm:justify-end gap-1 p-1 rounded-xl bg-slate-50/90 border border-slate-200/80">
                     <button type="button" class="omni-pitch-btn px-2.5 py-1.5 rounded-lg text-amber-900 hover:bg-amber-50 hover:text-amber-950 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap" title="Generate AI STAR Pitch">
-                        <span>✨</span><span>AI Pitch</span>
+                        <span>✨</span><span>AI Pitch</span><span class="omni-pitch-count-pill hidden text-[10px] font-black text-violet-700"></span>
                     </button>
                     <span class="w-px h-3.5 bg-slate-200"></span>
                     <button type="button" class="omni-cl-btn px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-white hover:text-violet-800 text-[11px] font-bold flex items-center gap-1 transition cursor-pointer whitespace-nowrap" title="Generate Tailored Cover Letter">
-                        <span>📝</span><span>Cover Letter</span>
+                        <span>📝</span><span>Cover Letter</span><span class="omni-cl-count-pill hidden text-[10px] font-black text-violet-700"></span>
                     </button>
                     <span class="w-px h-3.5 bg-slate-200"></span>
                     <button type="button" class="${saveBtnClass}" title="${alreadySaved ? 'Click to unsave from Job Tracker' : 'Save to Job Tracker'}">
@@ -8328,6 +8467,13 @@ window.renderOmniResults = function(result, query, append) {
         gridEl.parentElement.appendChild(extSection);
     }
 
+    if (typeof window.syncAiQuotaDisplay === "function") {
+        window.syncAiQuotaDisplay();
+    }
+    if (isUserLoggedIn() && !isUserPaid() && window.almondAiQuota && window.almondAiQuota.pitch_remaining === null && typeof window.fetchAiQuotaStatus === "function") {
+        window.fetchAiQuotaStatus();
+    }
+
     if (window.lucide && typeof window.lucide.createIcons === "function") {
         window.lucide.createIcons();
     }
@@ -8339,7 +8485,13 @@ window.exportOmniResults = async function(format = "csv") {
         return;
     }
     if (!isUserPaid()) {
-        if (typeof window.openVipPassModal === "function") window.openVipPassModal();
+        const labelMap = { csv: "Export Sheet (CSV)", pdf: "Export PDF", docx: "Export Word (.docx)" };
+        const featureLabel = labelMap[(format || "csv").toLowerCase()] || "Export Jobs";
+        if (typeof window.openProFeatureGateModal === "function") {
+            window.openProFeatureGateModal(featureLabel);
+        } else if (typeof window.openVipPassModal === "function") {
+            window.openVipPassModal();
+        }
         return;
     }
     const jobs = window.omniCurrentItems || [];

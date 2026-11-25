@@ -970,17 +970,20 @@
                             </div>
                         </div>
 
-                        <!-- Founder Conversion & Free Access Guide Banner (Shown to Free/Guest Users) -->
-                        <div id="omniFreeAccessStrip" class="hidden mb-3.5 p-3.5 rounded-2xl bg-gradient-to-r from-amber-50/90 via-white to-emerald-50/90 border border-amber-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-left">
-                            <div class="flex items-center gap-2.5 text-xs text-slate-800">
-                                <span class="text-base shrink-0">🔓</span>
+                        <!-- Standalone Free Access Guide Banner (Shown to Free/Guest Users — Non-Closable) -->
+                        <div id="omniFreeAccessStrip" class="hidden mb-3.5 p-3.5 rounded-2xl bg-gradient-to-r from-amber-50/90 via-white to-slate-50 border border-amber-200/80 text-left">
+                            <div class="flex items-start gap-2.5 text-xs text-slate-800 leading-relaxed">
+                                <span class="text-sm shrink-0 mt-0.5">ℹ️</span>
                                 <span>
-                                    <strong>Fresh (Last 4 Days)</strong> unlock with Pro for early apply &bull; Roles <strong>5+ days old are 100% Free</strong> to apply directly.
+                                    <strong>Free Plan Access:</strong> Jobs posted in the last 4 days are for Pro members so you can apply early before crowds form. Scroll down or use the <strong>Sort</strong> menu above (choose <strong>Oldest First</strong> or <strong>Free Jobs</strong>) to browse openings posted 5+ days ago for free after signup.
                                 </span>
                             </div>
-                            <button type="button" onclick="const s=document.getElementById('omniSortSelect'); if(s){s.value='free_jobs';} setOmniSortMode('free_jobs');" class="shrink-0 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-2xs transition cursor-pointer whitespace-nowrap">
-                                Show Only Free Jobs (5+ Days) &rarr;
-                            </button>
+                        </div>
+
+                        <!-- Live Free AI Quota Pill (Only visible to signed-in Free accounts) -->
+                        <div id="omniAiQuotaBar" class="hidden mb-3 px-3.5 py-2 rounded-xl bg-white/90 border border-slate-200/90 flex items-center justify-between gap-2 text-[11px] font-semibold text-slate-700 text-left shadow-2xs">
+                            <span id="omniAiQuotaSummaryText">Free AI Career Tools Quota: <strong class="text-violet-700" id="omniPitchLeftVal">10</strong>/10 AI STAR Pitches left &bull; <strong class="text-violet-700" id="omniClLeftVal">10</strong>/10 Cover Letters left</span>
+                            <button type="button" onclick="openVipPassModal()" class="text-violet-700 hover:text-violet-900 font-bold hover:underline cursor-pointer shrink-0">Get Unlimited &rarr;</button>
                         </div>
 
                         <!-- Full-Width Lengthy Horizontal Row Cards Container -->
@@ -1462,7 +1465,10 @@
                         <img src="/static/logo.png" alt="Almond Jobs" class="w-full h-full object-cover rounded-xl">
                     </div>
                     <div>
-                        <h3 class="font-black text-slate-950 text-base">Almond STAR Pitch Synthesizer</h3>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 class="font-black text-slate-950 text-base">Almond STAR Pitch Synthesizer</h3>
+                            <span id="pitchModalQuotaBadge" class="hidden px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-800 border border-violet-200">10/10 free left</span>
+                        </div>
                         <p id="pitchJobSub" class="text-xs font-bold text-slate-600">Strictly grounded in candidate verified achievements</p>
                     </div>
                 </div>
@@ -1493,7 +1499,10 @@
                         <img src="/static/logo.png" alt="Almond Jobs" class="w-full h-full object-cover rounded-xl">
                     </div>
                     <div>
-                        <h3 class="font-black text-slate-950 text-base">Tailored Executive Cover Letter</h3>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 class="font-black text-slate-950 text-base">Tailored Executive Cover Letter</h3>
+                            <span id="coverLetterQuotaBadge" class="hidden px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-800 border border-violet-200">10/10 free left</span>
+                        </div>
                         <p id="coverLetterSub" class="text-xs font-bold text-slate-600">Role-specific engineering narrative grounded in verified profile</p>
                     </div>
                 </div>
@@ -2194,6 +2203,33 @@
                     <span class="font-bold text-slate-600">UPI &bull; Cards &bull; NetBanking</span>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    <!-- 8a-gate. MODAL: PRO FEATURE LOCK NOTICE (Before Opening Full Pricing Comparison) -->
+    <div id="proFeatureGateModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-[55] flex items-center justify-center p-4">
+        <div class="rounded-2xl max-w-md w-full p-6 border border-white/15 bg-[#11141c] text-zinc-100 shadow-2xl space-y-4">
+            <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-lg shrink-0">🔒</div>
+                    <div>
+                        <span class="text-[10px] font-semibold uppercase tracking-wider text-violet-300 block">Pro Feature Locked</span>
+                        <h4 id="proGateModalTitle" class="text-base font-bold text-white leading-snug">Export PDF is locked on the Free plan</h4>
+                    </div>
+                </div>
+                <button type="button" onclick="closeProFeatureGateModal()" class="w-7 h-7 rounded-full bg-white/8 hover:bg-white/15 text-zinc-400 hover:text-white flex items-center justify-center text-xs cursor-pointer shrink-0">✕</button>
+            </div>
+            <p id="proGateModalDesc" class="text-xs text-zinc-300 leading-relaxed">
+                Downloading matched jobs as PDF, CSV Sheet, or Word reports is locked on the Free plan. Upgrade to Almond Jobs Pro to unlock exports, unlimited AI career tools, and today's fresh openings.
+            </p>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
+                <button type="button" onclick="proceedFromGateToPricing()" class="flex-1 py-2.5 px-4 rounded-lg bg-white hover:bg-zinc-200 text-slate-950 font-bold text-xs sm:text-sm cursor-pointer transition">
+                    View Pro Plans &amp; Upgrade &rarr;
+                </button>
+                <button type="button" onclick="closeProFeatureGateModal()" class="py-2.5 px-4 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 font-semibold text-xs cursor-pointer transition">
+                    Not Now
+                </button>
             </div>
         </div>
     </div>
