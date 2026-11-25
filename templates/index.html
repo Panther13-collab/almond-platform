@@ -864,9 +864,12 @@
                             <!-- Left: Search input for letters, skills, roles, packages -->
                             <div class="flex items-center flex-1 min-w-0 px-2">
                                 <i data-lucide="search" class="w-5 h-5 text-slate-400 shrink-0"></i>
-                                <input type="text" id="omniSearchInput" oninput="handleOmniSearchInput(event)" placeholder="Search any role, skill, package (e.g. Software Engineer, 7 LPA, Python, Bangalore)..." class="w-full bg-transparent px-3 py-2.5 text-sm sm:text-base text-slate-900 placeholder-slate-400 font-medium focus:outline-hidden" autocomplete="off" spellcheck="false">
+                                <input type="text" id="omniSearchInput" oninput="handleOmniSearchInput(event)" onkeydown="if(event.key==='Enter'){event.preventDefault();submitOmniManualSearch();}" placeholder="Search any role, skill, package (e.g. Software Engineer, Java Developer, 7 LPA)..." class="w-full bg-transparent px-3 py-2.5 text-sm sm:text-base text-slate-900 placeholder-slate-400 font-medium focus:outline-hidden" autocomplete="off" spellcheck="false">
                                 <button type="button" id="omniClearBtn" onclick="clearOmniSearch()" class="hidden p-1.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition cursor-pointer" aria-label="Clear search">
                                     <i data-lucide="x" class="w-4 h-4"></i>
+                                </button>
+                                <button type="button" id="omniSearchSubmitBtn" onclick="submitOmniManualSearch()" class="ml-1.5 p-2 sm:px-3 sm:py-2 rounded-xl bg-slate-900 hover:bg-violet-700 text-white font-bold transition cursor-pointer shrink-0 flex items-center justify-center shadow-xs" title="Search Direct Jobs" aria-label="Search Direct Jobs">
+                                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
                                 </button>
                             </div>
 
@@ -894,9 +897,9 @@
                                 <span id="omniResultsCountBadge" class="text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">Streaming live</span>
                             </div>
 
-                            <!-- Resume Match Action Bar (Edit Inputs + Export CSV/PDF) -->
-                            <div id="omniResumeActionBar" class="hidden flex items-center gap-2 flex-wrap">
-                                <button type="button" onclick="openOmniCriteriaModal(window.omniCurrentProfile)" class="px-3 py-1.5 rounded-xl bg-white hover:bg-violet-50 text-violet-800 border border-violet-200 font-bold text-xs shadow-2xs transition cursor-pointer flex items-center gap-1.5">
+                            <!-- Discovery Actions Bar (Category chips removed from homepage; only Edit Resume, Export & Sort) -->
+                            <div id="omniResumeActionBar" class="flex items-center gap-2 flex-wrap">
+                                <button type="button" id="omniEditResumeBtn" onclick="openOmniCriteriaModal(window.omniCurrentProfile)" class="hidden px-3 py-1.5 rounded-xl bg-white hover:bg-violet-50 text-violet-800 border border-violet-200 font-bold text-xs shadow-2xs transition cursor-pointer flex items-center gap-1.5">
                                     <span>✏️</span>
                                     <span>Edit Resume Inputs</span>
                                 </button>
@@ -920,20 +923,33 @@
                                     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[10px]">▼</span>
                                 </div>
                             </div>
-
-                            <!-- Fast Category Filter Chips (Hidden in Resume Match Mode) -->
-                            <div id="omniCategoryChipsBar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-                                <button type="button" onclick="setOmniCategoryFilter('All')" id="omniCat_All" class="omni-cat-chip px-3 py-1 rounded-full text-xs font-bold bg-slate-950 text-white cursor-pointer shadow-xs transition">All</button>
-                                <button type="button" onclick="setOmniCategoryFilter('internships')" id="omniCat_internships" class="omni-cat-chip px-3 py-1 rounded-full text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer shadow-2xs transition">🎓 Internships</button>
-                                <button type="button" onclick="setOmniCategoryFilter('entrylevel')" id="omniCat_entrylevel" class="omni-cat-chip px-3 py-1 rounded-full text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer shadow-2xs transition">🚀 Entry-Level</button>
-                                <button type="button" onclick="setOmniCategoryFilter('aiml')" id="omniCat_aiml" class="omni-cat-chip px-3 py-1 rounded-full text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer shadow-2xs transition">🤖 AI/ML</button>
-                            </div>
                         </div>
 
-                        <!-- Live Loading Spinner -->
-                        <div id="omniResultsLoading" class="hidden py-12 flex flex-col items-center justify-center gap-2">
-                            <div class="w-8 h-8 border-3 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
-                            <span class="text-xs font-bold text-slate-500">Searching direct corporate feeds...</span>
+                        <!-- Live Search / Match Visual Loader -->
+                        <div id="omniResultsLoading" class="hidden space-y-3 py-4">
+                            <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-violet-50 via-white to-amber-50 border border-violet-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+                                <div class="flex items-center gap-3.5 min-w-0">
+                                    <div class="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                        <div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div id="omniLoadingHeadline" class="text-xs sm:text-sm font-black text-slate-950 truncate">
+                                            Scanning direct corporate portals...
+                                        </div>
+                                        <div id="omniLoadingContext" class="text-[11px] font-semibold text-violet-800 mt-0.5 truncate">
+                                            Matching roles, skills &amp; live compensation bands
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-violet-100 text-violet-800 shrink-0 animate-pulse">
+                                    Live Query
+                                </span>
+                            </div>
+                            <!-- Shimmer Skeleton Rows -->
+                            <div class="space-y-3 animate-pulse">
+                                <div class="h-20 rounded-2xl bg-white/80 border border-slate-200/80 p-4 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-11 h-11 rounded-xl bg-slate-200"></div><div class="space-y-2"><div class="w-40 h-4 bg-slate-200 rounded"></div><div class="w-64 h-3 bg-slate-100 rounded"></div></div></div><div class="w-28 h-8 bg-slate-200 rounded-xl"></div></div>
+                                <div class="h-20 rounded-2xl bg-white/80 border border-slate-200/80 p-4 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-11 h-11 rounded-xl bg-slate-200"></div><div class="space-y-2"><div class="w-48 h-4 bg-slate-200 rounded"></div><div class="w-56 h-3 bg-slate-100 rounded"></div></div></div><div class="w-28 h-8 bg-slate-200 rounded-xl"></div></div>
+                            </div>
                         </div>
 
                         <!-- Full-Width Lengthy Horizontal Row Cards Container -->

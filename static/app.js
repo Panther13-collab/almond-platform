@@ -7469,8 +7469,13 @@ window.handleOmniSearchInput = function(e) {
         }
     }
 
-    // Reset resume matching mode when user manually types in search box
+    // Reset resume matching mode AND stale resume filters when user searches manually
     window.omniMatchResumeMode = false;
+    window.omniActiveLocation = "all";
+    window.omniActiveMinPackage = 0;
+    window.omniActiveWorkMode = "all";
+    window.omniActiveContractType = "all";
+    window.omniActiveMaxDays = 0;
 
     if (!trimmed) {
         // User cleared the search box -> hide Direct Corporate Openings container
@@ -7491,6 +7496,27 @@ window.handleOmniSearchInput = function(e) {
         window.omniCurrentQuery = trimmed;
         window.executeOmniSearch(trimmed, false);
     }, 120);
+};
+
+window.submitOmniManualSearch = function() {
+    const input = document.getElementById("omniSearchInput");
+    const trimmed = (input?.value || "").trim();
+    if (!trimmed) {
+        if (input) input.focus();
+        return;
+    }
+    clearTimeout(window.omniSearchDebounceTimer);
+    window.omniMatchResumeMode = false;
+    window.omniActiveLocation = "all";
+    window.omniActiveMinPackage = 0;
+    window.omniActiveWorkMode = "all";
+    window.omniActiveContractType = "all";
+    window.omniActiveMaxDays = 0;
+    const container = document.getElementById("omniSearchResultsContainer");
+    if (container) container.classList.remove("hidden");
+    window.omniCurrentOffset = 0;
+    window.omniCurrentQuery = trimmed;
+    window.executeOmniSearch(trimmed, false);
 };
 
 window.clearOmniSearch = function() {
@@ -7543,22 +7569,46 @@ window.executeOmniSearch = async function(query = "", append = false) {
     const emptyEl = document.getElementById("omniResultsEmptyState");
     const loadMoreContainer = document.getElementById("omniLoadMoreContainer");
 
+    const editBtn = document.getElementById("omniEditResumeBtn");
+    if (editBtn) {
+        if (window.omniMatchResumeMode) editBtn.classList.remove("hidden");
+        else editBtn.classList.add("hidden");
+    }
+
+    // Show descriptive loading banner with exact search query / resume info
+    const loadHead = document.getElementById("omniLoadingHeadline");
+    const loadCtx = document.getElementById("omniLoadingContext");
+    const sortLabels = {
+        best_match: "Best Match",
+        latest: "Latest First",
+        oldest: "Oldest First",
+        package_desc: "Package: High to Low",
+        package_asc: "Package: Low to High",
+        free_jobs: "Free Jobs (6+ Days Old)"
+    };
+    const sortText = sortLabels[window.omniSortMode || "best_match"] || "Best Match";
+    if (loadHead && loadCtx) {
+        if (window.omniMatchResumeMode) {
+            const pName = window.omniCurrentProfile?.name || "Your Resume";
+            const roleStr = window.omniTargetRole ? ` (${window.omniTargetRole})` : "";
+            loadHead.textContent = `Matching Direct Corporate Jobs for ${pName}${roleStr}...`;
+            const locsStr = (window.omniSelectedLocations && window.omniSelectedLocations.length > 0) ? window.omniSelectedLocations.join(", ") : (window.omniActiveLocation || "Global");
+            const skillsStr = (window.omniDerivedSkills && window.omniDerivedSkills.length > 0) ? window.omniDerivedSkills.slice(0, 4).join(", ") : "Extracted Skills";
+            loadCtx.textContent = `Skills: ${skillsStr} • Locations: ${locsStr} • Order: ${sortText}`;
+        } else {
+            loadHead.textContent = query ? `Searching Direct Corporate Portals for "${query}"...` : "Loading Direct Corporate Openings...";
+            loadCtx.textContent = `Scanning company career portals • Order: ${sortText}`;
+        }
+    }
+
     if (!append) {
         if (loadingEl) loadingEl.classList.remove("hidden");
+        if (gridEl) gridEl.classList.add("opacity-40", "pointer-events-none");
         if (emptyEl) emptyEl.classList.add("hidden");
         if (loadMoreContainer) loadMoreContainer.classList.add("hidden");
     }
 
     try {
-        const actionBar = document.getElementById("omniResumeActionBar");
-        const catBar = document.getElementById("omniCategoryChipsBar");
-        if (window.omniMatchResumeMode) {
-            if (actionBar) actionBar.classList.remove("hidden");
-            if (catBar) catBar.classList.add("hidden");
-        } else {
-            if (actionBar) actionBar.classList.add("hidden");
-            if (catBar) catBar.classList.remove("hidden");
-        }
 
         const params = new URLSearchParams({
             q: query,
@@ -7788,6 +7838,7 @@ window.renderOmniResults = function(result, query, append) {
     const headerTitle = document.getElementById("omniResultsHeaderTitle");
 
     if (loadingEl) loadingEl.classList.add("hidden");
+    if (gridEl) gridEl.classList.remove("opacity-40", "pointer-events-none");
     if (!gridEl) return;
 
     if (!result || !result.items) {

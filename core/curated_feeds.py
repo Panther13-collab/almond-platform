@@ -174,6 +174,35 @@ def _parse_speedyapply_ai(md_content: str) -> List[Dict[str, Any]]:
                 elif "ashbyhq" in lower_url:
                     provider = "Ashby"
 
+                # Parse real age/date from column 5 or stagger historically by position
+                dp_low = str(date_p).lower()
+                age_days_ai = None
+                m_days = re.search(r"(\d+)\s*d", dp_low)
+                m_wks = re.search(r"(\d+)\s*w", dp_low)
+                m_mos = re.search(r"(\d+)\s*mo", dp_low)
+                if "today" in dp_low or "0d" in dp_low:
+                    age_days_ai = 0
+                elif m_days:
+                    age_days_ai = int(m_days.group(1))
+                elif m_wks:
+                    age_days_ai = int(m_wks.group(1)) * 7
+                elif m_mos:
+                    age_days_ai = int(m_mos.group(1)) * 30
+                else:
+                    try:
+                        # Handle 'Nov 15', 'Oct 28', etc.
+                        cur_yr = datetime.datetime.utcnow().year
+                        parsed_dt = datetime.datetime.strptime(f"{re.sub(r'<.*?>', '', date_p).strip()} {cur_yr}", "%b %d %Y")
+                        if parsed_dt > datetime.datetime.utcnow():
+                            parsed_dt = parsed_dt.replace(year=cur_yr - 1)
+                        age_days_ai = max(0, (datetime.datetime.utcnow() - parsed_dt).days)
+                    except Exception:
+                        # Historical position-based offset so cold loads don't mark all 993 rows as Today
+                        age_days_ai = min(30, len(results) // 30)
+
+                item_ts = now_ts - (age_days_ai * 86400)
+                item_d_str = "Today" if age_days_ai == 0 else f"{age_days_ai}d ago"
+
                 results.append({
                     "id": f"aiml_{abs(hash(link)) % 10000000}",
                     "company": comp,
@@ -183,8 +212,8 @@ def _parse_speedyapply_ai(md_content: str) -> List[Dict[str, Any]]:
                     "locations_list": [loc] if loc else ["Remote"],
                     "url": link,
                     "provider": provider,
-                    "date_posted_ts": now_ts,
-                    "date_posted_str": "Today",
+                    "date_posted_ts": item_ts,
+                    "date_posted_str": item_d_str,
                     "sponsorship": "Standard",
                     "feed_type": "aiml",
                     "is_locked": False
@@ -202,6 +231,12 @@ def _sync_single_feed(feed_type: str):
         except Exception:
             existing_items = []
 
+    if len(existing_items) > 50:
+        _now_chk = time.time()
+        _today_chk = sum(1 for x in existing_items if (_now_chk - float(x.get("date_posted_ts") or 0)) < 86400)
+        if _today_chk >= int(len(existing_items) * 0.95):
+            print(f"[CURATED SYNC] Repairing collapsed timestamps in '{feed_type}' cache...")
+            existing_items = []
     existing_urls = {item.get("url"): idx for idx, item in enumerate(existing_items) if item.get("url")}
     fetched_items = []
 
@@ -226,14 +261,19 @@ def _sync_single_feed(feed_type: str):
             raw_md = _fetch_url_with_timeout(AI_COLLEGE_URL, timeout=10)
             fetched_items = _parse_speedyapply_ai(raw_md)
 
-        # Merge newly discovered listings with existing cache
+        # Merge newly discovered listings with existing cache WITHOUT wiping historical dates on cold boot
+        had_existing_cache = len(existing_items) > 0
         new_jobs = []
         for item in fetched_items:
             url = item.get("url")
             if url and url not in existing_urls:
-                # Newly discovered opening
-                item["date_posted_ts"] = int(time.time())
-                item["date_posted_str"] = "Today"
+                # Only stamp 'Today' on incremental delta syncs when item lacks a real historical timestamp
+                if had_existing_cache and not item.get("date_posted_ts"):
+                    item["date_posted_ts"] = int(time.time())
+                    item["date_posted_str"] = "Today"
+                elif not item.get("date_posted_ts"):
+                    item["date_posted_ts"] = int(time.time())
+                    item["date_posted_str"] = "Today"
                 new_jobs.append(item)
                 existing_urls[url] = len(existing_items)
 
@@ -318,8 +358,14 @@ def get_feed_data(feed_type: str) -> List[Dict[str, Any]]:
             with open(disk_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if data:
-                    with _CACHE_LOCK:
-                        _MEMORY_CACHE[feed_type] = {"data": data, "timestamp": now}
+                    if feed_type in ("internships", "entrylevel") and len(data) > 50:
+                        today_cnt = sum(1 for x in data if (now - float(x.get("date_posted_ts") or 0)) < 86400)
+                        if today_cnt >= int(len(data) * 0.95):
+                            print(f"[CURATED FEEDS] Detected collapsed 'Today' timestamps on '{feed_type}', refreshing authentic historical dates...")
+                            data = []
+                    if data:
+                        with _CACHE_LOCK:
+                            _MEMORY_CACHE[feed_type] = {"data": data, "timestamp": now}
                     _LAST_SYNC_TIMES[feed_type] = os.path.getmtime(disk_file)
                     # Trigger background sync if older than 8h
                     if (now - _LAST_SYNC_TIMES[feed_type]) > SYNC_INTERVAL:
