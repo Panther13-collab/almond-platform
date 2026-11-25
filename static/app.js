@@ -2600,9 +2600,7 @@ function renderJobCards(jobs, containerId = "jobListContainer", isThirdParty = f
         const applyBtnHtml = isAuthLocked
             ? window.renderDirectApplyActionHtml({ isAuthLocked: true, isVipLocked: false, safeUrl: "#", compact: true })
             : (isLocked
-                ? `<button type="button" onclick="openVipPassModal()" class="inline-flex items-center justify-center gap-1.5 px-5 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-xs shadow-violet-600/20 transition cursor-pointer">
-                    <span>👑 Unlock VIP for Latest Feed</span>
-                   </button>`
+                ? window.renderDirectApplyActionHtml({ isAuthLocked: false, isVipLocked: true, safeUrl: "#", compact: true })
                 : (isLinkedin
                     ? `<a href="${job.url}" target="_blank" rel="noopener noreferrer" class="direct-apply-link inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#0A66C2] hover:bg-[#004182] text-white text-xs sm:text-sm font-black rounded-xl shadow-xs transition" data-container="${containerId}" data-idx="${globalIdx}">
                         <span>Apply on LinkedIn</span>
@@ -2898,6 +2896,18 @@ function initModal() {
 
 }
 
+window.almondAiSessionCache = window.almondAiSessionCache || { pitch: {}, coverLetter: {} };
+
+function _getAiCacheKey(job) {
+    if (!job) return "";
+    const uid = (typeof getCandidateUserId === "function" ? getCandidateUserId() : "") || "anon";
+    const idPart = String(job.id || "").trim();
+    const urlPart = String(job.url || "").trim();
+    const fallbackPart = `${job.company || ""}_${job.title || job.role || ""}`.trim();
+    const uniqueKey = [idPart, urlPart || fallbackPart].filter(Boolean).join("|").toLowerCase();
+    return `${uid}::${uniqueKey}`;
+}
+
 async function openPitchModal(job) {
     if (!isUserLoggedIn()) {
         if (typeof window.openSignupToUnlockLinksModal === "function") window.openSignupToUnlockLinksModal();
@@ -2913,6 +2923,15 @@ async function openPitchModal(job) {
     if (!modal) return;
 
     pitchSub.textContent = `Target: ${job.title} at ${job.company}`;
+
+    const cacheKey = _getAiCacheKey(job);
+    const cachedPitch = cacheKey ? window.almondAiSessionCache.pitch[cacheKey] : "";
+    if (cachedPitch) {
+        pitchTextarea.value = cachedPitch;
+        if (typeof window.syncAiQuotaDisplay === "function") window.syncAiQuotaDisplay();
+        modal.classList.remove("hidden");
+        return;
+    }
 
     pitchTextarea.value = "Synthesizing STAR-grounded application pitch based on your verified candidate metrics...";
 
@@ -2967,6 +2986,9 @@ async function openPitchModal(job) {
             window.syncAiQuotaDisplay();
         }
 
+        if (cacheKey && data.pitch) {
+            window.almondAiSessionCache.pitch[cacheKey] = data.pitch;
+        }
         pitchTextarea.value = data.pitch;
 
     } catch (err) {
@@ -3067,6 +3089,15 @@ async function openCoverLetterModal(job) {
 
     sub.textContent = `Tailored for ${job.title} at ${job.company}`;
 
+    const cacheKey = _getAiCacheKey(job);
+    const cachedLetter = cacheKey ? window.almondAiSessionCache.coverLetter[cacheKey] : "";
+    if (cachedLetter) {
+        textarea.value = cachedLetter;
+        if (typeof window.syncAiQuotaDisplay === "function") window.syncAiQuotaDisplay();
+        modal.classList.remove("hidden");
+        return;
+    }
+
     textarea.value = "Synthesizing executive cover letter grounded in your verified achievements...";
 
     modal.classList.remove("hidden");
@@ -3120,6 +3151,9 @@ async function openCoverLetterModal(job) {
             window.syncAiQuotaDisplay();
         }
 
+        if (cacheKey && data.cover_letter) {
+            window.almondAiSessionCache.coverLetter[cacheKey] = data.cover_letter;
+        }
         textarea.value = data.cover_letter;
 
     } catch (err) {
@@ -5340,10 +5374,13 @@ window.renderDirectApplyActionHtml = function({ isAuthLocked, isVipLocked, safeU
     }
     if (isVipLocked) {
         const pad = compact ? "px-4 py-2" : "w-full sm:w-auto px-5 py-2.5";
-        return `<button type="button" onclick="openUpgradeModal()" class="${pad} rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition whitespace-nowrap">
-            <span>👑</span>
-            <span>Unlock with Pro</span>
-        </button>`;
+        return `<div class="flex flex-col items-stretch sm:items-end gap-1">
+            <span class="text-[10px] font-bold text-amber-800 tracking-tight whitespace-nowrap text-center sm:text-right">⚡ Apply fast &bull; Less competition</span>
+            <button type="button" onclick="openUpgradeModal()" class="${pad} rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition whitespace-nowrap">
+                <span>👑</span>
+                <span>Unlock with Pro</span>
+            </button>
+        </div>`;
     }
     const pad = compact ? "px-4 py-2" : "w-full sm:w-auto px-5 py-2.5";
     return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="omni-apply-btn ${pad} rounded-xl bg-slate-950 hover:bg-violet-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 transition whitespace-nowrap">
@@ -6131,6 +6168,7 @@ window.handleLogout = function() {
     localStorage.removeItem("almond_user_paid");
     window.currentAuthUser = null;
     window.candidateUser = null;
+    window.almondAiSessionCache = { pitch: {}, coverLetter: {} };
 
     window.updateTopProfileBar();
     if (typeof window.refreshUnlockedFeedsAfterAuth === "function") window.refreshUnlockedFeedsAfterAuth();
@@ -7178,7 +7216,7 @@ function renderCuratedCards(items, total, sortBy = 'latest') {
     const freeNoticeHtml = !loggedIn ? `
         <div class="p-3 rounded-xl bg-violet-50/95 border border-violet-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <span class="text-slate-800 font-medium">
-                🔒 <strong>Sign up free</strong> to view direct apply links. Jobs posted <strong>5+ days ago are 100% Free</strong> once signed in.
+                🔒 <strong>Sign up free</strong> to view direct apply links. Latest low-competition jobs need Pro; 5+ day jobs are free.
             </span>
             <button type="button" onclick="openSignupToUnlockLinksModal()" class="shrink-0 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold text-[11px] transition cursor-pointer">
                 Sign Up Free &rarr;
@@ -7187,7 +7225,7 @@ function renderCuratedCards(items, total, sortBy = 'latest') {
     ` : (!isUserPaid() ? `
         <div class="p-3 rounded-xl bg-amber-50/90 border border-amber-200 text-xs">
             <span class="text-slate-800 font-medium">
-                ℹ️ <strong>Free Plan Access:</strong> Jobs posted in the last 4 days are for Pro members so you can apply early before crowds form. Scroll down or use the <strong>Sort</strong> menu above to browse <strong>100% Free</strong> jobs posted 5+ days ago.
+                ℹ️ <strong>Free Plan:</strong> Latest jobs (less competition &amp; viewed early by HRs) are Pro-only. Use <strong>Sort</strong> to view 5+ day free jobs.
             </span>
         </div>
     ` : '');
