@@ -120,8 +120,13 @@ app.add_middleware(
 async def add_performance_cache_headers(request: Request, call_next):
     path = request.url.path
 
-    # Track real-time visitor telemetry for candidate pageviews
-    if not path.startswith("/static/") and path not in ["/favicon.ico", "/health", "/robots.txt", "/sitemap.xml", "/llms.txt"]:
+    # Track real-time visitor telemetry for candidate pageviews (excluding admin & static assets)
+    if (
+        not path.startswith("/static/")
+        and not path.startswith("/admin")
+        and not path.startswith("/api/admin")
+        and path not in ["/favicon.ico", "/health", "/ping", "/robots.txt", "/sitemap.xml", "/llms.txt", "/manifest.json", "/manifest.webmanifest", "/sw.js"]
+    ):
         try:
             client_ip = request.client.host if request.client else "127.0.0.1"
             forwarded = request.headers.get("x-forwarded-for")
@@ -137,7 +142,32 @@ async def add_performance_cache_headers(request: Request, call_next):
                 "platform": plat_hint,
                 "platform_version": plat_ver
             }
-            record_page_visit(path, client_ip, user_agent, referrer, client_hints=client_hints)
+            # Extract proxy/Cloudflare geo headers if available
+            cf_city = request.headers.get("cf-ipcity", "").strip()
+            cf_region = request.headers.get("cf-region", "").strip()
+            cf_country = request.headers.get("cf-ipcountry", "").strip()
+            loc_parts = [p for p in [cf_city, cf_region, cf_country] if p and p.upper() != "XX"]
+            proxy_location = ", ".join(loc_parts)
+
+            # Identify authenticated candidate if session cookie is present
+            vis_name = ""
+            vis_email = ""
+            sess_cookie = request.cookies.get("almond_session_token", "").strip()
+            if sess_cookie:
+                uid = verify_session_token(sess_cookie)
+                if uid:
+                    prof = get_user_profile(uid)
+                    if prof:
+                        vis_name = prof.get("full_name", "")
+                        vis_email = prof.get("email", "")
+
+            record_page_visit(
+                path, client_ip, user_agent, referrer,
+                client_hints=client_hints,
+                location=proxy_location,
+                user_name=vis_name,
+                user_email=vis_email
+            )
         except Exception:
             pass
 
@@ -973,7 +1003,10 @@ async def api_google_callback(request: Request, code: str = None, error: str = N
     </script>
 </body>
 </html>"""
-    return HTMLResponse(content=html_success, status_code=200)
+    resp = HTMLResponse(content=html_success, status_code=200)
+    if token:
+        resp.set_cookie(key="almond_session_token", value=token, max_age=86400 * 30, samesite="lax")
+    return resp
 
 @app.post("/api/auth/google")
 async def api_google_auth(request: Request, payload: dict = Body(...)):

@@ -5380,6 +5380,7 @@ window.handleAuthSubmit = async function(e) {
         // Store session tokens in localStorage
         if (data.token) {
             localStorage.setItem("almond_session_token", data.token);
+            document.cookie = `almond_session_token=${data.token}; path=/; max-age=2592000; SameSite=Lax`;
             localStorage.setItem("almond_auth_token", data.token);
         }
         if (data.user_id) localStorage.setItem("almond_user_id", data.user_id);
@@ -5463,6 +5464,7 @@ window.handleVerifyOtpSubmit = async function() {
         // Account verified & created! Store session
         if (data.token) {
             localStorage.setItem("almond_session_token", data.token);
+            document.cookie = `almond_session_token=${data.token}; path=/; max-age=2592000; SameSite=Lax`;
             localStorage.setItem("almond_auth_token", data.token);
         }
         if (data.user_id) localStorage.setItem("almond_user_id", data.user_id);
@@ -5605,6 +5607,7 @@ window.executeDirectSignupFallback = async function(email, password, fullName) {
         // Store session tokens in localStorage
         if (data.token) {
             localStorage.setItem("almond_session_token", data.token);
+            document.cookie = `almond_session_token=${data.token}; path=/; max-age=2592000; SameSite=Lax`;
             localStorage.setItem("almond_auth_token", data.token);
         }
         if (data.user_id) localStorage.setItem("almond_user_id", data.user_id);
@@ -5732,6 +5735,7 @@ async function completeGoogleAuth(payload) {
         // Store session in localStorage (set both session and backup auth token keys)
         if (data.token) {
             localStorage.setItem("almond_session_token", data.token);
+            document.cookie = `almond_session_token=${data.token}; path=/; max-age=2592000; SameSite=Lax`;
             localStorage.setItem("almond_auth_token", data.token);
         }
         localStorage.setItem("almond_user_id", data.user_id);
@@ -5773,6 +5777,7 @@ async function completeGoogleAuth(payload) {
 }
 
 window.handleLogout = function() {
+    document.cookie = "almond_session_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
     localStorage.removeItem("almond_session_token");
     localStorage.removeItem("almond_auth_token");
     localStorage.removeItem("almond_remaining_str");
@@ -5899,6 +5904,7 @@ window.initAuthSession = async function() {
                 if (resolvedToken) {
                     localStorage.setItem("almond_session_token", resolvedToken);
                     localStorage.setItem("almond_auth_token", resolvedToken);
+                    document.cookie = `almond_session_token=${resolvedToken}; path=/; max-age=2592000; SameSite=Lax`;
                 }
                 if (data.user_id) localStorage.setItem("almond_user_id", data.user_id);
                 if (data.email) localStorage.setItem("almond_user_email", data.email);

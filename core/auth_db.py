@@ -184,6 +184,18 @@ def init_db():
         except Exception:
             pass
         try:
+            cursor.execute("ALTER TABLE site_traffic ADD COLUMN location TEXT DEFAULT '';")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE site_traffic ADD COLUMN user_name TEXT DEFAULT '';")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE site_traffic ADD COLUMN user_email TEXT DEFAULT '';")
+        except Exception:
+            pass
+        try:
             cursor.execute("ALTER TABLE payments ADD COLUMN plan_name TEXT DEFAULT '';")
         except Exception:
             pass
@@ -2795,26 +2807,59 @@ def parse_device_hardware(user_agent: str = "", client_hints: dict = None) -> di
         "display": "💻 Desktop Browser"
     }
 
+_IP_GEO_CACHE = {}
+
+def _is_private_ip(ip: str) -> bool:
+    s = (ip or "").strip()
+    if not s or s in ("127.0.0.1", "::1", "localhost", "0.0.0.0"):
+        return True
+    if s.startswith(("10.", "192.168.", "172.16.", "172.17.", "172.18.", "172.19.", "172.2", "172.30.", "172.31.", "fe80:", "fc00:", "fd00:")):
+        return True
+    return False
+
+def _resolve_ip_location_bg(row_id: int, ip: str):
+    """Resolve geographic City, Region, Country in background thread without blocking page load."""
+    try:
+        import urllib.request, json
+        url = f"http://ip-api.com/json/{ip}?fields=status,countryCode,regionName,city"
+        req = urllib.request.Request(url, headers={"User-Agent": "AlmondJobsTelemetry/1.0"})
+        with urllib.request.urlopen(req, timeout=2.0) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        if data.get("status") == "success":
+            parts = [p for p in [data.get("city"), data.get("regionName"), data.get("countryCode")] if p]
+            loc_str = ", ".join(parts)
+            if loc_str:
+                _IP_GEO_CACHE[ip] = loc_str
+                with get_db() as conn:
+                    conn.execute("UPDATE site_traffic SET location = ? WHERE id = ?", (loc_str, row_id))
+                    conn.commit()
+    except Exception:
+        pass
+
 def record_page_visit(
     path: str,
     client_ip: str,
     user_agent: str = "",
     referrer: str = "",
     client_hints: dict = None,
-    device_model: str = ""
+    device_model: str = "",
+    location: str = "",
+    user_name: str = "",
+    user_email: str = ""
 ) -> bool:
     """
     Record an anonymous, privacy-compliant page visit in SQLite.
     Classifies bot / vulnerability scanners vs real candidate visits,
-    and identifies exact hardware device models (e.g. Poco M2 Pro, Samsung Galaxy, Windows 11).
+    identifies hardware device models, geographic location, and authenticated user identity.
     """
     try:
         clean_path = (path or "/").split("?")[0].strip()
-        # Filter out static files, assets, source maps, favicons
+        # Filter out static files, assets, source maps, favicons, and admin dashboard hits
         if any(clean_path.endswith(ext) for ext in [".css", ".js", ".png", ".jpg", ".jpeg", ".ico", ".webp", ".svg", ".map", ".woff", ".woff2", ".txt", ".xml"]):
             return False
-        # Filter out internal health checks and robots
-        if clean_path in ["/health", "/favicon.ico", "/robots.txt", "/sitemap.xml", "/llms.txt"]:
+        if clean_path in ["/health", "/ping", "/favicon.ico", "/robots.txt", "/sitemap.xml", "/llms.txt", "/manifest.json", "/manifest.webmanifest", "/sw.js"]:
+            return False
+        if clean_path.startswith("/admin") or clean_path.startswith("/api/admin"):
             return False
         if clean_path.startswith("/api/") and not clean_path.startswith("/api/jobs"):
             return False
@@ -2845,17 +2890,28 @@ def record_page_visit(
         visitor_hash = hashlib.sha256(hash_input.encode("utf-8")).hexdigest()[:16]
 
         clean_ref = (referrer or "")[:255]
+        clean_loc = (location or "").strip() or _IP_GEO_CACHE.get(client_ip, "")
+        clean_uname = (user_name or "").strip()[:120]
+        clean_uemail = (user_email or "").strip().lower()[:160]
 
+        row_id = None
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO site_traffic (date, path, visitor_hash, device, device_model, device_brand, is_bot, referrer, timestamp)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO site_traffic (date, path, visitor_hash, device, device_model, device_brand, is_bot, referrer, location, user_name, user_email, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (date_str, clean_path, visitor_hash, device_type, final_model, brand_name, is_bot, clean_ref, now)
+                (date_str, clean_path, visitor_hash, device_type, final_model, brand_name, is_bot, clean_ref, clean_loc, clean_uname, clean_uemail, now)
             )
+            row_id = cursor.lastrowid
             conn.commit()
+
+        # Non-blocking background Geo-IP resolution if location wasn't in proxy headers or cache
+        if not clean_loc and not is_bot and row_id and not _is_private_ip(client_ip):
+            import threading
+            threading.Thread(target=_resolve_ip_location_bg, args=(row_id, client_ip), daemon=True).start()
+
         return True
     except Exception as e:
         print(f"[TRAFFIC_TRACKER] Visit record note: {e}")
@@ -2947,6 +3003,16 @@ def parse_referrer_info(referrer: str) -> dict:
             "icon": "✈️"
         }
 
+    # Internal On-Site Navigation / Refresh
+    if "almondjobs.com" in ref_lower or "localhost" in ref_lower or "127.0.0.1" in ref_lower:
+        return {
+            "channel": "On-Site / Refresh",
+            "source": "Almond Jobs",
+            "detail": "Internal Navigation / Refresh",
+            "badge_color": "slate",
+            "icon": "🔄"
+        }
+
     # Other External Website
     domain_match = re.search(r'https?://([^/?#]+)', ref)
     domain = domain_match.group(1) if domain_match else ref[:30]
@@ -2960,8 +3026,9 @@ def parse_referrer_info(referrer: str) -> dict:
 
 def get_recent_visitors(limit: int = 50, bots_only: bool = False) -> list:
     """
-    Retrieve live stream of recent page hits with enriched referrer attribution,
-    hardware device models, and relative timestamps for founder telemetry.
+    Retrieve deduplicated live stream of recent unique visitor sessions (grouping consecutive
+    refreshes per visitor_hash) with geographic location, authenticated user identity,
+    referrer attribution, and hardware device models.
     """
     now = time.time()
     bot_filter = 1 if bots_only else 0
@@ -2970,15 +3037,52 @@ def get_recent_visitors(limit: int = 50, bots_only: bool = False) -> list:
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, date, path, visitor_hash, device, device_model, device_brand, is_bot, referrer, timestamp
+                SELECT id, date, path, visitor_hash, device, device_model, device_brand, is_bot, referrer,
+                       COALESCE(location, '') as location,
+                       COALESCE(user_name, '') as user_name,
+                       COALESCE(user_email, '') as user_email,
+                       timestamp
                 FROM site_traffic
-                WHERE is_bot = ?
+                WHERE is_bot = ? AND path NOT LIKE '/admin%' AND path NOT LIKE '/api/admin%'
                 ORDER BY timestamp DESC
                 LIMIT ?;
-            """, (bot_filter, limit))
+            """, (bot_filter, limit * 5))
             rows = cursor.fetchall()
 
+        # Group consecutive refreshes/pageviews by visitor_hash so 1 human = 1 clean row
+        grouped = {}
+        order = []
         for r in rows:
+            vh = r["visitor_hash"] or str(r["id"])
+            if vh not in grouped:
+                grouped[vh] = {
+                    "row": r,
+                    "hits": 1,
+                    "paths": [r["path"]],
+                    "best_ref": r["referrer"] or "",
+                    "best_loc": (r["location"] or "").strip(),
+                    "best_name": (r["user_name"] or "").strip(),
+                    "best_email": (r["user_email"] or "").strip(),
+                }
+                order.append(vh)
+            else:
+                g = grouped[vh]
+                g["hits"] += 1
+                if r["path"] not in g["paths"]:
+                    g["paths"].append(r["path"])
+                # Prefer external referrer over internal refresh
+                cur_ref = (r["referrer"] or "").strip()
+                if cur_ref and ("almondjobs.com" not in cur_ref.lower()) and (not g["best_ref"] or "almondjobs.com" in g["best_ref"].lower()):
+                    g["best_ref"] = cur_ref
+                if not g["best_loc"] and (r["location"] or "").strip():
+                    g["best_loc"] = (r["location"] or "").strip()
+                if not g["best_email"] and (r["user_email"] or "").strip():
+                    g["best_email"] = (r["user_email"] or "").strip()
+                    g["best_name"] = (r["user_name"] or "").strip()
+
+        for vh in order[:limit]:
+            g = grouped[vh]
+            r = g["row"]
             ts = r["timestamp"] or now
             diff = int(now - ts)
             if diff < 10:
@@ -2995,9 +3099,8 @@ def get_recent_visitors(limit: int = 50, bots_only: bool = False) -> list:
                 time_ago = time.strftime("%b %d, %H:%M", time.localtime(ts))
 
             time_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
-            
-            ref_meta = parse_referrer_info(r["referrer"])
-            
+            ref_meta = parse_referrer_info(g["best_ref"])
+
             model = (r["device_model"] or "").strip()
             brand = (r["device_brand"] or "").strip()
             dev_type = (r["device"] or "desktop").strip()
@@ -3008,19 +3111,22 @@ def get_recent_visitors(limit: int = 50, bots_only: bool = False) -> list:
                     model = "Tablet Device"
                 else:
                     model = "Desktop Browser"
-            
-            v_hash = (r["visitor_hash"] or "")[:8]
-            
+
             results.append({
                 "id": r["id"],
                 "date": r["date"],
                 "path": r["path"],
-                "visitor_hash": v_hash,
+                "paths_visited": g["paths"][:4],
+                "visit_count": g["hits"],
+                "visitor_hash": vh[:8],
                 "device": dev_type,
                 "device_model": model,
                 "device_brand": brand,
+                "location": g["best_loc"] or "Location Pending / Direct",
+                "user_name": g["best_name"],
+                "user_email": g["best_email"],
                 "is_bot": bool(r["is_bot"]),
-                "referrer": r["referrer"] or "",
+                "referrer": g["best_ref"],
                 "referrer_channel": ref_meta["channel"],
                 "referrer_source": ref_meta["source"],
                 "referrer_detail": ref_meta["detail"],
@@ -3033,6 +3139,23 @@ def get_recent_visitors(limit: int = 50, bots_only: bool = False) -> list:
     except Exception as e:
         print(f"[AUTH_DB] get_recent_visitors error: {e}")
     return results
+
+def get_location_breakdown(limit: int = 8) -> list:
+    """Aggregate real human visitors by geographic location (City/Country) for ad targeting."""
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT location, COUNT(*) as hits, COUNT(DISTINCT visitor_hash) as uniques
+                FROM site_traffic
+                WHERE is_bot = 0 AND COALESCE(location, '') != '' AND path NOT LIKE '/admin%'
+                GROUP BY location
+                ORDER BY uniques DESC, hits DESC
+                LIMIT ?;
+            """, (limit,))
+            return [{"location": r["location"], "hits": r["hits"], "uniques": r["uniques"]} for r in cursor.fetchall()]
+    except Exception:
+        return []
 
 def get_traffic_source_breakdown() -> list:
     """
@@ -3052,13 +3175,14 @@ def get_traffic_source_breakdown() -> list:
                         WHEN LOWER(referrer) LIKE '%google.%' THEN 'Google Search'
                         WHEN LOWER(referrer) LIKE '%whatsapp%' THEN 'WhatsApp'
                         WHEN LOWER(referrer) LIKE '%telegram%' OR LOWER(referrer) LIKE '%t.me%' THEN 'Telegram'
+                        WHEN LOWER(referrer) LIKE '%almondjobs.com%' OR LOWER(referrer) LIKE '%localhost%' THEN 'On-Site / Refresh'
                         WHEN referrer = '' OR referrer IS NULL THEN 'Direct / In-App'
                         ELSE 'Other Websites'
                     END as channel,
                     COUNT(*) as hits,
                     COUNT(DISTINCT visitor_hash) as uniques
                 FROM site_traffic
-                WHERE is_bot = 0
+                WHERE is_bot = 0 AND path NOT LIKE '/admin%' AND path NOT LIKE '/api/admin%'
                 GROUP BY channel
                 ORDER BY hits DESC;
             """)
@@ -3262,7 +3386,8 @@ def get_analytics_summary() -> dict:
         # Real-Time Telemetry Stream & Acquisition Sources
         "recent_visitors": get_recent_visitors(limit=50, bots_only=False),
         "recent_bot_probes": get_recent_visitors(limit=20, bots_only=True),
-        "traffic_sources": get_traffic_source_breakdown()
+        "traffic_sources": get_traffic_source_breakdown(),
+        "location_breakdown": get_location_breakdown()
     }
 
 def get_all_users_admin() -> list:
