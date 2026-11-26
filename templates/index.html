@@ -884,9 +884,45 @@
                         </div>
                     </div>
 
+                    <!-- ACTIVE RESUME PROFILE SUMMARY CARD (Centered directly below search bar after resume upload) -->
+                    <div id="omniActiveResumeCard" class="hidden w-full max-w-3xl mx-auto mb-6 rounded-2xl sm:rounded-3xl bg-white/95 border border-violet-200/90 shadow-md shadow-violet-500/5 p-4 sm:p-5 text-center backdrop-blur-md">
+                        <div class="flex flex-col items-center gap-2.5">
+                            <div class="inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 px-3 py-1 rounded-full bg-violet-50 border border-violet-200/80 text-[11px] font-bold text-violet-900">
+                                <span class="inline-flex items-center gap-1.5 whitespace-nowrap"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>Active Resume Profile</span></span>
+                                <span id="omniActiveResumeFileBadge" class="hidden text-[10px] font-mono text-slate-600 bg-white px-2 py-0.5 rounded-full border border-slate-200 max-w-[160px] sm:max-w-[260px] truncate">resume.pdf</span>
+                            </div>
+
+                            <div class="flex items-center justify-center gap-2.5">
+                                <div id="omniActiveResumeAvatar" class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0">S</div>
+                                <div class="text-left">
+                                    <h3 id="omniActiveResumeTitle" class="text-base sm:text-lg font-black text-slate-950 tracking-tight leading-tight">Candidate Resume</h3>
+                                    <p class="text-[11px] sm:text-xs text-slate-500 font-medium">Showing jobs tailored to these resume inputs</p>
+                                </div>
+                            </div>
+
+                            <div id="omniActiveResumeSummary" class="flex flex-wrap items-center justify-center gap-1.5 pt-0.5 text-[11px] font-bold text-slate-700">
+                                <!-- Populated dynamically with Role, Package, Locations, Skills -->
+                            </div>
+
+                            <div class="flex flex-wrap items-center justify-center gap-2 pt-1.5">
+                                <button type="button" id="omniEditResumeBtn" onclick="openOmniCriteriaModal(window.omniCurrentProfile)" class="px-4 py-2 rounded-xl bg-slate-950 hover:bg-violet-700 text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center gap-1.5 active:scale-95">
+                                    <span>✏️</span>
+                                    <span>Edit Inputs</span>
+                                </button>
+                                <button type="button" id="omniReuploadResumeBtn" onclick="if(window.triggerOmniResumeUpload){window.triggerOmniResumeUpload();}" class="px-4 py-2 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-900 border border-violet-200 font-bold text-xs shadow-2xs transition cursor-pointer flex items-center gap-1.5 active:scale-95">
+                                    <span>↻</span>
+                                    <span>Re-upload Resume</span>
+                                </button>
+                                <button type="button" id="omniClearResumeMatchBtn" onclick="clearOmniResumeMatch()" class="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200 font-bold text-xs transition cursor-pointer">
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- DIRECT INLINE RESULTS STREAM (Directly below the search bar) -->
                     <div id="omniSearchResultsContainer" class="hidden w-full max-w-5xl mx-auto mb-10">
-                        <!-- Feed Header & Resume Match Actions -->
+                        <!-- Feed Header & Export/Sort Actions -->
                         <div class="flex items-center justify-between gap-3 mb-4 flex-wrap px-1">
                             <div class="flex items-center gap-2">
                                 <span class="relative flex h-2.5 w-2.5 shrink-0">
@@ -897,12 +933,8 @@
                                 <span id="omniResultsCountBadge" class="text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">Streaming live</span>
                             </div>
 
-                            <!-- Discovery Actions Bar (Category chips removed from homepage; only Edit Resume, Export & Sort) -->
+                            <!-- Discovery Actions Bar (Export & Sort only) -->
                             <div id="omniResumeActionBar" class="flex items-center gap-2 flex-wrap">
-                                <button type="button" id="omniEditResumeBtn" onclick="openOmniCriteriaModal(window.omniCurrentProfile)" class="hidden px-3 py-1.5 rounded-xl bg-white hover:bg-violet-50 text-violet-800 border border-violet-200 font-bold text-xs shadow-2xs transition cursor-pointer flex items-center gap-1.5">
-                                    <span>✏️</span>
-                                    <span>Edit Resume Inputs</span>
-                                </button>
                                 <button type="button" onclick="exportOmniResults('csv')" class="px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-xs shadow-2xs transition cursor-pointer flex items-center gap-1.5">
                                     <span>📊</span>
                                     <span>Export Sheet</span>
@@ -2930,7 +2962,7 @@
     <!-- Lazy Razorpay SDK prefetch + Cache-Busted App Script -->
     <link rel="dns-prefetch" href="https://checkout.razorpay.com">
     <script>window.__ALMOND_RZP_SDK_URL__ = "https://checkout.razorpay.com/v1/checkout.js";</script>
-    <script src="/static/app.js?v=20261126_v18_clean_guest_funnel"></script>
+    <script src="/static/app.js?v=20261126_v19_centered_resume_card"></script>
     <script>
         lucide.createIcons();
     </script>

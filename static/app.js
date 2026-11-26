@@ -7991,6 +7991,82 @@ window.submitOmniManualSearch = function() {
     window.executeOmniSearch(trimmed, false);
 };
 
+window.renderActiveResumeCard = function() {
+    const card = document.getElementById("omniActiveResumeCard");
+    if (!card) return;
+    if (!window.omniMatchResumeMode) {
+        card.classList.add("hidden");
+        return;
+    }
+
+    const prof = window.omniCurrentProfile || {};
+    const candName = (prof.name && String(prof.name).trim()) || "Candidate";
+    const fileName = (window.omniUploadedFileName && String(window.omniUploadedFileName).trim()) || "";
+
+    const avatarEl = document.getElementById("omniActiveResumeAvatar");
+    if (avatarEl) {
+        avatarEl.textContent = candName.charAt(0).toUpperCase() || "C";
+    }
+    const titleEl = document.getElementById("omniActiveResumeTitle");
+    if (titleEl) {
+        titleEl.textContent = candName === "Candidate" ? "Active Resume Inputs" : `${candName}'s Resume Inputs`;
+    }
+    const fileBadge = document.getElementById("omniActiveResumeFileBadge");
+    if (fileBadge) {
+        if (fileName) {
+            fileBadge.textContent = fileName;
+            fileBadge.title = fileName;
+            fileBadge.classList.remove("hidden");
+        } else {
+            fileBadge.classList.add("hidden");
+        }
+    }
+
+    const summaryEl = document.getElementById("omniActiveResumeSummary");
+    if (summaryEl) {
+        const pills = [];
+        if (window.omniTargetRole) {
+            pills.push(`<span class="px-2.5 py-0.5 rounded-full bg-violet-50 border border-violet-200 text-violet-900">🎯 ${window.escapeClean(window.omniTargetRole)}</span>`);
+        }
+        if (Number(window.omniActiveMinPackage) > 0) {
+            pills.push(`<span class="px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800">💰 ${window.escapeClean(String(window.omniActiveMinPackage))}+ LPA</span>`);
+        }
+        const locs = (window.omniSelectedLocations && window.omniSelectedLocations.length > 0)
+            ? window.omniSelectedLocations.slice(0, 3).join(", ") + (window.omniSelectedLocations.length > 3 ? ` +${window.omniSelectedLocations.length - 3}` : "")
+            : "";
+        if (locs) {
+            pills.push(`<span class="px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700">📍 ${window.escapeClean(locs)}</span>`);
+        }
+        const skillCount = (window.omniDerivedSkills || []).length;
+        if (skillCount > 0) {
+            pills.push(`<span class="px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-900">⚡ ${skillCount} Skills</span>`);
+        }
+        summaryEl.innerHTML = pills.join("");
+    }
+
+    card.classList.remove("hidden");
+};
+
+window.clearOmniResumeMatch = function() {
+    window.omniMatchResumeMode = false;
+    window.omniCurrentProfile = null;
+    window.omniUploadedFileName = "";
+    window.omniDerivedSkills = [];
+    window.omniSelectedLocations = [];
+    window.omniActiveLocation = "all";
+    window.omniActiveMinPackage = 0;
+    window.omniActiveWorkMode = "all";
+    window.omniActiveContractType = "all";
+    window.omniActiveMaxDays = 0;
+    window.omniTargetRole = "";
+    window.omniCurrentQuery = "";
+    window.omniCurrentOffset = 0;
+    window.renderActiveResumeCard();
+    if (typeof window.executeOmniSearch === "function") {
+        window.executeOmniSearch("", false);
+    }
+};
+
 window.clearOmniSearch = function() {
     const input = document.getElementById("omniSearchInput");
     if (input) input.value = "";
@@ -8003,6 +8079,7 @@ window.clearOmniSearch = function() {
     window.omniCurrentQuery = "";
     window.omniCurrentOffset = 0;
     window.omniMatchResumeMode = false;
+    window.renderActiveResumeCard();
 };
 
 window.omniSortMode = "best_match";
@@ -8041,10 +8118,8 @@ window.executeOmniSearch = async function(query = "", append = false) {
     const emptyEl = document.getElementById("omniResultsEmptyState");
     const loadMoreContainer = document.getElementById("omniLoadMoreContainer");
 
-    const editBtn = document.getElementById("omniEditResumeBtn");
-    if (editBtn) {
-        if (window.omniMatchResumeMode) editBtn.classList.remove("hidden");
-        else editBtn.classList.add("hidden");
+    if (typeof window.renderActiveResumeCard === "function") {
+        window.renderActiveResumeCard();
     }
 
     // Show descriptive loading banner with exact search query / resume info
@@ -9048,6 +9123,7 @@ window.updateOmniPillStyles = function() {
 window.handleOmniResumeSelected = async function(event) {
     const file = event && event.target && event.target.files && event.target.files[0];
     if (!file) return;
+    window.omniUploadedFileName = file.name || "";
 
     const uploadLabel = document.getElementById("omniResumeUploadLabel");
     const originalLabel = uploadLabel ? uploadLabel.textContent : "Drop Resume (PDF/DOCX)";
@@ -9205,6 +9281,10 @@ window.submitOmniCriteria = async function() {
 
     window.closeOmniCriteriaModal();
 
+    if (typeof window.renderActiveResumeCard === "function") {
+        window.renderActiveResumeCard();
+    }
+
     // Reveal search results container
     const streamContainer = document.getElementById("omniSearchResultsContainer");
     if (streamContainer) {
@@ -9215,8 +9295,9 @@ window.submitOmniCriteria = async function() {
     window.omniCurrentOffset = 0;
     await window.executeOmniSearch("", false);
 
-    if (streamContainer) {
-        streamContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+    const scrollTarget = document.getElementById("omniActiveResumeCard") || streamContainer;
+    if (scrollTarget) {
+        scrollTarget.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 };
 
