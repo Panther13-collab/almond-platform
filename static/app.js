@@ -5401,8 +5401,8 @@ window.openProfileModal = function(contextReason = "") {
         if (contextReason === "search_intercept" || contextReason === "signup_links") {
             if (contextText) {
                 contextText.textContent = contextReason === "signup_links"
-                    ? "Sign up free in seconds to unblur direct company apply links (5+ day jobs free forever)."
-                    : "Sign in or create a free candidate account to run tailored searches.";
+                    ? "Sign up free in seconds to unblur direct company apply links & save jobs."
+                    : "Sign in or create a free candidate account to search and apply directly.";
             }
             contextNotice.classList.remove("hidden");
         } else {
@@ -5421,7 +5421,7 @@ window.openProfileModal = function(contextReason = "") {
 
     const contribFooter = document.getElementById("profileBottomContributeSection");
     const humanCheck = document.getElementById("authHumanCheckbox");
-    if (humanCheck) humanCheck.checked = true;
+    if (humanCheck) humanCheck.checked = false;
 
     const inAppHint = document.getElementById("inAppBrowserAuthHint");
     if (inAppHint) {
@@ -6207,6 +6207,40 @@ window.updateTopProfileBar = function() {
     if (topSignUpPill) {
         if (loggedIn) topSignUpPill.classList.add("hidden");
         else topSignUpPill.classList.remove("hidden");
+    }
+
+    // Hide all VIP / Pro / payment options from anonymous (logged-out) visitors;
+    // reveal them only after they sign up or log in.
+    const sideVipBtn = document.getElementById("sidePanelVipBtn");
+    const sideContribBtn = document.getElementById("sidePanelContributeBtn");
+    if (sideVipBtn) sideVipBtn.classList.toggle("hidden", !loggedIn);
+    if (sideContribBtn) sideContribBtn.classList.toggle("hidden", !loggedIn);
+
+    const omniFreeOpt = document.getElementById("omniSortFreeJobsOption");
+    const omniSortSel = document.getElementById("omniSortSelect");
+    if (omniFreeOpt) {
+        omniFreeOpt.hidden = !loggedIn;
+        omniFreeOpt.disabled = !loggedIn;
+        omniFreeOpt.classList.toggle("hidden", !loggedIn);
+        if (!loggedIn && omniSortSel && omniSortSel.value === "free_jobs") {
+            omniSortSel.value = "best_match";
+        }
+    }
+    const omniFreeStrip = document.getElementById("omniFreeAccessStrip");
+    if (omniFreeStrip) {
+        const hasLoadedItems = Array.isArray(window.omniCurrentItems) && window.omniCurrentItems.length > 0;
+        if (loggedIn && !paid && hasLoadedItems) omniFreeStrip.classList.remove("hidden");
+        else omniFreeStrip.classList.add("hidden");
+    }
+    const curatedFreeOpt = document.getElementById("curatedSortFreeJobsOption");
+    const curatedSortSel = document.getElementById("curatedSortSelect");
+    if (curatedFreeOpt) {
+        curatedFreeOpt.hidden = !loggedIn;
+        curatedFreeOpt.disabled = !loggedIn;
+        curatedFreeOpt.classList.toggle("hidden", !loggedIn);
+        if (!loggedIn && curatedSortSel && curatedSortSel.value === "free_jobs") {
+            curatedSortSel.value = "latest";
+        }
     }
 
     if (vipLbl) vipLbl.textContent = paid ? "VIP Active ✓" : "VIP Pass";
@@ -7235,7 +7269,7 @@ function renderCuratedCards(items, total, sortBy = 'latest') {
     const freeNoticeHtml = !loggedIn ? `
         <div class="p-3 rounded-xl bg-violet-50/95 border border-violet-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <span class="text-slate-800 font-medium">
-                🔒 <strong>Sign up free</strong> to view direct apply links. Latest low-competition jobs need Pro; 5+ day jobs are free.
+                🔒 <strong>Sign up free</strong> to view direct corporate apply links &amp; save jobs.
             </span>
             <button type="button" onclick="openSignupToUnlockLinksModal()" class="shrink-0 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold text-[11px] transition cursor-pointer">
                 Sign Up Free &rarr;
@@ -7278,12 +7312,14 @@ function renderCuratedCards(items, total, sortBy = 'latest') {
             compact: true
         });
 
+        const showProBadge = !isAuthLocked && isLocked;
+
         html += `
             <div class="curated-job-card p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:border-violet-300 hover:shadow-sm transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="space-y-1.5 min-w-0 flex-1">
                     <div class="flex items-center gap-2 flex-wrap">
                         <span class="text-sm font-black text-slate-950 flex items-center gap-1">🏢 ${window.escapeClean(item.company)}</span>
-                        <span class="px-2 py-0.5 rounded-md ${isLocked ? 'bg-amber-100 text-amber-950 border border-amber-300 font-black' : 'bg-slate-100 text-slate-600 font-semibold'} text-[10px]">${item.date_posted_str || 'Recent'}</span>
+                        <span class="px-2 py-0.5 rounded-md ${showProBadge ? 'bg-amber-100 text-amber-950 border border-amber-300 font-black' : 'bg-slate-100 text-slate-600 font-semibold'} text-[10px]">${item.date_posted_str || 'Recent'}</span>
                     </div>
                     <h4 class="text-xs sm:text-sm font-bold text-slate-800"><span class="text-[10px] font-extrabold uppercase text-slate-400 mr-1">Role:</span>${window.escapeClean(item.role)}</h4>
                     <div class="flex items-center gap-2 flex-wrap text-xs text-slate-600 font-medium">
@@ -7508,6 +7544,7 @@ function initTelemetryTicker() {
 // Side Panel (Navigation Drawer) Controller
 // ====================================================================
 window.openSidePanel = function() {
+    if (typeof window.updateTopProfileBar === "function") window.updateTopProfileBar();
     const drawer = document.getElementById("sidePanel");
     const backdrop = document.getElementById("sidePanelBackdrop");
     if (!drawer || !backdrop) return;
@@ -8311,7 +8348,7 @@ window.renderOmniResults = function(result, query, append) {
     }
     const freeStrip = document.getElementById("omniFreeAccessStrip");
     if (freeStrip) {
-        if (!isUserPaid() && items.length > 0) {
+        if (isUserLoggedIn() && !isUserPaid() && items.length > 0) {
             freeStrip.classList.remove("hidden");
         } else {
             freeStrip.classList.add("hidden");

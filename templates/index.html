@@ -802,11 +802,11 @@
                     <i data-lucide="user" class="w-4 h-4 text-violet-600"></i>
                     <span>Candidate Profile &amp; Settings</span>
                 </button>
-                <button type="button" onclick="navigateFromSidePanel('vip')" class="w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl text-xs font-black text-violet-950 bg-violet-50 hover:bg-violet-100 border border-violet-200 transition text-left cursor-pointer">
+                <button type="button" id="sidePanelVipBtn" onclick="navigateFromSidePanel('vip')" class="hidden w-full flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl text-xs font-black text-violet-950 bg-violet-50 hover:bg-violet-100 border border-violet-200 transition text-left cursor-pointer">
                     <span class="flex items-center gap-2"><span>👑</span><span>VIP Pass</span></span>
                     <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-400 text-slate-950">Unlock</span>
                 </button>
-                <button type="button" onclick="navigateFromSidePanel('contribute')" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-amber-900 bg-amber-50/70 hover:bg-amber-100/70 border border-amber-200/60 transition text-left cursor-pointer">
+                <button type="button" id="sidePanelContributeBtn" onclick="navigateFromSidePanel('contribute')" class="hidden w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-amber-900 bg-amber-50/70 hover:bg-amber-100/70 border border-amber-200/60 transition text-left cursor-pointer">
                     <span>☕</span>
                     <span>Support Almond Jobs (Contribute)</span>
                 </button>
@@ -918,7 +918,7 @@
                                         <option value="oldest">Sort: Oldest First</option>
                                         <option value="package_desc">Package: High to Low</option>
                                         <option value="package_asc">Package: Low to High</option>
-                                        <option value="free_jobs">Free Jobs (5+ Days Old)</option>
+                                        <option value="free_jobs" id="omniSortFreeJobsOption" class="hidden" disabled>Free Jobs (5+ Days Old)</option>
                                     </select>
                                     <span class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 text-[10px]">▼</span>
                                 </div>
@@ -2600,7 +2600,7 @@
             <div id="authFormView" class="space-y-3">
                 <div id="authContextNotice" class="hidden p-2.5 rounded-xl bg-violet-50 border border-violet-200 text-xs font-bold text-violet-900 flex items-center gap-2">
                     <span>🔒</span>
-                    <span id="authContextNoticeText">Create a free candidate account to unlock direct company apply links (5+ day jobs free forever).</span>
+                    <span id="authContextNoticeText">Create a free candidate account in seconds to unlock direct company apply links.</span>
                 </div>
                 <div id="inAppBrowserAuthHint" class="hidden p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] font-semibold text-amber-950 leading-snug">
                     📱 <strong>Inside Instagram / Facebook browser?</strong> Email signup below works in 1 tap — or open in Safari/Chrome for Google Sign-In.
@@ -2677,9 +2677,9 @@
                         </div>
                     </div>
 
-                    <!-- Human / Anti-Bot Verification Checkbox (Pre-checked for low friction on mobile) -->
+                    <!-- Human / Anti-Bot Verification Checkbox (Unchecked by default; user must confirm) -->
                     <label class="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:border-violet-400 transition select-none">
-                        <input type="checkbox" id="authHumanCheckbox" checked class="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 cursor-pointer">
+                        <input type="checkbox" id="authHumanCheckbox" class="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 cursor-pointer">
                         <span class="text-xs font-bold text-slate-700">I am human (Verify not a robot)</span>
                     </label>
 
@@ -2930,7 +2930,7 @@
     <!-- Lazy Razorpay SDK prefetch + Cache-Busted App Script -->
     <link rel="dns-prefetch" href="https://checkout.razorpay.com">
     <script>window.__ALMOND_RZP_SDK_URL__ = "https://checkout.razorpay.com/v1/checkout.js";</script>
-    <script src="/static/app.js?v=20261126_v17_mobile_fast_load"></script>
+    <script src="/static/app.js?v=20261126_v18_clean_guest_funnel"></script>
     <script>
         lucide.createIcons();
     </script>
@@ -3024,7 +3024,7 @@
                         <!-- Flipkart / Amazon Style Sort Option -->
                         <select id="curatedSortSelect" onchange="handleCuratedFilterChange()" class="text-xs font-bold px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-800 focus:outline-none focus:border-violet-500 shadow-2xs cursor-pointer" title="Sort verified job openings">
                             <option value="latest">Sort: Latest (New to Old)</option>
-                            <option value="free_jobs">Free Jobs (5+ Days Old)</option>
+                            <option value="free_jobs" id="curatedSortFreeJobsOption" class="hidden" disabled>Free Jobs (5+ Days Old)</option>
                             <option value="oldest">Sort: Oldest (Old to New)</option>
                             <option value="package_desc">Sort: Package (High to Low)</option>
                             <option value="package_asc">Sort: Package (Low to High)</option>
