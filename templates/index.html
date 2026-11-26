@@ -619,6 +619,19 @@
             animation: subtle-pulse 10s ease-in-out infinite;
         }
 
+        /* Crisp Urgency Blink for "Just Now" Label */
+        @keyframes justNowBlink {
+            0%, 49% { opacity: 1; }
+            50%, 75% { opacity: 0.22; }
+            76%, 100% { opacity: 1; }
+        }
+        .just-now-blink {
+            animation: justNowBlink 1.25s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .just-now-blink { animation: none; }
+        }
+
         .loc-dropdown { 
             max-height: 280px; 
             overflow-y: auto; 
@@ -884,36 +897,42 @@
                         </div>
                     </div>
 
-                    <!-- ACTIVE RESUME PROFILE SUMMARY CARD (Centered directly below search bar after resume upload) -->
-                    <div id="omniActiveResumeCard" class="hidden w-full max-w-3xl mx-auto mb-6 rounded-2xl sm:rounded-3xl bg-white/95 border border-violet-200/90 shadow-md shadow-violet-500/5 p-4 sm:p-5 text-center backdrop-blur-md">
-                        <div class="flex flex-col items-center gap-2.5">
-                            <div class="inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 px-3 py-1 rounded-full bg-violet-50 border border-violet-200/80 text-[11px] font-bold text-violet-900">
-                                <span class="inline-flex items-center gap-1.5 whitespace-nowrap"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>Active Resume Profile</span></span>
-                                <span id="omniActiveResumeFileBadge" class="hidden text-[10px] font-mono text-slate-600 bg-white px-2 py-0.5 rounded-full border border-slate-200 max-w-[160px] sm:max-w-[260px] truncate">resume.pdf</span>
-                            </div>
-
-                            <div class="flex items-center justify-center gap-2.5">
-                                <div id="omniActiveResumeAvatar" class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0">S</div>
-                                <div class="text-left">
-                                    <h3 id="omniActiveResumeTitle" class="text-base sm:text-lg font-black text-slate-950 tracking-tight leading-tight">Candidate Resume</h3>
-                                    <p class="text-[11px] sm:text-xs text-slate-500 font-medium">Showing jobs tailored to these resume inputs</p>
+                    <!-- ACTIVE RESUME PROFILE BAR (Full-width compact horizontal strip aligned to results container) -->
+                    <div id="omniActiveResumeCard" class="hidden w-full max-w-5xl mx-auto mb-5 rounded-2xl bg-white/95 border border-violet-200/90 shadow-md shadow-violet-500/5 px-4 py-3.5 sm:px-5 sm:py-4 text-left backdrop-blur-md">
+                        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
+                            <!-- Left: Candidate Identity + File + Active Criteria Pills -->
+                            <div class="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                                <div id="omniActiveResumeAvatar" class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white font-black text-base flex items-center justify-center shadow-xs shrink-0">S</div>
+                                <div class="min-w-0 flex-1 space-y-1.5">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <h3 id="omniActiveResumeTitle" class="text-sm sm:text-base font-black text-slate-950 tracking-tight leading-tight">Candidate Resume</h3>
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-black text-emerald-800 whitespace-nowrap">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                            <span>Active</span>
+                                        </span>
+                                        <span id="omniActiveResumeFileBadge" class="hidden text-[10px] font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200 max-w-[170px] sm:max-w-[260px] truncate">resume.pdf</span>
+                                    </div>
+                                    <div id="omniActiveResumeSummary" class="flex flex-wrap items-center gap-1.5 text-[11px] font-bold text-slate-700">
+                                        <!-- Populated dynamically with Role, Package, Locations, Skills -->
+                                    </div>
                                 </div>
                             </div>
 
-                            <div id="omniActiveResumeSummary" class="flex flex-wrap items-center justify-center gap-1.5 pt-0.5 text-[11px] font-bold text-slate-700">
-                                <!-- Populated dynamically with Role, Package, Locations, Skills -->
-                            </div>
-
-                            <div class="flex flex-wrap items-center justify-center gap-2 pt-1.5">
-                                <button type="button" id="omniEditResumeBtn" onclick="openOmniCriteriaModal(window.omniCurrentProfile)" class="px-4 py-2 rounded-xl bg-slate-950 hover:bg-violet-700 text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center gap-1.5 active:scale-95">
+                            <!-- Right: Refresh, Edit Inputs, Re-upload & Clear -->
+                            <div class="flex flex-wrap items-center justify-start lg:justify-end gap-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                                <button type="button" id="omniResumeRefreshBtn" onclick="refreshOmniLiveFeed(this)" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center gap-1.5 active:scale-95" title="Check for newly opened Just Now jobs">
+                                    <span class="refresh-spin-icon">↻</span>
+                                    <span>Refresh Live</span>
+                                </button>
+                                <button type="button" id="omniEditResumeBtn" onclick="openOmniCriteriaModal(window.omniCurrentProfile)" class="px-3.5 py-2 rounded-xl bg-slate-950 hover:bg-violet-700 text-white font-bold text-xs shadow-xs transition cursor-pointer flex items-center gap-1.5 active:scale-95">
                                     <span>✏️</span>
                                     <span>Edit Inputs</span>
                                 </button>
-                                <button type="button" id="omniReuploadResumeBtn" onclick="if(window.triggerOmniResumeUpload){window.triggerOmniResumeUpload();}" class="px-4 py-2 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-900 border border-violet-200 font-bold text-xs shadow-2xs transition cursor-pointer flex items-center gap-1.5 active:scale-95">
-                                    <span>↻</span>
-                                    <span>Re-upload Resume</span>
+                                <button type="button" id="omniReuploadResumeBtn" onclick="if(window.triggerOmniResumeUpload){window.triggerOmniResumeUpload();}" class="px-3.5 py-2 rounded-xl bg-violet-50 hover:bg-violet-100 text-violet-900 border border-violet-200 font-bold text-xs shadow-2xs transition cursor-pointer flex items-center gap-1.5 active:scale-95">
+                                    <span>📤</span>
+                                    <span>Re-upload</span>
                                 </button>
-                                <button type="button" id="omniClearResumeMatchBtn" onclick="clearOmniResumeMatch()" class="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200 font-bold text-xs transition cursor-pointer">
+                                <button type="button" id="omniClearResumeMatchBtn" onclick="clearOmniResumeMatch()" class="px-2.5 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-800 border border-slate-200 font-bold text-xs transition cursor-pointer" title="Clear active resume filter">
                                     Clear
                                 </button>
                             </div>
@@ -922,7 +941,7 @@
 
                     <!-- DIRECT INLINE RESULTS STREAM (Directly below the search bar) -->
                     <div id="omniSearchResultsContainer" class="hidden w-full max-w-5xl mx-auto mb-10">
-                        <!-- Feed Header & Export/Sort Actions -->
+                        <!-- Feed Header & Export/Sort/Refresh Actions -->
                         <div class="flex items-center justify-between gap-3 mb-4 flex-wrap px-1">
                             <div class="flex items-center gap-2">
                                 <span class="relative flex h-2.5 w-2.5 shrink-0">
@@ -933,8 +952,12 @@
                                 <span id="omniResultsCountBadge" class="text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full">Streaming live</span>
                             </div>
 
-                            <!-- Discovery Actions Bar (Export & Sort only) -->
+                            <!-- Discovery Actions Bar (Refresh, Export & Sort) -->
                             <div id="omniResumeActionBar" class="flex items-center gap-2 flex-wrap">
+                                <button type="button" id="omniFeedRefreshBtn" onclick="refreshOmniLiveFeed(this)" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold text-xs shadow-2xs transition cursor-pointer flex items-center gap-1.5 active:scale-95" title="Refresh to check for newly posted Just Now openings">
+                                    <span class="refresh-spin-icon">↻</span>
+                                    <span>Refresh</span>
+                                </button>
                                 <button type="button" onclick="exportOmniResults('csv')" class="px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-xs shadow-2xs transition cursor-pointer flex items-center gap-1.5">
                                     <span>📊</span>
                                     <span>Export Sheet</span>
@@ -2962,7 +2985,7 @@
     <!-- Lazy Razorpay SDK prefetch + Cache-Busted App Script -->
     <link rel="dns-prefetch" href="https://checkout.razorpay.com">
     <script>window.__ALMOND_RZP_SDK_URL__ = "https://checkout.razorpay.com/v1/checkout.js";</script>
-    <script src="/static/app.js?v=20261126_v19_centered_resume_card"></script>
+    <script src="/static/app.js?v=20261126_v20_justnow_refresh_bar"></script>
     <script>
         lucide.createIcons();
     </script>

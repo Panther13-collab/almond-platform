@@ -7314,12 +7314,18 @@ function renderCuratedCards(items, total, sortBy = 'latest') {
 
         const showProBadge = !isAuthLocked && isLocked;
 
+        const isTodayOrJustNow = /today|just now|hour|min/i.test(String(item.date_posted_str || "")) || (typeof item.days_ago === "number" && item.days_ago === 0);
+        const dateBadgeLabel = isTodayOrJustNow ? "Just Now" : (item.date_posted_str || "Recent");
+        const dateBadgeHtml = isTodayOrJustNow
+            ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-300 font-black text-[10px]"><span class="just-now-blink">${dateBadgeLabel}</span><span class="text-amber-700 font-bold">&bull; First come, first serve</span></span>`
+            : `<span class="px-2 py-0.5 rounded-md ${showProBadge ? 'bg-amber-100 text-amber-950 border border-amber-300 font-black' : 'bg-slate-100 text-slate-600 font-semibold'} text-[10px]">${window.escapeClean(dateBadgeLabel)}</span>`;
+
         html += `
             <div class="curated-job-card p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:border-violet-300 hover:shadow-sm transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="space-y-1.5 min-w-0 flex-1">
                     <div class="flex items-center gap-2 flex-wrap">
                         <span class="text-sm font-black text-slate-950 flex items-center gap-1">🏢 ${window.escapeClean(item.company)}</span>
-                        <span class="px-2 py-0.5 rounded-md ${showProBadge ? 'bg-amber-100 text-amber-950 border border-amber-300 font-black' : 'bg-slate-100 text-slate-600 font-semibold'} text-[10px]">${item.date_posted_str || 'Recent'}</span>
+                        ${dateBadgeHtml}
                     </div>
                     <h4 class="text-xs sm:text-sm font-bold text-slate-800"><span class="text-[10px] font-extrabold uppercase text-slate-400 mr-1">Role:</span>${window.escapeClean(item.role)}</h4>
                     <div class="flex items-center gap-2 flex-wrap text-xs text-slate-600 font-medium">
@@ -8357,6 +8363,21 @@ window.formatCompactLocationClient = function(rawLoc) {
     return picked.length > 0 ? `${prefix}${countLabel} (${picked.join(", ")})` : `${prefix}${countLabel} (Global)`;
 };
 
+window.refreshOmniLiveFeed = async function(triggerBtn = null) {
+    const icon = triggerBtn ? triggerBtn.querySelector(".refresh-spin-icon") : null;
+    if (icon) icon.classList.add("animate-spin", "inline-block");
+    if (triggerBtn) triggerBtn.disabled = true;
+    try {
+        window.omniCurrentOffset = 0;
+        if (typeof window.executeOmniSearch === "function") {
+            await window.executeOmniSearch(window.omniCurrentQuery || "", false);
+        }
+    } finally {
+        if (icon) icon.classList.remove("animate-spin");
+        if (triggerBtn) triggerBtn.disabled = false;
+    }
+};
+
 window.formatCenterDateBadge = function(job) {
     let ts = Number(job.date_posted_ts || 0);
     let diff = (typeof job.days_ago === "number" && Number.isFinite(job.days_ago)) ? Math.max(0, Math.floor(job.days_ago)) : null;
@@ -8374,10 +8395,10 @@ window.formatCenterDateBadge = function(job) {
     const dateShort = `${dObj.getDate()} ${months[dObj.getMonth()]} ${dObj.getFullYear()}`;
     const dateMonthDay = `${dObj.getDate()} ${months[dObj.getMonth()]}`;
 
-    if (diff === 0) return { primary: "Today", secondary: dateMonthDay, isFresh: true };
-    if (diff === 1) return { primary: "Yesterday", secondary: dateMonthDay, isFresh: true };
-    if (diff <= 5) return { primary: `${diff} days ago`, secondary: dateMonthDay, isFresh: true };
-    return { primary: dateShort, secondary: `${diff} days ago`, isFresh: false };
+    if (diff === 0) return { primary: "Just Now", secondary: dateMonthDay, urgency: "Apply soon • First come, first serve", isFresh: true, isJustNow: true };
+    if (diff === 1) return { primary: "Yesterday", secondary: dateMonthDay, urgency: "", isFresh: true, isJustNow: false };
+    if (diff <= 5) return { primary: `${diff} days ago`, secondary: dateMonthDay, urgency: "", isFresh: true, isJustNow: false };
+    return { primary: dateShort, secondary: `${diff} days ago`, urgency: "", isFresh: false, isJustNow: false };
 };
 
 window.renderOmniResults = function(result, query, append) {
@@ -8527,10 +8548,12 @@ window.renderOmniResults = function(result, query, append) {
                 </div>
             </div>
 
-            <!-- Center Zone: Freshness & Exact Date Badge -->
-            <div class="flex md:flex-col items-center md:justify-center gap-2 md:gap-0.5 px-3.5 py-2 rounded-xl ${dateBadge.isFresh ? 'bg-amber-50/80 border border-amber-200/80 text-amber-950' : 'bg-slate-50 border border-slate-200/80 text-slate-700'} shrink-0 text-center md:min-w-[120px]">
-                <span class="text-xs font-black tracking-tight">${dateBadge.primary}</span>
-                <span class="text-[10px] font-semibold opacity-75">${dateBadge.secondary}</span>
+            <!-- Center Zone: Freshness, Blinking Just Now & Exact Date Badge -->
+            <div class="flex flex-col items-center justify-center gap-0.5 px-3.5 py-2 rounded-xl ${dateBadge.isJustNow ? 'bg-emerald-50/90 border border-emerald-300 text-emerald-950' : (dateBadge.isFresh ? 'bg-amber-50/80 border border-amber-200/80 text-amber-950' : 'bg-slate-50 border border-slate-200/80 text-slate-700')} shrink-0 text-center md:min-w-[148px]">
+                ${dateBadge.isJustNow
+                    ? `<span class="inline-flex items-center gap-1.5 text-xs font-black tracking-tight text-emerald-700 just-now-blink"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span>Just Now</span></span><span class="text-[9.5px] font-extrabold text-amber-800 leading-tight whitespace-nowrap">${dateBadge.urgency}</span><span class="text-[10px] font-semibold opacity-70">${dateBadge.secondary}</span>`
+                    : `<span class="text-xs font-black tracking-tight">${dateBadge.primary}</span><span class="text-[10px] font-semibold opacity-75">${dateBadge.secondary}</span>`
+                }
             </div>
 
             <!-- Right Action Dock: Primary CTA + Sleek Secondary Pill Bar -->
