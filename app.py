@@ -1402,6 +1402,12 @@ def _is_request_authenticated(request: Optional[Request], user_id: str = "") -> 
     return False
 
 
+_CF_COUNTRY_NAMES = {
+    "IN": "India", "US": "United States", "GB": "United Kingdom", "UK": "United Kingdom",
+    "CA": "Canada", "DE": "Germany", "FR": "France", "NL": "Netherlands", "SG": "Singapore",
+    "AE": "UAE", "AU": "Australia", "IE": "Ireland"
+}
+
 @app.get("/api/omni-search")
 async def api_omni_search(
     request: Request,
@@ -1420,6 +1426,8 @@ async def api_omni_search(
     limit: int = Query(15),
     offset: int = Query(0),
     refresh: bool = Query(False),
+    geo_country: str = Query(""),
+    feed_nonce: str = Query(""),
     user_id: Optional[str] = Query(None)
 ):
     """Unified instant discovery query across live corporate portals & curated feeds."""
@@ -1427,6 +1435,8 @@ async def api_omni_search(
     effective_min_lpa = max(min_lpa, min_package_lpa or 0.0)
     user_logged_in = _is_request_authenticated(request, user_id or "")
     user_paid = is_user_paid(user_id) if (user_logged_in and user_id) else False
+    cf_cc = (request.headers.get("cf-ipcountry") or request.headers.get("x-country-code") or "").strip().upper()
+    effective_country = (geo_country or "").strip() or _CF_COUNTRY_NAMES.get(cf_cc, "")
 
     if refresh:
         trigger_live_refresh(force=True)
@@ -1450,7 +1460,9 @@ async def api_omni_search(
         min(limit, 100),
         offset,
         user_paid,
-        user_logged_in
+        user_logged_in,
+        effective_country.lower() if (user_logged_in and not user_paid) else "",
+        feed_nonce if (user_logged_in and not user_paid) else ""
     )
     now = time.time()
     if not refresh:
@@ -1475,7 +1487,9 @@ async def api_omni_search(
         limit=min(limit, 100),
         offset=offset,
         user_is_paid=user_paid,
-        user_is_logged_in=user_logged_in
+        user_is_logged_in=user_logged_in,
+        user_country=effective_country,
+        feed_nonce=feed_nonce
     )
 
     with _OMNI_SEARCH_CACHE_LOCK:

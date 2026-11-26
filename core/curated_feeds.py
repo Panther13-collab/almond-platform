@@ -3,12 +3,13 @@ import json
 import time
 import re
 import os
+import random
 import threading
 import concurrent.futures
 from typing import List, Dict, Any, Optional, Tuple
 import datetime
 from core.job_engine import clean_job_url
-from core.payment import apply_vip_latest_feed_lock
+from core.payment import apply_vip_latest_feed_lock, VIP_LATEST_FEED_MAX_DAYS
 
 # Local cache paths to avoid unnecessary network latency
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "feed_cache")
@@ -1289,6 +1290,123 @@ def _interleave_diverse_freshness_feed(items: List[Dict[str, Any]], now_ts: int)
     return ordered
 
 
+def _get_fast_country_tokens(user_country: str) -> Tuple[str, ...]:
+    c = (user_country or "").strip().lower()
+    if not c or c in ("all", "any", "worldwide"):
+        return ()
+    if c in ("in", "india"):
+        return ("india", "bengaluru", "bangalore", "chennai", "hyderabad", "pune", "mumbai", "delhi", "gurgaon", "gurugram", "noida", "kolkata")
+    if c in ("us", "usa", "united states"):
+        return ("united states", "usa", ", us", "san francisco", "new york", "seattle", "austin", "boston", "chicago")
+    if c in ("uk", "gb", "united kingdom"):
+        return ("united kingdom", "london", ", uk", "manchester", "edinburgh")
+    if c in ("de", "germany"):
+        return ("germany", "berlin", "munich", "frankfurt")
+    if c in ("ca", "canada"):
+        return ("canada", "toronto", "vancouver", "montreal")
+    if c in ("sg", "singapore"):
+        return ("singapore",)
+    if c in ("au", "australia"):
+        return ("australia", "sydney", "melbourne")
+    return (c,)
+
+
+def _build_signed_in_free_mixed_feed(
+    items: List[Dict[str, Any]],
+    now_ts: int,
+    user_country: str = "",
+    shuffle_seed: str = "",
+) -> List[Dict[str, Any]]:
+    """For logged-in Free users browsing without search/resume: prioritize location & shuffle pools
+    so every 15 cards contain 5 Pro (0-4d latest) and 10 Free (5+d unlocked) jobs, aligned to +5 Show More.
+    """
+    if len(items) <= 1:
+        return items
+
+    country_tokens = _get_fast_country_tokens(user_country)
+
+    pro_tiers: Tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]] = ([], [], [])
+    free_tiers: Tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]] = ([], [], [])
+
+    for it in items:
+        pts = int(it.get("date_posted_ts") or 0)
+        is_pro = (pts <= 100000) or (((now_ts - pts) // 86400) <= VIP_LATEST_FEED_MAX_DAYS)
+        loc_low = (it.get("location") or "").lower()
+        tier = 2
+        if country_tokens and any(tok in loc_low for tok in country_tokens):
+            tier = 0
+        elif "remote" in loc_low or "worldwide" in loc_low or "anywhere" in loc_low:
+            tier = 1
+        (pro_tiers[tier] if is_pro else free_tiers[tier]).append(it)
+
+    rng = random.Random(f"{user_country.lower()}|{shuffle_seed or (now_ts // 900)}")
+
+    def _shuffle_pool(tiers: Tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+        out: List[Dict[str, Any]] = []
+        for t in tiers:
+            if t:
+                rng.shuffle(t)
+                out.extend(t)
+        return out
+
+    pro_q = _shuffle_pool(pro_tiers)
+    free_q = _shuffle_pool(free_tiers)
+
+    result: List[Dict[str, Any]] = []
+    pi = 0
+    fi = 0
+    total_len = len(pro_q) + len(free_q)
+
+    # First 15: exact 5 Pro + 10 Free randomly positioned, guaranteeing a Free direct link at index 0 or 1
+    first_flags = [True] * 5 + [False] * 10
+    rng.shuffle(first_flags)
+    if first_flags[0] and first_flags[1]:
+        swap_idx = next((idx for idx in range(2, 15) if not first_flags[idx]), 2)
+        first_flags[1], first_flags[swap_idx] = first_flags[swap_idx], first_flags[1]
+
+    # Subsequent +5 Show More blocks alternate 1 Pro+4 Free, 2 Pro+3 Free, 2 Pro+3 Free (= 5 Pro + 10 Free per 15)
+    sub_patterns = (
+        [True] + [False] * 4,
+        [True] * 2 + [False] * 3,
+        [True] * 2 + [False] * 3,
+    )
+
+    def _take(want_pro: bool) -> Dict[str, Any]:
+        nonlocal pi, fi
+        if want_pro and pi < len(pro_q):
+            item = pro_q[pi]
+            pi += 1
+            return item
+        if not want_pro and fi < len(free_q):
+            item = free_q[fi]
+            fi += 1
+            return item
+        if fi < len(free_q):
+            item = free_q[fi]
+            fi += 1
+            return item
+        item = pro_q[pi]
+        pi += 1
+        return item
+
+    for want_pro in first_flags:
+        if len(result) >= total_len:
+            break
+        result.append(_take(want_pro))
+
+    block_idx = 0
+    while len(result) < total_len:
+        flags = list(sub_patterns[block_idx % 3])
+        rng.shuffle(flags)
+        for want_pro in flags:
+            if len(result) >= total_len:
+                break
+            result.append(_take(want_pro))
+        block_idx += 1
+
+    return result
+
+
 def omni_search_all_feeds(
     query: str = "",
     category: str = "All",
@@ -1304,7 +1422,9 @@ def omni_search_all_feeds(
     limit: int = 15,
     offset: int = 0,
     user_is_paid: bool = False,
-    user_is_logged_in: bool = True
+    user_is_logged_in: bool = True,
+    user_country: str = "",
+    feed_nonce: str = ""
 ) -> Dict[str, Any]:
     """High-speed unified discovery engine querying across live corporate portals & curated feeds
     with newest-first global IT + Non-IT domain diversity, precision location filtering, and resume matching.
@@ -1312,6 +1432,7 @@ def omni_search_all_feeds(
     # 1. Aggregate listings from live direct ATS boards, curated feeds & local datasets
     combined_items = []
     seen_urls: Dict[str, int] = {}
+    seen_role_keys: Dict[Tuple[str, str], int] = {}
 
     for ft in ["corporate_live", "internships", "aiml", "entrylevel"]:
         feed_items = get_feed_data(ft)
@@ -1321,13 +1442,22 @@ def omni_search_all_feeds(
                 continue
             if not item.get("feed_type"):
                 item["feed_type"] = ft
-            if url not in seen_urls:
-                seen_urls[url] = len(combined_items)
-                combined_items.append(item)
-            else:
+            role_key = ((item.get("company") or "").strip().lower(), (item.get("role") or "").strip().lower())
+            if url in seen_urls:
                 prev_idx = seen_urls[url]
                 if (item.get("date_posted_ts") or 0) > (combined_items[prev_idx].get("date_posted_ts") or 0):
                     combined_items[prev_idx] = item
+                continue
+            if role_key[0] and role_key[1] and role_key in seen_role_keys:
+                prev_idx = seen_role_keys[role_key]
+                if (item.get("date_posted_ts") or 0) > (combined_items[prev_idx].get("date_posted_ts") or 0):
+                    combined_items[prev_idx] = item
+                continue
+            idx = len(combined_items)
+            seen_urls[url] = idx
+            if role_key[0] and role_key[1]:
+                seen_role_keys[role_key] = idx
+            combined_items.append(item)
 
     # Supplement with local verified direct corporate listings (rich India + global openings)
     extra_corporate = load_local_corporate_jobs()
@@ -1564,7 +1694,15 @@ def omni_search_all_feeds(
     elif match_resume or q_tokens:
         filtered.sort(key=lambda x: (x.get("_match_score", 0), x.get("date_posted_ts", 0)), reverse=True)
     elif clean_sort == "best_match" and (not category or category.lower() in ("all", "any")):
-        filtered = _interleave_diverse_freshness_feed(filtered, now_ts)
+        if user_is_logged_in and not user_is_paid:
+            filtered = _build_signed_in_free_mixed_feed(
+                filtered,
+                now_ts,
+                user_country=user_country,
+                shuffle_seed=feed_nonce,
+            )
+        else:
+            filtered = _interleave_diverse_freshness_feed(filtered, now_ts)
     else:
         filtered.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=True)
 

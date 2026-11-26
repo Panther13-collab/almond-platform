@@ -5344,12 +5344,37 @@ window.openSignupToUnlockLinksModal = function() {
     }
 };
 
+window.omniFeedSessionNonce = String(Date.now());
+
+window.getUserGeoCountry = function() {
+    try {
+        const metaCountry = document.querySelector('meta[name="server-geo-country"]');
+        const raw = (metaCountry && metaCountry.content ? metaCountry.content : "").trim();
+        if (raw && raw.toUpperCase() !== "XX" && raw.toUpperCase() !== "UNKNOWN") {
+            const codeMap = {
+                IN: "India", US: "United States", GB: "United Kingdom", UK: "United Kingdom",
+                CA: "Canada", DE: "Germany", FR: "France", NL: "Netherlands",
+                SG: "Singapore", AE: "UAE", AU: "Australia", IE: "Ireland"
+            };
+            return codeMap[raw.toUpperCase()] || raw;
+        }
+        const curr = typeof window.getUserLocationCurrency === "function" ? window.getUserLocationCurrency() : "";
+        if (curr === "INR") return "India";
+        if (curr === "GBP") return "United Kingdom";
+        if (curr === "EUR") return "Germany";
+        if (curr === "USD") return "United States";
+    } catch (_) {}
+    return "";
+};
+
 window.refreshUnlockedFeedsAfterAuth = function() {
     try {
         if (typeof window.fetchAiQuotaStatus === "function") {
             window.fetchAiQuotaStatus();
         }
-        if (window.omniCurrentItems && window.omniCurrentItems.length > 0 && typeof window.executeOmniSearch === "function") {
+        window.omniCurrentOffset = 0;
+        window.omniFeedSessionNonce = String(Date.now());
+        if (typeof window.executeOmniSearch === "function" && document.getElementById("omniSearchResultsContainer")) {
             window.executeOmniSearch(window.omniCurrentQuery || "", false);
         }
         const curatedModal = document.getElementById("curatedFeedsModal");
@@ -8191,6 +8216,10 @@ window.executeOmniSearch = async function(query = "", append = false, forceRefre
         const currentUserId = window.currentUserId || localStorage.getItem("almond_user_id");
         if (currentUserId) {
             params.append("user_id", currentUserId);
+            const geoCountry = typeof window.getUserGeoCountry === "function" ? window.getUserGeoCountry() : "";
+            if (geoCountry) params.append("geo_country", geoCountry);
+            if (!window.omniFeedSessionNonce) window.omniFeedSessionNonce = String(Date.now());
+            params.append("feed_nonce", window.omniFeedSessionNonce);
         }
 
         const res = await fetch(`/api/omni-search?${params.toString()}`, {
@@ -8378,6 +8407,7 @@ window.refreshOmniLiveFeed = async function(triggerBtn = null) {
     if (triggerBtn) triggerBtn.disabled = true;
     try {
         window.omniCurrentOffset = 0;
+        window.omniFeedSessionNonce = String(Date.now());
         if (typeof window.executeOmniSearch === "function") {
             await window.executeOmniSearch(window.omniCurrentQuery || "", false, true);
         }
