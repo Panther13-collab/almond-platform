@@ -4,6 +4,7 @@ import time
 import re
 import os
 import threading
+import concurrent.futures
 from typing import List, Dict, Any, Optional, Tuple
 import datetime
 from core.job_engine import clean_job_url
@@ -17,23 +18,150 @@ INTERNSHIPS_URL = "https://raw.githubusercontent.com/SimplifyJobs/Summer2025-Int
 NEW_GRAD_URL = "https://raw.githubusercontent.com/SimplifyJobs/New-Grad-Positions/dev/.github/scripts/listings.json"
 AI_COLLEGE_URL = "https://raw.githubusercontent.com/speedyapply/2025-AI-College-Jobs/main/README.md"
 
-# 3 Times Per Day = Every 8 Hours (24 / 3 = 8 hours = 28,800 seconds)
-SYNC_INTERVAL = 8 * 3600
+# Lightweight real-time sync every 15 minutes (safe for Render Starter 512MB)
+SYNC_INTERVAL = 900
+MANUAL_REFRESH_COOLDOWN = 45
+MAX_STORED_CORPORATE_LIVE = 2500
+MAX_PER_COMPANY_BOARD = 150
 
 _MEMORY_CACHE: Dict[str, Dict[str, Any]] = {
+    "corporate_live": {"data": [], "timestamp": 0},
     "internships": {"data": [], "timestamp": 0},
     "entrylevel": {"data": [], "timestamp": 0},
     "aiml": {"data": [], "timestamp": 0}
 }
 _LAST_SYNC_TIMES: Dict[str, float] = {
+    "corporate_live": 0,
     "internships": 0,
     "entrylevel": 0,
     "aiml": 0
 }
 _CACHE_LOCK = threading.Lock()
 _SYNC_LOCK = threading.Lock()
+_REFRESH_LOCK = threading.Lock()
 _IS_SYNCING = False
 _SCHEDULER_STARTED = False
+_FEEDS_VERSION = 1
+_LAST_MANUAL_REFRESH_TS = 0.0
+
+# Curated verified direct corporate ATS boards spanning global IT + Non-IT professions
+CORPORATE_ATS_BOARDS: List[Tuple[str, str, str]] = [
+    ("gh", "stripe", "Stripe"),
+    ("gh", "spacex", "SpaceX"),
+    ("gh", "andurilindustries", "Anduril"),
+    ("gh", "airbnb", "Airbnb"),
+    ("gh", "cloudflare", "Cloudflare"),
+    ("gh", "figma", "Figma"),
+    ("gh", "coinbase", "Coinbase"),
+    ("gh", "faire", "Faire"),
+    ("gh", "zocdoc", "Zocdoc"),
+    ("gh", "brex", "Brex"),
+    ("gh", "duolingo", "Duolingo"),
+    ("gh", "reddit", "Reddit"),
+    ("gh", "instacart", "Instacart"),
+    ("gh", "robinhood", "Robinhood"),
+    ("gh", "gitlab", "GitLab"),
+    ("gh", "chime", "Chime"),
+    ("lever", "spotify", "Spotify"),
+    ("lever", "meesho", "Meesho"),
+    ("ashby", "linear", "Linear"),
+    ("ashby", "vanta", "Vanta"),
+]
+
+
+def get_feeds_version() -> int:
+    """Return monotonic version counter incremented whenever live feeds update."""
+    return _FEEDS_VERSION
+
+
+def _bump_feeds_version() -> None:
+    global _FEEDS_VERSION
+    _FEEDS_VERSION += 1
+
+
+def _parse_iso_timestamp(ts_val: Any, fallback: int) -> int:
+    """Parse ISO-8601 datetime string or epoch (s/ms) safely, clamping future clocks."""
+    now_ts = int(time.time())
+    if isinstance(ts_val, (int, float)) and ts_val > 0:
+        val = int(ts_val / 1000) if ts_val > 10_000_000_000 else int(ts_val)
+        return min(val, now_ts) if val > 100000 else fallback
+    if isinstance(ts_val, str) and ts_val.strip():
+        try:
+            dt = datetime.datetime.fromisoformat(ts_val.strip().replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=datetime.timezone.utc)
+            return min(int(dt.timestamp()), now_ts)
+        except Exception:
+            pass
+    return fallback
+
+
+def _classify_domain_bucket(item: Dict[str, Any]) -> str:
+    """Map any job into a broad global IT or Non-IT domain bucket for homepage diversity."""
+    text = f"{item.get('role', '')} {item.get('category', '')} {item.get('department', '')}".lower()
+    if any(k in text for k in [
+        "sales", "account executive", "marketing", "growth", "operations", "supply chain",
+        "logistics", "recruiter", "recruiting", "talent", "people", "human resources", "hr ",
+        "legal", "counsel", "compliance", "policy", "customer success", "support", "healthcare",
+        "clinical", "medical", "nurse", "partnerships", "merchandising", "catalog", "category manager",
+        "procurement", "real estate", "workplace", "hospitality"
+    ]):
+        return "business_ops"
+    if any(k in text for k in [
+        "finance", "accounting", "accountant", "controller", "tax", "audit", "treasury",
+        "payroll", "risk", "underwriting", "quant", "quantitative", "trading", "financial",
+        "fp&a", "investor"
+    ]):
+        return "finance_quant"
+    if any(k in text for k in [
+        "mechanical", "aerospace", "propulsion", "avionics", "manufacturing", "hardware",
+        "electrical", "civil", "structural", "robotics", "embedded", "mechatronics",
+        "technician", "machinist", "welder", "thermal", "materials", "battery", "fab", "cad"
+    ]):
+        return "core_engineering"
+    if any(k in text for k in [
+        "product manager", "product lead", "program manager", "project manager", "designer",
+        "ux", "ui ", "creative", "brand", "editorial", "content", "curriculum", "communications"
+    ]):
+        return "product_design"
+    if re.search(r"\b(ai|ml|nlp|llm)\b", text) or any(k in text for k in [
+        "machine learning", "deep learning", "data scientist", "data science",
+        "analytics", "data analyst", "data engineer", "research scientist"
+    ]):
+        return "ai_data"
+    return "software"
+
+
+def _infer_category_label(role: str, dept: str = "", fallback: str = "Corporate") -> str:
+    """Produce a human-readable IT or Non-IT category label for card display."""
+    text = f"{role} {dept}".lower()
+    if any(k in text for k in ["healthcare", "clinical", "medical", "patient"]):
+        return "Healthcare"
+    if any(k in text for k in ["finance", "accounting", "accountant", "tax", "audit", "treasury", "fp&a", "payroll"]):
+        return "Finance & Accounting"
+    if any(k in text for k in ["quant", "quantitative", "trading", "risk"]):
+        return "Quant & Risk"
+    if any(k in text for k in ["sales", "account executive", "revenue", "business development", "partnerships"]):
+        return "Sales & Business"
+    if any(k in text for k in ["marketing", "brand", "growth", "communications", "editorial"]):
+        return "Marketing & Growth"
+    if any(k in text for k in ["operations", "supply chain", "logistics", "procurement", "warehouse", "fleet", "catalog"]):
+        return "Operations & Supply Chain"
+    if any(k in text for k in ["legal", "counsel", "compliance", "policy", "privacy", "regulatory"]):
+        return "Legal & Compliance"
+    if any(k in text for k in ["recruiter", "recruiting", "talent", "people", "human resources", "hr "]):
+        return "HR & People"
+    if any(k in text for k in ["customer", "support", "trust", "safety", "success"]):
+        return "Customer Operations"
+    if any(k in text for k in ["mechanical", "aerospace", "propulsion", "manufacturing", "hardware", "electrical", "robotics", "technician", "avionics"]):
+        return "Hardware & Core Engg"
+    if any(k in text for k in ["product manager", "program manager", "design", "ux", "ui "]):
+        return "Product & Design"
+    if re.search(r"\b(ai|ml)\b", text) or any(k in text for k in ["machine learning", "data scien", "analytics", "data engineer"]):
+        return "AI/ML/Data"
+    if any(k in text for k in ["software", "engineer", "developer", "backend", "frontend", "full stack", "cloud", "devops", "security", "sre"]):
+        return "Software"
+    return dept.strip()[:36] if dept and len(dept.strip()) > 2 else fallback
 
 def _fetch_url_with_timeout(url: str, timeout: int = 12) -> str:
     req = urllib.request.Request(
@@ -50,15 +178,15 @@ def estimate_job_package(role_str: str, company_str: str, feed_type: str = "") -
     
     tier1 = any(top in c for top in ["google", "microsoft", "amazon", "apple", "meta", "stripe", "uber", "databricks", "netflix", "salesforce", "adobe", "nvidia", "palantir", "qualcomm", "intel", "amd", "cisco", "oracle"])
 
-    if feed_type == "internships" or "intern" in r:
-        if tier1 or "ai" in r or "research" in r or "quant" in r:
+    if feed_type == "internships" or re.search(r"\b(intern|internship|interns|co-op)\b", r):
+        if tier1 or re.search(r"\b(ai|ml|quant|research)\b", r):
             return 8.0, "65,000 - 1,20,000 / mo Stipend (~8 LPA)"
         elif any(k in r for k in ["software", "developer", "engineer", "data", "cloud", "security"]):
             return 5.5, "35,000 - 55,000 / mo Stipend (~5.5 LPA)"
         else:
             return 3.6, "20,000 - 35,000 / mo Stipend (~3.6 LPA)"
 
-    if any(k in r for k in ["ai", "ml", "machine learning", "deep learning", "llm", "nlp", "computer vision", "quant"]):
+    if re.search(r"\b(ai|ml|quant|llm|nlp)\b|machine learning|deep learning|computer vision", r):
         if tier1:
             return 34.0, "28 - 42 LPA (Tier-1 Benchmark)"
         return 22.0, "18 - 26 LPA (Corporate Disclosed)"
@@ -220,8 +348,138 @@ def _parse_speedyapply_ai(md_content: str) -> List[Dict[str, Any]]:
                 })
     return results
 
+def _fetch_single_ats_board(board: Tuple[str, str, str]) -> List[Dict[str, Any]]:
+    """Fetch and normalize direct corporate jobs from one Greenhouse, Lever, or Ashby board."""
+    kind, slug, company_name = board
+    now_ts = int(time.time())
+    items: List[Dict[str, Any]] = []
+    try:
+        if kind == "gh":
+            url = f"https://boards-api.greenhouse.io/v1/boards/{slug}/jobs"
+            raw = _fetch_url_with_timeout(url, timeout=4)
+            jobs = json.loads(raw).get("jobs") or []
+            for j in jobs:
+                j_url = clean_job_url(j.get("absolute_url") or "")
+                role = (j.get("title") or "").strip()
+                if not j_url or not role:
+                    continue
+                loc_obj = j.get("location")
+                loc_str = (loc_obj.get("name") if isinstance(loc_obj, dict) else str(loc_obj or "")) or "Worldwide / Remote"
+                ts = _parse_iso_timestamp(j.get("first_published") or j.get("updated_at"), now_ts - 86400)
+                if j.get("updated_at"):
+                    upd_ts = _parse_iso_timestamp(j.get("updated_at"), ts)
+                    if upd_ts > ts:
+                        ts = upd_ts
+                diff_days = max(0, (now_ts - ts) // 86400)
+                pkg_val, pkg_disp = estimate_job_package(role, company_name, "corporate_live")
+                items.append({
+                    "id": f"corp_gh_{slug}_{j.get('id', abs(hash(j_url)) % 1000000)}",
+                    "company": company_name,
+                    "role": role,
+                    "category": _infer_category_label(role, "", "Corporate"),
+                    "location": loc_str.strip(),
+                    "locations_list": [loc_str.strip()],
+                    "url": j_url,
+                    "provider": "Greenhouse",
+                    "date_posted_ts": ts,
+                    "date_posted_str": f"{diff_days}d ago" if diff_days > 0 else "Today",
+                    "sponsorship": "Standard",
+                    "feed_type": "corporate_live",
+                    "package_inr_lpa": pkg_val,
+                    "package_display": pkg_disp,
+                    "is_locked": False
+                })
+        elif kind == "lever":
+            url = f"https://api.lever.co/v0/postings/{slug}?mode=json"
+            raw = _fetch_url_with_timeout(url, timeout=4)
+            jobs = json.loads(raw) or []
+            for j in jobs:
+                j_url = clean_job_url(j.get("hostedUrl") or j.get("applyUrl") or "")
+                role = (j.get("text") or "").strip()
+                if not j_url or not role:
+                    continue
+                cats = j.get("categories") or {}
+                dept = (cats.get("department") or cats.get("team") or "").strip()
+                loc_str = (cats.get("location") or ", ".join(cats.get("allLocations") or [])) or "Worldwide / Remote"
+                ts = _parse_iso_timestamp(j.get("createdAt"), now_ts - 86400)
+                diff_days = max(0, (now_ts - ts) // 86400)
+                pkg_val, pkg_disp = estimate_job_package(role, company_name, "corporate_live")
+                items.append({
+                    "id": f"corp_lv_{slug}_{str(j.get('id', ''))[:12]}",
+                    "company": company_name,
+                    "role": role,
+                    "category": _infer_category_label(role, dept, "Corporate"),
+                    "location": loc_str.strip(),
+                    "locations_list": [loc_str.strip()],
+                    "url": j_url,
+                    "provider": "Lever",
+                    "date_posted_ts": ts,
+                    "date_posted_str": f"{diff_days}d ago" if diff_days > 0 else "Today",
+                    "sponsorship": "Standard",
+                    "feed_type": "corporate_live",
+                    "package_inr_lpa": pkg_val,
+                    "package_display": pkg_disp,
+                    "is_locked": False
+                })
+        elif kind == "ashby":
+            url = f"https://api.ashbyhq.com/posting-api/job-board/{slug}"
+            raw = _fetch_url_with_timeout(url, timeout=5)
+            jobs = json.loads(raw).get("jobs") or []
+            for j in jobs:
+                j_url = clean_job_url(j.get("jobUrl") or j.get("applyUrl") or "")
+                role = (j.get("title") or "").strip()
+                if not j_url or not role:
+                    continue
+                dept = (j.get("department") or j.get("team") or "").strip()
+                loc_parts = [j.get("location") or ""] + [
+                    sl.get("location") or "" for sl in (j.get("secondaryLocations") or []) if isinstance(sl, dict)
+                ]
+                loc_clean = [p.strip() for p in loc_parts if p and p.strip()]
+                loc_str = ", ".join(loc_clean) if loc_clean else ("Remote" if j.get("isRemote") else "Worldwide / Remote")
+                ts = _parse_iso_timestamp(j.get("publishedAt"), now_ts - 86400)
+                diff_days = max(0, (now_ts - ts) // 86400)
+                pkg_val, pkg_disp = estimate_job_package(role, company_name, "corporate_live")
+                items.append({
+                    "id": f"corp_ab_{slug}_{str(j.get('id', ''))[:12]}",
+                    "company": company_name,
+                    "role": role,
+                    "category": _infer_category_label(role, dept, "Corporate"),
+                    "location": loc_str,
+                    "locations_list": loc_clean or ["Remote"],
+                    "url": j_url,
+                    "provider": "Ashby",
+                    "date_posted_ts": ts,
+                    "date_posted_str": f"{diff_days}d ago" if diff_days > 0 else "Today",
+                    "sponsorship": "Standard",
+                    "feed_type": "corporate_live",
+                    "package_inr_lpa": pkg_val,
+                    "package_display": pkg_disp,
+                    "is_locked": False
+                })
+    except Exception:
+        return []
+    items.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=True)
+    return items[:MAX_PER_COMPANY_BOARD]
+
+
+def _fetch_corporate_live_feeds() -> List[Dict[str, Any]]:
+    """Fetch fresh direct corporate postings concurrently across global IT & Non-IT companies."""
+    collected: List[Dict[str, Any]] = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
+        futures = [pool.submit(_fetch_single_ats_board, b) for b in CORPORATE_ATS_BOARDS]
+        for fut in concurrent.futures.as_completed(futures, timeout=14):
+            try:
+                res = fut.result()
+                if res:
+                    collected.extend(res)
+            except Exception:
+                pass
+    collected.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=True)
+    return collected[:MAX_STORED_CORPORATE_LIVE]
+
+
 def _sync_single_feed(feed_type: str):
-    """Internal sync logic executed in the background 3 times per day."""
+    """Internal sync logic executed in background and throttled live refreshes."""
     disk_file = os.path.join(CACHE_DIR, f"{feed_type}_cache.json")
     existing_items = []
     if os.path.exists(disk_file):
@@ -231,7 +489,7 @@ def _sync_single_feed(feed_type: str):
         except Exception:
             existing_items = []
 
-    if len(existing_items) > 50:
+    if feed_type in ("internships", "entrylevel") and len(existing_items) > 50:
         _now_chk = time.time()
         _today_chk = sum(1 for x in existing_items if (_now_chk - float(x.get("date_posted_ts") or 0)) < 86400)
         if _today_chk >= int(len(existing_items) * 0.95):
@@ -241,7 +499,9 @@ def _sync_single_feed(feed_type: str):
     fetched_items = []
 
     try:
-        if feed_type == "internships":
+        if feed_type == "corporate_live":
+            fetched_items = _fetch_corporate_live_feeds()
+        elif feed_type == "internships":
             raw_text = _fetch_url_with_timeout(INTERNSHIPS_URL, timeout=12)
             raw_json = json.loads(raw_text)
             for item in raw_json:
@@ -261,27 +521,42 @@ def _sync_single_feed(feed_type: str):
             raw_md = _fetch_url_with_timeout(AI_COLLEGE_URL, timeout=10)
             fetched_items = _parse_speedyapply_ai(raw_md)
 
-        # Merge newly discovered listings with existing cache WITHOUT wiping historical dates on cold boot
-        had_existing_cache = len(existing_items) > 0
-        new_jobs = []
-        for item in fetched_items:
-            url = item.get("url")
-            if url and url not in existing_urls:
-                # Only stamp 'Today' on incremental delta syncs when item lacks a real historical timestamp
-                if had_existing_cache and not item.get("date_posted_ts"):
-                    item["date_posted_ts"] = int(time.time())
-                    item["date_posted_str"] = "Today"
-                elif not item.get("date_posted_ts"):
-                    item["date_posted_ts"] = int(time.time())
-                    item["date_posted_str"] = "Today"
-                new_jobs.append(item)
-                existing_urls[url] = len(existing_items)
-
-        if new_jobs:
-            print(f"[CURATED SYNC] Discovered {len(new_jobs)} new live listings for '{feed_type}'")
-            merged = new_jobs + existing_items
+        if feed_type == "corporate_live" and fetched_items:
+            # For live ATS boards, keep active board items authoritative while preserving newly updated timestamps
+            fetched_map = {it["url"]: it for it in fetched_items if it.get("url")}
+            new_discoveries = 0
+            now_ts = int(time.time())
+            for u, item in fetched_map.items():
+                if u not in existing_urls and existing_items:
+                    new_discoveries += 1
+                    # Newly spotted job not yet in cache: keep real timestamp if within 3 days, else stamp Just Now
+                    if (now_ts - int(item.get("date_posted_ts") or 0)) > (3 * 86400):
+                        item["date_posted_ts"] = now_ts
+                        item["date_posted_str"] = "Today"
+            merged = sorted(fetched_map.values(), key=lambda x: x.get("date_posted_ts", 0), reverse=True)[:MAX_STORED_CORPORATE_LIVE]
+            if new_discoveries:
+                print(f"[CURATED SYNC] Discovered {new_discoveries} new corporate direct jobs in 'corporate_live'")
         else:
-            merged = existing_items if existing_items else fetched_items
+            # Merge newly discovered listings with existing cache WITHOUT wiping historical dates on cold boot
+            had_existing_cache = len(existing_items) > 0
+            new_jobs = []
+            for item in fetched_items:
+                url = item.get("url")
+                if url and url not in existing_urls:
+                    if had_existing_cache and not item.get("date_posted_ts"):
+                        item["date_posted_ts"] = int(time.time())
+                        item["date_posted_str"] = "Today"
+                    elif not item.get("date_posted_ts"):
+                        item["date_posted_ts"] = int(time.time())
+                        item["date_posted_str"] = "Today"
+                    new_jobs.append(item)
+                    existing_urls[url] = len(existing_items)
+
+            if new_jobs:
+                print(f"[CURATED SYNC] Discovered {len(new_jobs)} new live listings for '{feed_type}'")
+                merged = new_jobs + existing_items
+            else:
+                merged = existing_items if existing_items else fetched_items
 
         if merged:
             with open(disk_file, "w", encoding="utf-8") as f:
@@ -289,12 +564,28 @@ def _sync_single_feed(feed_type: str):
             with _CACHE_LOCK:
                 _MEMORY_CACHE[feed_type] = {"data": merged, "timestamp": time.time()}
             _LAST_SYNC_TIMES[feed_type] = time.time()
+            _bump_feeds_version()
             print(f"[CURATED SYNC] Synced '{feed_type}': total {len(merged)} active stored listings.")
     except Exception as e:
         print(f"[CURATED SYNC] Live fetch warning for '{feed_type}': {e} (continuing with cached items)")
 
+
+def trigger_live_refresh(force: bool = True) -> bool:
+    """Perform a fast, cooldown-protected live ATS check when the candidate clicks Refresh."""
+    global _LAST_MANUAL_REFRESH_TS
+    now = time.time()
+    with _REFRESH_LOCK:
+        if not force or (now - _LAST_MANUAL_REFRESH_TS) < MANUAL_REFRESH_COOLDOWN:
+            return False
+        _LAST_MANUAL_REFRESH_TS = now
+    _sync_single_feed("corporate_live")
+    # Kick off background sync of secondary curated feeds without blocking HTTP response
+    threading.Thread(target=sync_all_feeds_background, daemon=True).start()
+    return True
+
+
 def sync_all_feeds_background():
-    """Background routine to sync all 3 feeds 3 times daily without blocking user requests."""
+    """Background routine to keep all global IT & Non-IT feeds continuously fresh."""
     global _IS_SYNCING
     with _SYNC_LOCK:
         if _IS_SYNCING:
@@ -302,41 +593,40 @@ def sync_all_feeds_background():
         _IS_SYNCING = True
 
     try:
-        print("[CURATED SYNC] Starting background 3x-daily feed synchronization...")
-        for ft in ["internships", "aiml", "entrylevel"]:
+        print("[CURATED SYNC] Starting background live feed synchronization...")
+        for ft in ["corporate_live", "internships", "aiml", "entrylevel"]:
             try:
                 _sync_single_feed(ft)
             except Exception as e:
                 print(f"[CURATED SYNC] Error syncing {ft}: {e}")
-        print("[CURATED SYNC] Completed 3x-daily background feed check.")
+        print("[CURATED SYNC] Completed background live feed check.")
     finally:
         with _SYNC_LOCK:
             _IS_SYNCING = False
 
+
 def start_curated_feed_scheduler():
-    """Starts the 3x per day background sync daemon (runs every 8 hours)."""
+    """Starts the 15-minute live background sync daemon."""
     global _SCHEDULER_STARTED
     if _SCHEDULER_STARTED:
         return
     _SCHEDULER_STARTED = True
 
     def _daemon_loop():
-        # First check on startup in background (delay 5s to avoid blocking server boot)
-        time.sleep(5)
+        # First check on startup in background (delay 4s to avoid blocking server boot)
+        time.sleep(4)
         sync_all_feeds_background()
-        
-        # Then loop every 8 hours (3 times per day)
+
         while True:
             time.sleep(SYNC_INTERVAL)
             try:
-                print("[CURATED SYNC] Scheduled 3x-daily sync timer triggered.")
                 sync_all_feeds_background()
             except Exception as err:
                 print(f"[CURATED SYNC] Scheduled sync error: {err}")
 
     t = threading.Thread(target=_daemon_loop, daemon=True, name="CuratedFeedsSyncDaemon")
     t.start()
-    print("[CURATED SYNC] Curated feeds background 3x/day scheduler initialized.")
+    print("[CURATED SYNC] Live multi-domain feeds background 15m scheduler initialized.")
 
 def get_feed_data(feed_type: str) -> List[Dict[str, Any]]:
     """Retrieve verified feed data with local disk and memory caching (instant, non-blocking)."""
@@ -950,6 +1240,55 @@ def format_compact_location(raw_loc: str, preferred_locs: list = None) -> str:
         return f"{prefix}{count_label} ({', '.join(highlights)})"
     return f"{prefix}{count_label} (Global)"
 
+def _interleave_diverse_freshness_feed(items: List[Dict[str, Any]], now_ts: int) -> List[Dict[str, Any]]:
+    """Order jobs strictly newest-day-bucket first while balancing IT & Non-IT domains and companies."""
+    if len(items) <= 1:
+        return items
+
+    domain_order = [
+        "business_ops",
+        "software",
+        "finance_quant",
+        "core_engineering",
+        "product_design",
+        "ai_data",
+    ]
+    day_buckets: Dict[int, List[Dict[str, Any]]] = {}
+    for it in items:
+        pts = int(it.get("date_posted_ts") or 0)
+        age_d = max(0, (now_ts - pts) // 86400) if pts > 100000 else 30
+        day_buckets.setdefault(age_d, []).append(it)
+
+    ordered: List[Dict[str, Any]] = []
+    for age_d in sorted(day_buckets.keys()):
+        bucket = day_buckets[age_d]
+        bucket.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=True)
+        pools: Dict[str, List[Dict[str, Any]]] = {d: [] for d in domain_order}
+        for it in bucket:
+            pools[_classify_domain_bucket(it)].append(it)
+
+        last_company = ""
+        while any(pools.values()):
+            progressed = False
+            for d in domain_order:
+                q = pools[d]
+                if not q:
+                    continue
+                pick_idx = 0
+                for idx in range(min(len(q), 6)):
+                    comp = (q[idx].get("company") or "").strip().lower()
+                    if comp and comp != last_company:
+                        pick_idx = idx
+                        break
+                chosen = q.pop(pick_idx)
+                last_company = (chosen.get("company") or "").strip().lower()
+                ordered.append(chosen)
+                progressed = True
+            if not progressed:
+                break
+    return ordered
+
+
 def omni_search_all_feeds(
     query: str = "",
     category: str = "All",
@@ -962,34 +1301,40 @@ def omni_search_all_feeds(
     target_role: Optional[str] = None,
     max_days: int = 0,
     sort_by: str = "best_match",
-    limit: int = 25,
+    limit: int = 15,
     offset: int = 0,
     user_is_paid: bool = False,
     user_is_logged_in: bool = True
 ) -> Dict[str, Any]:
-    """High-speed unified discovery engine querying across curated feeds and verified corporate postings
-    with precision location filtering, compensation benchmarks, and resume skill matching.
+    """High-speed unified discovery engine querying across live corporate portals & curated feeds
+    with newest-first global IT + Non-IT domain diversity, precision location filtering, and resume matching.
     """
-    # 1. Aggregate listings from in-memory cache + local verified datasets
+    # 1. Aggregate listings from live direct ATS boards, curated feeds & local datasets
     combined_items = []
-    seen_urls = set()
+    seen_urls: Dict[str, int] = {}
 
-    for ft in ["internships", "aiml", "entrylevel"]:
+    for ft in ["corporate_live", "internships", "aiml", "entrylevel"]:
         feed_items = get_feed_data(ft)
         for item in feed_items:
             url = item.get("url")
-            if url and url not in seen_urls:
-                seen_urls.add(url)
-                if not item.get("feed_type"):
-                    item["feed_type"] = ft
+            if not url:
+                continue
+            if not item.get("feed_type"):
+                item["feed_type"] = ft
+            if url not in seen_urls:
+                seen_urls[url] = len(combined_items)
                 combined_items.append(item)
+            else:
+                prev_idx = seen_urls[url]
+                if (item.get("date_posted_ts") or 0) > (combined_items[prev_idx].get("date_posted_ts") or 0):
+                    combined_items[prev_idx] = item
 
     # Supplement with local verified direct corporate listings (rich India + global openings)
     extra_corporate = load_local_corporate_jobs()
     for item in extra_corporate:
         url = item.get("url")
         if url and url not in seen_urls:
-            seen_urls.add(url)
+            seen_urls[url] = len(combined_items)
             combined_items.append(item)
 
     if not combined_items:
@@ -1216,32 +1561,12 @@ def omni_search_all_feeds(
         filtered.sort(key=lambda x: (float(x.get("package_inr_lpa") or 0), -x.get("date_posted_ts", 0)), reverse=False)
     elif clean_sort == "free_jobs":
         filtered.sort(key=lambda x: (x.get("_match_score", 0), x.get("date_posted_ts", 0)), reverse=True)
-    elif match_resume:
+    elif match_resume or q_tokens:
         filtered.sort(key=lambda x: (x.get("_match_score", 0), x.get("date_posted_ts", 0)), reverse=True)
+    elif clean_sort == "best_match" and (not category or category.lower() in ("all", "any")):
+        filtered = _interleave_diverse_freshness_feed(filtered, now_ts)
     else:
         filtered.sort(key=lambda x: x.get("date_posted_ts", 0), reverse=True)
-
-    # Founder Growth Interleaving: For free users on 'best_match' Page 1, ensure a healthy mix of
-    # fresh Pro roles AND unlocked 5+ day free roles so candidates immediately verify real direct links work!
-    if not user_is_paid and clean_sort == "best_match" and (max_days == 0 or max_days > 4) and len(filtered) > 10:
-        first_batch = filtered[:limit]
-        free_in_batch = sum(1 for x in first_batch if (now_ts - float(x.get("date_posted_ts") or now_ts)) // 86400 > 4)
-        if free_in_batch < 6:
-            fresh_pool = [x for x in filtered if (now_ts - float(x.get("date_posted_ts") or now_ts)) // 86400 <= 4]
-            free_pool = [x for x in filtered if (now_ts - float(x.get("date_posted_ts") or now_ts)) // 86400 > 4]
-            if free_pool:
-                mixed = []
-                fi, ri = 0, 0
-                while len(mixed) < len(filtered) and (fi < len(fresh_pool) or ri < len(free_pool)):
-                    for _ in range(2):
-                        if fi < len(fresh_pool):
-                            mixed.append(fresh_pool[fi])
-                            fi += 1
-                    for _ in range(2):
-                        if ri < len(free_pool):
-                            mixed.append(free_pool[ri])
-                            ri += 1
-                filtered = mixed
 
     total_count = len(filtered)
     page_slice = filtered[offset : offset + limit]

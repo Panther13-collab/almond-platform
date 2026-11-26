@@ -21,7 +21,10 @@ from core.parser import extract_text_from_file, parse_candidate_profile
 from core.job_engine import search_matching_jobs, fetch_linkedin_postings, _get_skills_fingerprint
 from core.pitch_generator import generate_star_pitch, generate_tailored_cover_letter
 from core.founder_engine import fetch_hn_founder_jobs
-from core.curated_feeds import query_curated_feed, start_curated_feed_scheduler, omni_search_all_feeds
+from core.curated_feeds import (
+    query_curated_feed, start_curated_feed_scheduler, omni_search_all_feeds,
+    trigger_live_refresh, get_feeds_version
+)
 from core.doc_exporter import (
     export_to_docx, export_to_pdf_async, export_to_csv,
     export_tech_dossier_pdf_async, export_tech_dossier_pdf,
@@ -1414,18 +1417,25 @@ async def api_omni_search(
     target_role: Optional[str] = Query(None),
     max_days: int = Query(0),
     sort_by: str = Query("best_match"),
-    limit: int = Query(25),
+    limit: int = Query(15),
     offset: int = Query(0),
+    refresh: bool = Query(False),
     user_id: Optional[str] = Query(None)
 ):
-    """Unified instant discovery query across internships, entry-level and AI/ML feeds."""
+    """Unified instant discovery query across live corporate portals & curated feeds."""
     skills_list = [s.strip().lower() for s in skills.split(",") if s.strip()] if skills else None
     effective_min_lpa = max(min_lpa, min_package_lpa or 0.0)
     user_logged_in = _is_request_authenticated(request, user_id or "")
     user_paid = is_user_paid(user_id) if (user_logged_in and user_id) else False
 
-    # Concurrency Caching: Sub-millisecond response for concurrent search traffic
+    if refresh:
+        trigger_live_refresh(force=True)
+        with _OMNI_SEARCH_CACHE_LOCK:
+            _OMNI_SEARCH_CACHE.clear()
+
+    # Concurrency Caching: Sub-millisecond response for concurrent search traffic (versioned with live feed sync)
     cache_key = (
+        get_feeds_version(),
         (q or "").strip().lower(),
         category,
         (location or "all").strip().lower(),
@@ -1443,11 +1453,12 @@ async def api_omni_search(
         user_logged_in
     )
     now = time.time()
-    with _OMNI_SEARCH_CACHE_LOCK:
-        if cache_key in _OMNI_SEARCH_CACHE:
-            entry = _OMNI_SEARCH_CACHE[cache_key]
-            if now - entry["timestamp"] < _OMNI_SEARCH_CACHE_TTL:
-                return JSONResponse(content={"status": "success", "result": entry["data"], "cached": True})
+    if not refresh:
+        with _OMNI_SEARCH_CACHE_LOCK:
+            if cache_key in _OMNI_SEARCH_CACHE:
+                entry = _OMNI_SEARCH_CACHE[cache_key]
+                if now - entry["timestamp"] < _OMNI_SEARCH_CACHE_TTL:
+                    return JSONResponse(content={"status": "success", "result": entry["data"], "cached": True})
 
     res = omni_search_all_feeds(
         query=q,

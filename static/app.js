@@ -8113,7 +8113,7 @@ window.setOmniCategoryFilter = function(category) {
     window.executeOmniSearch(window.omniCurrentQuery, false);
 };
 
-window.executeOmniSearch = async function(query = "", append = false) {
+window.executeOmniSearch = async function(query = "", append = false, forceRefresh = false) {
     if (!append && window.omniSearchAbortController) {
         try { window.omniSearchAbortController.abort(); } catch (_) {}
     }
@@ -8163,6 +8163,7 @@ window.executeOmniSearch = async function(query = "", append = false) {
 
     try {
 
+        const pageSize = append ? 5 : 15;
         const params = new URLSearchParams({
             q: query,
             category: window.omniMatchResumeMode ? "All" : (window.omniActiveCategory || "All"),
@@ -8172,9 +8173,12 @@ window.executeOmniSearch = async function(query = "", append = false) {
             contract_type: window.omniActiveContractType || "all",
             max_days: String(window.omniActiveMaxDays || 0),
             sort_by: window.omniSortMode || "best_match",
-            limit: "25",
+            limit: String(pageSize),
             offset: String(window.omniCurrentOffset || 0)
         });
+        if (forceRefresh) {
+            params.append("refresh", "true");
+        }
         if (window.omniMatchResumeMode) {
             params.append("match_resume", "true");
             if (window.omniDerivedSkills && window.omniDerivedSkills.length > 0) {
@@ -8199,6 +8203,11 @@ window.executeOmniSearch = async function(query = "", append = false) {
         if (err.name === "AbortError") return; // Handled silently
         console.warn("[OMNI-SEARCH] Query error:", err);
         if (loadingEl) loadingEl.classList.add("hidden");
+        const loadMoreBtn = document.getElementById("omniLoadMoreBtn");
+        if (loadMoreBtn) {
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.innerHTML = "<span>Show More Direct Jobs (+5)</span>";
+        }
     }
 };
 
@@ -8370,7 +8379,7 @@ window.refreshOmniLiveFeed = async function(triggerBtn = null) {
     try {
         window.omniCurrentOffset = 0;
         if (typeof window.executeOmniSearch === "function") {
-            await window.executeOmniSearch(window.omniCurrentQuery || "", false);
+            await window.executeOmniSearch(window.omniCurrentQuery || "", false, true);
         }
     } finally {
         if (icon) icon.classList.remove("animate-spin");
@@ -8613,8 +8622,13 @@ window.renderOmniResults = function(result, query, append) {
         }
     });
 
+    const loadMoreBtn = document.getElementById("omniLoadMoreBtn");
+    if (loadMoreBtn) {
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.innerHTML = "<span>Show More Direct Jobs (+5)</span>";
+    }
     if (loadMoreContainer) {
-        if (total > (window.omniCurrentOffset + items.length)) {
+        if (total > (window.omniCurrentItems || []).length) {
             loadMoreContainer.classList.remove("hidden");
         } else {
             loadMoreContainer.classList.add("hidden");
@@ -8718,9 +8732,16 @@ window.exportOmniResults = async function(format = "csv") {
     }
 };
 
-window.loadMoreOmniResults = function() {
-    window.omniCurrentOffset += 25;
-    window.executeOmniSearch(window.omniCurrentQuery, true);
+window.loadMoreOmniResults = async function() {
+    const btn = document.getElementById("omniLoadMoreBtn");
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="animate-spin inline-block">↻</span><span>Loading 5 more...</span>';
+    }
+    window.omniCurrentOffset = (window.omniCurrentItems && window.omniCurrentItems.length > 0)
+        ? window.omniCurrentItems.length
+        : ((window.omniCurrentOffset || 0) + 15);
+    await window.executeOmniSearch(window.omniCurrentQuery || "", true, false);
 };
 
 // --- OMNI RESUME & CANDIDATE INTELLIGENCE CONTROLLERS ---
