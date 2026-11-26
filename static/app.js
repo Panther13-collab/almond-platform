@@ -4465,6 +4465,7 @@ window.openContributeModal = function() {
     const modal = document.getElementById("vipPricingModal");
     if (!modal) return;
     modal.classList.remove("hidden");
+    if (typeof loadRazorpaySdk === "function") loadRazorpaySdk().catch(() => {});
     const nameInput = document.getElementById("coffeeSupporterName");
     if (nameInput && window.currentCandidateUser && window.currentCandidateUser.full_name) {
         if (!nameInput.value) nameInput.value = window.currentCandidateUser.full_name;
@@ -5162,6 +5163,7 @@ window.executeVipUpgradeCheckout = function() {
 window.openVipPassModal = function() {
     const modal = document.getElementById("vipPassModal");
     if (!modal) return;
+    if (typeof loadRazorpaySdk === "function") loadRazorpaySdk().catch(() => {});
 
     if (typeof window.detectAndApplyUserCurrency === "function") {
         window.detectAndApplyUserCurrency();
@@ -5298,7 +5300,7 @@ window.executeCoffeeContribution = function() {
 // Candidate Profile Placeholder Modal
 
 // --- CANDIDATE AUTHENTICATION & PROFILE CONTROLLER ---
-window.activeAuthTab = 'login';
+window.activeAuthTab = 'signup';
 window._pendingJobSearch = false;
 
 window.switchAuthTab = function(tab) {
@@ -5321,7 +5323,7 @@ window.switchAuthTab = function(tab) {
         if (tabSignup) tabSignup.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer";
         if (nameField) nameField.classList.remove("hidden");
         if (confirmPassField) confirmPassField.classList.remove("hidden");
-        if (submitBtnText) submitBtnText.textContent = "Create Account & Send Verification Code →";
+        if (submitBtnText) submitBtnText.textContent = "Create Free Account";
         if (toggleHint) toggleHint.innerHTML = `Already have an account? <button type="button" onclick="switchAuthTab('login')" class="text-violet-700 font-bold hover:underline cursor-pointer">Log in with Email</button>`;
     } else {
         if (passInput) passInput.setAttribute("autocomplete", "current-password");
@@ -5419,7 +5421,15 @@ window.openProfileModal = function(contextReason = "") {
 
     const contribFooter = document.getElementById("profileBottomContributeSection");
     const humanCheck = document.getElementById("authHumanCheckbox");
-    if (humanCheck) humanCheck.checked = false;
+    if (humanCheck) humanCheck.checked = true;
+
+    const inAppHint = document.getElementById("inAppBrowserAuthHint");
+    if (inAppHint) {
+        const ua = (typeof navigator !== "undefined" && navigator.userAgent) ? navigator.userAgent : "";
+        const isInAppWebView = /Instagram|FBAN|FBAV|FB_IAB|LinkedInApp|Line\/|Twitter/i.test(ua);
+        if (isInAppWebView) inAppHint.classList.remove("hidden");
+        else inAppHint.classList.add("hidden");
+    }
 
     if (isUserLoggedIn()) {
         if (authFormView) authFormView.classList.add("hidden");
@@ -6186,12 +6196,18 @@ window.updateTopProfileBar = function() {
     const topIcon = document.getElementById("topProfileIcon");
     const initialsSpan = document.getElementById("topProfileInitials");
     const topBtn = document.getElementById("topProfileBtn");
+    const topSignUpPill = document.getElementById("topSignUpPillBtn");
     const vipLbl = document.getElementById("topVipPassLabel");
     const vipCrown = document.getElementById("topProfileVipCrown");
     const vipBadge = document.getElementById("topProfileVipBadge");
     const modalAvatarBox = document.getElementById("modalUserAvatarBox");
     const paid = isUserPaid();
     const loggedIn = isUserLoggedIn();
+
+    if (topSignUpPill) {
+        if (loggedIn) topSignUpPill.classList.add("hidden");
+        else topSignUpPill.classList.remove("hidden");
+    }
 
     if (vipLbl) vipLbl.textContent = paid ? "VIP Active ✓" : "VIP Pass";
     const upgradeLbl = document.getElementById("topUpgradeLabel");
@@ -6609,16 +6625,19 @@ function initHumanVerifier() {
 
     if (!modal || !holdBtn) return;
 
-    // Check session verification:
-    // If verified in current session, ensure modal stays hidden (never prompt on page refresh)
-    // If not verified, open the modal immediately on initial session visit
-    if (isHumanVerified()) {
-        modal.classList.add("hidden");
-    } else {
-        resetVerifierUI();
-        modal.classList.remove("hidden");
-        if (closeBtn) closeBtn.classList.add("hidden"); // Enforce verification on initial session entry
-        if (window.lucide) lucide.createIcons();
+    // Never block new visitors on homepage entry with a fullscreen security gate.
+    // Keep modal hidden unless explicitly invoked, and mark passive human verification on first interaction.
+    modal.classList.add("hidden");
+    if (!isHumanVerified()) {
+        const markVerifiedPassively = () => {
+            try {
+                sessionStorage.setItem("almond_human_verified", "true");
+                document.cookie = "almond_human_verified=1; path=/; samesite=lax";
+            } catch (err) {}
+        };
+        ["pointerdown", "touchstart", "keydown", "scroll"].forEach((evt) => {
+            window.addEventListener(evt, markVerifiedPassively, { once: true, passive: true });
+        });
     }
 
     if (closeBtn) {
@@ -9235,18 +9254,28 @@ window.initOmniSearch = function() {
     });
 };
 
-// Initial load: do NOT display Direct Corporate Openings explicitly on homepage load
+// Initial load: immediately reveal live direct corporate openings so first-time visitors see real jobs right away
+window.initInitialLiveFeed = function() {
+    const streamContainer = document.getElementById("omniSearchResultsContainer");
+    if (streamContainer && typeof window.executeOmniSearch === "function") {
+        streamContainer.classList.remove("hidden");
+        window.omniCurrentQuery = "";
+        window.omniCurrentOffset = 0;
+        window.executeOmniSearch("", false);
+    }
+};
+
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
         window.initOmniSearch();
         window.initSocialProofToasts();
-        // Container remains hidden until user types in search or uploads resume
+        window.initInitialLiveFeed();
     });
 } else {
     setTimeout(() => {
         window.initOmniSearch();
         window.initSocialProofToasts();
-        // Container remains hidden until user types in search or uploads resume
+        window.initInitialLiveFeed();
     }, 100);
 }
 

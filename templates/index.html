@@ -479,7 +479,7 @@
             justify-content: flex-start !important;
         }
 
-        /* Persistent Fixed Background: Stationary across all 4 pages, stationary Page 2/3 framing, 0 zoom on scroll */
+        /* Persistent Fixed Background: Zero-video GPU-light ambient studio backdrop */
         #persistentHeroBg {
             position: fixed !important;
             inset: 0 !important;
@@ -490,44 +490,32 @@
             pointer-events: none !important;
             overflow: hidden !important;
             background-color: #faf8f5 !important;
+            background-image:
+                radial-gradient(60% 45% at 18% 12%, rgba(124, 58, 237, 0.08), transparent 70%),
+                radial-gradient(50% 45% at 85% 22%, rgba(217, 119, 6, 0.07), transparent 70%),
+                radial-gradient(65% 50% at 50% 90%, rgba(16, 185, 129, 0.05), transparent 75%) !important;
             transform: scale(1.28) translate(-8.5%, 0) !important;
             transform-origin: center center !important;
             opacity: 1 !important;
         }
 
-        #persistentHeroBg video {
-            display: block !important;
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: cover !important;
-            object-position: center !important;
-            opacity: 0.35 !important;
-            transform: scaleX(-1) translate(-15%, 0) !important;
-            -webkit-transform: scaleX(-1) translate(-15%, 0) !important;
-            will-change: transform;
-            -webkit-backface-visibility: hidden;
-            backface-visibility: hidden;
-        }
-
-        #persistentHeroBg .mobile-bg-poster {
-            display: none !important;
-            transform: scaleX(-1) translate(-15%, 0) !important;
-            -webkit-transform: scaleX(-1) translate(-15%, 0) !important;
+        @media (min-width: 768px) {
+            #persistentHeroBg::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background: url('/static/warrior_clean.webp') center / cover no-repeat;
+                opacity: 0.20;
+                transform: scaleX(-1) translate(-12%, 0);
+                -webkit-transform: scaleX(-1) translate(-12%, 0);
+                pointer-events: none;
+            }
         }
 
         /* Mobile Scrolling Fluidity & GPU Hardware Compositing: 60/120fps fluid scrolling */
         @media (max-width: 768px) {
             #persistentHeroBg {
                 contain: strict !important;
-                will-change: transform;
-            }
-            #persistentHeroBg video,
-            #persistentHeroBg .mobile-bg-poster {
-                transform: scaleX(-1) translate(4%, 0) !important;
-                -webkit-transform: scaleX(-1) translate(4%, 0) !important;
-                will-change: transform;
-                -webkit-backface-visibility: hidden;
-                backface-visibility: hidden;
             }
             .glass-panel, .kage-card {
                 backdrop-filter: none !important;
@@ -637,8 +625,6 @@
             scrollbar-width: thin; 
         }
     </style>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script>window.GOOGLE_CLIENT_ID = "913545898801-j8oknromfo64oh5ikh6ck8jjiaan0ssh.apps.googleusercontent.com";</script>
 </head>
 <body class="min-h-screen flex flex-col relative font-sans antialiased selection:bg-amber-100 selection:text-amber-950" style="background-color: #faf8f5 !important; background: #faf8f5 !important; color: #0f172a;">
 
@@ -677,11 +663,14 @@
                 </div>
             </div>
 
-            <!-- RIGHT: Profile Icon Button & Desktop Quick CTAs -->
+            <!-- RIGHT: Profile Icon Button, Mobile Sign Up CTA & Desktop Quick CTAs -->
             <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0 justify-end">
                 <button type="button" onclick="openHeroInfoModal('about')" class="hidden lg:flex px-3 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-bold text-slate-800 hover:text-emerald-900 bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 shadow-2xs hover:scale-105 active:scale-95 transition-all cursor-pointer items-center gap-1.5" title="Learn more about Almond Jobs & our mission">
                     <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
                     <span>Who We Are?</span>
+                </button>
+                <button type="button" id="topSignUpPillBtn" onclick="openSignupToUnlockLinksModal()" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-[11px] sm:text-xs shadow-sm shadow-violet-500/25 whitespace-nowrap cursor-pointer transition active:scale-95">
+                    Sign Up Free
                 </button>
                 <button type="button" id="topProfileBtn" onclick="openProfileModal()" class="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-100 hover:bg-violet-50 border border-slate-300 hover:border-violet-300 text-slate-700 hover:text-violet-700 flex items-center justify-center transition shadow-2xs cursor-pointer group shrink-0" title="Candidate Profile & Settings" aria-label="Candidate Profile">
                     <i id="topProfileIcon" data-lucide="user" class="w-4 h-4 group-hover:scale-110 transition-transform"></i>
@@ -840,17 +829,10 @@
     <!-- KINETIC REEL / STORY PRESENTATION VIEWPORT -->
     <div id="story-viewport" class="relative w-full min-h-screen">
 
-        <!-- PERSISTENT CINEMATIC ANIMATED BACKGROUND (Moving Character, Wind & Air Silhouette) -->
+        <!-- PERSISTENT LIGHTWEIGHT AMBIENT BACKDROP (0 KB on mobile; crisp studio artwork on desktop) -->
         <div id="persistentHeroBg" class="fixed inset-0 pointer-events-none z-0 overflow-hidden bg-[#faf8f5]" style="transform: scale(1.28) translate(-8.5%, 0); transform-origin: center center; opacity: 1;">
-            <!-- Desktop & Mobile Video Loop (Character, Air & Wind in continuous motion across all 4 pages) -->
-            <video autoplay loop muted playsinline preload="auto" poster="/static/warrior_clean.png" class="w-full h-full object-cover object-center opacity-35 transition-opacity duration-300">
-                <source src="/static/kage_clean.webm" type="video/webm">
-                <source src="/static/kage_clean.mp4" type="video/mp4">
-            </video>
-            <!-- Fallback poster for offline or video decoding failure -->
-            <img src="/static/warrior_clean.png" alt="Almond Warrior Silhouette" class="mobile-bg-poster hidden w-full h-full object-cover object-center pointer-events-none">
-            <!-- Warm almond cream atmospheric washes providing crisp readability and clear moving silhouette visibility -->
-            <div class="absolute inset-0 bg-[#faf8f5]/40 pointer-events-none"></div>
+            <!-- Warm almond cream atmospheric washes providing crisp readability -->
+            <div class="absolute inset-0 bg-[#faf8f5]/45 pointer-events-none"></div>
             <div class="absolute inset-0 bg-gradient-to-t from-[#faf8f5]/90 via-transparent to-[#faf8f5]/70 pointer-events-none"></div>
         </div>
 
@@ -882,7 +864,7 @@
                             <!-- Left: Search input for letters, skills, roles, packages -->
                             <div class="flex items-center flex-1 min-w-0 px-2">
                                 <i data-lucide="search" class="w-5 h-5 text-slate-400 shrink-0"></i>
-                                <input type="text" id="omniSearchInput" oninput="handleOmniSearchInput(event)" onkeydown="if(event.key==='Enter'){event.preventDefault();submitOmniManualSearch();}" placeholder="Search any role, skill, package (e.g. Software Engineer, Java Developer, 7 LPA)..." class="w-full bg-transparent px-3 py-2.5 text-sm sm:text-base text-slate-900 placeholder-slate-400 font-medium focus:outline-hidden" autocomplete="off" spellcheck="false">
+                                <input type="text" id="omniSearchInput" oninput="handleOmniSearchInput(event)" onkeydown="if(event.key==='Enter'){event.preventDefault();submitOmniManualSearch();}" placeholder="Search role, skill, or LPA..." class="w-full bg-transparent px-3 py-2.5 text-base text-slate-900 placeholder-slate-400 font-medium focus:outline-hidden" autocomplete="off" spellcheck="false">
                                 <button type="button" id="omniClearBtn" onclick="clearOmniSearch()" class="hidden p-1.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition cursor-pointer" aria-label="Clear search">
                                     <i data-lucide="x" class="w-4 h-4"></i>
                                 </button>
@@ -1242,7 +1224,7 @@
 
 
         <!-- STREAMLINED COMPACT FOOTER: COPYRIGHT & LEGAL COMPLIANCE -->
-        <footer id="bottomDirectoryFooter" class="w-full shrink-0 relative z-30 border-t border-slate-200/90 bg-white/95 px-4 sm:px-8 lg:px-12 py-4 sm:py-5 text-slate-800">
+        <footer id="bottomDirectoryFooter" class="w-full shrink-0 relative z-30 border-t border-slate-200/90 bg-white/95 px-4 sm:px-8 lg:px-12 pt-4 pb-20 sm:py-5 text-slate-800">
             <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 font-medium">
                 <div class="flex items-center gap-2">
                     <img src="/static/logo.png" alt="Almond Logo" class="w-4 h-4 object-contain">
@@ -1585,13 +1567,19 @@
         </div>
     </div>
     <script>
-        // Immediate session verification check: display modal on initial session open; omit on refresh
+        // Non-blocking passive verification bootstrap: never lock out initial visitors behind a fullscreen gate.
         (function() {
             try {
-                if (sessionStorage.getItem("almond_human_verified") !== "true") {
-                    var m = document.getElementById("humanVerifyModal");
-                    if (m) m.classList.remove("hidden");
-                }
+                if (sessionStorage.getItem("almond_human_verified") === "true") return;
+                var markPassiveHuman = function() {
+                    try {
+                        sessionStorage.setItem("almond_human_verified", "true");
+                        document.cookie = "almond_human_verified=1; path=/; samesite=lax";
+                    } catch(e) {}
+                };
+                ["pointerdown", "touchstart", "keydown", "scroll"].forEach(function(evt) {
+                    window.addEventListener(evt, markPassiveHuman, { once: true, passive: true });
+                });
             } catch(e) {}
         })();
     </script>
@@ -2590,11 +2578,11 @@
     </div>
 
     <!-- 9. MODAL: CANDIDATE PROFILE & AUTHENTICATION DASHBOARD -->
-    <div id="profileModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[60] flex items-center justify-center p-4">
-        <div class="rounded-3xl max-w-md w-full p-6 sm:p-7 border border-slate-200/90 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 bg-white/95 backdrop-blur-2xl my-auto">
+    <div id="profileModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[60] flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div class="rounded-3xl max-w-md w-full max-h-[92dvh] overflow-y-auto p-5 sm:p-7 border border-slate-200/90 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 text-slate-900 bg-white/95 backdrop-blur-2xl my-auto">
             
             <!-- Header -->
-            <div class="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
                 <div class="flex items-center space-x-3">
                     <div id="modalUserAvatarBox" class="w-10 h-10 rounded-2xl bg-violet-100 text-violet-700 flex items-center justify-center border border-violet-200 shadow-2xs">
                         <span id="modalUserAvatarInitials" class="hidden text-xs font-black tracking-wider text-violet-800">CA</span>
@@ -2609,13 +2597,16 @@
             </div>
 
             <!-- VIEW 1: AUTHENTICATION FORM (Shown when guest / logged out) -->
-            <div id="authFormView" class="space-y-4">
-                <div id="authContextNotice" class="hidden p-3 rounded-xl bg-violet-50 border border-violet-200 text-xs font-bold text-violet-900 flex items-center gap-2">
+            <div id="authFormView" class="space-y-3">
+                <div id="authContextNotice" class="hidden p-2.5 rounded-xl bg-violet-50 border border-violet-200 text-xs font-bold text-violet-900 flex items-center gap-2">
                     <span>🔒</span>
                     <span id="authContextNoticeText">Create a free candidate account to unlock direct company apply links (5+ day jobs free forever).</span>
                 </div>
+                <div id="inAppBrowserAuthHint" class="hidden p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] font-semibold text-amber-950 leading-snug">
+                    📱 <strong>Inside Instagram / Facebook browser?</strong> Email signup below works in 1 tap — or open in Safari/Chrome for Google Sign-In.
+                </div>
                 <!-- 1. PRIMARY AUTH ACTION: Continue with Google -->
-                <a href="/api/auth/google/login" id="googleAuthBtn" class="w-full py-3.5 px-4 rounded-2xl border-2 border-slate-200 hover:border-violet-400 bg-white hover:bg-slate-50 text-slate-900 font-black text-xs sm:text-sm shadow-xs hover:shadow-md transition flex items-center justify-center gap-3 cursor-pointer group no-underline">
+                <a href="/api/auth/google/login" id="googleAuthBtn" class="w-full py-3 px-4 rounded-2xl border-2 border-slate-200 hover:border-violet-400 bg-white hover:bg-slate-50 text-slate-900 font-black text-xs sm:text-sm shadow-xs hover:shadow-md transition flex items-center justify-center gap-3 cursor-pointer group no-underline">
                     <svg class="w-4 h-4 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -2626,7 +2617,7 @@
                 </a>
 
                 <!-- Divider: OR -->
-                <div class="relative flex py-1 items-center">
+                <div class="relative flex py-0.5 items-center">
                     <div class="flex-grow border-t border-slate-200"></div>
                     <span class="flex-shrink mx-3 text-[10px] font-black text-slate-400 uppercase tracking-wider">or continue with email</span>
                     <div class="flex-grow border-t border-slate-200"></div>
@@ -2634,27 +2625,27 @@
 
                 <!-- 2. SECONDARY: Tab Switcher: Log In vs Sign Up -->
                 <div class="flex rounded-xl bg-slate-100 p-1 border border-slate-200/80">
-                    <button type="button" id="tabBtnLogin" onclick="switchAuthTab('login')" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer">
+                    <button type="button" id="tabBtnLogin" onclick="switchAuthTab('login')" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-950 cursor-pointer">
                         Log In with Email
                     </button>
-                    <button type="button" id="tabBtnSignup" onclick="switchAuthTab('signup')" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-950 cursor-pointer">
-                        Sign Up with Email
+                    <button type="button" id="tabBtnSignup" onclick="switchAuthTab('signup')" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer">
+                        Sign Up Free
                     </button>
                 </div>
 
                 <!-- Error Message Banner -->
-                <div id="authErrorMessage" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+                <div id="authErrorMessage" class="hidden p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
                     <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
                     <span id="authErrorText">Invalid credentials</span>
                 </div>
 
                 <!-- Form Fields -->
-                <form id="candidateAuthForm" onsubmit="handleAuthSubmit(event)" class="space-y-3">
+                <form id="candidateAuthForm" onsubmit="handleAuthSubmit(event)" class="space-y-2.5">
                     <div id="signupNameField" class="hidden space-y-1">
                         <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Full Name</label>
                         <div class="relative">
                             <i data-lucide="user-check" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
-                            <input type="text" id="authFullNameInput" placeholder="Enter your full name" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-xs text-slate-900 transition">
+                            <input type="text" id="authFullNameInput" placeholder="Enter your full name" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-base sm:text-xs text-slate-900 transition">
                         </div>
                     </div>
 
@@ -2662,9 +2653,9 @@
                         <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Personal Email Address</label>
                         <div class="relative">
                             <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
-                            <input type="email" id="authEmailInput" required placeholder="name@gmail.com" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-xs text-slate-900 transition">
+                            <input type="email" id="authEmailInput" required placeholder="name@gmail.com" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-base sm:text-xs text-slate-900 transition">
                         </div>
-                        <p id="authEmailHelpText" class="text-[10px] text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                        <p id="authEmailHelpText" class="hidden sm:flex text-[10px] text-slate-500 font-medium mt-1 items-center gap-1.5">
                             <i data-lucide="info" class="w-3.5 h-3.5 text-violet-600 shrink-0"></i>
                             <span>Use your personal mail to receive verified updates on your direct applications.</span>
                         </p>
@@ -2674,7 +2665,7 @@
                         <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Password</label>
                         <div class="relative">
                             <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
-                            <input type="password" id="authPasswordInput" required minlength="6" placeholder="At least 6 characters" autocomplete="new-password" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-xs text-slate-900 transition">
+                            <input type="password" id="authPasswordInput" required minlength="6" placeholder="At least 6 characters" autocomplete="new-password" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-base sm:text-xs text-slate-900 transition">
                         </div>
                     </div>
 
@@ -2682,18 +2673,18 @@
                         <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Confirm Password</label>
                         <div class="relative">
                             <i data-lucide="shield-check" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
-                            <input type="password" id="authConfirmPasswordInput" minlength="6" placeholder="Re-enter your password" autocomplete="new-password" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-xs text-slate-900 transition">
+                            <input type="password" id="authConfirmPasswordInput" minlength="6" placeholder="Re-enter your password" autocomplete="new-password" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-base sm:text-xs text-slate-900 transition">
                         </div>
                     </div>
 
-                    <!-- Human / Anti-Bot Verification Checkbox (Required for Login & Sign Up) -->
-                    <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:border-violet-400 transition select-none">
-                        <input type="checkbox" id="authHumanCheckbox" class="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 cursor-pointer">
+                    <!-- Human / Anti-Bot Verification Checkbox (Pre-checked for low friction on mobile) -->
+                    <label class="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:border-violet-400 transition select-none">
+                        <input type="checkbox" id="authHumanCheckbox" checked class="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 cursor-pointer">
                         <span class="text-xs font-bold text-slate-700">I am human (Verify not a robot)</span>
                     </label>
 
-                    <button type="submit" id="authSubmitBtn" class="w-full mt-2 py-3 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md shadow-violet-600/25 transition transform active:scale-98 cursor-pointer flex items-center justify-center gap-2">
-                        <span id="authSubmitBtnText">Log In to Almond Jobs</span>
+                    <button type="submit" id="authSubmitBtn" class="w-full mt-1 py-3 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md shadow-violet-600/25 transition transform active:scale-98 cursor-pointer flex items-center justify-center gap-2">
+                        <span id="authSubmitBtnText">Create Free Account</span>
                         <i data-lucide="arrow-right" class="w-4 h-4 text-white"></i>
                     </button>
                 </form>
@@ -2936,9 +2927,10 @@
         </div>
     </div>
 
-        <!-- Scripts with Cache Busting Parameter -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
-    <script src="/static/app.js?v=20261120_v16_omni_search_and_pro_upgrade"></script>
+    <!-- Lazy Razorpay SDK prefetch + Cache-Busted App Script -->
+    <link rel="dns-prefetch" href="https://checkout.razorpay.com">
+    <script>window.__ALMOND_RZP_SDK_URL__ = "https://checkout.razorpay.com/v1/checkout.js";</script>
+    <script src="/static/app.js?v=20261126_v17_mobile_fast_load"></script>
     <script>
         lucide.createIcons();
     </script>
@@ -3417,7 +3409,7 @@
     </script>
 
     <!-- Floating Candidate Feedback Trigger -->
-    <button type="button" id="floatingFeedbackBtn" onclick="openCandidateFeedbackModal()" class="fixed bottom-16 sm:bottom-6 right-3 sm:right-6 z-40 px-4 py-2.5 rounded-full bg-slate-950/90 hover:bg-slate-900 text-white font-extrabold text-xs shadow-2xl border border-slate-700/80 backdrop-blur-md flex items-center gap-2 hover:scale-105 active:scale-95 transition cursor-pointer" title="Share feedback, report a broken link, or request a company to crawl">
+    <button type="button" id="floatingFeedbackBtn" onclick="openCandidateFeedbackModal()" class="fixed bottom-3 sm:bottom-6 right-3 sm:right-6 z-30 px-3 py-2 sm:px-4 sm:py-2.5 rounded-full bg-slate-950/90 hover:bg-slate-900 text-white font-extrabold text-[11px] sm:text-xs shadow-xl border border-slate-700/80 backdrop-blur-md flex items-center gap-1.5 sm:gap-2 hover:scale-105 active:scale-95 transition cursor-pointer" title="Share feedback, report a broken link, or request a company to crawl">
         <span class="text-amber-400">💡</span>
         <span>Feedback</span>
     </button>

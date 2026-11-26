@@ -1,4 +1,4 @@
-const CACHE_NAME = 'almond-shell-v1';
+const CACHE_NAME = 'almond-shell-v2';
 const SHELL_ASSETS = [
     '/',
     '/static/logo.png',
