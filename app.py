@@ -66,6 +66,21 @@ _OMNI_SEARCH_CACHE = {}
 _OMNI_SEARCH_CACHE_LOCK = threading.Lock()
 _OMNI_SEARCH_CACHE_TTL = 300  # 5 Minutes
 _OMNI_SEARCH_CACHE_MAX = 2000
+_INDEX_HTML_CACHE = {"mtime": 0.0, "content": ""}
+_INDEX_HTML_LOCK = threading.Lock()
+
+
+def _get_cached_index_html(index_file: str) -> str:
+    mtime = os.path.getmtime(index_file)
+    with _INDEX_HTML_LOCK:
+        if _INDEX_HTML_CACHE["content"] and _INDEX_HTML_CACHE["mtime"] == mtime:
+            return _INDEX_HTML_CACHE["content"]
+    with open(index_file, "r", encoding="utf-8") as f:
+        html = f.read()
+    with _INDEX_HTML_LOCK:
+        _INDEX_HTML_CACHE["mtime"] = mtime
+        _INDEX_HTML_CACHE["content"] = html
+    return html
 
 # Executive Admin Rate Limiting & Brute-Force Lockout Defense
 _FAILED_ADMIN_ATTEMPTS = {}
@@ -154,9 +169,10 @@ def _resolve_request_client_and_user(request: Request) -> tuple:
 async def add_performance_cache_headers(request: Request, call_next):
     path = request.url.path
 
-    # Track real-time visitor telemetry for candidate pageviews (excluding admin & static assets)
+    # Track real-time visitor telemetry for candidate pageviews (excluding HEAD probes, admin & static assets)
     if (
-        not path.startswith("/static/")
+        request.method != "HEAD"
+        and not path.startswith("/static/")
         and not path.startswith("/admin")
         and not path.startswith("/api/admin")
         and path not in ["/favicon.ico", "/health", "/ping", "/robots.txt", "/sitemap.xml", "/llms.txt", "/manifest.json", "/manifest.webmanifest", "/sw.js"]
@@ -196,19 +212,17 @@ async def add_performance_cache_headers(request: Request, call_next):
             pass
 
     response = await call_next(request)
-    # Static assets (images, fonts, scripts): cache for 7 days with revalidation
+    # Static assets: cache versioned (?v=...) bundles safely, allow bfcache on HTML (no no-store)
     if path.startswith("/static/"):
         if path.endswith(".js") or path.endswith(".css"):
-            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-            response.headers["Pragma"] = "no-cache"
-            response.headers["Expires"] = "0"
+            if "v=" in (request.url.query or ""):
+                response.headers["Cache-Control"] = "public, max-age=604800"
+            else:
+                response.headers["Cache-Control"] = "no-cache, must-revalidate"
         else:
             response.headers["Cache-Control"] = "public, max-age=86400"
     elif path == "/" or path.startswith("/jobs/"):
-        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Expires"] = "0"
-        # HTML pages: must revalidate so updates propagate immediately
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
     return response
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -430,26 +444,65 @@ async def get_geo_currency(request: Request):
 async def serve_index(request: Request):
     index_file = os.path.join(TEMPLATES_DIR, "index.html")
     if os.path.exists(index_file):
-        with open(index_file, "r", encoding="utf-8") as f:
-            content = f.read()
-            if Config.GA_MEASUREMENT_ID:
-                content = content.replace('window.__ALMOND_GA_ID__ || ""', f'"{Config.GA_MEASUREMENT_ID}"')
-            pixel_id = get_meta_pixel_id()
-            if pixel_id:
-                content = content.replace('window.__ALMOND_META_PIXEL_ID__ || ""', f'"{pixel_id}"')
-            
-            # Resolve real IP geolocation from Cloudflare CF-IPCountry header
-            cf_country = (
-                request.headers.get("cf-ipcountry")
-                or request.headers.get("x-country-code")
-                or request.headers.get("x-geo-country")
-                or ""
-            ).strip().upper()
-            country, currency = resolve_currency_for_country(cf_country)
-            if country != "UNKNOWN":
-                meta_tags = f'<meta name="server-geo-country" content="{country}">\n    <meta name="server-geo-currency" content="{currency}">'
-                content = content.replace("<head>", f"<head>\n    {meta_tags}", 1)
-            return HTMLResponse(content=content)
+        content = _get_cached_index_html(index_file)
+        if Config.GA_MEASUREMENT_ID:
+            content = content.replace('window.__ALMOND_GA_ID__ || ""', f'"{Config.GA_MEASUREMENT_ID}"')
+        pixel_id = get_meta_pixel_id()
+        if pixel_id:
+            content = content.replace('window.__ALMOND_META_PIXEL_ID__ || ""', f'"{pixel_id}"')
+
+        # Resolve real IP geolocation from Cloudflare CF-IPCountry header
+        cf_country = (
+            request.headers.get("cf-ipcountry")
+            or request.headers.get("x-country-code")
+            or request.headers.get("x-geo-country")
+            or ""
+        ).strip().upper()
+        country, currency = resolve_currency_for_country(cf_country)
+        if country != "UNKNOWN":
+            meta_tags = f'<meta name="server-geo-country" content="{country}">\n    <meta name="server-geo-currency" content="{currency}">'
+            content = content.replace("<head>", f"<head>\n    {meta_tags}", 1)
+
+        # Inline initial geo-matched omni feed on GET / so first-time mobile visitors see local jobs at 0ms
+        if request.method == "GET":
+            try:
+                sess_cookie = request.cookies.get("almond_session_token", "").strip()
+                user_data = verify_session_token(sess_cookie) if sess_cookie else None
+                u_logged_in = bool(user_data)
+                uid = (user_data.get("id") or user_data.get("user_id") or "") if user_data else ""
+                u_paid = is_user_paid(uid) if (u_logged_in and uid) else False
+                eff_country = _CF_COUNTRY_NAMES.get(cf_country, "") or (country if country not in ("UNKNOWN", "GLOBAL") else "")
+                boot_res = _get_or_compute_omni_feed(
+                    q="",
+                    location="all",
+                    category="All",
+                    effective_min_lpa=0.0,
+                    work_mode="all",
+                    contract_type="all",
+                    skills_list=None,
+                    match_resume=False,
+                    target_role=None,
+                    max_days=0,
+                    sort_by="best_match",
+                    limit=15,
+                    offset=0,
+                    refresh=False,
+                    user_paid=u_paid,
+                    user_logged_in=u_logged_in,
+                    effective_country=eff_country,
+                    feed_nonce="boot"
+                )
+                boot_payload = json.dumps({
+                    "country": eff_country,
+                    "logged_in": u_logged_in,
+                    "paid": u_paid,
+                    "result": boot_res
+                }).replace("</", "<\\/")
+                boot_script = f"<script>window.__ALMOND_INITIAL_FEED__ = {boot_payload};</script>"
+                content = content.replace("</body>", f"    {boot_script}\n</body>", 1)
+            except Exception as boot_err:
+                print(f"[BOOT_FEED] Inline preload note: {boot_err}")
+        return HTMLResponse(content=content)
     return HTMLResponse("<h1>Almond Jobs Platform is starting up...</h1>")
 
 @app.get("/template/{template_id}", response_class=HTMLResponse)
@@ -1102,6 +1155,18 @@ async def api_google_callback(request: Request, code: str = None, error: str = N
     user_id = res.get("user_id", "")
     full_name = res.get("full_name", full_name or email.split("@")[0])
     is_paid = "true" if res.get("is_paid") else "false"
+    is_new_user = bool(res.get("is_new_user"))
+    if is_new_user:
+        try:
+            record_funnel_event(
+                event_name="signup",
+                user_name=full_name,
+                user_email=email,
+                meta={"provider": "google"}
+            )
+        except Exception:
+            pass
+    is_new_google_js = "1" if is_new_user else "0"
 
     clean_name = str(full_name).replace('"', '\\"').replace('\n', ' ')
     clean_email = str(email).replace('"', '\\"').replace('\n', ' ')
@@ -1130,6 +1195,7 @@ async def api_google_callback(request: Request, code: str = None, error: str = N
             localStorage.setItem("almond_user_name", "{clean_name}");
             localStorage.setItem("almond_is_paid", "{is_paid}");
             sessionStorage.setItem("almond_login_event", "google_success");
+            if ("{is_new_google_js}" === "1") sessionStorage.setItem("almond_google_new_signup", "1");
         }} catch(e) {{
             console.error("Storage error:", e);
         }}
@@ -1234,7 +1300,7 @@ async def api_recent_contributions(limit: int = Query(50, ge=1, le=100)):
 async def api_verify_human_session(request: Request, payload: dict = Body(default={})):
     """
     Session-level Human Presence and Anti-Bot Verification Endpoint.
-    Validates telemetry hold timing bounds and sets session cookie.
+    Supports simple one-click checkbox verification as well as optional hold telemetry bounds.
     """
     hold_duration_ms = payload.get("hold_duration_ms")
     if hold_duration_ms is not None:
@@ -1479,6 +1545,90 @@ _CF_COUNTRY_NAMES = {
     "AE": "UAE", "AU": "Australia", "IE": "Ireland"
 }
 
+def _get_or_compute_omni_feed(
+    q: str = "",
+    location: str = "all",
+    category: str = "All",
+    effective_min_lpa: float = 0.0,
+    work_mode: str = "all",
+    contract_type: str = "all",
+    skills_list=None,
+    match_resume: bool = False,
+    target_role: Optional[str] = None,
+    max_days: int = 0,
+    sort_by: str = "best_match",
+    limit: int = 15,
+    offset: int = 0,
+    refresh: bool = False,
+    user_paid: bool = False,
+    user_logged_in: bool = False,
+    effective_country: str = "",
+    feed_nonce: str = ""
+):
+    if refresh:
+        trigger_live_refresh(force=True)
+        with _OMNI_SEARCH_CACHE_LOCK:
+            _OMNI_SEARCH_CACHE.clear()
+
+    # Keep guest feed_nonce deterministic per country so first-time landings hit cache in sub-milliseconds
+    cache_nonce = feed_nonce if (user_logged_in and not user_paid) else ("guest" if not user_paid else "")
+    cache_key = (
+        get_feeds_version(),
+        (q or "").strip().lower(),
+        category,
+        (location or "all").strip().lower(),
+        effective_min_lpa,
+        work_mode,
+        contract_type,
+        tuple(sorted(skills_list)) if skills_list else (),
+        match_resume,
+        (target_role or "").strip().lower(),
+        max_days,
+        (sort_by or "best_match").strip().lower(),
+        min(limit, 100),
+        offset,
+        user_paid,
+        user_logged_in,
+        effective_country.lower() if not user_paid else "",
+        cache_nonce
+    )
+    now = time.time()
+    if not refresh:
+        with _OMNI_SEARCH_CACHE_LOCK:
+            if cache_key in _OMNI_SEARCH_CACHE:
+                entry = _OMNI_SEARCH_CACHE[cache_key]
+                if now - entry["timestamp"] < _OMNI_SEARCH_CACHE_TTL:
+                    return entry["data"]
+
+    res = omni_search_all_feeds(
+        query=q,
+        category=category,
+        location=location,
+        min_package_lpa=effective_min_lpa,
+        work_mode=work_mode,
+        contract_type=contract_type,
+        skills=skills_list,
+        match_resume=match_resume,
+        target_role=target_role,
+        max_days=max_days,
+        sort_by=sort_by,
+        limit=min(limit, 100),
+        offset=offset,
+        user_is_paid=user_paid,
+        user_is_logged_in=user_logged_in,
+        user_country=effective_country,
+        feed_nonce=cache_nonce
+    )
+
+    with _OMNI_SEARCH_CACHE_LOCK:
+        if len(_OMNI_SEARCH_CACHE) > _OMNI_SEARCH_CACHE_MAX:
+            oldest_keys = sorted(_OMNI_SEARCH_CACHE.keys(), key=lambda k: _OMNI_SEARCH_CACHE[k]["timestamp"])[:500]
+            for k in oldest_keys:
+                del _OMNI_SEARCH_CACHE[k]
+        _OMNI_SEARCH_CACHE[cache_key] = {"timestamp": now, "data": res}
+    return res
+
+
 @app.get("/api/omni-search")
 async def api_omni_search(
     request: Request,
@@ -1509,69 +1659,27 @@ async def api_omni_search(
     cf_cc = (request.headers.get("cf-ipcountry") or request.headers.get("x-country-code") or "").strip().upper()
     effective_country = (geo_country or "").strip() or _CF_COUNTRY_NAMES.get(cf_cc, "")
 
-    if refresh:
-        trigger_live_refresh(force=True)
-        with _OMNI_SEARCH_CACHE_LOCK:
-            _OMNI_SEARCH_CACHE.clear()
-
-    # Concurrency Caching: Sub-millisecond response for concurrent search traffic (versioned with live feed sync)
-    cache_key = (
-        get_feeds_version(),
-        (q or "").strip().lower(),
-        category,
-        (location or "all").strip().lower(),
-        effective_min_lpa,
-        work_mode,
-        contract_type,
-        tuple(sorted(skills_list)) if skills_list else (),
-        match_resume,
-        (target_role or "").strip().lower(),
-        max_days,
-        (sort_by or "best_match").strip().lower(),
-        min(limit, 100),
-        offset,
-        user_paid,
-        user_logged_in,
-        effective_country.lower() if (user_logged_in and not user_paid) else "",
-        feed_nonce if (user_logged_in and not user_paid) else ""
-    )
-    now = time.time()
-    if not refresh:
-        with _OMNI_SEARCH_CACHE_LOCK:
-            if cache_key in _OMNI_SEARCH_CACHE:
-                entry = _OMNI_SEARCH_CACHE[cache_key]
-                if now - entry["timestamp"] < _OMNI_SEARCH_CACHE_TTL:
-                    return JSONResponse(content={"status": "success", "result": entry["data"], "cached": True})
-
-    res = omni_search_all_feeds(
-        query=q,
-        category=category,
+    res = _get_or_compute_omni_feed(
+        q=q,
         location=location,
-        min_package_lpa=effective_min_lpa,
+        category=category,
+        effective_min_lpa=effective_min_lpa,
         work_mode=work_mode,
         contract_type=contract_type,
-        skills=skills_list,
+        skills_list=skills_list,
         match_resume=match_resume,
         target_role=target_role,
         max_days=max_days,
         sort_by=sort_by,
-        limit=min(limit, 100),
+        limit=limit,
         offset=offset,
-        user_is_paid=user_paid,
-        user_is_logged_in=user_logged_in,
-        user_country=effective_country,
+        refresh=refresh,
+        user_paid=user_paid,
+        user_logged_in=user_logged_in,
+        effective_country=effective_country,
         feed_nonce=feed_nonce
     )
-
-    with _OMNI_SEARCH_CACHE_LOCK:
-        if len(_OMNI_SEARCH_CACHE) > _OMNI_SEARCH_CACHE_MAX:
-            oldest_keys = sorted(_OMNI_SEARCH_CACHE.keys(), key=lambda k: _OMNI_SEARCH_CACHE[k]["timestamp"])[:500]
-            for k in oldest_keys:
-                del _OMNI_SEARCH_CACHE[k]
-        _OMNI_SEARCH_CACHE[cache_key] = {"timestamp": now, "data": res}
-
     return JSONResponse(content={"status": "success", "result": res})
-
 
 @app.post("/api/find-jobs")
 async def find_jobs(request: Request, payload: dict = Body(...)):

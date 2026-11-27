@@ -1694,7 +1694,7 @@ def omni_search_all_feeds(
     elif match_resume or q_tokens:
         filtered.sort(key=lambda x: (x.get("_match_score", 0), x.get("date_posted_ts", 0)), reverse=True)
     elif clean_sort == "best_match" and (not category or category.lower() in ("all", "any")):
-        if user_is_logged_in and not user_is_paid:
+        if not user_is_paid:
             filtered = _build_signed_in_free_mixed_feed(
                 filtered,
                 now_ts,
@@ -1734,10 +1734,26 @@ def omni_search_all_feeds(
         item_copy["days_ago"] = diff_days
         raw_m = float(item_copy.get("_match_score") or 0)
         item_copy["match_score"] = min(98, max(58, int(60 + raw_m * 0.6))) if (match_resume or raw_m > 0) else 75
+        if not user_is_logged_in and offset == 0:
+            item_copy["_orig_url_sample"] = item_copy.get("url", "")
 
         processed_items.append(item_copy)
 
     apply_vip_latest_feed_lock(processed_items, user_is_paid=user_is_paid, user_is_logged_in=user_is_logged_in)
+
+    # Unlock 2 genuine 5+ day direct sample links for first-time guest visitors so they can verify real corporate portals before signing up
+    if not user_is_logged_in and offset == 0:
+        unlocked_samples = 0
+        for item_copy in processed_items:
+            orig_sample_url = str(item_copy.pop("_orig_url_sample", "") or "")
+            if unlocked_samples < 2 and not item_copy.get("is_locked") and orig_sample_url.startswith(("http://", "https://")):
+                item_copy["url"] = orig_sample_url
+                item_copy["is_auth_locked"] = False
+                item_copy["is_free_sample"] = True
+                unlocked_samples += 1
+    else:
+        for item_copy in processed_items:
+            item_copy.pop("_orig_url_sample", None)
 
     # 7. Fetch external / LinkedIn postings when matching resume (or on initial search)
     external_jobs = []

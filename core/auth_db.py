@@ -1363,7 +1363,8 @@ def login_or_signup_google_user(email: str, full_name: str = "", google_id: str 
                 "paid_until": paid_until,
                 "remaining_str": remaining_str,
                 "device_model": active_device,
-                "token": token
+                "token": token,
+                "is_new_user": False
             }
         else:
             user_id = str(uuid.uuid4())
@@ -1425,7 +1426,8 @@ def login_or_signup_google_user(email: str, full_name: str = "", google_id: str 
                 "paid_until": initial_until,
                 "remaining_str": remaining_str,
                 "device_model": clean_device,
-                "token": token
+                "token": token,
+                "is_new_user": True
             }
 
 def get_user_profile(user_id: str) -> dict:
@@ -2667,7 +2669,10 @@ def is_bot_or_scanner(path: str, user_agent: str = "") -> bool:
         "wget/", "httpclient", "zgrab", "censys", "shodan", "netcraft",
         "semrush", "ahrefs", "bytespider", "go-http-client", "masscan",
         "nikto", "sqlmap", "headless", "phantomjs", "selenium", "puppeteer",
-        "screaming frog", "dotbot", "petalbot", "mj12bot", "nmap"
+        "screaming frog", "dotbot", "petalbot", "mj12bot", "nmap",
+        "facebookexternalhit", "meta-externalagent", "meta-externalfetcher", "facebot",
+        "twitterbot", "linkedinbot", "slackbot", "whatsapp", "telegrambot",
+        "discordbot", "applebot", "bingpreview", "pinterest"
     ]
     if any(b in ua_lower for b in bot_ua_patterns):
         return True

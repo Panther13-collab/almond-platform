@@ -5319,21 +5319,32 @@ window.switchAuthTab = function(tab) {
     const passInput = document.getElementById("authPasswordInput");
     if (tab === 'signup') {
         if (passInput) passInput.setAttribute("autocomplete", "new-password");
-        if (tabLogin) tabLogin.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-950 cursor-pointer";
-        if (tabSignup) tabSignup.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer";
-        if (nameField) nameField.classList.remove("hidden");
-        if (confirmPassField) confirmPassField.classList.remove("hidden");
-        if (submitBtnText) submitBtnText.textContent = "Create Free Account";
+        if (tabLogin) tabLogin.className = "flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-950 cursor-pointer";
+        if (tabSignup) tabSignup.className = "flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer";
+        if (nameField) nameField.classList.add("hidden");
+        if (confirmPassField) confirmPassField.classList.add("hidden");
+        if (submitBtnText) submitBtnText.textContent = "Create Free Account ?";
         if (toggleHint) toggleHint.innerHTML = `Already have an account? <button type="button" onclick="switchAuthTab('login')" class="text-violet-700 font-bold hover:underline cursor-pointer">Log in with Email</button>`;
     } else {
         if (passInput) passInput.setAttribute("autocomplete", "current-password");
-        if (tabLogin) tabLogin.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer";
-        if (tabSignup) tabSignup.className = "flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-950 cursor-pointer";
+        if (tabLogin) tabLogin.className = "flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer";
+        if (tabSignup) tabSignup.className = "flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-950 cursor-pointer";
         if (nameField) nameField.classList.add("hidden");
         if (confirmPassField) confirmPassField.classList.add("hidden");
         if (submitBtnText) submitBtnText.textContent = "Log In to Almond Jobs";
-        if (toggleHint) toggleHint.innerHTML = `Don't have an account? <button type="button" onclick="switchAuthTab('signup')" class="text-violet-700 font-bold hover:underline cursor-pointer">Sign up with Email</button>`;
+        if (toggleHint) toggleHint.innerHTML = `Don't have an account? <button type="button" onclick="switchAuthTab('signup')" class="text-violet-700 font-bold hover:underline cursor-pointer">Sign up free</button>`;
     }
+};
+
+window.toggleAuthPasswordVisibility = function() {
+    const passInput = document.getElementById("authPasswordInput");
+    const toggleBtn = document.getElementById("toggleAuthPasswordBtn");
+    if (!passInput || !toggleBtn) return;
+    const isHidden = passInput.type === "password";
+    passInput.type = isHidden ? "text" : "password";
+    toggleBtn.textContent = isHidden ? "Hide" : "Show";
+    toggleBtn.setAttribute("aria-pressed", isHidden ? "true" : "false");
+    toggleBtn.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
 };
 
 window.openSignupToUnlockLinksModal = function() {
@@ -5410,10 +5421,13 @@ window.renderDirectApplyActionHtml = function({ isAuthLocked, isVipLocked, safeU
         </div>`;
     }
     const pad = compact ? "px-4 py-2" : "w-full sm:w-auto px-5 py-2.5";
-    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="omni-apply-btn ${pad} rounded-xl bg-slate-950 hover:bg-violet-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 transition whitespace-nowrap">
+    const sampleNote = (!isUserLoggedIn())
+        ? `<span class="text-[10px] font-bold text-emerald-700 tracking-tight whitespace-nowrap text-center sm:text-right">? Free sample direct link</span>`
+        : "";
+    return `<div class="flex flex-col items-stretch sm:items-end gap-1">${sampleNote}<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="omni-apply-btn ${pad} rounded-xl bg-slate-950 hover:bg-violet-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 transition whitespace-nowrap">
         <span>${externalLabel}</span>
         <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-    </a>`;
+    </a></div>`;
 };
 
 window.openProfileModal = function(contextReason = "") {
@@ -5668,90 +5682,23 @@ window.handleAuthSubmit = async function(e) {
     }
 
     if (window.activeAuthTab === "signup") {
+        const confirmPassField = document.getElementById("signupConfirmPasswordField");
+        const isConfirmVisible = confirmPassField && !confirmPassField.classList.contains("hidden");
         const confirmPassInput = document.getElementById("authConfirmPasswordInput");
         const confirmPass = confirmPassInput?.value || "";
-        if (password !== confirmPass) {
+        if (isConfirmVisible && password !== confirmPass) {
             if (errBox && errText) {
                 errText.textContent = "Passwords do not match. Please re-enter.";
                 errBox.classList.remove("hidden");
             }
             return;
         }
-    }
 
-    // SIGN UP: Request OTP verification first (with instant self-healing direct signup fallback)
-    if (window.activeAuthTab === "signup") {
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.classList.add("opacity-70");
-            submitBtn.innerHTML = `<span class="animate-spin mr-1">⌛</span> Sending Verification OTP...`;
-        }
-
+        // Instant direct candidate activation (no disruptive email OTP round-trip on mobile WebView)
+        const derivedName = fullName || email.split("@")[0].replace(/[._-]+/g, " ").trim() || "Candidate";
         try {
-            const resp = await fetch("/api/auth/send-otp", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: email })
-            });
-            const data = await resp.json().catch(() => ({}));
-
-            // Self-healing fallback: If outbound SMTP is unconfigured on host or delivery is unavailable,
-            // never block the candidate! Seamlessly activate their account instantly.
-            if (data.fallback_available || (!resp.ok && (data.detail || "").includes("SMTP credentials"))) {
-                console.info("[Auth] Outbound email delivery unavailable on host. Seamlessly executing instant direct registration...");
-                await window.executeDirectSignupFallback(email, password, fullName);
-                return;
-            }
-
-            if (!resp.ok || data.status === "error") {
-                throw new Error(data.detail || data.message || "Failed to send verification code.");
-            }
-
-            // Transition form to OTP step
-            const form = document.getElementById("candidateAuthForm");
-            const otpStep = document.getElementById("authOtpStep");
-            const displayEl = document.getElementById("otpEmailDisplay");
-            const otpInput = document.getElementById("authOtpInput");
-
-            if (form) form.classList.add("hidden");
-            if (otpStep) otpStep.classList.remove("hidden");
-            if (displayEl) displayEl.textContent = email;
-            if (otpInput) {
-                otpInput.value = "";
-                setTimeout(() => otpInput.focus(), 150);
-            }
-
-            if (typeof window.startResendOtpTimer === "function") {
-                window.startResendOtpTimer(120);
-            }
-        } catch (err) {
-            // If the error mentions SMTP credentials or delivery failure, fallback automatically!
-            const errMsg = String(err && (err.message || err.detail || ""));
-            if (errMsg.includes("SMTP credentials") || errMsg.includes("verification email") || errMsg.includes("Failed to dispatch")) {
-                console.warn("[Auth] Caught email delivery error. Executing instant direct registration fallback...");
-                try {
-                    await window.executeDirectSignupFallback(email, password, fullName);
-                    return;
-                } catch (fallbackErr) {
-                    if (errBox && errText) {
-                        errText.textContent = fallbackErr.message || "Account creation failed.";
-                        errBox.classList.remove("hidden");
-                    }
-                    return;
-                }
-            }
-            if (errBox && errText) {
-                errText.textContent = err.message || "Failed to dispatch verification code.";
-                errBox.classList.remove("hidden");
-            }
-        } finally {
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.classList.remove("opacity-70");
-                submitBtn.innerHTML = `<span id="authSubmitBtnText">Send Verification OTP &rarr;</span><i data-lucide="arrow-right" class="w-4 h-4 text-white"></i>`;
-                if (window.lucide) lucide.createIcons();
-            }
-        }
+            await window.executeDirectSignupFallback(email, password, derivedName);
+        } catch (_) {}
         return;
     }
 
@@ -6070,7 +6017,7 @@ window.executeDirectSignupFallback = async function(email, password, fullName) {
         if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.classList.remove("opacity-70");
-            submitBtn.innerHTML = `<span id="authSubmitBtnText">Send Verification OTP &rarr;</span><i data-lucide="arrow-right" class="w-4 h-4 text-white"></i>`;
+            submitBtn.innerHTML = `<span id="authSubmitBtnText">Create Free Account &rarr;</span><i data-lucide="arrow-right" class="w-4 h-4 text-white"></i>`;
         }
         if (verifyBtn) {
             verifyBtn.disabled = false;
@@ -6103,12 +6050,30 @@ window.cancelOtpVerification = function() {
 // GOOGLE SIGN-IN & 0-OTP AUTH CONTROLLER
 // ==========================================
 window.handleGoogleSignInClick = function(e) {
-    const googleBtn = document.getElementById("googleAuthBtn");
+    const ua = (typeof navigator !== "undefined" && navigator.userAgent) ? navigator.userAgent : "";
+    const isInAppWebView = /Instagram|FBAN|FBAV|FB_IAB|LinkedInApp|Line\//i.test(ua);
+    if (isInAppWebView) {
+        if (e && e.preventDefault) e.preventDefault();
+        const errBox = document.getElementById("authErrorMessage");
+        const errText = document.getElementById("authErrorText");
+        if (errBox && errText) {
+            errText.textContent = "Instagram blocks Google Sign-In popups. Enter your email & password below for instant 10-second free signup (no OTP code needed)!";
+            errBox.classList.remove("hidden");
+        }
+        const emailInput = document.getElementById("authEmailInput");
+        if (emailInput) {
+            emailInput.focus();
+            emailInput.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        return false;
+    }
+
     const googleLabel = document.getElementById("googleAuthBtnLabel");
     if (googleLabel) googleLabel.textContent = "Connecting to Google...";
-    
-    // Direct official Google OAuth 2.0 Account Chooser (Standard pattern across GitHub, Linear, FundedNext)
+
+    // Standard browser: redirect to official Google OAuth 2.0 Account Chooser
     window.location.href = "/api/auth/google/login";
+    return true;
 };
 
 window.handleGoogleCredentialResponse = function(response) {
@@ -6329,6 +6294,13 @@ window.initAuthSession = async function() {
         const isLoginSuccess = urlParams.get("login") === "success" || sessionStorage.getItem("almond_login_event") === "google_success";
         if (isLoginSuccess && isUserLoggedIn()) {
             sessionStorage.removeItem("almond_login_event");
+            const isNewGoogleSignup = sessionStorage.getItem("almond_google_new_signup") === "1";
+            if (isNewGoogleSignup) {
+                sessionStorage.removeItem("almond_google_new_signup");
+                if (typeof window.almondTrackFunnel === "function") {
+                    window.almondTrackFunnel("signup", { user_email: email, user_name: fullName });
+                }
+            }
             if (urlParams.get("login") === "success") {
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
@@ -6640,55 +6612,42 @@ function openHumanVerification(targetResourceName, onSuccessCallback) {
 }
 
 function resetVerifierUI() {
-    const ringCircle = document.getElementById("holdRingCircle");
-    const bgFill = document.getElementById("holdBgFill");
+    const tickBox = document.getElementById("humanTickCheckbox");
     const btnText = document.getElementById("holdVerifyBtnText");
     const hintText = document.getElementById("holdVerifyHint");
     const successIcon = document.getElementById("holdVerifySuccessIcon");
-    const holdBtn = document.getElementById("holdVerifyBtn");
+    const boxLabel = document.getElementById("holdVerifyBtn");
 
-    if (ringCircle) {
-        ringCircle.style.strokeDashoffset = "56.548";
-        ringCircle.className = "text-violet-300 fill-none transition-none";
-        ringCircle.parentElement?.classList.remove("hidden");
+    if (tickBox) {
+        tickBox.checked = false;
+        tickBox.disabled = false;
     }
-
-    if (bgFill) {
-        bgFill.style.width = "0%";
-        bgFill.className = "absolute inset-y-0 left-0 bg-gradient-to-r from-violet-600 via-purple-500 to-indigo-500 w-0 transition-none z-0 opacity-85 pointer-events-none";
-    }
-
     if (btnText) {
-        btnText.textContent = "Press & Hold to Verify";
-        btnText.className = "text-sm font-black text-white tracking-wide transition-colors";
+        btnText.textContent = "I am not a robot";
+        btnText.className = "text-sm font-extrabold text-slate-900 tracking-tight transition-colors";
     }
-
     if (hintText) {
-        hintText.textContent = "Press and hold for a few seconds, then release before the loading completes. Space bar works too.";
-        hintText.className = "text-xs text-slate-400 text-center mt-3 font-medium leading-relaxed transition-colors";
+        hintText.textContent = "Just one tap to verify and continue.";
+        hintText.className = "text-xs text-slate-500 text-center mt-3 font-medium leading-relaxed transition-colors";
     }
-
     if (successIcon) successIcon.classList.add("hidden");
-
-    if (holdBtn) {
-        holdBtn.className = "w-full py-4 px-6 bg-slate-900 hover:bg-slate-800/80 border-2 border-violet-400/70 rounded-2xl flex items-center justify-center space-x-3 transition-all relative overflow-hidden group shadow-lg shadow-violet-500/15 cursor-pointer outline-none focus:ring-2 focus:ring-violet-400 select-none";
+    if (boxLabel) {
+        boxLabel.className = "w-full min-h-[60px] py-3.5 px-4 bg-slate-50 hover:bg-violet-50/70 border-2 border-slate-300 hover:border-violet-500 rounded-2xl flex items-center justify-between gap-3 transition-all shadow-xs cursor-pointer select-none";
     }
 }
 
 function initHumanVerifier() {
     const modal = document.getElementById("humanVerifyModal");
     const closeBtn = document.getElementById("closeVerifyModal");
-    const holdBtn = document.getElementById("holdVerifyBtn");
-    const ringCircle = document.getElementById("holdRingCircle");
-    const bgFill = document.getElementById("holdBgFill");
+    const tickBox = document.getElementById("humanTickCheckbox");
+    const boxLabel = document.getElementById("holdVerifyBtn");
     const btnText = document.getElementById("holdVerifyBtnText");
     const hintText = document.getElementById("holdVerifyHint");
     const successIcon = document.getElementById("holdVerifySuccessIcon");
 
-    if (!modal || !holdBtn) return;
+    if (!modal) return;
 
-    // Never block new visitors on homepage entry with a fullscreen security gate.
-    // Keep modal hidden unless explicitly invoked, and mark passive human verification on first interaction.
+    // Never block new visitors on homepage entry with a fullscreen gate.
     modal.classList.add("hidden");
     if (!isHumanVerified()) {
         const markVerifiedPassively = () => {
@@ -6702,214 +6661,62 @@ function initHumanVerifier() {
         });
     }
 
+    const closeModal = () => {
+        modal.classList.add("hidden");
+        pendingHumanAction = null;
+    };
+
     if (closeBtn) {
-        closeBtn.addEventListener("click", () => {
-            if (!isHumanVerified()) {
-                holdBtn.classList.add("ring-2", "ring-violet-400");
-                setTimeout(() => holdBtn.classList.remove("ring-2", "ring-violet-400"), 400);
-                return;
-            }
-            modal.classList.add("hidden");
-            pendingHumanAction = null;
-        });
+        closeBtn.addEventListener("click", closeModal);
     }
 
     modal.addEventListener("click", (e) => {
-        if (e.target === modal) {
-            if (!isHumanVerified()) {
-                holdBtn.classList.add("ring-2", "ring-violet-400");
-                setTimeout(() => holdBtn.classList.remove("ring-2", "ring-violet-400"), 400);
-                return;
-            }
-            modal.classList.add("hidden");
-            pendingHumanAction = null;
-        }
+        if (e.target === modal) closeModal();
     });
 
-    const TOTAL_LOAD_TIME = 2600; // 2.6 seconds total loading duration
-    const MIN_HOLD_TIME = 1400;   // 1.4 seconds minimum hold threshold (few seconds)
-    const MAX_HOLD_TIME = 2500;   // Must release before loading completes (at 2.6s)
-    const CIRCUMFERENCE = 56.548; // 2 * PI * 9
-
-    let verifierState = "IDLE";   // IDLE | HOLDING | SUCCESS | FAILED
-    let holdStartTime = 0;
-    let animFrameId = null;
-
-    function startHold(e) {
-        if (e.type === "keydown" && e.code !== "Space") return;
-        if (e.type === "keydown") e.preventDefault();
-        if (e.type === "touchstart") e.preventDefault();
-        if (verifierState === "SUCCESS" || verifierState === "HOLDING") return;
-
-        verifierState = "HOLDING";
-        holdStartTime = performance.now();
-
-        if (hintText) {
-            hintText.textContent = "Keep holding for a few seconds...";
-            hintText.className = "text-xs text-violet-300 font-bold text-center mt-3 transition-colors";
-        }
-        if (btnText) btnText.textContent = "Keep holding...";
-
-        function tick(now) {
-            if (verifierState !== "HOLDING") return;
-
-            const elapsed = now - holdStartTime;
-            const progress = Math.min(elapsed / TOTAL_LOAD_TIME, 1.0);
-
-            if (bgFill) bgFill.style.width = `${progress * 100}%`;
-            if (ringCircle) ringCircle.style.strokeDashoffset = `${CIRCUMFERENCE * (1 - progress)}`;
-
-            if (elapsed >= MIN_HOLD_TIME && elapsed < MAX_HOLD_TIME) {
-                // In valid release window: hold threshold met, before loading finishes
-                if (btnText) {
-                    btnText.textContent = "RELEASE NOW TO VERIFY!";
-                    btnText.className = "text-sm font-black text-emerald-300 tracking-wider animate-pulse";
-                }
-                if (hintText) {
-                    hintText.textContent = "⚡ Release now before the loading bar completes!";
-                    hintText.className = "text-xs text-emerald-300 font-black text-center mt-3 animate-pulse";
-                }
-                if (holdBtn) {
-                    holdBtn.classList.add("border-emerald-400", "shadow-emerald-500/30");
-                }
-                if (bgFill) {
-                    bgFill.className = "absolute inset-y-0 left-0 bg-gradient-to-r from-violet-600 via-emerald-500 to-teal-400 w-full transition-none z-0 opacity-90 pointer-events-none";
-                }
-            } else if (progress >= 1.0) {
-                // User held too long: loading finished before release
-                verifierState = "FAILED";
-                if (animFrameId) cancelAnimationFrame(animFrameId);
-
-                if (btnText) {
-                    btnText.textContent = "Held too long!";
-                    btnText.className = "text-sm font-black text-rose-300 tracking-wide";
-                }
-                if (hintText) {
-                    hintText.textContent = "Loading finished before release! You must release before loading completes. Try again.";
-                    hintText.className = "text-xs text-rose-300 font-bold text-center mt-3";
-                }
-                if (holdBtn) {
-                    holdBtn.classList.add("border-rose-400");
-                }
-
-                setTimeout(() => {
-                    resetVerifierUI();
-                    verifierState = "IDLE";
-                }, 1400);
-                return;
-            }
-
-            if (verifierState === "HOLDING") {
-                animFrameId = requestAnimationFrame(tick);
-            }
-        }
-
-        animFrameId = requestAnimationFrame(tick);
-    }
-
-    function releaseHold(e) {
-        if (e.type === "keyup" && e.code !== "Space") return;
-        if (verifierState !== "HOLDING") return;
-
-        if (animFrameId) cancelAnimationFrame(animFrameId);
-        const elapsed = performance.now() - holdStartTime;
-
-        if (elapsed < MIN_HOLD_TIME) {
-            // Released too early (< 1.4s)
-            verifierState = "FAILED";
-            resetVerifierUI();
-            if (btnText) {
-                btnText.textContent = "Hold longer!";
-                btnText.className = "text-sm font-black text-amber-300 tracking-wide";
-            }
-            if (hintText) {
-                hintText.textContent = "Released too early! Please hold for a few seconds before releasing.";
-                hintText.className = "text-xs text-amber-300 font-bold text-center mt-3";
-            }
-            if (holdBtn) {
-                holdBtn.classList.add("border-amber-400");
-                setTimeout(() => {
-                    resetVerifierUI();
-                    verifierState = "IDLE";
-                }, 1400);
-            }
-        } else if (elapsed >= MIN_HOLD_TIME && elapsed < MAX_HOLD_TIME) {
-            // SUCCESS! User held for a few seconds and released before loading completed
-            verifierState = "SUCCESS";
-
-            // Save verification in session storage (persists on reload, clears on new session)
-            try {
-                sessionStorage.setItem("almond_human_verified", "true");
-                document.cookie = "almond_human_verified=1; path=/; samesite=lax";
-            } catch (err) {}
-
-            // Send telemetry validation beacon to backend
-            try {
-                fetch("/api/security/verify-human", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ hold_duration_ms: Math.round(elapsed) })
-                }).catch(() => {});
-            } catch (err) {}
-
-            if (bgFill) {
-                bgFill.className = "absolute inset-y-0 left-0 bg-emerald-600 w-full transition-all duration-200 z-0 opacity-95";
-            }
-            if (btnText) {
-                btnText.textContent = "Human Verified ✓";
-                btnText.className = "text-sm font-black text-white tracking-wide";
-            }
-            if (hintText) {
-                hintText.textContent = "Verification confirmed! Welcome to Almond Jobs.";
-                hintText.className = "text-xs text-emerald-400 font-bold text-center mt-3";
-            }
-            if (successIcon) successIcon.classList.remove("hidden");
-            if (ringCircle && ringCircle.parentElement) ringCircle.parentElement.classList.add("hidden");
-
-            if (holdBtn) {
-                holdBtn.className = "w-full py-4 px-6 bg-emerald-950/90 border-2 border-emerald-400 rounded-2xl flex items-center justify-center space-x-3 transition-all relative overflow-hidden group shadow-lg shadow-emerald-500/25";
-            }
-
-            // Smoothly close modal
-            setTimeout(() => {
-                modal.classList.add("transition-opacity", "duration-300", "opacity-0");
-                setTimeout(() => {
-                    modal.classList.add("hidden");
-                    modal.classList.remove("opacity-0", "transition-opacity", "duration-300");
-                    verifierState = "IDLE";
-                    if (pendingHumanAction) {
-                        const cb = pendingHumanAction;
-                        pendingHumanAction = null;
-                        cb();
-                    }
-                }, 300);
-            }, 450);
-        }
-    }
-
-    // Pointer events (Mouse, Touch & Window-level release safety)
-    holdBtn.addEventListener("mousedown", startHold);
-    holdBtn.addEventListener("mouseup", releaseHold);
-    holdBtn.addEventListener("mouseleave", releaseHold);
-    window.addEventListener("mouseup", releaseHold);
-
-    holdBtn.addEventListener("touchstart", startHold, { passive: false });
-    holdBtn.addEventListener("touchend", releaseHold);
-    holdBtn.addEventListener("touchcancel", releaseHold);
-    window.addEventListener("touchend", releaseHold);
-    window.addEventListener("touchcancel", releaseHold);
-
-    // Keyboard Spacebar events
     window.addEventListener("keydown", (e) => {
-        if (!modal.classList.contains("hidden") && e.code === "Space") {
-            startHold(e);
+        if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+            closeModal();
         }
     });
 
-    window.addEventListener("keyup", (e) => {
-        if (!modal.classList.contains("hidden") && e.code === "Space") {
-            releaseHold(e);
+    if (!tickBox) return;
+
+    tickBox.addEventListener("change", () => {
+        if (!tickBox.checked) return;
+
+        try {
+            sessionStorage.setItem("almond_human_verified", "true");
+            document.cookie = "almond_human_verified=1; path=/; samesite=lax";
+        } catch (err) {}
+
+        try {
+            fetch("/api/security/verify-human", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ check_method: "checkbox" })
+            }).catch(() => {});
+        } catch (err) {}
+
+        if (btnText) {
+            btnText.textContent = "Human Verified ?";
+            btnText.className = "text-sm font-black text-emerald-800 tracking-tight";
         }
+        if (hintText) {
+            hintText.textContent = "Verification confirmed! Continuing...";
+            hintText.className = "text-xs text-emerald-700 font-bold text-center mt-3";
+        }
+        if (successIcon) successIcon.classList.remove("hidden");
+        if (boxLabel) {
+            boxLabel.className = "w-full min-h-[60px] py-3.5 px-4 bg-emerald-50 border-2 border-emerald-500 rounded-2xl flex items-center justify-between gap-3 transition-all shadow-sm select-none";
+        }
+
+        setTimeout(() => {
+            modal.classList.add("hidden");
+            const cb = pendingHumanAction;
+            pendingHumanAction = null;
+            if (cb) cb();
+        }, 250);
     });
 }
 
@@ -8216,11 +8023,11 @@ window.executeOmniSearch = async function(query = "", append = false, forceRefre
                 params.append("target_role", window.omniTargetRole);
             }
         }
+        const geoCountry = typeof window.getUserGeoCountry === "function" ? window.getUserGeoCountry() : "";
+        if (geoCountry) params.append("geo_country", geoCountry);
         const currentUserId = window.currentUserId || localStorage.getItem("almond_user_id");
         if (currentUserId) {
             params.append("user_id", currentUserId);
-            const geoCountry = typeof window.getUserGeoCountry === "function" ? window.getUserGeoCountry() : "";
-            if (geoCountry) params.append("geo_country", geoCountry);
             if (!window.omniFeedSessionNonce) window.omniFeedSessionNonce = String(Date.now());
             params.append("feed_nonce", window.omniFeedSessionNonce);
         }
@@ -9275,12 +9082,13 @@ window.handleOmniResumeSelected = async function(event) {
             pkgField.value = "7 LPA";
         }
 
-        // 6. Preferred Locations: ALWAYS start empty so candidate explicitly chooses cities/countries
+        // 6. Preferred Locations: Pre-seed detected country (e.g. India) for 1-tap matching while still editable
         const locInput = document.getElementById("omniCriteriaLocationInput");
         const locHidden = document.getElementById("omniCriteriaLocation");
         if (locInput) locInput.value = "";
         if (locHidden) locHidden.value = "";
-        window.omniSelectedLocations = [];
+        const detectedCountry = typeof window.getUserGeoCountry === "function" ? window.getUserGeoCountry() : "";
+        window.omniSelectedLocations = detectedCountry ? [detectedCountry] : [];
         window.renderOmniLocationBadges();
 
         window.openOmniCriteriaModal(profile);
@@ -9449,13 +9257,83 @@ window.initOmniSearch = function() {
     });
 };
 
-// Initial load: immediately reveal live direct corporate openings so first-time visitors see real jobs right away
+window.applyQuickJobFilter = function(preset, clickedBtn) {
+    document.querySelectorAll(".omni-quick-chip").forEach(btn => {
+        const isFreeBtn = btn.getAttribute("data-quick-filter") === "free";
+        if (btn === clickedBtn) {
+            btn.className = "omni-quick-chip shrink-0 px-3.5 py-2 rounded-full text-xs font-extrabold bg-slate-950 text-white border border-slate-950 shadow-xs transition cursor-pointer";
+        } else if (isFreeBtn) {
+            btn.className = "omni-quick-chip shrink-0 px-3.5 py-2 rounded-full text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 shadow-2xs transition cursor-pointer";
+        } else {
+            btn.className = "omni-quick-chip shrink-0 px-3.5 py-2 rounded-full text-xs font-bold bg-white/95 hover:bg-violet-50 text-slate-800 hover:text-violet-900 border border-slate-200 shadow-2xs transition cursor-pointer";
+        }
+    });
+
+    const inputEl = document.getElementById("omniSearchInput");
+    const clearBtn = document.getElementById("omniClearBtn");
+    window.omniMatchResumeMode = false;
+    window.omniCurrentOffset = 0;
+    window.omniActiveLocation = "all";
+    window.omniActiveCategory = "All";
+    window.omniActiveWorkMode = "all";
+    window.omniActiveContractType = "all";
+    window.omniSortMode = "best_match";
+
+    let q = "";
+    if (preset === "india") {
+        window.omniActiveLocation = "India";
+    } else if (preset === "software") {
+        q = "Software Engineer";
+    } else if (preset === "ai") {
+        window.omniActiveCategory = "AI";
+    } else if (preset === "intern") {
+        window.omniActiveContractType = "internship";
+    } else if (preset === "remote") {
+        window.omniActiveWorkMode = "remote";
+    } else if (preset === "free") {
+        window.omniSortMode = "free_jobs";
+        const sortSel = document.getElementById("omniSortSelect");
+        if (sortSel) sortSel.value = "free_jobs";
+    }
+
+    if (inputEl) inputEl.value = q;
+    if (clearBtn) {
+        if (q) clearBtn.classList.remove("hidden");
+        else clearBtn.classList.add("hidden");
+    }
+    window.omniCurrentQuery = q;
+
+    const streamContainer = document.getElementById("omniSearchResultsContainer");
+    if (streamContainer) streamContainer.classList.remove("hidden");
+    if (typeof window.executeOmniSearch === "function") {
+        window.executeOmniSearch(q, false);
+    }
+};
+
+// Initial load: render server-inlined geo-matched feed synchronously at 0ms, or fetch via /api/omni-search
 window.initInitialLiveFeed = function() {
     const streamContainer = document.getElementById("omniSearchResultsContainer");
-    if (streamContainer && typeof window.executeOmniSearch === "function") {
-        streamContainer.classList.remove("hidden");
-        window.omniCurrentQuery = "";
-        window.omniCurrentOffset = 0;
+    if (!streamContainer) return;
+    streamContainer.classList.remove("hidden");
+    window.omniCurrentQuery = "";
+    window.omniCurrentOffset = 0;
+
+    try {
+        const boot = window.__ALMOND_INITIAL_FEED__;
+        const clientLoggedIn = typeof isUserLoggedIn === "function" ? isUserLoggedIn() : false;
+        const clientCountry = typeof window.getUserGeoCountry === "function" ? window.getUserGeoCountry() : "";
+        const bootCountry = (boot && boot.country) || "";
+        const countryCompatible = !clientCountry || !bootCountry || bootCountry.toLowerCase() === clientCountry.toLowerCase();
+        if (boot && boot.result && Array.isArray(boot.result.items) && boot.result.items.length > 0 && Boolean(boot.logged_in) === clientLoggedIn && countryCompatible) {
+            window.__ALMOND_INITIAL_FEED__ = null;
+            if (typeof window.renderOmniResults === "function") {
+                window.renderOmniResults(boot.result, "", false);
+                return;
+            }
+        }
+    } catch (_) {}
+
+    if (typeof window.executeOmniSearch === "function") {
         window.executeOmniSearch("", false);
     }
 };

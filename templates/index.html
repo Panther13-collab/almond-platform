@@ -405,6 +405,8 @@
             }
         }
     </script>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -895,6 +897,31 @@
                                 <input type="file" id="omniResumeFileInput" accept=".pdf,.docx,.txt" class="hidden" onchange="handleOmniResumeSelected(event)">
                             </div>
                         </div>
+                    </div>
+
+                    <!-- QUICK ROLE & REGION CHIPS (1-tap mobile discovery without needing a PDF resume) -->
+                    <div id="omniQuickFilterChips" class="w-full max-w-4xl mx-auto -mt-4 mb-7 flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-1 px-1" role="group" aria-label="Quick job filters">
+                        <button type="button" data-quick-filter="all" onclick="applyQuickJobFilter('all', this)" class="omni-quick-chip shrink-0 px-3.5 py-2 rounded-full text-xs font-extrabold bg-slate-950 text-white border border-slate-950 shadow-xs transition cursor-pointer">
+                            All Live Roles
+                        </button>
+                        <button type="button" data-quick-filter="india" onclick="applyQuickJobFilter('india', this)" class="omni-quick-chip shrink-0 px-3.5 py-2 rounded-full text-xs font-bold bg-white/95 hover:bg-violet-50 text-slate-800 hover:text-violet-900 border border-slate-200 shadow-2xs transition cursor-pointer">
+                            ???? India Tech Hubs
+                        </button>
+                        <button type="button" data-quick-filter="software" onclick="applyQuickJobFilter('software', this)" class="omni-quick-chip shrink-0 px-3.5 py-2 rounded-full text-xs font-bold bg-white/95 hover:bg-violet-50 text-slate-800 hover:text-violet-900 border border-slate-200 shadow-2xs transition cursor-pointer">
+                            ?? Software / Full Stack
+                        </button>
+                        <button type="button" data-quick-filter="ai" onclick="applyQuickJobFilter('ai', this)" class="omni-quick-chip shrink-0 px-3.5 py-2 rounded-full text-xs font-bold bg-white/95 hover:bg-violet-50 text-slate-800 hover:text-violet-900 border border-slate-200 shadow-2xs transition cursor-pointer">
+                            ?? AI &amp; Data
+                        </button>
+                        <button type="button" data-quick-filter="intern" onclick="applyQuickJobFilter('intern', this)" class="omni-quick-chip shrink-0 px-3.5 py-2 rounded-full text-xs font-bold bg-white/95 hover:bg-violet-50 text-slate-800 hover:text-violet-900 border border-slate-200 shadow-2xs transition cursor-pointer">
+                            ?? Freshers &amp; Interns
+                        </button>
+                        <button type="button" data-quick-filter="remote" onclick="applyQuickJobFilter('remote', this)" class="omni-quick-chip shrink-0 px-3.5 py-2 rounded-full text-xs font-bold bg-white/95 hover:bg-violet-50 text-slate-800 hover:text-violet-900 border border-slate-200 shadow-2xs transition cursor-pointer">
+                            ?? Remote
+                        </button>
+                        <button type="button" data-quick-filter="free" onclick="applyQuickJobFilter('free', this)" class="omni-quick-chip shrink-0 px-3.5 py-2 rounded-full text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 shadow-2xs transition cursor-pointer">
+                            ?? Free Direct Links
+                        </button>
                     </div>
 
                     <!-- ACTIVE RESUME PROFILE BAR (Full-width compact horizontal strip aligned to results container) -->
@@ -1566,57 +1593,46 @@
         </div>
     </div>
 
-    <!-- 6. MODAL: HOLD TO VERIFY HUMAN PROOF (BOT BARRIER) -->
-    <div id="humanVerifyModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[99999] flex items-center justify-center p-4">
-        <div class="bg-[#0c101d] rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-violet-500/40 relative text-slate-100 animate-in fade-in zoom-in-95 duration-150 select-none">
-            
-            <!-- Modal Header (Centered) -->
-            <div class="relative text-center mb-6 pt-1">
-                <button type="button" id="closeVerifyModal" class="hidden absolute -top-1.5 right-0 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition" aria-label="Close verification">
+    <!-- 6. MODAL: SIMPLE TICK-BOX HUMAN VERIFICATION (BOT CHECK) -->
+    <div id="humanVerifyModal" class="hidden fixed inset-0 bg-slate-950/75 backdrop-blur-md z-[99999] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="humanVerifyTitle">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-200 relative text-slate-900 animate-in fade-in zoom-in-95 duration-150">
+
+            <!-- Modal Header -->
+            <div class="relative text-center mb-5 pt-1">
+                <button type="button" id="closeVerifyModal" class="absolute -top-1.5 right-0 text-slate-500 hover:text-slate-900 p-2 rounded-lg hover:bg-slate-100 transition cursor-pointer" aria-label="Close verification">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
-                <div class="w-14 h-14 rounded-2xl overflow-hidden mx-auto mb-3 ring-2 ring-violet-400/50 shadow-xl shadow-violet-500/20 bg-[#070b14] p-0.5">
+                <div class="w-12 h-12 rounded-2xl overflow-hidden mx-auto mb-3 ring-2 ring-violet-200 shadow-md bg-slate-950 p-0.5">
                     <img src="/static/logo.png" alt="Almond Jobs" class="w-full h-full object-cover rounded-xl">
                 </div>
-                <h3 class="font-extrabold text-white text-xl tracking-tight">Security Check</h3>
-                <p class="text-xs text-violet-200/80 mt-1 font-medium">Hold for a few seconds and release before loading completes to verify you are human.</p>
+                <h3 id="humanVerifyTitle" class="font-black text-slate-950 text-lg sm:text-xl tracking-tight">Quick Security Check</h3>
+                <p class="text-xs text-slate-600 mt-1 font-medium">Tick the box below once to confirm you are human.</p>
             </div>
 
-            <!-- Central Hold to Verify Button -->
-            <div class="relative mb-2">
-                <button type="button" id="holdVerifyBtn" class="w-full py-4 px-6 bg-slate-900 hover:bg-slate-800/80 border-2 border-violet-400/70 rounded-2xl flex items-center justify-center space-x-3 transition-all relative overflow-hidden group shadow-lg cursor-pointer outline-none select-none" style="touch-action: none; -webkit-user-select: none; user-select: none;">
-                    
-                    <!-- Full-Box Background Fill (Vibrant Violet / Emerald Gradient) -->
-                    <div id="holdBgFill" class="absolute inset-y-0 left-0 bg-gradient-to-r from-violet-600 via-purple-500 to-indigo-500 w-0 transition-none z-0 opacity-85 pointer-events-none"></div>
+            <!-- Simple Captcha-style Tick Box -->
+            <label for="humanTickCheckbox" id="holdVerifyBtn" class="w-full min-h-[60px] py-3.5 px-4 bg-slate-50 hover:bg-violet-50/70 border-2 border-slate-300 hover:border-violet-500 rounded-2xl flex items-center justify-between gap-3 transition-all shadow-xs cursor-pointer select-none">
+                <span class="flex items-center gap-3.5">
+                    <input type="checkbox" id="humanTickCheckbox" class="w-6 h-6 rounded-md border-2 border-slate-400 accent-violet-600 cursor-pointer shrink-0">
+                    <span id="holdVerifyBtnText" class="text-sm font-extrabold text-slate-900 tracking-tight transition-colors">I am not a robot</span>
+                </span>
+                <span class="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 shrink-0">
+                    <i id="holdVerifySuccessIcon" data-lucide="check-circle-2" class="hidden w-5 h-5 text-emerald-600"></i>
+                    <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Almond Shield</span>
+                </span>
+            </label>
 
-                    <!-- Content Overlay -->
-                    <div class="relative z-10 flex items-center justify-center space-x-3 pointer-events-none">
-                        <div class="relative w-6 h-6 flex-shrink-0 flex items-center justify-center">
-                            <svg class="w-6 h-6 transform -rotate-90" viewBox="0 0 24 24">
-                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" class="text-slate-700 fill-none" />
-                                <circle id="holdRingCircle" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" stroke-dasharray="56.548" stroke-dashoffset="56.548" stroke-linecap="round" class="text-violet-300 fill-none transition-none" />
-                            </svg>
-                            <i id="holdVerifySuccessIcon" data-lucide="check" class="hidden w-4 h-4 text-emerald-300 absolute"></i>
-                        </div>
-
-                        <!-- Button Label -->
-                        <span id="holdVerifyBtnText" class="text-sm font-black text-white tracking-wide transition-colors">Press &amp; Hold to Verify</span>
-                    </div>
-                </button>
-            </div>
-
-            <!-- Helper Instructions / Caption -->
-            <p id="holdVerifyHint" class="text-xs text-slate-400 text-center mt-3 font-medium leading-relaxed transition-colors">
-                Press and hold for a few seconds, then release before the loading completes. Space bar works too.
+            <!-- Live Status Hint -->
+            <p id="holdVerifyHint" aria-live="polite" class="text-xs text-slate-500 text-center mt-3 font-medium leading-relaxed transition-colors">
+                Just one tap to verify and continue.
             </p>
 
-            <!-- Anti-Bot Signature Status -->
-            <div class="mt-5 pt-3.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+            <!-- Anti-Bot Status Footer -->
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
                 <span class="flex items-center space-x-1.5">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                    <span class="font-bold text-slate-300">Almond Bot Barrier</span>
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span class="font-bold text-slate-700">Almond Security</span>
                 </span>
-                <span class="font-mono text-slate-400">Entropy Verified</span>
+                <span class="font-mono text-slate-400">1-Tap Check</span>
             </div>
 
         </div>
@@ -2657,11 +2673,11 @@
                     <span>🔒</span>
                     <span id="authContextNoticeText">Create a free candidate account in seconds to unlock direct company apply links.</span>
                 </div>
-                <div id="inAppBrowserAuthHint" class="hidden p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] font-semibold text-amber-950 leading-snug">
-                    📱 <strong>Inside Instagram / Facebook browser?</strong> Email signup below works in 1 tap — or open in Safari/Chrome for Google Sign-In.
+                <div id="inAppBrowserAuthHint" class="hidden p-3 rounded-xl bg-amber-50 border border-amber-300 text-xs font-semibold text-amber-950 leading-snug">
+                    ?? <strong>Inside Instagram / Facebook?</strong> Google Sign-In is blocked inside app browsers. Use <strong>Instant Email Sign Up</strong> below (10 seconds, no email code needed!).
                 </div>
                 <!-- 1. PRIMARY AUTH ACTION: Continue with Google -->
-                <a href="/api/auth/google/login" id="googleAuthBtn" class="w-full py-3 px-4 rounded-2xl border-2 border-slate-200 hover:border-violet-400 bg-white hover:bg-slate-50 text-slate-900 font-black text-xs sm:text-sm shadow-xs hover:shadow-md transition flex items-center justify-center gap-3 cursor-pointer group no-underline">
+                <a href="/api/auth/google/login" id="googleAuthBtn" onclick="return handleGoogleSignInClick(event);" class="w-full min-h-[48px] py-3 px-4 rounded-2xl border-2 border-slate-200 hover:border-violet-400 bg-white hover:bg-slate-50 text-slate-900 font-black text-xs sm:text-sm shadow-xs hover:shadow-md transition flex items-center justify-center gap-3 cursor-pointer group no-underline">
                     <svg class="w-4 h-4 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -2674,76 +2690,76 @@
                 <!-- Divider: OR -->
                 <div class="relative flex py-0.5 items-center">
                     <div class="flex-grow border-t border-slate-200"></div>
-                    <span class="flex-shrink mx-3 text-[10px] font-black text-slate-400 uppercase tracking-wider">or continue with email</span>
+                    <span class="flex-shrink mx-3 text-[10px] font-black text-slate-400 uppercase tracking-wider">or instant email access (no OTP wait)</span>
                     <div class="flex-grow border-t border-slate-200"></div>
                 </div>
 
                 <!-- 2. SECONDARY: Tab Switcher: Log In vs Sign Up -->
                 <div class="flex rounded-xl bg-slate-100 p-1 border border-slate-200/80">
-                    <button type="button" id="tabBtnLogin" onclick="switchAuthTab('login')" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-950 cursor-pointer">
-                        Log In with Email
+                    <button type="button" id="tabBtnLogin" onclick="switchAuthTab('login')" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-950 cursor-pointer">
+                        Log In
                     </button>
-                    <button type="button" id="tabBtnSignup" onclick="switchAuthTab('signup')" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer">
-                        Sign Up Free
+                    <button type="button" id="tabBtnSignup" onclick="switchAuthTab('signup')" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer">
+                        Instant Sign Up Free
                     </button>
                 </div>
 
                 <!-- Error Message Banner -->
-                <div id="authErrorMessage" class="hidden p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
+                <div id="authErrorMessage" role="alert" aria-live="assertive" class="hidden p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2">
                     <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
                     <span id="authErrorText">Invalid credentials</span>
                 </div>
 
                 <!-- Form Fields -->
-                <form id="candidateAuthForm" onsubmit="handleAuthSubmit(event)" class="space-y-2.5">
+                <form id="candidateAuthForm" onsubmit="handleAuthSubmit(event)" class="space-y-3">
                     <div id="signupNameField" class="hidden space-y-1">
-                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Full Name</label>
+                        <label for="authFullNameInput" class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Full Name (Optional)</label>
                         <div class="relative">
-                            <i data-lucide="user-check" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
-                            <input type="text" id="authFullNameInput" placeholder="Enter your full name" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-base sm:text-xs text-slate-900 transition">
+                            <i data-lucide="user-check" class="w-4 h-4 text-slate-400 absolute left-3 top-3.5"></i>
+                            <input type="text" id="authFullNameInput" name="full_name" autocomplete="name" enterkeyhint="next" placeholder="Enter your full name" class="w-full min-h-[48px] pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-base sm:text-sm text-slate-900 transition">
                         </div>
                     </div>
 
                     <div class="space-y-1">
-                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Personal Email Address</label>
+                        <label for="authEmailInput" class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Personal Email Address <span aria-hidden="true" class="text-rose-500">*</span></label>
                         <div class="relative">
-                            <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
-                            <input type="email" id="authEmailInput" required placeholder="name@gmail.com" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-base sm:text-xs text-slate-900 transition">
+                            <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3 top-3.5"></i>
+                            <input type="email" id="authEmailInput" name="email" required autocomplete="username" spellcheck="false" enterkeyhint="next" placeholder="name@gmail.com" class="w-full min-h-[48px] pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-base sm:text-sm text-slate-900 transition">
                         </div>
-                        <p id="authEmailHelpText" class="hidden sm:flex text-[10px] text-slate-500 font-medium mt-1 items-center gap-1.5">
-                            <i data-lucide="info" class="w-3.5 h-3.5 text-violet-600 shrink-0"></i>
-                            <span>Use your personal mail to receive verified updates on your direct applications.</span>
-                        </p>
                     </div>
 
                     <div class="space-y-1">
-                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Password</label>
+                        <div class="flex items-center justify-between">
+                            <label for="authPasswordInput" class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Password <span class="font-semibold normal-case text-slate-400">(min 6 chars)</span></label>
+                            <button type="button" id="toggleAuthPasswordBtn" onclick="toggleAuthPasswordVisibility()" aria-pressed="false" aria-label="Show password" class="text-[11px] font-bold text-violet-700 hover:underline cursor-pointer px-1.5 py-0.5">
+                                Show
+                            </button>
+                        </div>
                         <div class="relative">
-                            <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
-                            <input type="password" id="authPasswordInput" required minlength="6" placeholder="At least 6 characters" autocomplete="new-password" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-base sm:text-xs text-slate-900 transition">
+                            <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3 top-3.5"></i>
+                            <input type="password" id="authPasswordInput" name="password" required minlength="6" autocomplete="new-password" enterkeyhint="done" placeholder="Create or enter 6+ character password" class="w-full min-h-[48px] pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-base sm:text-sm text-slate-900 transition">
                         </div>
                     </div>
 
                     <div id="signupConfirmPasswordField" class="hidden space-y-1">
-                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Confirm Password</label>
+                        <label for="authConfirmPasswordInput" class="block text-[11px] font-black uppercase tracking-wider text-slate-600">Confirm Password</label>
                         <div class="relative">
-                            <i data-lucide="shield-check" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
-                            <input type="password" id="authConfirmPasswordInput" minlength="6" placeholder="Re-enter your password" autocomplete="new-password" class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-base sm:text-xs text-slate-900 transition">
+                            <i data-lucide="shield-check" class="w-4 h-4 text-slate-400 absolute left-3 top-3.5"></i>
+                            <input type="password" id="authConfirmPasswordInput" minlength="6" autocomplete="new-password" placeholder="Re-enter your password" class="w-full min-h-[48px] pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:border-violet-500 focus:bg-white focus:outline-none text-base sm:text-sm text-slate-900 transition">
                         </div>
                     </div>
 
-                    <!-- Human / Anti-Bot Verification Checkbox (Unchecked by default; user must confirm) -->
-                    <label class="flex items-center gap-2.5 p-2 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:border-violet-400 transition select-none">
-                        <input type="checkbox" id="authHumanCheckbox" class="w-4 h-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500 cursor-pointer">
-                        <span class="text-xs font-bold text-slate-700">I am human (Verify not a robot)</span>
+                    <!-- Simple Accessible Human Tick-Box Verification -->
+                    <label for="authHumanCheckbox" class="flex items-center gap-3 min-h-[48px] px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:border-violet-400 transition select-none">
+                        <input type="checkbox" id="authHumanCheckbox" class="w-5 h-5 rounded border-slate-400 accent-violet-600 cursor-pointer shrink-0">
+                        <span class="text-xs font-bold text-slate-800">I am human (Tick to verify)</span>
                     </label>
 
-                    <button type="submit" id="authSubmitBtn" class="w-full mt-1 py-3 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md shadow-violet-600/25 transition transform active:scale-98 cursor-pointer flex items-center justify-center gap-2">
-                        <span id="authSubmitBtnText">Create Free Account</span>
+                    <button type="submit" id="authSubmitBtn" class="w-full min-h-[48px] mt-1 py-3 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded-xl shadow-md shadow-violet-600/25 transition transform active:scale-98 cursor-pointer flex items-center justify-center gap-2">
+                        <span id="authSubmitBtnText">Create Free Account &rarr;</span>
                         <i data-lucide="arrow-right" class="w-4 h-4 text-white"></i>
                     </button>
                 </form>
-
                 <!-- OTP VERIFICATION STEP (Shown during sign up after submitting email) -->
                 <div id="authOtpStep" class="hidden space-y-3.5 pt-1">
                     <div class="p-3 bg-violet-50/90 border border-violet-200 rounded-xl text-center">
@@ -2985,7 +3001,7 @@
     <!-- Lazy Razorpay SDK prefetch + Cache-Busted App Script -->
     <link rel="dns-prefetch" href="https://checkout.razorpay.com">
     <script>window.__ALMOND_RZP_SDK_URL__ = "https://checkout.razorpay.com/v1/checkout.js";</script>
-    <script src="/static/app.js?v=20261126_v22_signedin_mix_geo"></script>
+    <script src="/static/app.js?v=20261127_v23_conv_fix"></script>
     <script>
         lucide.createIcons();
     </script>
