@@ -5323,7 +5323,7 @@ window.switchAuthTab = function(tab) {
         if (tabSignup) tabSignup.className = "flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-slate-950 shadow-xs cursor-pointer";
         if (nameField) nameField.classList.add("hidden");
         if (confirmPassField) confirmPassField.classList.add("hidden");
-        if (submitBtnText) submitBtnText.textContent = "Create Free Account ?";
+        if (submitBtnText) submitBtnText.textContent = "Create Free Account →";
         if (toggleHint) toggleHint.innerHTML = `Already have an account? <button type="button" onclick="switchAuthTab('login')" class="text-violet-700 font-bold hover:underline cursor-pointer">Log in with Email</button>`;
     } else {
         if (passInput) passInput.setAttribute("autocomplete", "current-password");
@@ -5422,7 +5422,7 @@ window.renderDirectApplyActionHtml = function({ isAuthLocked, isVipLocked, safeU
     }
     const pad = compact ? "px-4 py-2" : "w-full sm:w-auto px-5 py-2.5";
     const sampleNote = (!isUserLoggedIn())
-        ? `<span class="text-[10px] font-bold text-emerald-700 tracking-tight whitespace-nowrap text-center sm:text-right">? Free sample direct link</span>`
+        ? `<span class="text-[10px] font-bold text-emerald-700 tracking-tight whitespace-nowrap text-center sm:text-right">✓ Free sample direct link</span>`
         : "";
     return `<div class="flex flex-col items-stretch sm:items-end gap-1">${sampleNote}<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="omni-apply-btn ${pad} rounded-xl bg-slate-950 hover:bg-violet-700 text-white font-extrabold text-xs shadow-xs flex items-center justify-center gap-1.5 transition whitespace-nowrap">
         <span>${externalLabel}</span>
@@ -6699,7 +6699,7 @@ function initHumanVerifier() {
         } catch (err) {}
 
         if (btnText) {
-            btnText.textContent = "Human Verified ?";
+            btnText.textContent = "Human Verified ✓";
             btnText.className = "text-sm font-black text-emerald-800 tracking-tight";
         }
         if (hintText) {
@@ -8316,7 +8316,7 @@ window.renderOmniResults = function(result, query, append) {
         let rawPkg = job.package_display || (job.package_inr_lpa ? `${job.package_inr_lpa} LPA Benchmark` : "Disclosed Corporate Band");
         rawPkg = String(rawPkg).replace(/[₹\u20b9]/g, "").trim();
         const pkgDisplay = window.escapeClean(rawPkg);
-        const isAuthLocked = !isUserLoggedIn() || Boolean(job.is_auth_locked);
+        const isAuthLocked = (typeof job.is_auth_locked === "boolean") ? job.is_auth_locked : !isUserLoggedIn();
         const isLocked = Boolean(job.is_locked);
         let rawProvider = job.portal_provider || job.source || (job.url && job.url.includes("greenhouse") ? "Greenhouse" : (job.url && job.url.includes("lever") ? "Lever" : (job.url && job.url.includes("ashby") ? "Ashby" : (job.url && job.url.includes("workday") ? "Workday" : "Direct Portal"))));
         rawProvider = String(rawProvider).replace(/\bATS\b/gi, "Portal").trim();
@@ -9261,11 +9261,11 @@ window.applyQuickJobFilter = function(preset, clickedBtn) {
     document.querySelectorAll(".omni-quick-chip").forEach(btn => {
         const isFreeBtn = btn.getAttribute("data-quick-filter") === "free";
         if (btn === clickedBtn) {
-            btn.className = "omni-quick-chip shrink-0 px-3.5 py-2 rounded-full text-xs font-extrabold bg-slate-950 text-white border border-slate-950 shadow-xs transition cursor-pointer";
+            btn.className = "omni-quick-chip shrink-0 px-3 py-1.5 rounded-full text-xs font-extrabold bg-slate-950 text-white border border-slate-950 shadow-xs transition cursor-pointer";
         } else if (isFreeBtn) {
-            btn.className = "omni-quick-chip shrink-0 px-3.5 py-2 rounded-full text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 shadow-2xs transition cursor-pointer";
+            btn.className = "omni-quick-chip shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 shadow-2xs transition cursor-pointer";
         } else {
-            btn.className = "omni-quick-chip shrink-0 px-3.5 py-2 rounded-full text-xs font-bold bg-white/95 hover:bg-violet-50 text-slate-800 hover:text-violet-900 border border-slate-200 shadow-2xs transition cursor-pointer";
+            btn.className = "omni-quick-chip shrink-0 px-3 py-1.5 rounded-full text-xs font-bold bg-white/95 hover:bg-violet-50 text-slate-800 hover:text-violet-900 border border-slate-200 shadow-2xs transition cursor-pointer";
         }
     });
 

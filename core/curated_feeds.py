@@ -1317,8 +1317,8 @@ def _build_signed_in_free_mixed_feed(
     user_country: str = "",
     shuffle_seed: str = "",
 ) -> List[Dict[str, Any]]:
-    """For logged-in Free users browsing without search/resume: prioritize location & shuffle pools
-    so every 15 cards contain 5 Pro (0-4d latest) and 10 Free (5+d unlocked) jobs, aligned to +5 Show More.
+    """For Free & guest users browsing without search/resume: prioritize location & freshness
+    so every 15 cards highlight 9 Latest (Just Now / Yesterday / 2 days ago prioritized) + 6 fresher Free (5+d) jobs.
     """
     if len(items) <= 1:
         return items
@@ -1341,34 +1341,63 @@ def _build_signed_in_free_mixed_feed(
 
     rng = random.Random(f"{user_country.lower()}|{shuffle_seed or (now_ts // 900)}")
 
-    def _shuffle_pool(tiers: Tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+    def _order_pro_pool(tiers: Tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
         out: List[Dict[str, Any]] = []
         for t in tiers:
-            if t:
-                rng.shuffle(t)
-                out.extend(t)
+            if not t:
+                continue
+            by_age: Dict[int, List[Dict[str, Any]]] = {0: [], 1: [], 2: [], 3: [], 4: [], 5: []}
+            for x in t:
+                pts_x = int(x.get("date_posted_ts") or 0)
+                age_x = max(0, (now_ts - pts_x) // 86400) if pts_x > 100000 else 5
+                by_age[min(5, age_x)].append(x)
+            for age_key in (0, 1, 2, 3, 4, 5):
+                grp = by_age[age_key]
+                if grp:
+                    rng.shuffle(grp)
+                    out.extend(grp)
         return out
 
-    pro_q = _shuffle_pool(pro_tiers)
-    free_q = _shuffle_pool(free_tiers)
+    def _order_free_pool(tiers: Tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+        out: List[Dict[str, Any]] = []
+        for t in tiers:
+            if not t:
+                continue
+            recent, mid, older = [], [], []
+            for x in t:
+                pts_x = int(x.get("date_posted_ts") or 0)
+                age_x = max(0, (now_ts - pts_x) // 86400) if pts_x > 100000 else 30
+                if age_x <= 7:
+                    recent.append(x)
+                elif age_x <= 14:
+                    mid.append(x)
+                else:
+                    older.append(x)
+            for grp in (recent, mid, older):
+                if grp:
+                    rng.shuffle(grp)
+                    out.extend(grp)
+        return out
+
+    pro_q = _order_pro_pool(pro_tiers)
+    free_q = _order_free_pool(free_tiers)
 
     result: List[Dict[str, Any]] = []
     pi = 0
     fi = 0
     total_len = len(pro_q) + len(free_q)
 
-    # First 15: exact 5 Pro + 10 Free randomly positioned, guaranteeing a Free direct link at index 0 or 1
-    first_flags = [True] * 5 + [False] * 10
-    rng.shuffle(first_flags)
-    if first_flags[0] and first_flags[1]:
-        swap_idx = next((idx for idx in range(2, 15) if not first_flags[idx]), 2)
-        first_flags[1], first_flags[swap_idx] = first_flags[swap_idx], first_flags[1]
+    # First 15: 9 Latest (Just Now / Yesterday / 2d first) + 6 Free, keeping slot 0 as Latest & slot 1 as clickable Free
+    first_flags = [True] + [False] + [True] * 8 + [False] * 5
+    tail_flags = first_flags[2:]
+    rng.shuffle(tail_flags)
+    first_flags = [True, False] + tail_flags
 
-    # Subsequent +5 Show More blocks alternate 1 Pro+4 Free, 2 Pro+3 Free, 2 Pro+3 Free (= 5 Pro + 10 Free per 15)
+    # Subsequent +5 Show More blocks stay freshness-rich (3 Latest + 2 Free)
     sub_patterns = (
-        [True] + [False] * 4,
-        [True] * 2 + [False] * 3,
-        [True] * 2 + [False] * 3,
+        [True] * 3 + [False] * 2,
+        [True] * 3 + [False] * 2,
+        [True] * 3 + [False] * 2,
     )
 
     def _take(want_pro: bool) -> Dict[str, Any]:

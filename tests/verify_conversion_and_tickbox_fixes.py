@@ -46,11 +46,16 @@ class TestConversionAndTickBoxFixes(unittest.TestCase):
         self.assertIn("max-age=604800", js_resp.headers.get("cache-control", ""))
 
     def test_03_guest_india_geo_prioritization_and_two_free_samples(self):
-        """Guest Indian visitor receives India-prioritized feed with 2 unlocked direct sample links."""
+        """Guest Indian visitor receives fresh latest India-prioritized jobs (0-2d) + 2 unlocked direct sample links."""
+        self.assertNotIn("??", self.html)
         resp = self.client.get("/api/omni-search?geo_country=India&limit=15&offset=0")
         self.assertEqual(resp.status_code, 200)
         items = resp.json()["result"]["items"]
         self.assertEqual(len(items), 15)
+
+        latest_0_2d = [it for it in items if isinstance(it.get("days_ago"), int) and it["days_ago"] <= 2]
+        self.assertGreaterEqual(len(latest_0_2d), 5, f"Expected >=5 latest jobs (<=2d), got {len(latest_0_2d)}")
+        self.assertLessEqual(items[0].get("days_ago", 99), 2, f"Top card should be ultra-fresh (<=2d), got {items[0].get('days_ago')}")
 
         unlocked_samples = [
             it for it in items
