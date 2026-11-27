@@ -527,8 +527,8 @@ async def serve_admin_dashboard(
         candidates = get_all_users_admin()
         genuine_count = sum(1 for c in candidates if not c.get("is_dummy"))
         dummy_count = sum(1 for c in candidates if c.get("is_dummy"))
-        new_count = sum(1 for c in candidates if c.get("is_new"))
-        vip_count = sum(1 for c in candidates if c.get("is_paid"))
+        new_count = sum(1 for c in candidates if not c.get("is_dummy") and c.get("is_new"))
+        vip_count = sum(1 for c in candidates if not c.get("is_dummy") and c.get("is_paid"))
         rendered = template.render(
             is_authenticated=True,
             admin_key=provided_key,

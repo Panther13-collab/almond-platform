@@ -1498,27 +1498,80 @@ def is_dummy_email(email: str) -> bool:
         "mailinator.com", "tempmail.com", "10minutemail.com", "throwaway.com",
         "guerrillamail.com", "trashmail.com", "localhost",
         "enterprise.org", "techcorp.com", "startup.ai", "domain.com",
-        "almondjobs-test.com", "almondtest.com", "startup.io"
+        "almondjobs-test.com", "almondtest.com", "startup.io",
+        "legacy.org", "company.com"
     }
     if domain in dummy_domains or domain.endswith(".test") or domain.endswith(".example"):
         return True
 
     local_part = clean.split("@")[0]
-    dummy_keywords = ["dummy", "fake", "sample", "temp", "mock", "tester", "test_", "_test", "testuser", "asdf", "qwerty"]
+    dummy_keywords = ["dummy", "fake", "sample", "temp", "mock", "tester", "test_", "_test", "testuser", "e2ecand", "asdf", "qwerty"]
     for kw in dummy_keywords:
         if kw in local_part:
             return True
 
     test_prefixes = [
-        "vip_split_", "supporter_feed_", "otp_test_", "smoke_test_", "perf_test_", "test_",
-        "matcher_", "persist_", "direct_cand_", "google_vip_", "candidate_", "director_", "webhook_candidate"
+        "vip_split_", "supporter_feed_", "otp_test_", "smoke_test_", "perf_test_", "test_", "test.",
+        "matcher_", "persist_", "direct_cand_", "google_vip_", "google_candidate_",
+        "expired_candidate_", "expired_vip_", "candidate_", "director_", "webhook_candidate",
+        "alias_test_", "durable_cand_", "rev_test_", "vip_future_", "e2e_", "user_"
     ]
     for pfx in test_prefixes:
         if local_part.startswith(pfx):
             return True
 
-    # Pattern for synthetic test accounts with timestamp hashes, e.g. foo_1795177899
-    if re.search(r'_[0-9]{8,}', local_part):
+    # Pattern for synthetic test accounts with timestamp or hex suffixes (e.g. foo_1795177899, sridhar_9a56e6)
+    if re.search(r'_[0-9]{8,}', local_part) or re.search(r'_[0-9a-f]{6,}$', local_part):
+        return True
+
+    return False
+
+
+def is_test_payment_record(
+    payment_id: str = "",
+    order_id: str = "",
+    user_id: str = "",
+    email: str = "",
+    supporter_name: str = "",
+    amount_inr: float = 0.0
+) -> bool:
+    """Return True if a row in `payments` is an automated test, seed, or ₹0 admin grant rather than a real paid customer order."""
+    try:
+        if float(amount_inr or 0) <= 0:
+            return True
+    except (TypeError, ValueError):
+        return True
+
+    pid = (payment_id or "").strip().lower()
+    oid = (order_id or "").strip().lower()
+    uid = (user_id or "").strip().lower()
+    em = (email or "").strip().lower()
+    sup = (supporter_name or "").strip().lower()
+
+    if em and is_dummy_email(em):
+        return True
+    if "@" in uid and is_dummy_email(uid):
+        return True
+
+    uid_markers = ("idempotent_test", "supporter_api_user", "supporter_user_", "test_cand_", "dummy", "webhook_candidate")
+    if any(m in uid for m in uid_markers):
+        return True
+
+    id_markers = (
+        "pay_test", "pay_e2e", "pay_feed", "pay_wh", "pay_api", "pay_contrib",
+        "pay_viptest", "pay_contribtest", "pay_me_", "pay_1inr", "adm_",
+        "ord_test", "ord_e2e", "order_feed", "order_wh", "ord_api", "ord_contrib",
+        "order_viptest", "order_contribtest", "ord_me_", "ord_1inr", "order_adm_",
+        "demo", "mock", "dummy", "fake"
+    )
+    if any(m in pid for m in id_markers) or any(m in oid for m in id_markers):
+        return True
+
+    # Real Razorpay payment IDs are strictly pay_<10..24 alphanumeric> without extra underscores
+    if not re.match(r'^pay_[a-z0-9]{10,24}$', pid):
+        return True
+
+    if sup in ("karthik raja", "karthik r", "sneha patil", "admin grant"):
         return True
 
     return False
@@ -3381,23 +3434,71 @@ def get_traffic_source_breakdown() -> list:
 
 def purge_dummy_candidates_admin() -> dict:
     """
-    Safely purge synthetic/dummy test accounts from the users table.
-    Preserves genuine candidates and internal system accounts.
+    Safely purge synthetic/dummy test accounts, test payments, test VIP grants, and test funnel rows.
+    Preserves all genuine candidates and genuine paid orders.
     """
     try:
         candidates = get_all_users_admin()
         dummy_ids = [c["id"] for c in candidates if c.get("is_dummy") and c["id"] != SYSTEM_STORE_EMAIL]
-        if not dummy_ids:
-            return {"status": "success", "deleted_count": 0, "message": "No test accounts to purge."}
-        
+        dummy_emails = [c["email"].strip().lower() for c in candidates if c.get("is_dummy") and c.get("email")]
+
+        deleted_payments = 0
+        deleted_grants = 0
         with get_db() as conn:
             cursor = conn.cursor()
-            placeholders = ",".join("?" for _ in dummy_ids)
-            cursor.execute(f"DELETE FROM candidate_applications WHERE user_id IN ({placeholders});", dummy_ids)
-            cursor.execute(f"DELETE FROM payments WHERE user_id IN ({placeholders});", dummy_ids)
-            cursor.execute(f"DELETE FROM users WHERE id IN ({placeholders});", dummy_ids)
+            if dummy_ids:
+                placeholders = ",".join("?" for _ in dummy_ids)
+                cursor.execute(f"DELETE FROM candidate_applications WHERE user_id IN ({placeholders});", dummy_ids)
+                cursor.execute(f"DELETE FROM payments WHERE user_id IN ({placeholders});", dummy_ids)
+                cursor.execute(f"DELETE FROM users WHERE id IN ({placeholders});", dummy_ids)
+
+            # Remove synthetic test payment rows even if orphan user_id doesn't match users
+            cursor.execute("""
+                SELECT p.id, p.user_id, p.payment_id, p.order_id, p.amount_inr, p.supporter_name, u.email
+                FROM payments p LEFT JOIN users u ON p.user_id = u.id;
+            """)
+            test_pay_ids = [
+                r["id"] for r in cursor.fetchall()
+                if is_test_payment_record(
+                    r["payment_id"], r["order_id"], r["user_id"], r["email"] or "", r["supporter_name"] or "", r["amount_inr"]
+                )
+            ]
+            if test_pay_ids:
+                p_ph = ",".join("?" for _ in test_pay_ids)
+                cursor.execute(f"DELETE FROM payments WHERE id IN ({p_ph});", test_pay_ids)
+                deleted_payments = len(test_pay_ids)
+
+            # Remove dummy vip_grants in SQLite
+            cursor.execute("SELECT email FROM vip_grants;")
+            bad_grants = [r["email"] for r in cursor.fetchall() if is_dummy_email(r["email"])]
+            if bad_grants:
+                g_ph = ",".join("?" for _ in bad_grants)
+                cursor.execute(f"DELETE FROM vip_grants WHERE email IN ({g_ph});", bad_grants)
+                deleted_grants = len(bad_grants)
+
+            # Remove dummy funnel_events
+            cursor.execute("SELECT id, user_email FROM funnel_events WHERE COALESCE(user_email, '') != '';")
+            bad_fe = [r["id"] for r in cursor.fetchall() if is_dummy_email(r["user_email"])]
+            if bad_fe:
+                f_ph = ",".join("?" for _ in bad_fe)
+                cursor.execute(f"DELETE FROM funnel_events WHERE id IN ({f_ph});", bad_fe)
+
             conn.commit()
-        return {"status": "success", "deleted_count": len(dummy_ids), "message": f"Successfully purged {len(dummy_ids)} dummy accounts."}
+
+        # Also clean dummy entries from Supabase cloud vip_grants
+        store = _get_system_store()
+        cloud_grants = dict(store.get("vip_grants", {}) or {})
+        cleaned_grants = {em: info for em, info in cloud_grants.items() if not is_dummy_email(em)}
+        removed_cloud_grants = len(cloud_grants) - len(cleaned_grants)
+        if removed_cloud_grants > 0:
+            _update_system_store({"vip_grants": cleaned_grants})
+
+        total_cleaned = len(dummy_ids) + deleted_payments + deleted_grants + removed_cloud_grants
+        return {
+            "status": "success",
+            "deleted_count": total_cleaned,
+            "message": f"Purged {len(dummy_ids)} test accounts, {deleted_payments} test payments, and {deleted_grants + removed_cloud_grants} test VIP grants."
+        }
     except Exception as e:
         return {"status": "error", "message": str(e), "deleted_count": 0}
 
@@ -3499,27 +3600,31 @@ def get_analytics_summary() -> dict:
             cursor.execute("""
                 SELECT strftime('%Y-%m-%d', timestamp, 'unixepoch') as ev_date,
                        event_name,
-                       COUNT(DISTINCT visitor_hash) as uniq_cnt,
-                       COUNT(*) as raw_cnt,
-                       COALESCE(SUM(amount_inr), 0) as rev_sum
-                FROM funnel_events
-                GROUP BY ev_date, event_name;
+                       visitor_hash,
+                       COALESCE(user_email, '') as user_email,
+                       COALESCE(amount_inr, 0) as amount_inr
+                FROM funnel_events;
             """)
+            seen_day_visitors = {}
             for fr in cursor.fetchall():
                 d = fr["ev_date"]
-                if not d:
+                if not d or (fr["user_email"] and is_dummy_email(fr["user_email"])):
                     continue
                 bucket = day_funnel.setdefault(d, {"signups": 0, "resumes": 0, "checkouts": 0, "purchases": 0, "revenue_inr": 0.0})
                 ev = fr["event_name"]
-                if ev == "signup":
-                    bucket["signups"] += int(fr["uniq_cnt"] or 0)
-                elif ev == "resume_upload":
-                    bucket["resumes"] += int(fr["uniq_cnt"] or 0)
-                elif ev == "checkout_start":
-                    bucket["checkouts"] += int(fr["uniq_cnt"] or 0)
-                elif ev == "purchase":
-                    bucket["purchases"] += int(fr["raw_cnt"] or 0)
-                    bucket["revenue_inr"] += float(fr["rev_sum"] or 0.0)
+                vh = fr["visitor_hash"] or fr["user_email"]
+                seen_set = seen_day_visitors.setdefault((d, ev), set())
+                if ev == "purchase":
+                    bucket["purchases"] += 1
+                    bucket["revenue_inr"] += float(fr["amount_inr"] or 0.0)
+                elif vh not in seen_set:
+                    seen_set.add(vh)
+                    if ev == "signup":
+                        bucket["signups"] += 1
+                    elif ev == "resume_upload":
+                        bucket["resumes"] += 1
+                    elif ev == "checkout_start":
+                        bucket["checkouts"] += 1
         except Exception:
             pass
 
@@ -4228,14 +4333,19 @@ def get_revenue_analytics() -> dict:
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, user_id, payment_id, order_id, amount_inr, plan_name, status, created_at,
-                       supporter_name, supporter_message, currency
-                FROM payments
-                ORDER BY created_at DESC
+                SELECT p.id, p.user_id, p.payment_id, p.order_id, p.amount_inr, p.plan_name, p.status, p.created_at,
+                       p.supporter_name, p.supporter_message, p.currency, u.email as user_email
+                FROM payments p
+                LEFT JOIN users u ON p.user_id = u.id
+                ORDER BY p.created_at DESC
             """)
             rows = cursor.fetchall()
             for r in rows:
                 amt = float(r["amount_inr"] or 0)
+                if is_test_payment_record(
+                    r["payment_id"], r["order_id"], r["user_id"], r["user_email"] or "", r["supporter_name"] or "", amt
+                ):
+                    continue
                 status = (r["status"] or "").lower()
                 plan = (r["plan_name"] or "").lower()
                 curr = (r["currency"] or "INR").upper()
@@ -4273,7 +4383,7 @@ def get_revenue_analytics() -> dict:
                     "amount_formatted": f"{curr_sym}{amt:,.0f}" if amt == int(amt) else f"{curr_sym}{amt:,.2f}",
                     "plan_name": r["plan_name"] or ("Coffee Support" if is_coffee else "VIP Pass"),
                     "product_type": "Coffee Support" if is_coffee else "VIP Pass",
-                    "supporter_name": r["supporter_name"] or r["user_id"] or "Candidate",
+                    "supporter_name": r["supporter_name"] or r["user_email"] or r["user_id"] or "Candidate",
                     "supporter_message": r["supporter_message"] or "",
                     "created_at": ts,
                     "created_at_str": datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc).strftime("%b %d, %Y %H:%M UTC"),
@@ -4475,31 +4585,36 @@ def get_ad_funnel_summary() -> dict:
                     END as src_key,
                     COALESCE(utm_campaign, '') as camp_key,
                     event_name,
-                    COUNT(DISTINCT visitor_hash) as uniq_ev,
-                    COUNT(*) as raw_ev,
-                    COALESCE(SUM(amount_inr), 0) as rev_sum
-                FROM funnel_events
-                GROUP BY src_key, camp_key, event_name;
+                    visitor_hash,
+                    COALESCE(user_email, '') as user_email,
+                    COALESCE(amount_inr, 0) as amount_inr
+                FROM funnel_events;
             """)
+            seen_ev = set()
             for r in cursor.fetchall():
+                if r["user_email"] and is_dummy_email(r["user_email"]):
+                    continue
                 b = _bucket(r["src_key"], r["camp_key"])
                 ev = r["event_name"]
-                uniq_n = int(r["uniq_ev"] or 0)
-                raw_n = int(r["raw_ev"] or 0)
-                if ev == "resume_upload":
-                    b["resume_uploads"] += uniq_n
-                    totals["resume_uploads"] += uniq_n
-                elif ev == "signup":
-                    b["signups"] += uniq_n
-                    totals["signups"] += uniq_n
-                elif ev == "checkout_start":
-                    b["checkout_starts"] += uniq_n
-                    totals["checkout_starts"] += uniq_n
-                elif ev == "purchase":
-                    b["purchases"] += raw_n
-                    b["revenue_inr"] += float(r["rev_sum"] or 0.0)
-                    totals["purchases"] += raw_n
-                    totals["revenue_inr"] += float(r["rev_sum"] or 0.0)
+                if ev == "purchase":
+                    amt = float(r["amount_inr"] or 0.0)
+                    b["purchases"] += 1
+                    b["revenue_inr"] += amt
+                    totals["purchases"] += 1
+                    totals["revenue_inr"] += amt
+                else:
+                    uk = (r["src_key"], r["camp_key"], ev, r["visitor_hash"] or r["user_email"])
+                    if uk not in seen_ev:
+                        seen_ev.add(uk)
+                        if ev == "resume_upload":
+                            b["resume_uploads"] += 1
+                            totals["resume_uploads"] += 1
+                        elif ev == "signup":
+                            b["signups"] += 1
+                            totals["signups"] += 1
+                        elif ev == "checkout_start":
+                            b["checkout_starts"] += 1
+                            totals["checkout_starts"] += 1
     except Exception as e:
         print(f"[FUNNEL_TRACKER] Summary error: {e}")
 

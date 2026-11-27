@@ -334,10 +334,10 @@
                         </div>
                     </div>
                     <div class="apple-card p-5 space-y-1">
-                        <div class="text-xs font-medium text-[#6e6e73]">Paid VIP &amp; Revenue</div>
+                        <div class="text-xs font-medium text-[#6e6e73]">Paid Revenue</div>
                         <div class="text-3xl font-bold text-[#248a3d] tabular-nums">&#8377;{{ "%.0f"|format(total_rev) }}</div>
                         <div class="text-xs text-[#6e6e73] tabular-nums">
-                            <strong>{{ vip_count }}</strong> VIPs &bull; <strong class="text-[#b25000]">{{ abandoned_cnt }}</strong> left before paying
+                            <strong>{{ paid_orders }}</strong> paid order{{ 's' if paid_orders != 1 else '' }} &bull; {{ vip_count }} active VIP{{ 's' if vip_count != 1 else '' }} (incl. grants)
                         </div>
                     </div>
                 </div>
@@ -379,9 +379,9 @@
                             <div class="text-xs text-[#b25000]">Ready for last offer</div>
                         </div>
                         <div class="p-4 rounded-2xl bg-[#ecfdf3] border border-[#bbf7d0] space-y-1">
-                            <div class="text-[11px] font-semibold uppercase tracking-wide text-[#248a3d]">5. Paid / Active VIP</div>
-                            <div class="text-2xl font-bold text-[#248a3d] tabular-nums">{{ vip_count }}</div>
-                            <div class="text-xs text-[#248a3d]">{{ paid_orders }} orders captured</div>
+                            <div class="text-[11px] font-semibold uppercase tracking-wide text-[#248a3d]">5. Paid / VIP Active</div>
+                            <div class="text-2xl font-bold text-[#248a3d] tabular-nums">{{ paid_orders }} <span class="text-xs font-medium text-[#248a3d]">paid</span></div>
+                            <div class="text-xs text-[#248a3d]">{{ vip_count }} active VIP (incl. admin grants)</div>
                         </div>
                     </div>
                 </div>
