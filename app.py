@@ -41,8 +41,10 @@ from core.auth_db import (
     parse_device_hardware, is_bot_or_scanner, get_dynamic_pricing, update_tier_pricing,
     save_candidate_feedback, get_all_candidate_feedback, reply_to_candidate_feedback, get_revenue_analytics, purge_dummy_candidates_admin,
     get_meta_pixel_id, set_meta_pixel_id, record_funnel_event,
+    set_recovery_offer, get_recovery_offer, dismiss_recovery_offer,
     FREE_AI_GENERATION_LIMIT, get_ai_quota_status, consume_ai_generation_quota
 )
+from core.email_sender import send_recovery_offer_email
 from core.payment import apply_vip_latest_feed_lock, create_razorpay_order, verify_razorpay_signature
 from core.security import BotShieldMiddleware, validate_uploaded_file, acquire_search_slot, release_search_slot
 from core.sitemap_generator import (
@@ -718,6 +720,74 @@ async def api_admin_grant_vip(request: Request, payload: dict = Body(...)):
 
     return JSONResponse(content=res)
 
+@app.post("/api/admin/send-recovery-offer")
+async def api_admin_send_recovery_offer(request: Request, payload: dict = Body(...)):
+    """Push a targeted last-chance popup offer and/or limited-offer email to candidates who exited checkout."""
+    cookie_key = request.cookies.get("almond_admin_key")
+    header_key = request.headers.get("x-admin-key")
+    query_key = payload.get("key")
+    provided_key = (query_key or cookie_key or header_key or "").strip()
+    if not _is_valid_admin_key(provided_key):
+        raise HTTPException(status_code=401, detail="Unauthorized: Invalid admin secret key.")
+
+    email = (payload.get("email") or "").strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Valid candidate email is required.")
+
+    candidate_name = (payload.get("name") or "Candidate").strip()
+    headline = (payload.get("headline") or "Final Offer: Unlock Almond Jobs Pro Today").strip()
+    message = (payload.get("message") or "You explored Almond Jobs Pro earlier. Complete your upgrade today to unlock instant direct corporate links before this limited offer ends.").strip()
+    discount_badge = (payload.get("discount_badge") or "Limited Last Offer").strip()
+    mode = (payload.get("mode") or "both").strip().lower()
+
+    popup_saved = False
+    if mode in ("popup", "both"):
+        pop_res = set_recovery_offer(email, headline=headline, message=message, discount_badge=discount_badge)
+        popup_saved = pop_res.get("status") == "success"
+
+    email_sent = False
+    email_err = ""
+    if mode in ("email", "both"):
+        em_res = send_recovery_offer_email(
+            to_email=email,
+            candidate_name=candidate_name,
+            offer_headline=headline,
+            offer_message=message,
+        )
+        email_sent = bool(em_res.get("delivered"))
+        email_err = em_res.get("error", "")
+
+    if mode == "email" and not email_sent:
+        raise HTTPException(status_code=500, detail=email_err or "SMTP delivery failed.")
+
+    parts = []
+    if popup_saved:
+        parts.append("next-visit popup armed")
+    if email_sent:
+        parts.append("offer email sent")
+    elif mode == "both" and email_err:
+        parts.append(f"email note: {email_err}")
+
+    return JSONResponse(content={
+        "status": "success",
+        "email": email,
+        "popup_saved": popup_saved,
+        "email_sent": email_sent,
+        "message": f"Updated for {email}: " + (", ".join(parts) or "done"),
+    })
+
+@app.post("/api/recovery-offer/dismiss")
+async def api_dismiss_recovery_offer(payload: dict = Body(...)):
+    token = (payload.get("token") or "").strip()
+    email = (payload.get("email") or "").strip().lower()
+    if token:
+        ud = verify_session_token(token, email=email)
+        if ud and ud.get("email"):
+            email = ud["email"]
+    if email:
+        dismiss_recovery_offer(email)
+    return JSONResponse(content={"status": "success"})
+
 @app.post("/api/admin/reply-contribution")
 async def api_admin_reply_contribution(request: Request, payload: dict = Body(...)):
     """Executive admin endpoint to reply to candidate community contributions."""
@@ -1136,6 +1206,7 @@ async def api_me(payload: dict = Body(...)):
             "paid_until_formatted": profile.get("paid_until_formatted", ""),
             "remaining_str": profile.get("remaining_str", ""),
             "is_paid": paid,
+            "recovery_offer": (None if paid else get_recovery_offer(profile.get("email", ""))),
             "price_inr": Config.PRICE_INR,
             "price_usd": Config.PRICE_USD,
             "vip_price_inr": getattr(Config, "VIP_PRICE_INR", 699),

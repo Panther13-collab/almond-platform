@@ -213,3 +213,81 @@ def send_otp_email(to_email: str, otp_code: str) -> dict:
             "simulated": False,
             "error": str(e)
         }
+
+
+def send_recovery_offer_email(
+    to_email: str,
+    candidate_name: str = "Candidate",
+    offer_headline: str = "Limited Last Offer on Almond Jobs Pro",
+    offer_message: str = "We noticed you explored Almond Jobs Pro earlier. Unlock full direct corporate links today before this limited offer ends.",
+    cta_url: str = "https://almondjobs.com/?offer=last_chance",
+) -> dict:
+    """Send a clean, Apple-minimalist limited-offer email to candidates who hesitated before paying."""
+    import html
+    clean_email = (to_email or "").strip().lower()
+    if not clean_email or "@" not in clean_email:
+        return {"delivered": False, "error": "Invalid recipient email."}
+    if not Config.is_smtp_configured():
+        return {
+            "delivered": False,
+            "error": "SMTP credentials (SMTP_HOST, SMTP_USER, SMTP_PASS) not configured."
+        }
+
+    safe_name = html.escape((candidate_name or "Candidate").strip() or "Candidate")
+    safe_headline = html.escape(offer_headline.strip())
+    safe_msg = html.escape(offer_message.strip())
+    safe_url = html.escape(cta_url.strip())
+
+    html_body = f"""<!DOCTYPE html>
+<html lang="en">
+<body style="margin:0;padding:32px 16px;background:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif;color:#1d1d1f;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width:520px;background:#ffffff;border-radius:18px;border:1px solid #e5e5ea;padding:32px;text-align:left;">
+          <tr>
+            <td>
+              <div style="font-size:13px;font-weight:700;color:#0071e3;margin-bottom:8px;">ALMOND JOBS &bull; LIMITED OFFER</div>
+              <h1 style="margin:0 0 12px;font-size:22px;font-weight:700;line-height:1.25;color:#1d1d1f;">{safe_headline}</h1>
+              <p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#424245;">Hi {safe_name},</p>
+              <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#424245;">{safe_msg}</p>
+              <a href="{safe_url}" style="display:inline-block;background:#0071e3;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 22px;border-radius:980px;">
+                Claim Pro Access Now
+              </a>
+              <p style="margin:24px 0 0;font-size:12px;color:#86868b;line-height:1.5;">
+                Direct corporate career portal links with zero recruiter markups &bull; almondjobs.com
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = offer_headline.strip()[:120]
+        msg["From"] = Config.SMTP_FROM or f"Almond Jobs <{Config.SMTP_USER}>"
+        msg["To"] = clean_email
+        msg["Reply-To"] = Config.SMTP_USER
+        plain = f"Hi {candidate_name},\n\n{offer_message}\n\nUnlock now: {cta_url}\n"
+        msg.attach(MIMEText(plain, "plain", "utf-8"))
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
+
+        context = ssl.create_default_context()
+        if Config.SMTP_PORT == 465:
+            with smtplib.SMTP_SSL(Config.SMTP_HOST, Config.SMTP_PORT, context=context, timeout=6) as server:
+                server.login(Config.SMTP_USER, Config.SMTP_PASS)
+                server.send_message(msg)
+        else:
+            with smtplib.SMTP(Config.SMTP_HOST, Config.SMTP_PORT, timeout=6) as server:
+                server.ehlo()
+                server.starttls(context=context)
+                server.ehlo()
+                server.login(Config.SMTP_USER, Config.SMTP_PASS)
+                server.send_message(msg)
+        return {"delivered": True, "email": clean_email}
+    except Exception as e:
+        return {"delivered": False, "error": str(e)}

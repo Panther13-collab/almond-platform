@@ -3,1856 +3,1126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Almond Jobs Telemetry &bull; Executive Command Suite</title>
+    <title>Almond Jobs Admin</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --apple-bg: #f5f5f7;
+            --apple-card: #ffffff;
+            --apple-border: rgba(0, 0, 0, 0.08);
+            --apple-text: #1d1d1f;
+            --apple-muted: #6e6e73;
+            --apple-blue: #0071e3;
+            --apple-blue-hover: #0077ed;
+        }
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #080c14;
-            color: #f1f5f9;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--apple-bg);
+            color: var(--apple-text);
+            -webkit-font-smoothing: antialiased;
         }
         .font-mono {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
-        .card-surface {
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(14px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
         }
-        .card-surface:hover {
-            border-color: rgba(245, 158, 11, 0.25);
+        .apple-card {
+            background: var(--apple-card);
+            border: 1px solid var(--apple-border);
+            border-radius: 18px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
         }
-        .tab-btn.active {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.1) 100%);
-            border-color: rgba(245, 158, 11, 0.6);
-            color: #fbbf24;
-            font-weight: 800;
+        :where(a:any-link, button, input, select, textarea, [tabindex="0"]):focus-visible {
+            outline: 3px solid var(--apple-blue);
+            outline-offset: 2px;
         }
-        .tab-btn {
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(15, 23, 42, 0.6);
-            color: #94a3b8;
-            transition: all 0.2s ease;
+        .visually-hidden:where(:not(:focus-within, :active)) {
+            position: absolute !important;
+            clip-path: inset(50%) !important;
+            overflow: hidden !important;
+            width: 1px !important;
+            height: 1px !important;
+            margin: -1px !important;
+            padding: 0 !important;
+            border: 0 !important;
+            white-space: nowrap !important;
         }
-        .tab-btn:hover {
-            color: #f8fafc;
-            border-color: rgba(255, 255, 255, 0.2);
+        .skip-link:focus {
+            position: fixed;
+            top: 0.75rem;
+            left: 0.75rem;
+            z-index: 100;
+            padding: 0.625rem 1rem;
+            border-radius: 980px;
+            background: #1d1d1f;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.875rem;
         }
-        .filter-pill.active {
-            background-color: #f59e0b;
-            color: #0f172a;
-            border-color: #f59e0b;
-            font-weight: 800;
+        /* Apple-style single-row navigation tabs with accessible border-block-end indicator */
+        .tablist-scroll {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            overflow-x: auto;
+            scroll-snap-type: inline proximity;
+            scrollbar-width: none;
         }
-        .filter-pill {
-            background-color: rgba(30, 41, 59, 0.8);
-            color: #94a3b8;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .tablist-scroll::-webkit-scrollbar { display: none; }
+        [role="tab"] {
+            position: relative;
+            flex: none;
+            scroll-snap-align: start;
+            min-block-size: 40px;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--apple-muted);
+            background: transparent;
+            cursor: pointer;
+            transition: color 0.15s ease, background-color 0.15s ease;
         }
-        .custom-scrollbar {
-            --scrollbar-thumb: rgba(245, 158, 11, 0.3);
-            --scrollbar-track: rgba(15, 23, 42, 0.5);
-            scrollbar-width: thin;
-            scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+        [role="tab"]:hover {
+            color: var(--apple-text);
+            background: rgba(0, 0, 0, 0.04);
         }
-        @supports not (scrollbar-color: auto) {
-            .custom-scrollbar {
-                scrollbar-width: auto;
+        [role="tab"][aria-selected="true"] {
+            color: var(--apple-text);
+            font-weight: 600;
+        }
+        [role="tab"][aria-selected="true"]::after {
+            content: "";
+            position: absolute;
+            inset: auto 0.75rem 0;
+            border-block-end: 2.5px solid var(--apple-blue);
+        }
+        .seg-pill {
+            min-block-size: 32px;
+            padding: 0.35rem 0.85rem;
+            border-radius: 980px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--apple-muted);
+            background: transparent;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .seg-pill.active {
+            background: #ffffff;
+            color: var(--apple-text);
+            border-color: rgba(0, 0, 0, 0.08);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+        }
+        /* Responsive table container */
+        .table-wrapper {
+            overflow: auto;
+            max-inline-size: 100%;
+            max-block-size: min(540px, 72vh);
+            container-type: inline-size;
+            border: 1px solid var(--apple-border);
+            border-radius: 14px;
+            background: #ffffff;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            text-align: left;
+            font-size: 0.8125rem;
+        }
+        .data-table caption {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--apple-muted);
+            background: #fafafa;
+            border-bottom: 1px solid var(--apple-border);
+        }
+        .data-table thead {
+            position: sticky;
+            inset-block-start: 0;
+            z-index: 2;
+            background: #fafafa;
+        }
+        .data-table thead th {
+            padding: 0.65rem 1rem;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--apple-muted);
+            border-bottom: 1px solid var(--apple-border);
+            white-space: nowrap;
+        }
+        .data-table tbody th,
+        .data-table tbody td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            vertical-align: middle;
+        }
+        .data-table tbody th {
+            font-weight: 600;
+            color: var(--apple-text);
+            background: #ffffff;
+        }
+        .data-table tbody tr:hover th,
+        .data-table tbody tr:hover td {
+            background: #fafafa;
+        }
+        @container (width < 640px) {
+            .responsive-stack table,
+            .responsive-stack thead,
+            .responsive-stack tbody,
+            .responsive-stack tr,
+            .responsive-stack th,
+            .responsive-stack td { display: block; }
+            .responsive-stack thead { display: none; }
+            .responsive-stack tbody tr {
+                margin: 0.75rem;
+                border: 1px solid var(--apple-border);
+                border-radius: 12px;
+                overflow: hidden;
+                background: #ffffff;
             }
-            .custom-scrollbar::-webkit-scrollbar {
-                width: 6px;
-                height: 6px;
+            .responsive-stack tbody th {
+                background: #fafafa;
+                border-bottom: 1px solid var(--apple-border);
             }
-            .custom-scrollbar::-webkit-scrollbar-track {
-                background: var(--scrollbar-track);
+            .responsive-stack tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 0.75rem;
+                text-align: right;
             }
-            .custom-scrollbar::-webkit-scrollbar-thumb {
-                background: var(--scrollbar-thumb);
-                border-radius: 9999px;
+            .responsive-stack tbody td::before {
+                content: attr(data-label);
+                font-size: 0.7rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                color: var(--apple-muted);
+                text-align: left;
+                flex-shrink: 0;
             }
+        }
+        dialog::backdrop {
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(6px);
         }
     </style>
 </head>
-<body class="min-h-screen antialiased flex flex-col justify-between">
+<body class="min-h-screen flex flex-col justify-between">
+    <a href="#main-content" class="skip-link visually-hidden">Skip to main content</a>
 
-    <!-- Authentication Lock Screen (Shown if key is missing or invalid) -->
-    <div id="auth-lock-view" class="{% if is_authenticated %}hidden{% else %}flex{% endif %} fixed inset-0 z-50 items-center justify-center p-4 bg-[#080c14]/95 backdrop-blur-xl">
-        <div class="card-surface max-w-md w-full p-8 rounded-2xl border border-white/10 shadow-2xl text-center space-y-6">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-3xl">
-                &#127792;
-            </div>
+    {% if not is_authenticated %}
+    <main id="main-content" tabindex="-1" class="flex-1 flex items-center justify-center p-4">
+        <div class="apple-card max-w-md w-full p-8 space-y-6 text-center">
+            <img src="/static/logo-512.png" alt="Almond Jobs" class="w-12 h-12 mx-auto object-contain">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight text-white">Almond Jobs Telemetry</h1>
-                <p class="text-sm text-slate-400 mt-2">Executive Traffic, Live Engagements &amp; Candidate Sign-In Portal</p>
+                <h1 class="text-2xl font-bold tracking-tight text-[#1d1d1f]">Almond Jobs Admin</h1>
+                <p class="text-sm text-[#6e6e73] mt-1.5">Sign in with your executive access key</p>
             </div>
-            
-            <form id="key-form" method="GET" action="/admin" class="space-y-4">
-                <div class="text-left">
-                    <label for="admin-key" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Admin Secret Access Key</label>
-                    <input type="password" id="admin-key" name="key" placeholder="Enter admin secret key" required 
-                           class="w-full px-4 py-3 bg-slate-900/90 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent font-mono text-sm">
+            <form id="key-form" method="GET" action="/admin" class="space-y-4 text-left">
+                <div>
+                    <label for="admin-key" class="block text-xs font-semibold text-[#1d1d1f] mb-1.5">Access Key</label>
+                    <input type="password" id="admin-key" name="key" required autocomplete="current-password" placeholder="Enter admin key"
+                           class="w-full px-3.5 py-2.5 bg-white border border-black/15 rounded-xl text-sm font-mono">
                     {% if auth_error %}
-                    <p class="text-xs text-rose-400 mt-2 font-medium">&#9888;&#65039; Invalid admin access key. Please verify credentials.</p>
+                    <p role="alert" class="text-xs text-[#d70015] mt-2 font-medium">Incorrect access key. Please try again.</p>
                     {% endif %}
                 </div>
-                <button type="submit" class="w-full py-3 px-6 rounded-xl font-bold text-sm tracking-wide bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 hover:from-amber-300 hover:to-amber-400 shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                    Unlock Executive Console
+                <button type="submit" class="w-full min-h-[44px] py-2.5 px-5 rounded-full font-semibold text-sm bg-[#0071e3] hover:bg-[#0077ed] text-white transition cursor-pointer">
+                    Continue
                 </button>
             </form>
-            <p class="text-xs text-slate-500">Zero-cost internal engine. Google / Anthropic platform grade.</p>
         </div>
+    </main>
+    {% else %}
+
+    <!-- Live Status Toast -->
+    <div id="admin-live-status" role="status" aria-live="polite" class="hidden fixed bottom-5 right-5 z-50 max-w-sm px-4 py-3 rounded-2xl bg-[#1d1d1f] text-white text-xs font-medium shadow-xl flex items-center gap-3">
+        <span id="admin-live-status-text"></span>
+        <button type="button" onclick="this.parentElement.classList.add('hidden')" aria-label="Dismiss notification" class="text-white/60 hover:text-white text-base leading-none cursor-pointer">&times;</button>
     </div>
 
-    {% if is_authenticated %}
-    <!-- Top Executive Header -->
-    <header class="card-surface sticky top-0 z-40 border-b border-white/10 px-6 py-3.5">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+    <!-- Minimal Apple Header & Single-Row Navigation -->
+    <header class="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-black/8">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-xl text-amber-400 font-black">
-                    &#127792;
-                </div>
+                <img src="/static/logo-512.png" alt="" class="w-7 h-7 object-contain">
                 <div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-base font-extrabold tracking-tight text-white">Almond Jobs Telemetry</span>
-                        <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">Executive Suite</span>
-                    </div>
-                    <p class="text-xs text-slate-400">Platform Command, Pricing Governance &amp; Candidate Telemetry</p>
+                    <span class="text-sm sm:text-base font-bold tracking-tight text-[#1d1d1f]">Almond Jobs</span>
+                    <span class="text-xs text-[#6e6e73] ml-2">Admin</span>
                 </div>
             </div>
-
-            <!-- Status Badges & Quick Action Controls -->
-            <div class="flex items-center gap-3">
-                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>Production Live</span>
-                </div>
-                <button type="button" onclick="window.location.reload()" class="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition" title="Refresh Dashboard">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            <div class="flex items-center gap-2">
+                <a href="/" target="_blank" rel="noopener" class="min-h-[34px] px-3.5 py-1.5 rounded-full border border-black/10 hover:bg-black/5 text-xs font-medium text-[#1d1d1f] inline-flex items-center">
+                    View Site &#8599;
+                </a>
+                <button type="button" onclick="window.location.reload()" class="min-h-[34px] px-3.5 py-1.5 rounded-full border border-black/10 hover:bg-black/5 text-xs font-medium text-[#1d1d1f] cursor-pointer">
+                    Refresh
                 </button>
-                <a href="/admin?logout=1" class="px-3.5 py-1.5 rounded-xl bg-slate-800/80 hover:bg-rose-500/20 hover:text-rose-300 border border-slate-700 hover:border-rose-500/30 text-xs font-semibold text-slate-400 transition flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    Lock Session
+                <a href="/admin?logout=1" class="min-h-[34px] px-3.5 py-1.5 rounded-full border border-black/10 hover:bg-[#fff2f2] hover:text-[#d70015] text-xs font-medium text-[#6e6e73] inline-flex items-center">
+                    Sign Out
                 </a>
             </div>
         </div>
+
+        <nav aria-label="Admin sections" class="border-t border-black/5">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 py-1 tablist-scroll" role="tablist" aria-label="Admin console sections">
+                <button type="button" role="tab" id="tab-btn-overview" aria-selected="true" onclick="switchAdminTab('overview')">
+                    Overview
+                </button>
+                <button type="button" role="tab" id="tab-btn-users" aria-selected="false" onclick="switchAdminTab('users')">
+                    Users &amp; Recovery ({{ genuine_count }})
+                </button>
+                <button type="button" role="tab" id="tab-btn-vip" aria-selected="false" onclick="switchAdminTab('vip')">
+                    VIP &amp; Pricing
+                </button>
+                <button type="button" role="tab" id="tab-btn-settings" aria-selected="false" onclick="switchAdminTab('settings')">
+                    Settings
+                </button>
+            </div>
+        </nav>
     </header>
 
-    <!-- Global Executive Tab Navigation Bar -->
-    <div class="sticky top-[69px] z-30 bg-[#080c14]/90 backdrop-blur-md border-b border-white/5 py-3 px-6">
-        <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
-            <button type="button" onclick="switchAdminTab('overview')" id="tab-btn-overview" class="tab-btn active px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer">
-                <span>&#128202;</span> Overview &amp; KPIs
-            </button>
-            <button type="button" onclick="switchAdminTab('pricing')" id="tab-btn-pricing" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer">
-                <span>&#127991;&#65039;</span> Pricing &amp; Festival Offers
-            </button>
-            <button type="button" onclick="switchAdminTab('candidates')" id="tab-btn-candidates" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer">
-                <span>&#128101;</span> Candidate Directory
-                <span class="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-700 text-slate-300 font-mono">{{ candidates|length }}</span>
-            </button>
-            <button type="button" onclick="switchAdminTab('grants')" id="tab-btn-grants" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer">
-                <span>&#128081;</span> VIP Grants &amp; Access
-            </button>
-            <button type="button" onclick="switchAdminTab('feedback')" id="tab-btn-feedback" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer">
-                <span>💡</span> Feedback Inbox
-                <span id="feedback-unread-badge" class="px-1.5 py-0.5 rounded-full text-[10px] bg-violet-600 text-white font-mono">{{ (feedback_items or [])|length }}</span>
-            </button>
-            <button type="button" onclick="switchAdminTab('revenue')" id="tab-btn-revenue" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer">
-                <span>💳</span> Revenue &amp; Gateway Analytics
-            </button>
-            <button type="button" onclick="switchAdminTab('security')" id="tab-btn-security" class="tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer">
-                <span>&#128737;&#65039;</span> Security Shield &amp; Devices
-            </button>
-        </div>
-    </div>
+    <main id="main-content" tabindex="-1" class="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-6">
+        {% set total_vis = analytics.unique_visitors_total or 0 %}
+        {% set today_vis = analytics.today_unique_visitors or 0 %}
+        {% set resume_cnt = analytics.resume_users_count or 0 %}
+        {% set abandoned_cnt = analytics.abandoned_count or 0 %}
+        {% set paid_orders = revenue_analytics.summary.total_orders or 0 %}
+        {% set total_rev = revenue_analytics.summary.total_revenue_inr or 0 %}
+        {% set ft = (analytics.ad_funnel.totals if analytics.ad_funnel else {}) %}
+        {% set started_pay_cnt = (ft.checkout_starts or 0) %}
+        {% if started_pay_cnt < (vip_count + abandoned_cnt) %}{% set started_pay_cnt = vip_count + abandoned_cnt %}{% endif %}
 
-    <!-- Main Executive Content Area -->
-    <main class="max-w-7xl mx-auto px-6 py-8 flex-1 space-y-8 w-full">
-
-        <!-- ============================================================= -->
-        <!-- TAB 1: OVERVIEW & KPIS -->
-        <!-- ============================================================= -->
-        <div id="panel-overview" class="space-y-6">
-            <div class="flex items-center justify-between">
-                <h2 class="text-xl font-bold text-white flex items-center gap-2">Core Telemetry & Engagements</h2>
-                <span class="text-xs text-slate-400">Live candidate session stream</span>
-            </div>
-
-            <!-- Executive Metrics Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div class="card-surface p-5 rounded-2xl space-y-2 border-l-4 border-l-amber-400">
-                    <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                        <span>Total Verified Visitors</span>
-                        <span class="text-amber-400">&#128100;</span>
+        <!-- ================================================================= -->
+        <!-- 1. OVERVIEW: START -> END PLATFORM FLOW                           -->
+        <!-- ================================================================= -->
+        <section id="panel-overview" role="tabpanel" aria-labelledby="tab-btn-overview">
+            <div class="space-y-6">
+                <div class="flex flex-wrap items-end justify-between gap-2">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-[#1d1d1f]">Overview</h1>
+                        <p class="text-sm text-[#6e6e73] mt-0.5">Live visitor flow, acquisition sources, and conversion health &bull; {{ analytics.today_date or 'Today' }}</p>
                     </div>
-                    <div class="text-3xl font-extrabold text-white tracking-tight">{{ analytics.unique_visitors_total or 0 }}</div>
-                    <p class="text-xs text-slate-400">Unique candidate footprints</p>
                 </div>
 
-                <div class="card-surface p-5 rounded-2xl space-y-2 border-l-4 border-l-emerald-400">
-                    <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                        <span>Genuine Humans</span>
-                        <span class="text-emerald-400">&#10003;</span>
+                <!-- 4 Core Numbers -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="apple-card p-5 space-y-1">
+                        <div class="text-xs font-medium text-[#6e6e73]">Today's Visitors</div>
+                        <div class="text-3xl font-bold text-[#1d1d1f] tabular-nums">{{ today_vis }}</div>
+                        <div class="text-xs text-[#6e6e73] tabular-nums">{{ analytics.today_pageviews or 0 }} views today</div>
                     </div>
-                    <div class="text-3xl font-extrabold text-emerald-400 tracking-tight">{{ analytics.human_percentage or 100 }}%</div>
-                    <p class="text-xs text-slate-400">{{ analytics.unique_visitors_genuine or 0 }} genuine candidates filtered</p>
-                </div>
-
-                <div class="card-surface p-5 rounded-2xl space-y-2 border-l-4 border-l-violet-400">
-                    <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                        <span>Registered Candidates</span>
-                        <span class="text-violet-400">&#128196;</span>
+                    <div class="apple-card p-5 space-y-1">
+                        <div class="text-xs font-medium text-[#6e6e73]">Total Visitors</div>
+                        <div class="text-3xl font-bold text-[#1d1d1f] tabular-nums">{{ total_vis }}</div>
+                        <div class="text-xs text-[#6e6e73] tabular-nums">{{ analytics.total_pageviews or 0 }} total views</div>
                     </div>
-                    <div class="text-3xl font-extrabold text-white tracking-tight">{{ candidates|length }}</div>
-                    <p class="text-xs text-slate-400">{{ genuine_count }} genuine &bull; {{ dummy_count }} test profiles</p>
-                </div>
-
-                <div class="card-surface p-5 rounded-2xl space-y-2 border-l-4 border-l-amber-500">
-                    <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                        <span>Active VIP Members</span>
-                        <span class="text-amber-400">&#128081;</span>
-                    </div>
-                    <div class="text-3xl font-extrabold text-amber-400 tracking-tight">{{ vip_count }}</div>
-                    <p class="text-xs text-slate-400">Unrestricted Corporate Ingestion Access</p>
-                </div>
-            </div>
-
-            <!-- FounderScale Conversion Funnel & Strategy Guide -->
-            <div class="card-surface p-5 rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-slate-900/80 to-emerald-500/10 space-y-3">
-                <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-black uppercase tracking-wider text-amber-400">&#129517; Founder Conversion Intelligence</span>
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">Live Stream Active</span>
+                    <div class="apple-card p-5 space-y-1">
+                        <div class="text-xs font-medium text-[#6e6e73]">Logged-In Candidates</div>
+                        <div class="text-3xl font-bold text-[#0071e3] tabular-nums">{{ genuine_count }}</div>
+                        <div class="text-xs text-[#6e6e73] tabular-nums">
+                            {{ "%.1f"|format((genuine_count / total_vis * 100) if total_vis > 0 else 0) }}% of visitors &bull; {{ resume_cnt }} resumes
                         </div>
-                        <p class="text-xs text-slate-300 leading-relaxed max-w-3xl">
-                            <strong class="text-white">Why 11 Visitors != 11 Candidates:</strong> When people click your Reddit, Peerlist, or WhatsApp posts, they arrive as <strong class="text-amber-300">Verified Web Visitors</strong> (logged in real time below). They only enter the <strong class="text-violet-300">Candidate Directory</strong> when they complete free signup/OTP to save jobs. In tech SaaS, a 5% to 15% visit-to-signup conversion is healthy.
-                        </p>
                     </div>
-                    <div class="flex items-center gap-2 text-xs font-mono bg-slate-950/90 px-4 py-2.5 rounded-xl border border-white/10 shrink-0">
-                        <span class="text-amber-400 font-bold">{{ analytics.unique_visitors_total or 0 }} Visitors</span>
-                        <span class="text-slate-500">&rarr;</span>
-                        <span class="text-violet-400 font-bold">{{ genuine_count }} Real Candidates</span>
-                        <span class="text-slate-500">&rarr;</span>
-                        <span class="text-emerald-400 font-bold">{{ vip_count }} VIP Members</span>
+                    <div class="apple-card p-5 space-y-1">
+                        <div class="text-xs font-medium text-[#6e6e73]">Paid VIP &amp; Revenue</div>
+                        <div class="text-3xl font-bold text-[#248a3d] tabular-nums">&#8377;{{ "%.0f"|format(total_rev) }}</div>
+                        <div class="text-xs text-[#6e6e73] tabular-nums">
+                            <strong>{{ vip_count }}</strong> VIPs &bull; <strong class="text-[#b25000]">{{ abandoned_cnt }}</strong> left before paying
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Paid Ad Funnel, Meta Pixel & Campaign ROI Tracker -->
-            <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
-                <!-- Left 2 Columns: 5-Stage Conversion Funnel & Campaign ROI Table -->
-                <div class="xl:col-span-2 card-surface p-5 rounded-2xl space-y-4 border-l-4 border-l-pink-500">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <!-- Start-to-End Flow Pipeline -->
+                <div class="apple-card p-6 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                                <span>&#127919;</span> Paid Ad Conversion Funnel &amp; Campaign ROI
-                            </h3>
-                            <p class="text-xs text-slate-400 mt-0.5">Tracks Instagram, Facebook &amp; social clicks from landing to Pro upgrade (even when In-App browsers hide Referrer)</p>
+                            <h2 class="text-base font-bold text-[#1d1d1f]">End-to-End Conversion Flow</h2>
+                            <p class="text-xs text-[#6e6e73]">Track every step from landing on almondjobs.com to paid Pro membership.</p>
                         </div>
-                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-pink-500/15 text-pink-300 border border-pink-500/30 self-start">UTM + fbclid + Pixel Ready</span>
+                        {% if abandoned_cnt > 0 %}
+                        <button type="button" onclick="jumpToAbandonedRecovery()"
+                                class="min-h-[34px] px-4 py-1.5 rounded-full bg-[#fff8eb] hover:bg-[#ffefd2] border border-[#f5d08a] text-[#b25000] text-xs font-semibold cursor-pointer">
+                            Recover {{ abandoned_cnt }} Hesitant User{{ 's' if abandoned_cnt != 1 else '' }} &rarr;
+                        </button>
+                        {% endif %}
                     </div>
 
-                    {% set ft = (analytics.ad_funnel.totals if analytics.ad_funnel else {}) %}
-                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
-                            <div class="text-[10px] font-bold text-slate-400 uppercase">1. Ad Clicks / Visits</div>
-                            <div class="text-xl font-black text-white font-mono mt-0.5">{{ ft.visitors or 0 }}</div>
+                    <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                        <div class="p-4 rounded-2xl bg-[#f5f5f7] space-y-1">
+                            <div class="text-[11px] font-semibold uppercase tracking-wide text-[#6e6e73]">1. Visited Site</div>
+                            <div class="text-2xl font-bold text-[#1d1d1f] tabular-nums">{{ total_vis }}</div>
+                            <div class="text-xs text-[#6e6e73]">100% baseline</div>
                         </div>
-                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
-                            <div class="text-[10px] font-bold text-slate-400 uppercase">2. Resume Uploads</div>
-                            <div class="text-xl font-black text-sky-400 font-mono mt-0.5">{{ ft.resume_uploads or 0 }}</div>
+                        <div class="p-4 rounded-2xl bg-[#f5f5f7] space-y-1">
+                            <div class="text-[11px] font-semibold uppercase tracking-wide text-[#6e6e73]">2. Logged In</div>
+                            <div class="text-2xl font-bold text-[#0071e3] tabular-nums">{{ genuine_count }}</div>
+                            <div class="text-xs text-[#6e6e73]">{{ "%.1f"|format((genuine_count / total_vis * 100) if total_vis > 0 else 0) }}% of visitors</div>
                         </div>
-                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
-                            <div class="text-[10px] font-bold text-slate-400 uppercase">3. Free Signups</div>
-                            <div class="text-xl font-black text-violet-400 font-mono mt-0.5">{{ ft.signups or 0 }}</div>
+                        <div class="p-4 rounded-2xl bg-[#f5f5f7] space-y-1">
+                            <div class="text-[11px] font-semibold uppercase tracking-wide text-[#6e6e73]">3. Uploaded Resume</div>
+                            <div class="text-2xl font-bold text-[#1d1d1f] tabular-nums">{{ resume_cnt }}</div>
+                            <div class="text-xs text-[#6e6e73]">{{ "%.1f"|format((resume_cnt / genuine_count * 100) if genuine_count > 0 else 0) }}% of logged-in</div>
                         </div>
-                        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
-                            <div class="text-[10px] font-bold text-slate-400 uppercase">4. Checkout Opens</div>
-                            <div class="text-xl font-black text-amber-400 font-mono mt-0.5">{{ ft.checkout_starts or 0 }}</div>
+                        <div class="p-4 rounded-2xl bg-[#fff8eb] border border-[#f5d08a]/60 space-y-1">
+                            <div class="text-[11px] font-semibold uppercase tracking-wide text-[#b25000]">4. Left Before Paying</div>
+                            <div class="text-2xl font-bold text-[#b25000] tabular-nums">{{ abandoned_cnt }}</div>
+                            <div class="text-xs text-[#b25000]">Ready for last offer</div>
                         </div>
-                        <div class="p-3 rounded-xl bg-slate-900/90 border border-emerald-500/30">
-                            <div class="text-[10px] font-bold text-emerald-400 uppercase">5. Pro Purchases</div>
-                            <div class="text-xl font-black text-emerald-400 font-mono mt-0.5">{{ ft.purchases or 0 }} <span class="text-xs font-normal text-slate-300">(&#8377;{{ "%.0f"|format(ft.revenue_inr or 0) }})</span></div>
+                        <div class="p-4 rounded-2xl bg-[#ecfdf3] border border-[#bbf7d0] space-y-1">
+                            <div class="text-[11px] font-semibold uppercase tracking-wide text-[#248a3d]">5. Paid / Active VIP</div>
+                            <div class="text-2xl font-bold text-[#248a3d] tabular-nums">{{ vip_count }}</div>
+                            <div class="text-xs text-[#248a3d]">{{ paid_orders }} orders captured</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Acquisition Channels + UTM Breakdown -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <div class="apple-card p-6 space-y-4">
+                        <div>
+                            <h2 class="text-base font-bold text-[#1d1d1f]">Traffic by Channel</h2>
+                            <p class="text-xs text-[#6e6e73]">Meta Ads, Facebook, Instagram, Google Search, AI Tools (ChatGPT/Perplexity/Claude), LinkedIn &amp; Direct</p>
+                        </div>
+                        <div class="divide-y divide-black/5">
+                            {% for src in analytics.traffic_sources or [] %}
+                            <div class="py-2.5 flex items-center justify-between text-sm">
+                                <span class="font-medium text-[#1d1d1f]">{{ src.icon }} {{ src.channel }}</span>
+                                <span class="font-mono text-xs text-[#6e6e73] tabular-nums">
+                                    <strong class="text-sm text-[#1d1d1f]">{{ src.uniques }}</strong> visitors &bull; {{ src.hits }} views
+                                </span>
+                            </div>
+                            {% else %}
+                            <p class="text-xs text-[#6e6e73] py-4">No acquisition channel traffic recorded yet.</p>
+                            {% endfor %}
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto custom-scrollbar border border-slate-800/80 rounded-xl">
-                        <table class="w-full text-left border-collapse text-xs">
+                    <div class="apple-card p-6 space-y-4">
+                        <div>
+                            <h2 class="text-base font-bold text-[#1d1d1f]">Ad Campaign Performance (UTM)</h2>
+                            <p class="text-xs text-[#6e6e73]">Compare how Meta posters and social links convert into signups, resumes &amp; sales.</p>
+                        </div>
+                        <div tabindex="0" role="region" aria-labelledby="utm-cap" class="table-wrapper responsive-stack">
+                            <table class="data-table">
+                                <caption id="utm-cap">Conversion funnel grouped by campaign UTM</caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Source / Campaign</th>
+                                        <th scope="col" class="text-right">Visits</th>
+                                        <th scope="col" class="text-right">Signups</th>
+                                        <th scope="col" class="text-right">Resumes</th>
+                                        <th scope="col" class="text-right">Paid</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in (analytics.ad_funnel.campaigns if analytics.ad_funnel else []) %}
+                                    <tr>
+                                        <th scope="row">
+                                            <span class="capitalize">{{ row.source }}</span>
+                                            <span class="block text-[11px] font-mono font-normal text-[#6e6e73]">{{ row.campaign }}</span>
+                                        </th>
+                                        <td data-label="Visits" class="text-right font-mono tabular-nums">{{ row.visitors }}</td>
+                                        <td data-label="Signups" class="text-right font-mono tabular-nums text-[#0071e3] font-semibold">{{ row.signups }}</td>
+                                        <td data-label="Resumes" class="text-right font-mono tabular-nums">{{ row.resume_uploads }}</td>
+                                        <td data-label="Paid" class="text-right font-mono tabular-nums text-[#248a3d] font-semibold">{{ row.purchases }}</td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center py-6 text-xs text-[#6e6e73]">UTM clicks will populate here automatically as ad traffic arrives.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day-by-Day Table -->
+                <div class="apple-card p-6 space-y-4">
+                    <div>
+                        <h2 class="text-base font-bold text-[#1d1d1f]">Day-by-Day Activity (Last 14 Days)</h2>
+                        <p class="text-xs text-[#6e6e73]">Daily visitors, pageviews, logins, resume uploads, checkout attempts &amp; paid orders.</p>
+                    </div>
+                    <div tabindex="0" role="region" aria-labelledby="daily-cap" class="table-wrapper responsive-stack">
+                        <table class="data-table">
+                            <caption id="daily-cap">Daily platform metrics ordered newest first</caption>
                             <thead>
-                                <tr class="border-b border-slate-800 bg-slate-900/90 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
-                                    <th class="py-2.5 px-3">Source / Campaign</th>
-                                    <th class="py-2.5 px-3 text-right">Visitors</th>
-                                    <th class="py-2.5 px-3 text-right">Resumes</th>
-                                    <th class="py-2.5 px-3 text-right">Signups</th>
-                                    <th class="py-2.5 px-3 text-right">Checkouts</th>
-                                    <th class="py-2.5 px-3 text-right">Pro Sales</th>
-                                    <th class="py-2.5 px-3 text-right">Revenue</th>
+                                <tr>
+                                    <th scope="col">Date (UTC)</th>
+                                    <th scope="col" class="text-right">Visitors</th>
+                                    <th scope="col" class="text-right">Pageviews</th>
+                                    <th scope="col" class="text-right">Logged-In</th>
+                                    <th scope="col" class="text-right">Resumes</th>
+                                    <th scope="col" class="text-right">Started Pay</th>
+                                    <th scope="col" class="text-right">Paid VIP</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-800/60 font-mono">
-                                {% for row in (analytics.ad_funnel.campaigns if analytics.ad_funnel else []) %}
-                                <tr class="hover:bg-slate-800/40">
-                                    <td class="py-2 px-3 font-sans">
-                                        <span class="font-bold text-white capitalize">{{ row.source }}</span>
-                                        <span class="block text-[10px] text-slate-400 font-mono">{{ row.campaign }}</span>
+                            <tbody>
+                                {% for day in analytics.daily_trend or [] %}
+                                <tr>
+                                    <th scope="row" class="font-mono text-xs">{{ day.date }}</th>
+                                    <td data-label="Visitors" class="text-right font-mono tabular-nums font-semibold">{{ day.uniques }}</td>
+                                    <td data-label="Pageviews" class="text-right font-mono tabular-nums text-[#6e6e73]">{{ day.pageviews }}</td>
+                                    <td data-label="Logged-In" class="text-right font-mono tabular-nums text-[#0071e3] font-semibold">{{ day.signups or 0 }}</td>
+                                    <td data-label="Resumes" class="text-right font-mono tabular-nums">{{ day.resumes or 0 }}</td>
+                                    <td data-label="Started Pay" class="text-right font-mono tabular-nums text-[#b25000]">{{ day.checkouts or 0 }}</td>
+                                    <td data-label="Paid VIP" class="text-right font-mono tabular-nums text-[#248a3d] font-semibold">
+                                        {{ day.purchases or 0 }} {% if day.revenue_inr %}(&#8377;{{ "%.0f"|format(day.revenue_inr) }}){% endif %}
                                     </td>
-                                    <td class="py-2 px-3 text-right text-slate-200">{{ row.visitors }}</td>
-                                    <td class="py-2 px-3 text-right text-sky-400">{{ row.resume_uploads }}</td>
-                                    <td class="py-2 px-3 text-right text-violet-400">{{ row.signups }}</td>
-                                    <td class="py-2 px-3 text-right text-amber-400">{{ row.checkout_starts }}</td>
-                                    <td class="py-2 px-3 text-right font-bold text-emerald-400">{{ row.purchases }}</td>
-                                    <td class="py-2 px-3 text-right font-bold text-emerald-300">&#8377;{{ "%.0f"|format(row.revenue_inr or 0) }}</td>
                                 </tr>
                                 {% else %}
                                 <tr>
-                                    <td colspan="7" class="py-4 text-center text-xs text-slate-500 font-sans">
-                                        Use a UTM-tagged link in your Meta/Instagram ads to compare campaign performance here.
-                                    </td>
+                                    <td colspan="7" class="text-center py-6 text-xs text-[#6e6e73]">No daily records yet.</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
                 </div>
-
-                <!-- Right Column: Meta Pixel Setup & UTM Ad Link Builder -->
-                <div class="card-surface p-5 rounded-2xl space-y-4 border-l-4 border-l-indigo-500">
-                    <div>
-                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                            <span>&#9889;</span> Meta Pixel Setup (&#8377;0 Tool Cost)
-                        </h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Paste your Meta Events Manager Pixel ID so Instagram/FB ads optimize automatically for Pro buyers.</p>
-                    </div>
-                    <form onsubmit="handleMetaPixelSave(event)" class="space-y-2.5">
-                        <label class="block text-[11px] font-semibold text-slate-300">Meta Pixel / Dataset ID</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="admin-meta-pixel-input" value="{{ meta_pixel_id or '' }}"
-                                   placeholder="e.g. 123456789012345"
-                                   class="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-mono focus:outline-none focus:ring-1 focus:ring-indigo-400">
-                            <button type="submit" id="admin-meta-pixel-btn"
-                                    class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition cursor-pointer shrink-0">
-                                Save ID
-                            </button>
-                        </div>
-                        <p class="text-[11px] {% if meta_pixel_id %}text-emerald-400{% else %}text-slate-500{% endif %} font-mono">
-                            {% if meta_pixel_id %}&#10003; Active Pixel: {{ meta_pixel_id }} (PageView, Lead, Purchase){% else %}Not active yet — paste Pixel ID once created in Meta Events Manager.{% endif %}
-                        </p>
-                    </form>
-
-                    <div class="pt-3 border-t border-slate-800 space-y-2">
-                        <label class="block text-[11px] font-semibold text-slate-300">Ad Link Builder (For Instagram / FB Ads)</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <select id="utm-src-select" onchange="updateAdUtmPreview()" class="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white">
-                                <option value="instagram">Instagram</option>
-                                <option value="facebook">Facebook</option>
-                                <option value="reddit">Reddit</option>
-                                <option value="peerlist">Peerlist</option>
-                            </select>
-                            <input type="text" id="utm-camp-input" value="fresher_test1" oninput="updateAdUtmPreview()" placeholder="campaign_name"
-                                   class="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white font-mono">
-                        </div>
-                        <div class="flex gap-1.5">
-                            <input type="text" id="utm-url-preview" readonly
-                                   value="https://almondjobs.com/?utm_source=instagram&utm_medium=paid_social&utm_campaign=fresher_test1"
-                                   class="flex-1 px-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-[10px] text-emerald-300 font-mono">
-                            <button type="button" onclick="copyAdUtmPreview()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold shrink-0">Copy</button>
-                        </div>
-                    </div>
-                </div>
             </div>
+        </section>
 
-            <!-- Marketing Acquisition Channels (Reddit, Peerlist, Direct, Search) -->
-            <div class="card-surface p-5 rounded-2xl space-y-4">
-                <div class="flex items-center justify-between">
+        <!-- ================================================================= -->
+        <!-- 2. USERS & CHECKOUT DROP-OFF RECOVERY                             -->
+        <!-- ================================================================= -->
+        <section id="panel-users" role="tabpanel" aria-labelledby="tab-btn-users" hidden>
+            <div class="space-y-6">
+                <div class="flex flex-wrap items-end justify-between gap-3">
                     <div>
-                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                            <span>&#128225;</span> Live Acquisition Channels (Where Visitors Come From)
-                        </h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Tracking clicks from Reddit posts, Peerlist launches, and social links</p>
+                        <h2 class="text-2xl font-bold tracking-tight text-[#1d1d1f]">Users &amp; Checkout Recovery</h2>
+                        <p class="text-sm text-[#6e6e73] mt-0.5">Every logged-in email, resume upload status, checkout hesitation &amp; one-click last-offer outreach.</p>
                     </div>
-                    <span class="text-xs text-slate-500 font-mono">Live Ingestion</span>
+                    <a href="/api/admin/export-users" target="_blank" rel="noopener"
+                       class="min-h-[36px] px-4 py-1.5 rounded-full border border-black/15 bg-white hover:bg-[#f5f5f7] text-xs font-semibold text-[#1d1d1f] inline-flex items-center">
+                        Export CSV
+                    </a>
                 </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                    {% for src in analytics.traffic_sources or [] %}
-                    <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1 hover:border-slate-700 transition">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-white truncate">{{ src.icon }} {{ src.channel }}</span>
+                <!-- Segmented Filters + Search -->
+                <div class="apple-card p-5 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="inline-flex flex-wrap items-center gap-1 p-1 rounded-full bg-[#f5f5f7] border border-black/5">
+                            <button type="button" onclick="setUserFilter('all')" id="ufilter-all" class="seg-pill active">All Logged-In ({{ genuine_count }})</button>
+                            <button type="button" onclick="setUserFilter('abandoned')" id="ufilter-abandoned" class="seg-pill">Left Before Paying ({{ abandoned_cnt }})</button>
+                            <button type="button" onclick="setUserFilter('resume')" id="ufilter-resume" class="seg-pill">Uploaded Resume ({{ resume_cnt }})</button>
+                            <button type="button" onclick="setUserFilter('no_resume')" id="ufilter-no_resume" class="seg-pill">No Resume Yet</button>
+                            <button type="button" onclick="setUserFilter('vip')" id="ufilter-vip" class="seg-pill">VIP Active ({{ vip_count }})</button>
                         </div>
-                        <div class="text-xl font-extrabold text-amber-400 font-mono">{{ src.uniques }} <span class="text-xs font-normal text-slate-400">uniques</span></div>
-                        <div class="text-[11px] text-slate-500 font-mono">{{ src.hits }} total clicks</div>
-                    </div>
-                    {% else %}
-                    <div class="col-span-full py-4 text-center text-xs text-slate-500">
-                        No external channel clicks recorded yet today. Share links on Reddit, Peerlist, and WhatsApp to populate.
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
 
-            <!-- Geographic Ad-Targeting Breakdown (Top Cities & Countries) -->
-            <div class="card-surface p-5 rounded-2xl space-y-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                            <span>&#128205;</span> Visitor Locations (For Geo-Targeted Ads)
-                        </h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Cities &amp; regions where real human candidates are browsing Almond Jobs</p>
-                    </div>
-                    <span class="text-xs text-slate-500 font-mono">Geo-IP Telemetry</span>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {% for loc in analytics.location_breakdown or [] %}
-                    <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
-                        <div class="text-xs font-bold text-white truncate" title="{{ loc.location }}">&#127757; {{ loc.location }}</div>
-                        <div class="text-lg font-extrabold text-emerald-400 font-mono">{{ loc.uniques }} <span class="text-[11px] font-normal text-slate-400">visitors ({{ loc.hits }} hits)</span></div>
-                    </div>
-                    {% else %}
-                    <div class="col-span-full py-3 text-center text-xs text-slate-500">
-                        Geographic city/country data will populate automatically as new human visitors arrive.
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Live Human Visitor Stream (Deduplicated Sessions with Name & Location) -->
-            <div class="card-surface p-6 rounded-2xl space-y-4 border-l-4 border-l-emerald-400">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div>
-                        <div class="flex items-center gap-2.5">
-                            <span class="relative flex h-3 w-3">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                            </span>
-                            <h3 class="text-base font-bold text-white">Live Human Visitor Stream (Deduplicated Sessions)</h3>
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Real Humans Only</span>
+                        <div class="w-full sm:w-64">
+                            <label for="candidate-search" class="visually-hidden">Search users by name or email</label>
+                            <input type="search" id="candidate-search" oninput="applyUserFilters()" placeholder="Search email or name..."
+                                   class="w-full px-3.5 py-2 bg-[#f5f5f7] border border-black/10 rounded-full text-xs text-[#1d1d1f]">
                         </div>
-                        <p class="text-xs text-slate-400 mt-1">
-                            Consecutive refreshes are grouped per visitor. Shows <strong class="text-slate-200">Name/Email</strong> when signed in, <strong class="text-slate-200">City/Country</strong>, referral source, and hardware device.
-                        </p>
                     </div>
-                    
-                    <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <input type="text" id="visitor-search" placeholder="Filter by name, city, reddit, iphone..." 
-                               oninput="filterVisitorStream()"
-                               class="w-full sm:w-64 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-400 font-mono">
-                        <button type="button" onclick="window.location.reload()" title="Refresh Feed"
-                                class="p-1.5 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition flex items-center gap-1 shrink-0">
-                            <span>&#8635;</span> Refresh
-                        </button>
-                    </div>
-                </div>
 
-                <!-- Visitors Table -->
-                <div class="overflow-x-auto custom-scrollbar border border-slate-800/80 rounded-xl">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="border-b border-slate-800 bg-slate-900/90 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
-                                <th class="py-3 px-3">Visitor / Identity</th>
-                                <th class="py-3 px-3">Location (City / Country)</th>
-                                <th class="py-3 px-3">Last Active</th>
-                                <th class="py-3 px-3">Acquisition Source</th>
-                                <th class="py-3 px-3">Pages &amp; Views</th>
-                                <th class="py-3 px-3">Hardware &amp; Device</th>
-                            </tr>
-                        </thead>
-                        <tbody id="visitor-stream-body" class="divide-y divide-slate-800/60 font-mono">
-                            {% for v in analytics.recent_visitors or [] %}
-                            <tr class="visitor-stream-row hover:bg-slate-800/40 transition"
-                                data-source="{{ v.referrer_channel|lower }} {{ v.referrer_detail|lower }}"
-                                data-path="{{ v.path|lower }}"
-                                data-device="{{ v.device_model|lower }}"
-                                data-location="{{ v.location|lower }}"
-                                data-user="{{ v.user_name|lower }} {{ v.user_email|lower }}">
-                                <td class="py-2.5 px-3 font-sans">
-                                    {% if v.user_email %}
-                                    <div class="font-bold text-emerald-300 text-xs">&#10003; {{ v.user_name or v.user_email }}</div>
-                                    <div class="text-[10px] text-slate-400 font-mono">{{ v.user_email }}</div>
-                                    {% else %}
-                                    <div class="inline-flex items-center gap-1.5 font-semibold text-slate-200 text-xs">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                                        <span>Anonymous Guest</span>
-                                    </div>
-                                    <div class="text-[10px] text-slate-500 font-mono">vis_{{ v.visitor_hash }} (Not signed in)</div>
-                                    {% endif %}
-                                </td>
-                                <td class="py-2.5 px-3 font-sans text-xs">
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-200">
-                                        <span>&#128205;</span> {{ v.location }}
-                                    </span>
-                                </td>
-                                <td class="py-2.5 px-3 text-slate-300 whitespace-nowrap" title="{{ v.time_str }}">
-                                    <span class="font-bold text-white">{{ v.time_ago }}</span>
-                                    <span class="text-[10px] text-slate-500 block font-sans">{{ v.date }}</span>
-                                </td>
-                                <td class="py-2.5 px-3">
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold 
-                                            {% if 'reddit' in v.referrer_channel|lower %}bg-amber-500/20 text-amber-300 border border-amber-500/40
-                                            {% elif 'instagram' in v.referrer_channel|lower or 'meta' in v.referrer_channel|lower %}bg-pink-500/20 text-pink-300 border border-pink-500/40
-                                            {% elif 'facebook' in v.referrer_channel|lower %}bg-blue-500/20 text-blue-300 border border-blue-500/40
-                                            {% elif 'peerlist' in v.referrer_channel|lower %}bg-emerald-500/20 text-emerald-300 border border-emerald-500/40
-                                            {% elif 'linkedin' in v.referrer_channel|lower %}bg-blue-500/20 text-blue-300 border border-blue-500/40
-                                            {% elif 'google' in v.referrer_channel|lower %}bg-violet-500/20 text-violet-300 border border-violet-500/40
-                                            {% else %}bg-slate-800 text-slate-300 border border-slate-700{% endif %}">
-                                            {{ v.referrer_icon }} {{ v.referrer_channel }}
-                                        </span>
-                                        {% if v.referrer_detail and v.referrer_detail != v.referrer_channel %}
-                                        <span class="text-[11px] text-slate-400 font-sans truncate max-w-[160px]">{{ v.referrer_detail }}</span>
+                    <!-- Clean User Journey Table -->
+                    <div tabindex="0" role="region" aria-labelledby="users-cap" class="table-wrapper responsive-stack">
+                        <table class="data-table">
+                            <caption id="users-cap">Logged-in users with resume status, payment hesitation status, and VIP/offer actions</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">User &amp; Email ID</th>
+                                    <th scope="col">Source</th>
+                                    <th scope="col">Resume</th>
+                                    <th scope="col">Payment / VIP Status</th>
+                                    <th scope="col">Joined</th>
+                                    <th scope="col" class="text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="candidates-table-body">
+                                {% for c in candidates %}
+                                {% if not c.is_dummy %}
+                                <tr class="candidate-row"
+                                    data-name="{{ c.full_name|lower }}"
+                                    data-email="{{ c.email|lower }}"
+                                    data-is-vip="{{ 'true' if c.is_paid else 'false' }}"
+                                    data-resume="{{ 'true' if c.resume_uploaded else 'false' }}"
+                                    data-abandoned="{{ 'true' if c.checkout_abandoned else 'false' }}">
+                                    <th scope="row">
+                                        <span class="text-[#1d1d1f] font-semibold">{{ c.full_name or 'Candidate' }}</span>
+                                        <span class="block text-xs font-mono font-normal text-[#6e6e73]">{{ c.email }}</span>
+                                    </th>
+                                    <td data-label="Source" class="text-xs text-[#6e6e73]">{{ c.acquisition_source or 'Direct' }}</td>
+                                    <td data-label="Resume">
+                                        {% if c.resume_uploaded %}
+                                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#ecfdf3] text-[#248a3d]">Uploaded</span>
+                                        {% else %}
+                                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#f5f5f7] text-[#6e6e73]">Not Uploaded</span>
                                         {% endif %}
-                                    </div>
-                                </td>
-                                <td class="py-2.5 px-3 font-mono text-amber-300 text-xs">
-                                    <span class="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">{{ v.path }}</span>
-                                    {% if v.visit_count > 1 %}
-                                    <span class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">{{ v.visit_count }} views</span>
-                                    {% endif %}
-                                </td>
-                                <td class="py-2.5 px-3 text-slate-200 font-sans text-xs">
-                                    <span class="font-medium">{{ v.device_model }}</span>
-                                    {% if v.device_brand %}<span class="text-[10px] text-slate-500 ml-1">({{ v.device_brand }})</span>{% endif %}
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr id="no-visitors-row">
-                                <td colspan="6" class="py-8 text-center text-xs text-slate-500">
-                                    No live human visits recorded in this session yet. As visitors browse from Reddit or Peerlist, they stream here instantly.
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Executive Quick Management Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                <div onclick="switchAdminTab('pricing')" class="card-surface p-6 rounded-2xl cursor-pointer hover:border-amber-400 transition space-y-3 group">
-                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-2xl text-amber-400 group-hover:scale-110 transition">
-                        &#127991;&#65039;
+                                    </td>
+                                    <td data-label="Status">
+                                        {% if c.is_paid %}
+                                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#ecfdf3] text-[#248a3d]">VIP Active (till {{ c.paid_until_str }})</span>
+                                        {% elif c.checkout_abandoned %}
+                                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#fff8eb] text-[#b25000] border border-[#f5d08a]">Exited Before Paying</span>
+                                        {% else %}
+                                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#f5f5f7] text-[#6e6e73]">Free</span>
+                                        {% endif %}
+                                        {% if c.recovery_offer %}
+                                        <span class="block text-[10px] text-[#0071e3] font-semibold mt-1">Popup Offer Armed</span>
+                                        {% endif %}
+                                    </td>
+                                    <td data-label="Joined" class="font-mono text-xs text-[#6e6e73]">{{ c.created_at_str[:10] }}</td>
+                                    <td data-label="Actions" class="text-right whitespace-nowrap space-x-1.5">
+                                        {% if not c.is_paid %}
+                                        <button type="button" onclick="openRecoveryModal('{{ c.email }}', '{{ (c.full_name or 'Candidate')|replace("'", "") }}')"
+                                                class="px-3 py-1 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-[11px] font-semibold cursor-pointer">
+                                            Send Last Offer
+                                        </button>
+                                        <button type="button" onclick="openConfirmModal('Grant 30-Day VIP', 'Grant 30-day VIP access to {{ c.email }}?', function(){ adminGrantVip('{{ c.email }}'); })"
+                                                class="px-3 py-1 rounded-full border border-black/15 hover:bg-[#f5f5f7] text-[#1d1d1f] text-[11px] font-semibold cursor-pointer">
+                                            Grant VIP
+                                        </button>
+                                        {% else %}
+                                        <button type="button" onclick="openConfirmModal('Revoke VIP Access', 'Revoke VIP access for {{ c.email }}?', function(){ adminRevokeVip('{{ c.email }}'); })"
+                                                class="px-3 py-1 rounded-full border border-[#ffd6d9] bg-[#fff2f2] hover:bg-[#ffe5e7] text-[#d70015] text-[11px] font-semibold cursor-pointer">
+                                            Revoke VIP
+                                        </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-8 text-xs text-[#6e6e73]">No logged-in candidates yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
-                    <h3 class="text-lg font-bold text-white group-hover:text-amber-400 transition">Pricing &amp; Festival Offers</h3>
-                    <p class="text-xs text-slate-400 leading-relaxed">Adjust offer prices and original crossed-out prices for 1m, 3m (30% off), and 6m (35% off) across INR, USD, EUR, GBP. Safe for existing VIP members.</p>
-                    <span class="text-xs font-bold text-amber-400 flex items-center gap-1">Manage Pricing &rarr;</span>
-                </div>
-
-                <div onclick="switchAdminTab('candidates')" class="card-surface p-6 rounded-2xl cursor-pointer hover:border-violet-400 transition space-y-3 group">
-                    <div class="w-12 h-12 rounded-xl bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-2xl text-violet-400 group-hover:scale-110 transition">
-                        &#128101;
-                    </div>
-                    <h3 class="text-lg font-bold text-white group-hover:text-violet-400 transition">Registered Candidates Directory</h3>
-                    <p class="text-xs text-slate-400 leading-relaxed">Search candidate profiles, filter by Genuine, VIP Active, New Registrations, and Dummy accounts. Export candidate spreadsheets to CSV.</p>
-                    <span class="text-xs font-bold text-violet-400 flex items-center gap-1">View Candidates &rarr;</span>
-                </div>
-
-                <div onclick="switchAdminTab('grants')" class="card-surface p-6 rounded-2xl cursor-pointer hover:border-emerald-400 transition space-y-3 group">
-                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-2xl text-emerald-400 group-hover:scale-110 transition">
-                        &#128081;
-                    </div>
-                    <h3 class="text-lg font-bold text-white group-hover:text-emerald-400 transition">Instant VIP Grants</h3>
-                    <p class="text-xs text-slate-400 leading-relaxed">Pre-approve VIP passes for candidate email addresses with selectable validity (30d, 90d, 180d). Accounts automatically unlock VIP upon sign-in.</p>
-                    <span class="text-xs font-bold text-emerald-400 flex items-center gap-1">Grant Access &rarr;</span>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- ============================================================= -->
-        <!-- TAB 2: PRICING & FESTIVAL OFFERS MANAGER -->
-        <!-- ============================================================= -->
-        <div id="panel-pricing" class="hidden space-y-6">
-            <!-- Pricing Overview Banner -->
-            <div class="card-surface p-6 rounded-2xl space-y-2 border-l-4 border-l-amber-400">
-                <div class="flex items-center justify-between flex-wrap gap-2">
-                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                        <span>&#127991;&#65039;</span> Dynamic Subscription Pricing &amp; Festival Manager
-                    </h2>
-                    <span class="text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30">Instant Live Sync</span>
+        <!-- ================================================================= -->
+        <!-- 3. VIP GRANTS, FESTIVAL PRICING & REVENUE LEDGER                  -->
+        <!-- ================================================================= -->
+        <section id="panel-vip" role="tabpanel" aria-labelledby="tab-btn-vip" hidden>
+            <div class="space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight text-[#1d1d1f]">VIP Access, Festival Offers &amp; Revenue</h2>
+                    <p class="text-sm text-[#6e6e73] mt-0.5">Grant VIP passes instantly to any email, update live multi-currency pricing, and verify payments.</p>
                 </div>
-                <p class="text-xs text-slate-300 leading-relaxed">
-                    Set individual offer prices, original crossed-out prices, and promotional discount badges across all currencies. 
-                    <strong class="text-amber-300">Safety Guarantee:</strong> Updating prices here takes effect immediately on public modals and checkout sessions without restarting the server, and <span class="underline">never alters or truncates</span> existing VIP candidates' validity dates.
-                </p>
-            </div>
 
-            <!-- Toast Alert for Live Save Feedback -->
-            <div id="pricing-save-toast" class="hidden p-4 rounded-xl bg-emerald-950/90 border border-emerald-500 text-emerald-300 text-xs font-bold flex items-center justify-between shadow-lg">
-                <span id="pricing-save-toast-msg">&#10003; Pricing updated successfully!</span>
-                <button type="button" onclick="this.parentElement.classList.add('hidden')" class="text-emerald-400 hover:text-white">&times;</button>
-            </div>
-
-            <!-- Tier Cards Grid (1m, 3m, 6m) -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                <!-- 1-MONTH VIP PASS -->
-                <div class="card-surface p-6 rounded-2xl space-y-5 border border-slate-700/80">
-                    <div class="flex items-center justify-between">
+                <!-- Grant VIP to Any Email -->
+                <div class="apple-card p-6 space-y-4">
+                    <h3 class="text-base font-bold text-[#1d1d1f]">Grant VIP Access to Email ID</h3>
+                    <form id="admin-grant-form" onsubmit="handleAdminGrantSubmit(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+                        <div class="sm:col-span-2">
+                            <label for="admin-grant-email" class="block text-xs font-semibold text-[#1d1d1f] mb-1">Candidate Email</label>
+                            <input type="email" id="admin-grant-email" required autocomplete="email" placeholder="candidate@example.com"
+                                   class="w-full px-3.5 py-2 bg-[#f5f5f7] border border-black/10 rounded-xl text-sm font-mono">
+                        </div>
                         <div>
-                            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Duration: 30 Days</span>
-                            <h3 class="text-lg font-extrabold text-white">1-Month VIP Pass</h3>
-                        </div>
-                        <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Standard Tier</span>
-                    </div>
-
-                    <div class="space-y-4 text-xs">
-                        <!-- INR -->
-                        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                            <span class="font-bold text-amber-400 block">&#8377; Indian Rupee (INR)</span>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="text-[10px] text-slate-400 block mb-1">Offer Price (&#8377;)</label>
-                                    <input type="number" id="price_1m_inr" value="{{ pricing_tiers['1m'].inr_price if pricing_tiers else 699 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
-                                </div>
-                                <div>
-                                    <label class="text-[10px] text-slate-400 block mb-1">Original Price (&#8377;)</label>
-                                    <input type="number" id="orig_1m_inr" value="{{ pricing_tiers['1m'].inr_original if pricing_tiers else 699 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- USD -->
-                        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                            <span class="font-bold text-emerald-400 block">$ US Dollar (USD)</span>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="text-[10px] text-slate-400 block mb-1">Offer Price ($)</label>
-                                    <input type="number" step="0.01" id="price_1m_usd" value="{{ pricing_tiers['1m'].usd_price if pricing_tiers else 9.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
-                                </div>
-                                <div>
-                                    <label class="text-[10px] text-slate-400 block mb-1">Original Price ($)</label>
-                                    <input type="number" step="0.01" id="orig_1m_usd" value="{{ pricing_tiers['1m'].usd_original if pricing_tiers else 9.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- EUR & GBP -->
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-[10px] text-slate-400 block mb-1">&euro; EUR Offer</label>
-                                <input type="number" step="0.01" id="price_1m_eur" value="{{ pricing_tiers['1m'].eur_price if pricing_tiers else 9.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
-                                <input type="hidden" id="orig_1m_eur" value="{{ pricing_tiers['1m'].eur_original if pricing_tiers else 9.99 }}">
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-slate-400 block mb-1">&pound; GBP Offer</label>
-                                <input type="number" step="0.01" id="price_1m_gbp" value="{{ pricing_tiers['1m'].gbp_price if pricing_tiers else 9.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
-                                <input type="hidden" id="orig_1m_gbp" value="{{ pricing_tiers['1m'].gbp_original if pricing_tiers else 9.99 }}">
-                            </div>
-                        </div>
-
-                        <!-- Promotional Badging -->
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-[10px] text-slate-400 block mb-1">Discount % (Optional)</label>
-                                <input type="number" id="disc_1m_pct" value="{{ pricing_tiers['1m'].discount_pct if pricing_tiers else 0 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-xs focus:border-amber-400 focus:outline-none">
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-slate-400 block mb-1">Badge Text</label>
-                                <input type="text" id="badge_1m_text" value="{{ pricing_tiers['1m'].badge_text if pricing_tiers else 'Standard VIP' }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-amber-400 focus:outline-none">
-                            </div>
-                        </div>
-                    </div>
-
-                    <button type="button" onclick="saveTierPricing('1m')" id="save-btn-1m" class="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white transition flex items-center justify-center gap-2 cursor-pointer">
-                        <span>Save 1-Month Pricing</span>
-                    </button>
-                </div>
-
-                <!-- 3-MONTH CAREER SPRINT -->
-                <div class="card-surface p-6 rounded-2xl space-y-5 border-2 border-amber-500/70 shadow-lg shadow-amber-950/20">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <span class="text-[10px] font-black uppercase tracking-wider text-amber-400">Duration: 90 Days</span>
-                            <h3 class="text-lg font-extrabold text-white">3-Month Career Sprint</h3>
-                        </div>
-                        <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">Popular Tier</span>
-                    </div>
-
-                    <div class="space-y-4 text-xs">
-                        <!-- INR -->
-                        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                            <span class="font-bold text-amber-400 block">&#8377; Indian Rupee (INR)</span>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="text-[10px] text-slate-400 block mb-1">Offer Price (&#8377;)</label>
-                                    <input type="number" id="price_3m_inr" value="{{ pricing_tiers['3m'].inr_price if pricing_tiers else 1799 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
-                                </div>
-                                <div>
-                                    <label class="text-[10px] text-slate-400 block mb-1">Original Price (&#8377;)</label>
-                                    <input type="number" id="orig_3m_inr" value="{{ pricing_tiers['3m'].inr_original if pricing_tiers else 2599 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- USD -->
-                        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                            <span class="font-bold text-emerald-400 block">$ US Dollar (USD)</span>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="text-[10px] text-slate-400 block mb-1">Offer Price ($)</label>
-                                    <input type="number" step="0.01" id="price_3m_usd" value="{{ pricing_tiers['3m'].usd_price if pricing_tiers else 24.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
-                                </div>
-                                <div>
-                                    <label class="text-[10px] text-slate-400 block mb-1">Original Price ($)</label>
-                                    <input type="number" step="0.01" id="orig_3m_usd" value="{{ pricing_tiers['3m'].usd_original if pricing_tiers else 34.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- EUR & GBP -->
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-[10px] text-slate-400 block mb-1">&euro; EUR Offer</label>
-                                <input type="number" step="0.01" id="price_3m_eur" value="{{ pricing_tiers['3m'].eur_price if pricing_tiers else 24.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
-                                <input type="hidden" id="orig_3m_eur" value="{{ pricing_tiers['3m'].eur_original if pricing_tiers else 34.99 }}">
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-slate-400 block mb-1">&pound; GBP Offer</label>
-                                <input type="number" step="0.01" id="price_3m_gbp" value="{{ pricing_tiers['3m'].gbp_price if pricing_tiers else 24.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-amber-400 focus:outline-none">
-                                <input type="hidden" id="orig_3m_gbp" value="{{ pricing_tiers['3m'].gbp_original if pricing_tiers else 34.99 }}">
-                            </div>
-                        </div>
-
-                        <!-- Promotional Badging -->
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-[10px] text-slate-400 block mb-1">Discount % (e.g. 30)</label>
-                                <input type="number" id="disc_3m_pct" value="{{ pricing_tiers['3m'].discount_pct if pricing_tiers else 30 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-xs focus:border-amber-400 focus:outline-none">
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-slate-400 block mb-1">Discount Label</label>
-                                <input type="text" id="disc_3m_label" value="{{ pricing_tiers['3m'].discount_label if pricing_tiers else '30% OFF Limited Offer' }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-amber-400 focus:outline-none">
-                            </div>
-                        </div>
-                    </div>
-
-                    <button type="button" onclick="saveTierPricing('3m')" id="save-btn-3m" class="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 transition flex items-center justify-center gap-2 cursor-pointer shadow-md">
-                        <span>Save 3-Month Pricing</span>
-                    </button>
-                </div>
-
-                <!-- 6-MONTH CAREER DOMINANCE -->
-                <div class="card-surface p-6 rounded-2xl space-y-5 border border-violet-500/50 shadow-lg shadow-violet-950/20">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <span class="text-[10px] font-black uppercase tracking-wider text-violet-400">Duration: 180 Days</span>
-                            <h3 class="text-lg font-extrabold text-white">6-Month Dominance</h3>
-                        </div>
-                        <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/40">Best Value Tier</span>
-                    </div>
-
-                    <div class="space-y-4 text-xs">
-                        <!-- INR -->
-                        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                            <span class="font-bold text-violet-400 block">&#8377; Indian Rupee (INR)</span>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="text-[10px] text-slate-400 block mb-1">Offer Price (&#8377;)</label>
-                                    <input type="number" id="price_6m_inr" value="{{ pricing_tiers['6m'].inr_price if pricing_tiers else 2799 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-violet-400 focus:outline-none">
-                                </div>
-                                <div>
-                                    <label class="text-[10px] text-slate-400 block mb-1">Original Price (&#8377;)</label>
-                                    <input type="number" id="orig_6m_inr" value="{{ pricing_tiers['6m'].inr_original if pricing_tiers else 4299 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-violet-400 focus:outline-none">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- USD -->
-                        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                            <span class="font-bold text-emerald-400 block">$ US Dollar (USD)</span>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="text-[10px] text-slate-400 block mb-1">Offer Price ($)</label>
-                                    <input type="number" step="0.01" id="price_6m_usd" value="{{ pricing_tiers['6m'].usd_price if pricing_tiers else 38.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-violet-400 focus:outline-none">
-                                </div>
-                                <div>
-                                    <label class="text-[10px] text-slate-400 block mb-1">Original Price ($)</label>
-                                    <input type="number" step="0.01" id="orig_6m_usd" value="{{ pricing_tiers['6m'].usd_original if pricing_tiers else 59.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-violet-400 focus:outline-none">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- EUR & GBP -->
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-[10px] text-slate-400 block mb-1">&euro; EUR Offer</label>
-                                <input type="number" step="0.01" id="price_6m_eur" value="{{ pricing_tiers['6m'].eur_price if pricing_tiers else 38.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-violet-400 focus:outline-none">
-                                <input type="hidden" id="orig_6m_eur" value="{{ pricing_tiers['6m'].eur_original if pricing_tiers else 59.99 }}">
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-slate-400 block mb-1">&pound; GBP Offer</label>
-                                <input type="number" step="0.01" id="price_6m_gbp" value="{{ pricing_tiers['6m'].gbp_price if pricing_tiers else 38.99 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm focus:border-violet-400 focus:outline-none">
-                                <input type="hidden" id="orig_6m_gbp" value="{{ pricing_tiers['6m'].gbp_original if pricing_tiers else 59.99 }}">
-                            </div>
-                        </div>
-
-                        <!-- Promotional Badging -->
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="text-[10px] text-slate-400 block mb-1">Discount % (e.g. 35)</label>
-                                <input type="number" id="disc_6m_pct" value="{{ pricing_tiers['6m'].discount_pct if pricing_tiers else 35 }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-xs focus:border-violet-400 focus:outline-none">
-                            </div>
-                            <div>
-                                <label class="text-[10px] text-slate-400 block mb-1">Discount Label</label>
-                                <input type="text" id="disc_6m_label" value="{{ pricing_tiers['6m'].discount_label if pricing_tiers else '35% OFF Limited Offer' }}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-violet-400 focus:outline-none">
-                            </div>
-                        </div>
-                    </div>
-
-                    <button type="button" onclick="saveTierPricing('6m')" id="save-btn-6m" class="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white transition flex items-center justify-center gap-2 cursor-pointer shadow-md">
-                        <span>Save 6-Month Pricing</span>
-                    </button>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- ============================================================= -->
-        <!-- TAB 3: CANDIDATE DIRECTORY & FILTERS -->
-        <!-- ============================================================= -->
-        <div id="panel-candidates" class="hidden space-y-6">
-            <div class="card-surface p-6 rounded-2xl space-y-5">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                            <span>&#128101;</span> Registered Candidates Directory
-                        </h2>
-                        <p class="text-xs text-slate-400">Total accounts: {{ candidates|length }} candidates</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <a href="/api/admin/export-users" target="_blank" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 text-xs font-bold transition flex items-center gap-2">
-                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            Download CSV Export
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Instant Search Bar -->
-                <div class="relative">
-                    <input type="text" id="candidate-search" placeholder="Search by candidate name, email, device model, or plan..."
-                           class="w-full px-4 py-3 pl-10 bg-slate-900/90 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400">
-                    <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
-
-                <!-- Smart Multi-Filter Bar: Real vs Dummy, Recency, VIP Tier, Providers -->
-                <div class="space-y-3 bg-slate-900/40 p-4 rounded-xl border border-white/5">
-                    <!-- Quick Filter Pills Row -->
-                    <div class="space-y-1.5">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-1 block">Quick Filters:</span>
-                        <div class="flex items-center gap-2 flex-wrap text-xs">
-                            <button type="button" onclick="setQuickFilter('genuine')" id="pill-genuine" class="filter-pill active px-3.5 py-1.5 rounded-lg cursor-pointer font-bold text-emerald-300 border-emerald-500/40">
-                                &#10003; Genuine Real Candidates (<span id="count-genuine">{{ genuine_count }}</span>)
-                            </button>
-                            <button type="button" onclick="setQuickFilter('all')" id="pill-all" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer font-bold">
-                                All (Real + Test) (<span id="count-all">{{ candidates|length }}</span>)
-                            </button>
-                            <button type="button" onclick="setQuickFilter('vip')" id="pill-vip" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer font-bold">
-                                &#128081; Active VIP (<span id="count-vip">{{ vip_count }}</span>)
-                            </button>
-                            <button type="button" onclick="setQuickFilter('new')" id="pill-new" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer font-bold">
-                                &#9889; Newly Added (24h) (<span id="count-new">{{ new_count }}</span>)
-                            </button>
-                            <button type="button" onclick="setQuickFilter('dummy')" id="pill-dummy" class="filter-pill px-3 py-1.5 rounded-lg cursor-pointer font-bold text-slate-400">
-                                &#129514; Test / Seeded (<span id="count-dummy">{{ dummy_count }}</span>)
-                            </button>
-
-                            <!-- Safe 1-Click Clean of Test / Dummy Accounts -->
-                            <button type="button" onclick="triggerPurgeTestAccounts()" class="ml-auto px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold transition flex items-center gap-1.5">
-                                <span>&#128465;&#65039;</span> Clean {{ dummy_count }} Test Accounts
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Fine-Grained Dropdowns Row -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 pt-1">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Account Classification</label>
-                            <select id="filter-type" onchange="applyFilters()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-400">
-                                <option value="genuine" selected>Genuine Candidates (Hide Test / Dummy)</option>
-                                <option value="all">All Accounts (Real &amp; Test)</option>
-                                <option value="dummy">Dummy / Test Accounts Only</option>
+                            <label for="admin-grant-duration" class="block text-xs font-semibold text-[#1d1d1f] mb-1">Duration</label>
+                            <select id="admin-grant-duration" class="w-full px-3.5 py-2 bg-[#f5f5f7] border border-black/10 rounded-xl text-sm">
+                                <option value="30">30 Days (1 Month)</option>
+                                <option value="90">90 Days (3 Months)</option>
+                                <option value="180">180 Days (6 Months)</option>
+                                <option value="1">24 Hours (Day Pass)</option>
                             </select>
                         </div>
-
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Registration Date</label>
-                            <select id="filter-recency" onchange="applyFilters()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-400">
-                                <option value="all">All Time</option>
-                                <option value="24h">Newly Added (Last 24 Hours)</option>
-                                <option value="7d">Last 7 Days</option>
-                                <option value="30d">Last 30 Days</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Membership Status</label>
-                            <select id="filter-vip" onchange="applyFilters()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-400">
-                                <option value="all">All Tiers</option>
-                                <option value="vip">VIP Active Only</option>
-                                <option value="free">Standard Free Only</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Sign-In Method</label>
-                            <select id="filter-provider" onchange="applyFilters()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-400">
-                                <option value="all">All Providers</option>
-                                <option value="google">Google OAuth</option>
-                                <option value="email">Email OTP</option>
-                                <option value="pre_approved">Pre-Approved</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Candidates Table -->
-                <div class="overflow-x-auto custom-scrollbar">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
-                                <th class="py-3 px-3">Candidate</th>
-                                <th class="py-3 px-3">Classification</th>
-                                <th class="py-3 px-3">Device / Hardware</th>
-                                <th class="py-3 px-3">Membership Tier</th>
-                                <th class="py-3 px-3">VIP Expiration</th>
-                                <th class="py-3 px-3">Registered At</th>
-                                <th class="py-3 px-3 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="candidates-table-body" class="divide-y divide-slate-800/60 font-mono">
-                            {% for c in candidates %}
-                            <tr class="candidate-row hover:bg-slate-800/40 transition" 
-                                data-name="{{ c.full_name|lower }}" 
-                                data-email="{{ c.email|lower }}" 
-                                data-device="{{ c.device_display|lower }}" 
-                                data-provider="{{ c.auth_provider|lower if c.auth_provider else 'email' }}"
-                                data-is-dummy="{{ 'true' if c.is_dummy else 'false' }}"
-                                data-is-vip="{{ 'true' if c.is_paid else 'false' }}"
-                                data-is-new="{{ 'true' if c.is_new else 'false' }}"
-                                data-created="{{ c.created_at }}">
-                                <td class="py-3 px-3 font-sans">
-                                    <div class="font-bold text-white text-sm">{{ c.full_name or 'Anonymous Candidate' }}</div>
-                                    <div class="text-slate-400 text-xs font-mono">{{ c.email }}</div>
-                                </td>
-                                <td class="py-3 px-3">
-                                    {% if c.is_dummy %}
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">Test / Dummy</span>
-                                    {% else %}
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Genuine</span>
-                                    {% endif %}
-                                </td>
-                                <td class="py-3 px-3 text-slate-300 font-sans text-xs">
-                                    {{ c.device_display }}
-                                </td>
-                                <td class="py-3 px-3">
-                                    {% if c.is_paid %}
-                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40">VIP ACTIVE</span>
-                                    {% else %}
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] text-slate-400 bg-slate-900 border border-slate-800">Free Tier</span>
-                                    {% endif %}
-                                </td>
-                                <td class="py-3 px-3 text-slate-300">
-                                    {{ c.paid_until_str or 'N/A' }}
-                                </td>
-                                <td class="py-3 px-3 text-slate-400">
-                                    {{ c.created_at_str }}
-                                </td>
-                                <td class="py-3 px-3 text-right">
-                                    {% if c.is_paid %}
-                                    <button type="button" onclick="adminRevokeVip('{{ c.email }}')" class="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[11px] font-bold transition">Revoke</button>
-                                    {% else %}
-                                    <button type="button" onclick="adminGrantVip('{{ c.email }}')" class="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-bold transition">Grant VIP</button>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- ============================================================= -->
-        <!-- TAB 4: VIP GRANTS & ACCESS GOVERNANCE -->
-        <!-- ============================================================= -->
-        <div id="panel-grants" class="hidden space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Instant Grant Form Card -->
-                <div class="card-surface p-6 rounded-2xl space-y-4 border border-amber-500/30">
-                    <div class="flex items-center gap-2 text-amber-400">
-                        <span class="text-2xl">&#128081;</span>
-                        <h2 class="text-lg font-bold text-white">Grant 1-Month VIP Access to Email</h2>
-                    </div>
-                    <p class="text-xs text-slate-300 leading-relaxed">
-                        Enter any candidate email to instantly grant or extend VIP Pass access. If the candidate hasn't registered yet, a pre-approved VIP record will be created and automatically attached upon their first login.
-                    </p>
-
-                    <form id="admin-grant-form" onsubmit="handleAdminGrantSubmit(event)" class="space-y-3 pt-2">
-                        <div>
-                            <label for="admin-grant-email" class="block text-xs font-semibold text-slate-300 mb-1">Candidate Email Address</label>
-                            <input type="email" id="admin-grant-email" placeholder="candidate@example.com" required 
-                                   class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs font-mono focus:border-amber-400 focus:outline-none">
-                        </div>
-
-                        <div>
-                            <label for="admin-grant-duration" class="block text-xs font-semibold text-slate-300 mb-1">Pass Duration</label>
-                            <select id="admin-grant-duration" class="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs font-medium focus:border-amber-400 focus:outline-none">
-                                <option value="30">30 Days (1-Month VIP Pass)</option>
-                                <option value="90">90 Days (3-Month Career Sprint)</option>
-                                <option value="180">180 Days (6-Month Career Dominance)</option>
-                                <option value="1">24 Hours (Day Sprint)</option>
-                            </select>
-                        </div>
-
-                        <button type="submit" id="admin-grant-btn" class="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 hover:from-amber-300 hover:to-amber-400 transition flex items-center justify-center gap-2 cursor-pointer shadow-md">
-                            <span>Grant VIP Access Immediately</span>
+                        <button type="submit" id="admin-grant-btn" class="min-h-[38px] px-5 py-2 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-semibold cursor-pointer">
+                            Grant VIP
                         </button>
                     </form>
                 </div>
 
-                <!-- VIP Access Rules & FAQ Card -->
-                <div class="card-surface p-6 rounded-2xl space-y-4">
-                    <h3 class="text-base font-bold text-white flex items-center gap-2">
-                        <span>&#128161;</span> VIP Governance Architecture
-                    </h3>
-                    <ul class="space-y-3 text-xs text-slate-300 leading-relaxed">
-                        <li class="flex items-start gap-2">
-                            <span class="text-emerald-400 font-bold">&#10003;</span>
-                            <span><strong>Zero Rekeying Surprises:</strong> Admin grants persist across logins via local SQLite and Supabase synchronizations.</span>
-                        </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-emerald-400 font-bold">&#10003;</span>
-                            <span><strong>Strict Timestamp Expirations:</strong> Access is controlled by absolute UNIX timestamps (<code class="text-amber-300">paid_until</code>). Once elapsed, accounts automatically revert to standard tier without manual revocation.</span>
-                        </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-emerald-400 font-bold">&#10003;</span>
-                            <span><strong>Instant Revocation:</strong> Revoking access instantly downgrades the member and locks latest corporate links in all active client sessions.</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Supporter Contributions & Founder Replies Card -->
-            <div class="card-surface p-6 rounded-2xl space-y-4">
-                <div class="flex items-center justify-between">
+                <!-- Festival Pricing Controls -->
+                <div class="apple-card p-6 space-y-4">
                     <div>
-                        <h3 class="text-base font-bold text-white flex items-center gap-2">
-                            <span>&#9749;</span> Supporter Contributions &amp; Community Messages
-                        </h3>
-                        <p class="text-xs text-slate-400">View voluntary candidate coffee contributions and publish official founder replies to the live community feed.</p>
+                        <h3 class="text-base font-bold text-[#1d1d1f]">Festival &amp; Regional Pricing</h3>
+                        <p class="text-xs text-[#6e6e73]">Updates go live immediately on checkout without altering existing active VIP members.</p>
                     </div>
-                    <span class="text-xs font-bold px-3 py-1 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30">{{ contributions|length if contributions else 0 }} Messages</span>
-                </div>
-
-                <div class="space-y-3">
-                    {% for item in contributions or [] %}
-                    <div class="p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-3" id="contrib-row-{{ item.id }}">
-                        <div class="flex items-center justify-between text-xs">
-                            <div class="flex items-center gap-2">
-                                <span class="font-extrabold text-white">{{ item.supporter_name or item.name or 'Generous Candidate' }}</span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">&#8377;{{ item.amount_inr }} Contribution</span>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        {% for tid, label, dur, def_inr, def_orig_inr, def_usd, def_orig_usd, def_disc in [
+                            ('1m', '1-Month Pass', '30 Days', 699, 699, 19.99, 19.99, 0),
+                            ('3m', '3-Month Sprint', '90 Days', 1799, 2599, 49.99, 69.99, 30),
+                            ('6m', '6-Month Pro', '180 Days', 2799, 4299, 79.99, 129.99, 35)
+                        ] %}
+                        <div class="p-5 rounded-2xl bg-[#f5f5f7] border border-black/5 space-y-3 text-xs">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-sm font-bold text-[#1d1d1f]">{{ label }}</h4>
+                                <span class="text-[11px] font-medium text-[#6e6e73]">{{ dur }}</span>
                             </div>
-                            <span class="text-[11px] text-slate-500">{{ item.plan_name }}</span>
-                        </div>
-
-                        {% if item.message %}
-                        <div class="p-3 bg-slate-950/80 rounded-lg border border-slate-800/80 text-xs text-slate-300 leading-relaxed italic">
-                            "{{ item.message }}"
-                        </div>
-                        {% endif %}
-
-                        <!-- Existing Founder Reply or Reply Form -->
-                        {% if item.admin_reply %}
-                        <div class="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs space-y-1">
-                            <div class="flex items-center justify-between text-[11px] font-bold text-amber-400">
-                                <span>&#127792; Founder Response (Published)</span>
-                                <span class="text-emerald-400">&#10003; Live on platform</span>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label for="price_{{ tid }}_inr" class="block text-[11px] font-medium text-[#6e6e73] mb-1">INR Offer (&#8377;)</label>
+                                    <input type="number" id="price_{{ tid }}_inr" value="{{ pricing_tiers[tid].inr_price if pricing_tiers else def_inr }}" class="w-full px-2.5 py-1.5 bg-white border border-black/10 rounded-lg font-mono">
+                                </div>
+                                <div>
+                                    <label for="orig_{{ tid }}_inr" class="block text-[11px] font-medium text-[#6e6e73] mb-1">INR Crossed (&#8377;)</label>
+                                    <input type="number" id="orig_{{ tid }}_inr" value="{{ pricing_tiers[tid].inr_original if pricing_tiers else def_orig_inr }}" class="w-full px-2.5 py-1.5 bg-white border border-black/10 rounded-lg font-mono">
+                                </div>
+                                <div>
+                                    <label for="price_{{ tid }}_usd" class="block text-[11px] font-medium text-[#6e6e73] mb-1">USD Offer ($)</label>
+                                    <input type="number" step="0.01" id="price_{{ tid }}_usd" value="{{ pricing_tiers[tid].usd_price if pricing_tiers else def_usd }}" class="w-full px-2.5 py-1.5 bg-white border border-black/10 rounded-lg font-mono">
+                                </div>
+                                <div>
+                                    <label for="orig_{{ tid }}_usd" class="block text-[11px] font-medium text-[#6e6e73] mb-1">USD Crossed ($)</label>
+                                    <input type="number" step="0.01" id="orig_{{ tid }}_usd" value="{{ pricing_tiers[tid].usd_original if pricing_tiers else def_orig_usd }}" class="w-full px-2.5 py-1.5 bg-white border border-black/10 rounded-lg font-mono">
+                                </div>
+                                <div>
+                                    <label for="price_{{ tid }}_eur" class="block text-[11px] font-medium text-[#6e6e73] mb-1">EUR Offer (&euro;)</label>
+                                    <input type="number" step="0.01" id="price_{{ tid }}_eur" value="{{ pricing_tiers[tid].eur_price if pricing_tiers else def_usd }}" class="w-full px-2.5 py-1.5 bg-white border border-black/10 rounded-lg font-mono">
+                                    <input type="hidden" id="orig_{{ tid }}_eur" value="{{ pricing_tiers[tid].eur_original if pricing_tiers else def_orig_usd }}">
+                                </div>
+                                <div>
+                                    <label for="price_{{ tid }}_gbp" class="block text-[11px] font-medium text-[#6e6e73] mb-1">GBP Offer (&pound;)</label>
+                                    <input type="number" step="0.01" id="price_{{ tid }}_gbp" value="{{ pricing_tiers[tid].gbp_price if pricing_tiers else def_usd }}" class="w-full px-2.5 py-1.5 bg-white border border-black/10 rounded-lg font-mono">
+                                    <input type="hidden" id="orig_{{ tid }}_gbp" value="{{ pricing_tiers[tid].gbp_original if pricing_tiers else def_orig_usd }}">
+                                </div>
+                                <div>
+                                    <label for="disc_{{ tid }}_pct" class="block text-[11px] font-medium text-[#6e6e73] mb-1">Discount %</label>
+                                    <input type="number" id="disc_{{ tid }}_pct" value="{{ pricing_tiers[tid].discount_pct if pricing_tiers else def_disc }}" class="w-full px-2.5 py-1.5 bg-white border border-black/10 rounded-lg font-mono">
+                                </div>
+                                {% if tid == '1m' %}
+                                <div>
+                                    <label for="badge_1m_text" class="block text-[11px] font-medium text-[#6e6e73] mb-1">Festival / Badge Text</label>
+                                    <input type="text" id="badge_1m_text" value="{{ pricing_tiers['1m'].badge_text if pricing_tiers else 'Standard VIP' }}" class="w-full px-2.5 py-1.5 bg-white border border-black/10 rounded-lg">
+                                </div>
+                                {% else %}
+                                <div>
+                                    <label for="disc_{{ tid }}_label" class="block text-[11px] font-medium text-[#6e6e73] mb-1">Festival / Offer Label</label>
+                                    <input type="text" id="disc_{{ tid }}_label" value="{{ pricing_tiers[tid].discount_label if pricing_tiers else (def_disc ~ '% OFF') }}" class="w-full px-2.5 py-1.5 bg-white border border-black/10 rounded-lg">
+                                </div>
+                                {% endif %}
                             </div>
-                            <p class="text-slate-200">"{{ item.admin_reply }}"</p>
-                        </div>
-                        {% else %}
-                        <form onsubmit="handleContributionReply(event, '{{ item.id }}')" class="flex items-center gap-2 pt-1">
-                            <input type="text" id="reply-input-{{ item.id }}" placeholder="Write a warm founder reply to display on the platform..." required
-                                   class="flex-1 px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs placeholder-slate-500 focus:outline-none focus:border-amber-400">
-                            <button type="submit" id="reply-btn-{{ item.id }}" class="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs rounded-lg transition shrink-0 cursor-pointer shadow-sm">
-                                Post Reply
+                            <button type="button" onclick="saveTierPricing('{{ tid }}')" id="save-btn-{{ tid }}"
+                                    class="w-full min-h-[36px] py-2 rounded-full bg-[#1d1d1f] hover:bg-black text-white font-semibold cursor-pointer">
+                                Save {{ tid|upper }} Offer
                             </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Paid Transactions Ledger -->
+                <div class="apple-card p-6 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-base font-bold text-[#1d1d1f]">Paid Orders ({{ paid_orders }} Verified)</h3>
+                            <p class="text-xs text-[#6e6e73]">VIP Passes: &#8377;{{ "%.0f"|format(revenue_analytics.summary.vip_revenue_inr or 0) }} &bull; Currency mix: INR {{ revenue_analytics.summary.currencies.INR }}, USD {{ revenue_analytics.summary.currencies.USD }}, EUR {{ revenue_analytics.summary.currencies.EUR }}, GBP {{ revenue_analytics.summary.currencies.GBP }}</p>
+                        </div>
+                    </div>
+                    <div tabindex="0" role="region" aria-labelledby="ledger-cap" class="table-wrapper responsive-stack">
+                        <table class="data-table">
+                            <caption id="ledger-cap">Captured Razorpay transactions</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Payment ID</th>
+                                    <th scope="col">Plan</th>
+                                    <th scope="col">Candidate</th>
+                                    <th scope="col" class="text-right">Amount</th>
+                                    <th scope="col">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for txn in revenue_analytics.transactions or [] %}
+                                <tr>
+                                    <th scope="row" class="font-mono text-xs text-[#0071e3] select-all">{{ txn.payment_id }}</th>
+                                    <td data-label="Plan">{{ txn.plan_name }}</td>
+                                    <td data-label="Candidate">{{ txn.supporter_name }}</td>
+                                    <td data-label="Amount" class="text-right font-bold text-[#248a3d] tabular-nums">{{ txn.amount_formatted }}</td>
+                                    <td data-label="Date" class="text-xs text-[#6e6e73]">{{ txn.created_at_str }}</td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="5" class="text-center py-6 text-xs text-[#6e6e73]">No captured orders yet.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- 4. SETTINGS: PIXEL, UTM LINK GENERATOR & CLEANUP                  -->
+        <!-- ================================================================= -->
+        <section id="panel-settings" role="tabpanel" aria-labelledby="tab-btn-settings" hidden>
+            <div class="space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight text-[#1d1d1f]">Platform Settings</h2>
+                    <p class="text-sm text-[#6e6e73] mt-0.5">Meta Pixel tracking, campaign UTM builder &amp; database hygiene.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <div class="apple-card p-6 space-y-3">
+                        <h3 class="text-base font-bold text-[#1d1d1f]">Meta Pixel ID</h3>
+                        <form onsubmit="handleMetaPixelSave(event)" class="space-y-3">
+                            <label for="admin-meta-pixel-input" class="block text-xs font-medium text-[#6e6e73]">Active Dataset / Pixel ID</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="admin-meta-pixel-input" value="{{ meta_pixel_id or '' }}" placeholder="990596014125026"
+                                       class="flex-1 px-3.5 py-2 bg-[#f5f5f7] border border-black/10 rounded-xl text-sm font-mono">
+                                <button type="submit" id="admin-meta-pixel-btn" class="px-5 py-2 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-semibold cursor-pointer">Save</button>
+                            </div>
                         </form>
-                        {% endif %}
                     </div>
-                    {% else %}
-                    <p class="text-xs text-slate-500 py-4 text-center">No community contributions recorded yet.</p>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
 
-        <!-- ============================================================= -->
-        <!-- TAB 5: SECURITY SHIELD & HARDWARE ANALYTICS -->
-        <!-- ============================================================= -->
-        <div id="panel-security" class="hidden space-y-6">
-            <!-- Hardware & Device Breakdown -->
-            <div class="card-surface p-6 rounded-2xl space-y-4">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                    <span>&#128241;</span> Device & Hardware Breakdown
-                </h3>
-                <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2 text-xs">
-                    <span class="font-bold text-slate-400 uppercase tracking-wider block">Candidate Devices &amp; Hardware Models</span>
-                    <div class="space-y-1">
-                        {% for dev in analytics.hardware_devices or [] %}
-                        <div class="flex items-center justify-between py-1.5 border-b border-slate-800">
-                            <span class="text-white font-medium">{{ dev.brand or 'Generic' }} &bull; {{ dev.model or 'Desktop Browser' }}</span>
-                            <span class="font-mono text-emerald-400 font-bold">{{ dev.hits }} candidate visits</span>
+                    <div class="apple-card p-6 space-y-3">
+                        <h3 class="text-base font-bold text-[#1d1d1f]">Campaign UTM Link Builder</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="utm-src-select" class="block text-xs font-medium text-[#6e6e73] mb-1">Channel</label>
+                                <select id="utm-src-select" onchange="updateAdUtmPreview()" class="w-full px-3 py-2 bg-[#f5f5f7] border border-black/10 rounded-xl text-xs">
+                                    <option value="meta">Meta Ads</option>
+                                    <option value="instagram">Instagram</option>
+                                    <option value="facebook">Facebook</option>
+                                    <option value="google">Google</option>
+                                    <option value="linkedin">LinkedIn</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="utm-camp-input" class="block text-xs font-medium text-[#6e6e73] mb-1">Campaign Tag</label>
+                                <input type="text" id="utm-camp-input" value="in_precision_20_35" oninput="updateAdUtmPreview()"
+                                       class="w-full px-3 py-2 bg-[#f5f5f7] border border-black/10 rounded-xl text-xs font-mono">
+                            </div>
                         </div>
-                        {% else %}
-                        <p class="text-slate-500 py-2">No hardware visits recorded yet.</p>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Route Intelligence & Security Shield -->
-            <div class="card-surface p-6 rounded-2xl space-y-4">
-                <div class="flex items-center justify-between flex-wrap gap-2">
-                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                        <span>&#128737;&#65039;</span> Bot Interception &amp; Route Telemetry
-                    </h3>
-                    <div class="flex items-center gap-2">
-                        <button type="button" id="tab-btn-verified" onclick="switchRouteTab('verified')" class="px-3 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950">Verified Candidate Routes</button>
-                        <button type="button" id="tab-btn-probes" onclick="switchRouteTab('probes')" class="px-3 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white bg-slate-800">Security Probes Blocked</button>
+                        <div class="flex gap-2">
+                            <label for="utm-url-preview" class="visually-hidden">Generated UTM URL</label>
+                            <input type="text" id="utm-url-preview" readonly value="https://almondjobs.com/?utm_source=meta&utm_medium=paid_social&utm_campaign=in_precision_20_35"
+                                   class="flex-1 px-3 py-2 bg-[#f5f5f7] border border-black/10 rounded-xl text-xs font-mono text-[#6e6e73]">
+                            <button type="button" onclick="copyAdUtmPreview()" class="px-4 py-2 rounded-full bg-[#1d1d1f] text-white text-xs font-semibold cursor-pointer">Copy</button>
+                        </div>
                     </div>
                 </div>
 
-                <div id="table-verified-routes" class="overflow-x-auto custom-scrollbar">
-                    <table class="w-full text-left text-xs font-mono">
-                        <thead>
-                            <tr class="border-b border-slate-800 text-slate-400 font-sans uppercase">
-                                <th class="py-2 px-3">Path</th>
-                                <th class="py-2 px-3 text-right">Hits</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-800/40">
-                            {% for page in analytics.top_pages or [] %}
-                            <tr>
-                                <td class="py-2 px-3 text-slate-200">{{ page.path }}</td>
-                                <td class="py-2 px-3 text-right text-amber-400 font-bold">{{ page.views }}</td>
-                            </tr>
-                            {% else %}
-                            <tr><td colspan="2" class="py-2 px-3 text-slate-500">No route visits yet.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div id="table-probes-routes" class="overflow-x-auto custom-scrollbar hidden">
-                    <table class="w-full text-left text-xs font-mono">
-                        <thead>
-                            <tr class="border-b border-slate-800 text-slate-400 font-sans uppercase">
-                                <th class="py-2 px-3">Blocked Scanner Path</th>
-                                <th class="py-2 px-3 text-right">Interceptions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-800/40">
-                            {% for probe in analytics.top_blocked_probes or [] %}
-                            <tr class="text-rose-400">
-                                <td class="py-2 px-3">{{ probe.path }}</td>
-                                <td class="py-2 px-3 text-right font-bold">{{ probe.hits }}</td>
-                            </tr>
-                            {% else %}
-                            <tr><td colspan="2" class="py-2 px-3 text-slate-500">No scanner probes intercepted yet.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- ============================================================= -->
-        <!-- TAB 6: CANDIDATE FEEDBACK INBOX -->
-        <!-- ============================================================= -->
-        <div id="panel-feedback" class="hidden space-y-6">
-            <div class="card-surface p-6 rounded-2xl space-y-4">
-                <div class="flex items-center justify-between flex-wrap gap-3">
+                <div class="apple-card p-6 flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                            <span>💡</span> Candidate Feedback &amp; Feature Inbox
-                        </h3>
-                        <p class="text-xs text-slate-400">Broken links, crawler requests, feature suggestions, and verified offer celebrations.</p>
+                        <h3 class="text-base font-bold text-[#1d1d1f]">Database Hygiene</h3>
+                        <p class="text-xs text-[#6e6e73]">{{ dummy_count }} synthetic test account{{ 's' if dummy_count != 1 else '' }} detected (hidden from main metrics).</p>
                     </div>
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <button type="button" onclick="filterAdminFeedback('all')" id="fb-btn-all" class="px-3 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950 cursor-pointer">All ({{ (feedback_items or [])|length }})</button>
-                        <button type="button" onclick="filterAdminFeedback('broken_link')" id="fb-btn-broken" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white cursor-pointer">Broken Links</button>
-                        <button type="button" onclick="filterAdminFeedback('crawl_request')" id="fb-btn-crawl" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white cursor-pointer">Company Requests</button>
-                        <button type="button" onclick="filterAdminFeedback('feature_suggestion')" id="fb-btn-feat" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white cursor-pointer">Feature Ideas</button>
-                        <button type="button" onclick="filterAdminFeedback('praise_hired')" id="fb-btn-hired" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white cursor-pointer">🎉 Hired / Praise</button>
-                    </div>
-                </div>
-
-                <div id="admin-feedback-container" class="space-y-4 pt-2">
-                    {% for item in feedback_items or [] %}
-                    <div class="feedback-card p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-3" data-category="{{ item.category }}" data-status="{{ item.status }}">
-                        <div class="flex items-center justify-between flex-wrap gap-2">
-                            <div class="flex items-center gap-2">
-                                {% if item.category == 'broken_link' %}
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-950 text-rose-400 border border-rose-800">🔗 Broken Link</span>
-                                {% elif item.category == 'crawl_request' %}
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-950 text-blue-400 border border-blue-800">🏢 Crawl Request</span>
-                                {% elif item.category == 'praise_hired' %}
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">🎉 Hired / Offer</span>
-                                {% else %}
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-950 text-purple-400 border border-purple-800">💡 Feature Idea</span>
-                                {% endif %}
-
-                                {% if item.hired_company %}
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-400 border border-amber-800">Joined: {{ item.hired_company }}</span>
-                                {% endif %}
-
-                                <span class="text-[11px] text-amber-400 font-bold">{% for _ in range(item.rating or 5) %}★{% endfor %}</span>
-                            </div>
-                            <div class="flex items-center gap-2 text-xs text-slate-400">
-                                {% if item.status == 'resolved' %}
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">🟢 Replied</span>
-                                {% else %}
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-400 border border-amber-800">🟡 Pending</span>
-                                {% endif %}
-                                <span class="text-[11px]">{{ item.created_at_str }}</span>
-                            </div>
-                        </div>
-
-                        <div class="text-xs text-slate-200 leading-relaxed font-sans">
-                            {{ item.message }}
-                        </div>
-
-                        {% if item.page_url %}
-                        <div class="text-[11px] text-slate-400 font-mono">
-                            Reported from: <a href="{{ item.page_url }}" target="_blank" class="text-violet-400 underline">{{ item.page_url }}</a>
-                        </div>
-                        {% endif %}
-
-                        <div class="text-[11px] text-slate-500 font-mono">
-                            Candidate: {{ item.user_email or item.user_id or 'Anonymous' }}
-                        </div>
-
-                        <!-- Admin Reply Area -->
-                        <div class="pt-2 border-t border-slate-800/80">
-                            {% if item.admin_reply %}
-                            <div class="p-2.5 rounded-lg bg-violet-950/40 border border-violet-800/50 text-xs space-y-1">
-                                <div class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Founder / Admin Response:</div>
-                                <div class="text-slate-200">{{ item.admin_reply }}</div>
-                            </div>
-                            {% else %}
-                            <div class="flex items-center gap-2" id="reply-box-{{ item.id }}">
-                                <input type="text" id="reply-input-{{ item.id }}" placeholder="Type founder reply to candidate..." class="flex-1 px-3 py-1.5 text-xs rounded-lg bg-slate-950 border border-slate-800 text-white focus:outline-none focus:border-amber-400">
-                                <button type="button" onclick="sendAdminFeedbackReply({{ item.id }})" class="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold transition cursor-pointer">
-                                    Send Reply
-                                </button>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-12 text-slate-500 text-xs">
-                        No candidate feedback received yet. New submissions will appear here live.
-                    </div>
-                    {% endfor %}
+                    <button type="button" onclick="openConfirmModal('Clean Test Accounts', 'Delete {{ dummy_count }} test accounts? Genuine candidate profiles are never affected.', triggerPurgeTestAccounts)"
+                            class="min-h-[36px] px-4 py-1.5 rounded-full border border-[#ffd6d9] bg-[#fff2f2] hover:bg-[#ffe5e7] text-[#d70015] text-xs font-semibold cursor-pointer">
+                        Purge {{ dummy_count }} Test Accounts
+                    </button>
                 </div>
             </div>
-        </div>
-
-        <!-- ============================================================= -->
-        <!-- TAB 7: REVENUE & GATEWAY ANALYTICS -->
-        <!-- ============================================================= -->
-        <div id="panel-revenue" class="hidden space-y-6">
-            <!-- Revenue Summary KPIs -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="card-surface p-5 rounded-2xl border-l-4 border-emerald-500 space-y-1">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Verified Revenue</span>
-                    <div class="text-2xl font-black text-white">₹{{ "%.0f"|format(revenue_analytics.summary.total_revenue_inr or 0) }}</div>
-                    <span class="text-[11px] text-emerald-400 font-semibold">{{ revenue_analytics.summary.total_orders or 0 }} successful transactions</span>
-                </div>
-                <div class="card-surface p-5 rounded-2xl border-l-4 border-violet-500 space-y-1">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">VIP Pass Subscriptions</span>
-                    <div class="text-2xl font-black text-violet-400">₹{{ "%.0f"|format(revenue_analytics.summary.vip_revenue_inr or 0) }}</div>
-                    <span class="text-[11px] text-violet-300 font-semibold">{{ revenue_analytics.summary.vip_orders or 0 }} VIP passes (1m, 3m, 6m)</span>
-                </div>
-                <div class="card-surface p-5 rounded-2xl border-l-4 border-amber-500 space-y-1">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Voluntary Coffee Support</span>
-                    <div class="text-2xl font-black text-amber-400">₹{{ "%.0f"|format(revenue_analytics.summary.coffee_revenue_inr or 0) }}</div>
-                    <span class="text-[11px] text-amber-300 font-semibold">{{ revenue_analytics.summary.coffee_orders or 0 }} contributions</span>
-                </div>
-                <div class="card-surface p-5 rounded-2xl border-l-4 border-blue-500 space-y-1">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Currency Mix</span>
-                    <div class="text-sm font-bold text-white pt-1">
-                        INR: {{ revenue_analytics.summary.currencies.INR }} &bull; USD: {{ revenue_analytics.summary.currencies.USD }}
-                    </div>
-                    <span class="text-[11px] text-slate-400">EUR: {{ revenue_analytics.summary.currencies.EUR }} &bull; GBP: {{ revenue_analytics.summary.currencies.GBP }}</span>
-                </div>
-            </div>
-
-            <!-- Visual Daily Revenue Chart (SVG Graphic) -->
-            <div class="card-surface p-6 rounded-2xl space-y-4">
-                <div class="flex items-center justify-between flex-wrap gap-2">
-                    <div>
-                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                            <span>📈</span> Daily Revenue Trends (VIP Pass vs Coffee Contributions)
-                        </h3>
-                        <p class="text-xs text-slate-400">Cryptographically verified daily inflow across all payment tiers.</p>
-                    </div>
-                    <div class="flex items-center gap-4 text-xs font-semibold">
-                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-violet-500 inline-block"></span> VIP Pass</span>
-                        <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-amber-400 inline-block"></span> Coffee Support</span>
-                    </div>
-                </div>
-
-                <!-- Responsive CSS/SVG Bar Chart -->
-                <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 overflow-x-auto custom-scrollbar">
-                    <div class="min-w-[600px] h-48 flex items-end gap-2 pt-6 pb-2 px-2 border-b border-slate-800">
-                        {% for day in revenue_analytics.daily_trends or [] %}
-                        {% set total_day = day.total_inr or 0 %}
-                        {% set bar_height = [[(total_day / 50)|int, 8]|max, 160]|min if total_day > 0 else 4 %}
-                        <div class="flex-1 flex flex-col items-center gap-1 group relative">
-                            <!-- Tooltip -->
-                            <div class="hidden group-hover:block absolute bottom-full mb-2 bg-slate-950 border border-slate-700 text-white text-[10px] p-2 rounded-lg shadow-xl z-20 whitespace-nowrap">
-                                <div class="font-bold">{{ day.date }}</div>
-                                <div class="text-violet-400">VIP: ₹{{ day.vip_inr|int }}</div>
-                                <div class="text-amber-400">Coffee: ₹{{ day.coffee_inr|int }}</div>
-                                <div class="text-emerald-400 font-bold border-t border-slate-800 mt-1 pt-1">Total: ₹{{ day.total_inr|int }} ({{ day.count }} orders)</div>
-                            </div>
-                            <!-- Stacked bar -->
-                            <div class="w-full max-w-[28px] rounded-t flex flex-col justify-end overflow-hidden" style="height: {{ bar_height }}px;">
-                                {% if day.coffee_inr > 0 %}
-                                <div class="bg-amber-400 w-full" style="height: {{ [(day.coffee_inr / (total_day or 1) * 100)|int, 15]|max }}%;"></div>
-                                {% endif %}
-                                {% if day.vip_inr > 0 %}
-                                <div class="bg-violet-600 w-full flex-1"></div>
-                                {% endif %}
-                                {% if total_day == 0 %}
-                                <div class="bg-slate-800 w-full h-full"></div>
-                                {% endif %}
-                            </div>
-                            <span class="text-[9px] text-slate-500 font-mono truncate w-12 text-center">{{ day.date[-5:] }}</span>
-                        </div>
-                        {% else %}
-                        <div class="w-full text-center py-12 text-slate-500 text-xs">No daily revenue recorded yet.</div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Cryptographically Verified Transaction Ledger -->
-            <div class="card-surface p-6 rounded-2xl space-y-4">
-                <div class="flex items-center justify-between flex-wrap gap-2">
-                    <div>
-                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                            <span>🛡️</span> Verified Gateway Transaction Ledger
-                        </h3>
-                        <p class="text-xs text-slate-400">Every row contains verified Razorpay HMAC SHA-256 signatures. Direct mathematical proof of payment without opening the Razorpay dashboard.</p>
-                    </div>
-                    <span class="text-xs font-mono font-bold text-emerald-400 px-3 py-1 rounded-lg bg-emerald-950/60 border border-emerald-800">
-                        100% HMAC Verified
-                    </span>
-                </div>
-
-                <div class="overflow-x-auto custom-scrollbar">
-                    <table class="w-full text-left text-xs font-mono">
-                        <thead>
-                            <tr class="border-b border-slate-800 text-slate-400 font-sans uppercase">
-                                <th class="py-3 px-3">Payment ID</th>
-                                <th class="py-3 px-3">Order ID</th>
-                                <th class="py-3 px-3">Product / Tier</th>
-                                <th class="py-3 px-3">Candidate / Supporter</th>
-                                <th class="py-3 px-3 text-right">Amount</th>
-                                <th class="py-3 px-3">Timestamp</th>
-                                <th class="py-3 px-3 text-center">HMAC Gateway Status</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-800/40">
-                            {% for txn in revenue_analytics.transactions or [] %}
-                            <tr>
-                                <td class="py-2.5 px-3 text-amber-400 font-bold select-all">{{ txn.payment_id }}</td>
-                                <td class="py-2.5 px-3 text-slate-400 select-all">{{ txn.order_id }}</td>
-                                <td class="py-2.5 px-3 text-slate-200">
-                                    {% if txn.product_type == 'Coffee Support' %}
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-950 text-amber-400 border border-amber-800">☕ {{ txn.plan_name }}</span>
-                                    {% else %}
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-950 text-violet-400 border border-violet-800">👑 {{ txn.plan_name }}</span>
-                                    {% endif %}
-                                </td>
-                                <td class="py-2.5 px-3 text-slate-300 font-sans truncate max-w-[160px]">{{ txn.supporter_name }}</td>
-                                <td class="py-2.5 px-3 text-right font-bold text-emerald-400 font-sans">{{ txn.amount_formatted }}</td>
-                                <td class="py-2.5 px-3 text-slate-400 font-sans text-[11px]">{{ txn.created_at_str }}</td>
-                                <td class="py-2.5 px-3 text-center">
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
-                                        <span>🛡️</span> Verified Captured
-                                    </span>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr><td colspan="7" class="py-4 px-3 text-center text-slate-500 font-sans">No captured transactions yet.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        </section>
     </main>
 
-    <!-- Executive Footer -->
-    <footer class="card-surface border-t border-white/10 px-6 py-4 text-center text-xs text-slate-500">
-        Almond Jobs Telemetry &bull; Internal High-Performance Engine &bull; Zero Third-Party Tracker Reliance
+    <!-- NATIVE DIALOG: SEND LAST OFFER EMAIL / TARGETED POPUP -->
+    <dialog id="recovery-offer-dialog" aria-labelledby="recovery-dialog-title" class="rounded-2xl p-6 max-w-md w-full border border-black/10 shadow-2xl bg-white">
+        <form onsubmit="submitRecoveryOffer(event)" class="space-y-4">
+            <div class="flex items-start justify-between gap-2">
+                <div>
+                    <h2 id="recovery-dialog-title" class="text-lg font-bold text-[#1d1d1f]">Send Last-Chance Offer</h2>
+                    <p id="recovery-target-label" class="text-xs font-mono text-[#6e6e73] mt-0.5"></p>
+                </div>
+                <button type="button" onclick="closeRecoveryModal()" aria-label="Close modal" class="text-[#6e6e73] hover:text-[#1d1d1f] text-lg leading-none cursor-pointer">&times;</button>
+            </div>
+
+            <input type="hidden" id="rec-email">
+            <input type="hidden" id="rec-name">
+
+            <div>
+                <label for="rec-mode" class="block text-xs font-semibold text-[#1d1d1f] mb-1">Delivery Method</label>
+                <select id="rec-mode" class="w-full px-3 py-2 bg-[#f5f5f7] border border-black/10 rounded-xl text-xs">
+                    <option value="both">Send Email + Arm Next-Visit Popup</option>
+                    <option value="popup">Arm Next-Visit Popup Only</option>
+                    <option value="email">Send Email Only</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="rec-headline" class="block text-xs font-semibold text-[#1d1d1f] mb-1">Offer Headline</label>
+                <input type="text" id="rec-headline" required value="Final Offer: Unlock Almond Jobs Pro Today"
+                       class="w-full px-3 py-2 bg-[#f5f5f7] border border-black/10 rounded-xl text-xs">
+            </div>
+
+            <div>
+                <label for="rec-message" class="block text-xs font-semibold text-[#1d1d1f] mb-1">Offer Message</label>
+                <textarea id="rec-message" rows="3" required class="w-full px-3 py-2 bg-[#f5f5f7] border border-black/10 rounded-xl text-xs">We saved your spot on Almond Jobs. Complete your Pro upgrade today to unlock direct global and remote company portals before this limited offer closes.</textarea>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeRecoveryModal()" class="min-h-[36px] px-4 py-1.5 rounded-full border border-black/15 text-xs font-semibold text-[#1d1d1f] cursor-pointer">Cancel</button>
+                <button type="submit" id="rec-submit-btn" class="min-h-[36px] px-5 py-1.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-semibold cursor-pointer">Send Offer</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- NATIVE DIALOG: CONFIRM DESTRUCTIVE/VIP ACTION -->
+    <dialog id="admin-confirm-dialog" aria-labelledby="confirm-dialog-title" class="rounded-2xl p-6 max-w-sm w-full border border-black/10 shadow-2xl bg-white">
+        <div class="space-y-4">
+            <h2 id="confirm-dialog-title" class="text-base font-bold text-[#1d1d1f]">Confirm Action</h2>
+            <p id="confirm-dialog-body" class="text-xs text-[#6e6e73] leading-relaxed"></p>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeConfirmModal()" class="min-h-[36px] px-4 py-1.5 rounded-full border border-black/15 text-xs font-semibold text-[#1d1d1f] cursor-pointer">Cancel</button>
+                <button type="button" id="confirm-dialog-proceed" class="min-h-[36px] px-4 py-1.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-semibold cursor-pointer">Confirm</button>
+            </div>
+        </div>
+    </dialog>
+
+    <footer class="border-t border-black/8 bg-white px-6 py-4 text-center text-xs text-[#86868b]">
+        Almond Jobs &bull; Enterprise Executive Console
     </footer>
 
-    <!-- Interactive Dashboard Script -->
     <script>
         const ADMIN_KEY = "{{ admin_key }}";
+        const TAB_KEYS = ['overview', 'users', 'vip', 'settings'];
+        let pendingConfirmAction = null;
+        let currentUserFilter = 'all';
 
-        // --- TAB SWITCHER CONTROLLER ---
+        function notifyStatus(msg) {
+            const box = document.getElementById('admin-live-status');
+            const text = document.getElementById('admin-live-status-text');
+            if (!box || !text) return;
+            text.textContent = msg;
+            box.classList.remove('hidden');
+            clearTimeout(window.__toastTimer);
+            window.__toastTimer = setTimeout(() => box.classList.add('hidden'), 4500);
+        }
+
+        function openConfirmModal(title, message, onConfirm) {
+            document.getElementById('confirm-dialog-title').textContent = title;
+            document.getElementById('confirm-dialog-body').textContent = message;
+            pendingConfirmAction = onConfirm;
+            document.getElementById('admin-confirm-dialog')?.showModal();
+        }
+        function closeConfirmModal() {
+            pendingConfirmAction = null;
+            document.getElementById('admin-confirm-dialog')?.close();
+        }
+        document.getElementById('confirm-dialog-proceed')?.addEventListener('click', () => {
+            const fn = pendingConfirmAction;
+            closeConfirmModal();
+            if (typeof fn === 'function') fn();
+        });
+
+        window.openRecoveryModal = function(email, name) {
+            document.getElementById('rec-email').value = email;
+            document.getElementById('rec-name').value = name || 'Candidate';
+            document.getElementById('recovery-target-label').textContent = email;
+            document.getElementById('recovery-offer-dialog')?.showModal();
+        };
+        window.closeRecoveryModal = function() {
+            document.getElementById('recovery-offer-dialog')?.close();
+        };
+        window.submitRecoveryOffer = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('rec-submit-btn');
+            if (btn) btn.disabled = true;
+            const payload = {
+                email: document.getElementById('rec-email')?.value || '',
+                name: document.getElementById('rec-name')?.value || 'Candidate',
+                mode: document.getElementById('rec-mode')?.value || 'both',
+                headline: document.getElementById('rec-headline')?.value || '',
+                message: document.getElementById('rec-message')?.value || '',
+                key: ADMIN_KEY
+            };
+            try {
+                const resp = await fetch('/api/admin/send-recovery-offer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+                    body: JSON.stringify(payload)
+                });
+                const data = await resp.json().catch(() => ({}));
+                closeRecoveryModal();
+                notifyStatus(data.message || data.detail || (resp.ok ? 'Offer sent.' : 'Failed'));
+                if (resp.ok) setTimeout(() => window.location.reload(), 900);
+            } catch (err) {
+                notifyStatus('Error: ' + err.message);
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        };
+
         window.switchAdminTab = function(tabName) {
-            const tabs = ['overview', 'pricing', 'candidates', 'grants', 'security', 'feedback', 'revenue'];
-            tabs.forEach(function(t) {
+            if (!TAB_KEYS.includes(tabName)) tabName = 'overview';
+            TAB_KEYS.forEach(t => {
                 const btn = document.getElementById('tab-btn-' + t);
                 const panel = document.getElementById('panel-' + t);
+                const selected = (t === tabName);
                 if (btn) {
-                    if (t === tabName) {
-                        btn.className = 'tab-btn active px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer';
-                    } else {
-                        btn.className = 'tab-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shrink-0 cursor-pointer';
-                    }
+                    btn.setAttribute('aria-selected', selected ? 'true' : 'false');
+                    btn.setAttribute('tabindex', selected ? '0' : '-1');
+                    if (selected) btn.scrollIntoView({ block: 'nearest', inline: 'nearest' });
                 }
-                if (panel) {
-                    if (t === tabName) {
-                        panel.classList.remove('hidden');
-                    } else {
-                        panel.classList.add('hidden');
-                    }
-                }
+                if (panel) panel.hidden = !selected;
             });
             sessionStorage.setItem('almond_admin_active_tab', tabName);
         };
 
-        // Restore tab on load
+        window.jumpToAbandonedRecovery = function() {
+            switchAdminTab('users');
+            setUserFilter('abandoned');
+        };
+
+        document.querySelector('[role="tablist"]')?.addEventListener('keydown', (e) => {
+            const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+            const idx = tabs.indexOf(document.activeElement);
+            if (idx < 0) return;
+            let next = idx;
+            if (e.key === 'ArrowRight') next = (idx + 1) % tabs.length;
+            else if (e.key === 'ArrowLeft') next = (idx - 1 + tabs.length) % tabs.length;
+            else if (e.key === 'Home') next = 0;
+            else if (e.key === 'End') next = tabs.length - 1;
+            else return;
+            e.preventDefault();
+            tabs[next].focus();
+            switchAdminTab(tabs[next].id.replace('tab-btn-', ''));
+        });
+
         const savedTab = sessionStorage.getItem('almond_admin_active_tab');
-        if (savedTab && ['overview', 'pricing', 'candidates', 'grants', 'security', 'feedback', 'revenue'].includes(savedTab)) {
-            window.switchAdminTab(savedTab);
+        switchAdminTab(savedTab && TAB_KEYS.includes(savedTab) ? savedTab : 'overview');
+
+        window.setUserFilter = function(mode) {
+            currentUserFilter = mode;
+            ['all', 'abandoned', 'resume', 'no_resume', 'vip'].forEach(k => {
+                document.getElementById('ufilter-' + k)?.classList.toggle('active', k === mode);
+            });
+            applyUserFilters();
+        };
+
+        window.applyUserFilters = function() {
+            const q = (document.getElementById('candidate-search')?.value || '').toLowerCase().trim();
+            document.querySelectorAll('.candidate-row').forEach(row => {
+                const email = row.getAttribute('data-email') || '';
+                const name = row.getAttribute('data-name') || '';
+                const isVip = row.getAttribute('data-is-vip') === 'true';
+                const hasRes = row.getAttribute('data-resume') === 'true';
+                const isAb = row.getAttribute('data-abandoned') === 'true';
+
+                const textOk = !q || email.includes(q) || name.includes(q);
+                let modeOk = true;
+                if (currentUserFilter === 'abandoned') modeOk = isAb;
+                else if (currentUserFilter === 'resume') modeOk = hasRes;
+                else if (currentUserFilter === 'no_resume') modeOk = !hasRes;
+                else if (currentUserFilter === 'vip') modeOk = isVip;
+                row.style.display = (textOk && modeOk) ? '' : 'none';
+            });
+        };
+
+        async function apiGrantVip(email, action = 'grant', duration = 30) {
+            const resp = await fetch('/api/admin/grant-vip', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+                body: JSON.stringify({ email, action, duration_days: duration, key: ADMIN_KEY })
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) throw new Error(data.detail || data.message || 'Operation failed');
+            return data;
         }
-
-        // --- FEEDBACK INBOX CONTROLLERS ---
-        window.filterAdminFeedback = function(cat) {
-            const buttons = ['all', 'broken_link', 'crawl_request', 'feature_suggestion', 'praise_hired'];
-            const btnMap = {
-                'all': 'fb-btn-all',
-                'broken_link': 'fb-btn-broken',
-                'crawl_request': 'fb-btn-crawl',
-                'feature_suggestion': 'fb-btn-feat',
-                'praise_hired': 'fb-btn-hired'
-            };
-            Object.keys(btnMap).forEach(function(k) {
-                const b = document.getElementById(btnMap[k]);
-                if (b) {
-                    if (k === cat) {
-                        b.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950 cursor-pointer';
-                    } else {
-                        b.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:text-white cursor-pointer';
-                    }
-                }
-            });
-
-            const cards = document.querySelectorAll('.feedback-card');
-            cards.forEach(function(card) {
-                if (cat === 'all' || card.getAttribute('data-category') === cat) {
-                    card.classList.remove('hidden');
-                } else {
-                    card.classList.add('hidden');
-                }
-            });
-        };
-
-        window.sendAdminFeedbackReply = async function(feedbackId) {
-            const input = document.getElementById('reply-input-' + feedbackId);
-            if (!input || !input.value.trim()) {
-                alert('Please enter a reply message.');
-                return;
-            }
-            const replyText = input.value.trim();
+        window.adminGrantVip = async function(email) {
             try {
-                const res = await fetch('/api/admin/feedback/reply', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
-                    body: JSON.stringify({ id: feedbackId, reply: replyText, key: ADMIN_KEY })
-                });
-                const data = await res.json();
-                if (data.status === 'success') {
-                    const box = document.getElementById('reply-box-' + feedbackId);
-                    if (box) {
-                        box.outerHTML = '<div class="p-2.5 rounded-lg bg-violet-950/40 border border-violet-800/50 text-xs space-y-1"><div class="text-[10px] font-bold text-violet-400 uppercase tracking-wider">Founder / Admin Response:</div><div class="text-slate-200">' + replyText + '</div></div>';
-                    }
-                } else {
-                    alert('Error sending reply: ' + (data.message || 'Unknown error'));
-                }
-            } catch (err) {
-                alert('Failed to send reply: ' + err.message);
-            }
+                const res = await apiGrantVip(email, 'grant', 30);
+                notifyStatus(res.message || 'VIP granted.');
+                setTimeout(() => window.location.reload(), 800);
+            } catch (e) { notifyStatus('Error: ' + e.message); }
+        };
+        window.adminRevokeVip = async function(email) {
+            try {
+                const res = await apiGrantVip(email, 'revoke');
+                notifyStatus(res.message || 'VIP revoked.');
+                setTimeout(() => window.location.reload(), 800);
+            } catch (e) { notifyStatus('Error: ' + e.message); }
+        };
+        window.handleAdminGrantSubmit = async function(e) {
+            e.preventDefault();
+            const email = (document.getElementById('admin-grant-email')?.value || '').trim();
+            const duration = parseInt(document.getElementById('admin-grant-duration')?.value || '30');
+            if (!email) return;
+            try {
+                const res = await apiGrantVip(email, 'grant', duration);
+                notifyStatus(res.message || 'VIP granted.');
+                setTimeout(() => window.location.reload(), 800);
+            } catch (err) { notifyStatus('Error: ' + err.message); }
         };
 
-        // --- PRICING MANAGER AJAX CONTROLLER ---
         window.saveTierPricing = async function(tierId) {
             const btn = document.getElementById('save-btn-' + tierId);
             if (btn) btn.disabled = true;
-
             const payload = {
                 tier_id: tierId,
                 inr_price: parseInt(document.getElementById('price_' + tierId + '_inr')?.value || 699),
                 inr_original: parseInt(document.getElementById('orig_' + tierId + '_inr')?.value || 699),
-                usd_price: parseFloat(document.getElementById('price_' + tierId + '_usd')?.value || 9.99),
-                usd_original: parseFloat(document.getElementById('orig_' + tierId + '_usd')?.value || 9.99),
-                eur_price: parseFloat(document.getElementById('price_' + tierId + '_eur')?.value || 9.99),
-                eur_original: parseFloat(document.getElementById('orig_' + tierId + '_eur')?.value || 9.99),
-                gbp_price: parseFloat(document.getElementById('price_' + tierId + '_gbp')?.value || 9.99),
-                gbp_original: parseFloat(document.getElementById('orig_' + tierId + '_gbp')?.value || 9.99),
+                usd_price: parseFloat(document.getElementById('price_' + tierId + '_usd')?.value || 19.99),
+                usd_original: parseFloat(document.getElementById('orig_' + tierId + '_usd')?.value || 19.99),
+                eur_price: parseFloat(document.getElementById('price_' + tierId + '_eur')?.value || 18.99),
+                eur_original: parseFloat(document.getElementById('orig_' + tierId + '_eur')?.value || 18.99),
+                gbp_price: parseFloat(document.getElementById('price_' + tierId + '_gbp')?.value || 15.99),
+                gbp_original: parseFloat(document.getElementById('orig_' + tierId + '_gbp')?.value || 15.99),
                 discount_pct: parseInt(document.getElementById('disc_' + tierId + '_pct')?.value || 0),
                 discount_label: (document.getElementById('disc_' + tierId + '_label')?.value || '').trim(),
                 badge_text: (document.getElementById('badge_' + tierId + '_text')?.value || '').trim(),
                 key: ADMIN_KEY
             };
-
             try {
                 const resp = await fetch('/api/admin/pricing', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-admin-key': ADMIN_KEY
-                    },
+                    headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
                     body: JSON.stringify(payload)
                 });
                 const res = await resp.json().catch(() => ({}));
-                if (btn) btn.disabled = false;
-
-                if (resp.ok && res.success) {
-                    const toast = document.getElementById('pricing-save-toast');
-                    const toastMsg = document.getElementById('pricing-save-toast-msg');
-                    if (toast && toastMsg) {
-                        toastMsg.textContent = '&#10003; Pricing for ' + tierId.toUpperCase() + ' saved and synchronized live!';
-                        toast.classList.remove('hidden');
-                        setTimeout(() => toast.classList.add('hidden'), 5000);
-                    }
-                } else {
-                    alert('Error saving pricing: ' + (res.detail || res.message || 'Unknown error'));
-                }
+                notifyStatus(resp.ok && res.success ? ('Saved ' + tierId.toUpperCase() + ' pricing.') : ('Error: ' + (res.detail || res.message || 'Save failed')));
             } catch (err) {
+                notifyStatus('Network error: ' + err.message);
+            } finally {
                 if (btn) btn.disabled = false;
-                alert('Network error saving pricing: ' + err.message);
             }
         };
 
-        // --- VISITOR STREAM LIVE SEARCH ---
-        function filterVisitorStream() {
-            const query = (document.getElementById('visitor-search')?.value || '').toLowerCase().trim();
-            const rows = document.querySelectorAll('.visitor-stream-row');
-            let visibleCount = 0;
-            rows.forEach(r => {
-                const src = r.getAttribute('data-source') || '';
-                const path = r.getAttribute('data-path') || '';
-                const dev = r.getAttribute('data-device') || '';
-                const loc = r.getAttribute('data-location') || '';
-                const usr = r.getAttribute('data-user') || '';
-                const match = !query || src.includes(query) || path.includes(query) || dev.includes(query) || loc.includes(query) || usr.includes(query);
-                r.style.display = match ? '' : 'none';
-                if (match) visibleCount++;
-            });
-            const noRow = document.getElementById('no-visitors-row');
-            if (noRow) noRow.style.display = (visibleCount === 0 && query) ? '' : 'none';
-        }
-
-        // --- PURGE DUMMY ACCOUNTS CONTROLLER ---
-        async function triggerPurgeTestAccounts() {
-            const confirmed = confirm(
-                'Are you sure you want to clean all test/dummy accounts?\n\n' +
-                'This will safely delete synthetic test accounts from development while keeping genuine registered candidates (and your own founder account) completely safe.'
-            );
-            if (!confirmed) return;
-
+        window.triggerPurgeTestAccounts = async function() {
             try {
                 const res = await fetch('/api/admin/clean-test-candidates', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY }
                 });
                 const data = await res.json();
-                if (data.status === 'success') {
-                    alert('Clean complete: ' + data.message);
-                    window.location.reload();
-                } else {
-                    alert('Purge error: ' + (data.message || 'Unknown error'));
-                }
-            } catch (err) {
-                alert('Request failed: ' + err.message);
-            }
-        }
-
-        // --- CANDIDATE DIRECTORY FILTER CONTROLLER ---
-        let currentQuickFilter = 'genuine';
-
-        function setQuickFilter(mode) {
-            currentQuickFilter = mode;
-            const pills = document.querySelectorAll('.filter-pill');
-            pills.forEach(p => {
-                if (p.id === 'pill-' + mode) {
-                    p.classList.add('active');
-                } else {
-                    p.classList.remove('active');
-                }
-            });
-
-            const typeSelect = document.getElementById('filter-type');
-            const recencySelect = document.getElementById('filter-recency');
-            const vipSelect = document.getElementById('filter-vip');
-
-            if (mode === 'genuine') {
-                if (typeSelect) typeSelect.value = 'genuine';
-            } else if (mode === 'dummy') {
-                if (typeSelect) typeSelect.value = 'dummy';
-            } else if (mode === 'new') {
-                if (recencySelect) recencySelect.value = '24h';
-            } else if (mode === 'vip') {
-                if (vipSelect) vipSelect.value = 'vip';
-            } else if (mode === 'all') {
-                if (typeSelect) typeSelect.value = 'all';
-                if (recencySelect) recencySelect.value = 'all';
-                if (vipSelect) vipSelect.value = 'all';
-            }
-
-            applyFilters();
-        }
-
-        function applyFilters() {
-            const query = (document.getElementById('candidate-search')?.value || '').toLowerCase().trim();
-            const filterType = document.getElementById('filter-type')?.value || 'all';
-            const filterRecency = document.getElementById('filter-recency')?.value || 'all';
-            const filterVip = document.getElementById('filter-vip')?.value || 'all';
-            const filterProvider = document.getElementById('filter-provider')?.value || 'all';
-
-            const now = Date.now() / 1000;
-            const rows = document.querySelectorAll('.candidate-row');
-
-            rows.forEach(row => {
-                const email = (row.getAttribute('data-email') || '').toLowerCase();
-                const name = (row.getAttribute('data-name') || '').toLowerCase();
-                const device = (row.getAttribute('data-device') || '').toLowerCase();
-                const provider = (row.getAttribute('data-provider') || '').toLowerCase();
-                const isDummy = row.getAttribute('data-is-dummy') === 'true';
-                const isVip = row.getAttribute('data-is-vip') === 'true';
-                const created = parseFloat(row.getAttribute('data-created') || '0');
-
-                const textMatch = !query || name.includes(query) || email.includes(query) || device.includes(query);
-
-                let typeMatch = true;
-                if (filterType === 'genuine') typeMatch = !isDummy;
-                else if (filterType === 'dummy') typeMatch = isDummy;
-
-                let recencyMatch = true;
-                if (filterRecency === '24h') recencyMatch = (now - created) <= 86400;
-                else if (filterRecency === '7d') recencyMatch = (now - created) <= (86400 * 7);
-                else if (filterRecency === '30d') recencyMatch = (now - created) <= (86400 * 30);
-
-                let vipMatch = true;
-                if (filterVip === 'vip') vipMatch = isVip;
-                else if (filterVip === 'free') vipMatch = !isVip;
-
-                let providerMatch = true;
-                if (filterProvider !== 'all') {
-                    providerMatch = provider.includes(filterProvider);
-                }
-
-                if (textMatch && typeMatch && recencyMatch && vipMatch && providerMatch) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        document.getElementById('candidate-search')?.addEventListener('input', applyFilters);
-        // Apply genuine filter by default so founder sees real candidates immediately
-        setQuickFilter('genuine');
-
-        // --- VIP GRANT & REVOKE AJAX CONTROLLER ---
-        async function apiGrantVip(email, action = 'grant', duration = 30) {
-            try {
-                const resp = await fetch('/api/admin/grant-vip', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-admin-key': ADMIN_KEY
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        action: action,
-                        duration_days: duration,
-                        key: ADMIN_KEY
-                    })
-                });
-
-                const data = await resp.json().catch(() => ({}));
-                if (!resp.ok) {
-                    throw new Error(data.detail || data.message || 'Operation failed');
-                }
-                return data;
-            } catch (err) {
-                alert('VIP management error: ' + err.message);
-                return null;
-            }
-        }
-
-        window.adminGrantVip = async function(email) {
-            if (!confirm('Grant VIP Pass to ' + email + '?\nTheir account will immediately have 30 days of full VIP access upon sign-in.')) {
-                return;
-            }
-            const res = await apiGrantVip(email, 'grant', 30);
-            if (res && res.status === 'success') {
-                alert('Success: ' + res.message);
-                window.location.reload();
-            }
+                notifyStatus(data.message || 'Cleaned.');
+                if (data.status === 'success') setTimeout(() => window.location.reload(), 800);
+            } catch (err) { notifyStatus('Purge failed: ' + err.message); }
         };
 
-        window.adminRevokeVip = async function(email) {
-            if (!confirm('Revoke VIP Pass from ' + email + '?\nTheir account will revert to the Standard Free tier.')) {
-                return;
-            }
-            const res = await apiGrantVip(email, 'revoke');
-            if (res && res.status === 'success') {
-                alert('Success: ' + res.message);
-                window.location.reload();
-            }
-        };
-
-        window.handleAdminGrantSubmit = async function(e) {
+        window.handleMetaPixelSave = async function(e) {
             e.preventDefault();
-            const input = document.getElementById('admin-grant-email');
-            const durationSelect = document.getElementById('admin-grant-duration');
-            const email = (input?.value || '').trim();
-            const duration = parseInt(durationSelect?.value || '30');
-            if (!email) return;
-
-            const btn = document.getElementById('admin-grant-btn');
+            const btn = document.getElementById('admin-meta-pixel-btn');
+            const pixelId = (document.getElementById('admin-meta-pixel-input')?.value || '').trim();
             if (btn) btn.disabled = true;
-
-            const res = await apiGrantVip(email, 'grant', duration);
-            if (btn) btn.disabled = false;
-
-            if (res && res.status === 'success') {
-                alert('Success: ' + res.message);
-                if (input) input.value = '';
-                window.location.reload();
-            }
-        };
-
-        window.handleContributionReply = async function(e, paymentId) {
-            e.preventDefault();
-            const input = document.getElementById('reply-input-' + paymentId);
-            const btn = document.getElementById('reply-btn-' + paymentId);
-            const replyText = (input?.value || '').trim();
-            if (!replyText) return;
-
-            if (btn) btn.disabled = true;
-
             try {
-                const resp = await fetch('/api/admin/reply-contribution', {
+                const resp = await fetch('/api/admin/meta-pixel', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-admin-key': ADMIN_KEY
-                    },
-                    body: JSON.stringify({
-                        payment_id: paymentId,
-                        reply: replyText,
-                        key: ADMIN_KEY
-                    })
+                    headers: { 'Content-Type': 'application/json', 'x-admin-key': ADMIN_KEY },
+                    body: JSON.stringify({ pixel_id: pixelId, key: ADMIN_KEY })
                 });
                 const data = await resp.json().catch(() => ({}));
-                if (resp.ok && data.status === 'success') {
-                    alert('Reply published live to the platform community feed!');
-                    window.location.reload();
-                } else {
-                    alert('Error posting reply: ' + (data.detail || data.message || 'Unknown error'));
-                    if (btn) btn.disabled = false;
-                }
+                notifyStatus(data.message || (resp.ok ? 'Pixel saved.' : 'Save failed'));
             } catch (err) {
-                alert('Network error posting reply: ' + err.message);
+                notifyStatus('Error: ' + err.message);
+            } finally {
                 if (btn) btn.disabled = false;
-            }
-        };
-
-        window.switchRouteTab = function(type) {
-            const tableVer = document.getElementById('table-verified-routes');
-            const tableProbe = document.getElementById('table-probes-routes');
-            const btnVer = document.getElementById('tab-btn-verified');
-            const btnProbe = document.getElementById('tab-btn-probes');
-
-            if (type === 'verified') {
-                tableVer?.classList.remove('hidden');
-                tableProbe?.classList.add('hidden');
-                btnVer.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950';
-                btnProbe.className = 'px-3 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white bg-slate-800';
-            } else {
-                tableVer?.classList.add('hidden');
-                tableProbe?.classList.remove('hidden');
-                btnVer.className = 'px-3 py-1 rounded-lg text-xs font-bold text-slate-400 hover:text-white bg-slate-800';
-                btnProbe.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-amber-400 text-slate-950';
             }
         };
 
         window.updateAdUtmPreview = function() {
-            const src = (document.getElementById('utm-src-select')?.value || 'instagram').trim();
-            const rawCamp = (document.getElementById('utm-camp-input')?.value || 'fresher_test1').trim();
-            const camp = encodeURIComponent(rawCamp.replace(/\s+/g, '_'));
+            const src = (document.getElementById('utm-src-select')?.value || 'meta').trim();
+            const rawCamp = (document.getElementById('utm-camp-input')?.value || 'in_precision_20_35').trim();
             const out = document.getElementById('utm-url-preview');
-            if (out) {
-                out.value = `https://almondjobs.com/?utm_source=${encodeURIComponent(src)}&utm_medium=paid_social&utm_campaign=${camp}`;
-            }
+            if (out) out.value = `https://almondjobs.com/?utm_source=${encodeURIComponent(src)}&utm_medium=paid_social&utm_campaign=${encodeURIComponent(rawCamp.replace(/\s+/g, '_'))}`;
         };
 
         window.copyAdUtmPreview = function() {
             const out = document.getElementById('utm-url-preview');
             if (!out) return;
-            navigator.clipboard?.writeText(out.value).then(() => {
-                alert('Copied UTM ad link:\n' + out.value);
-            }).catch(() => {
+            navigator.clipboard?.writeText(out.value).then(() => notifyStatus('Copied UTM URL.')).catch(() => {
                 out.select();
                 document.execCommand('copy');
+                notifyStatus('Copied UTM URL.');
             });
-        };
-
-        window.handleMetaPixelSave = async function(e) {
-            e.preventDefault();
-            const input = document.getElementById('admin-meta-pixel-input');
-            const btn = document.getElementById('admin-meta-pixel-btn');
-            const pixelId = (input?.value || '').trim();
-            if (btn) btn.disabled = true;
-            try {
-                const resp = await fetch('/api/admin/meta-pixel', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-admin-key': ADMIN_KEY
-                    },
-                    body: JSON.stringify({ pixel_id: pixelId, key: ADMIN_KEY })
-                });
-                const data = await resp.json().catch(() => ({}));
-                if (resp.ok && data.status === 'success') {
-                    alert(data.message || 'Meta Pixel updated.');
-                    window.location.reload();
-                } else {
-                    alert('Error saving Meta Pixel: ' + (data.detail || data.message || 'Invalid Pixel ID'));
-                }
-            } catch (err) {
-                alert('Network error saving Meta Pixel: ' + err.message);
-            } finally {
-                if (btn) btn.disabled = false;
-            }
         };
     </script>
     {% endif %}
-
 </body>
 </html>

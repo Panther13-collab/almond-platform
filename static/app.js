@@ -6375,6 +6375,9 @@ window.initAuthSession = async function() {
                 if (typeof window.fetchKanbanFromCloud === "function") {
                     window.fetchKanbanFromCloud();
                 }
+                if (!data.is_paid && data.recovery_offer && data.recovery_offer.active && typeof window.showAlmondRecoveryOfferPopup === "function") {
+                    window.showAlmondRecoveryOfferPopup(data.recovery_offer);
+                }
             } else if (data.invalid_token === true) {
                 localStorage.removeItem("almond_session_token");
                 localStorage.removeItem("almond_auth_token");
@@ -9746,3 +9749,66 @@ function dismissPwaPrompt() {
     } catch (err) {}
 }
 window.dismissPwaPrompt = dismissPwaPrompt;
+
+window.showAlmondRecoveryOfferPopup = function(offer) {
+    if (!offer || !offer.active || document.getElementById('almond-recovery-offer-dialog')) return;
+    const dlg = document.createElement('dialog');
+    dlg.id = 'almond-recovery-offer-dialog';
+    dlg.setAttribute('aria-labelledby', 'almond-recovery-offer-title');
+    dlg.style.cssText = 'max-width:440px;width:calc(100% - 2rem);border-radius:20px;border:1px solid #e5e5ea;padding:24px;background:#ffffff;color:#1d1d1f;box-shadow:0 24px 60px rgba(0,0,0,0.18);font-family:-apple-system,BlinkMacSystemFont,Inter,sans-serif;';
+
+    const badge = document.createElement('div');
+    badge.style.cssText = 'display:inline-block;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#0071e3;background:#f0f7ff;border:1px solid #d0e5ff;padding:4px 10px;border-radius:999px;margin-bottom:10px;';
+    badge.textContent = offer.discount_badge || 'Limited Last Offer';
+
+    const title = document.createElement('h2');
+    title.id = 'almond-recovery-offer-title';
+    title.style.cssText = 'margin:0 0 8px;font-size:20px;font-weight:700;line-height:1.25;color:#1d1d1f;';
+    title.textContent = offer.headline || 'Final Offer: Unlock Almond Jobs Pro';
+
+    const body = document.createElement('p');
+    body.style.cssText = 'margin:0 0 20px;font-size:14px;line-height:1.55;color:#424245;';
+    body.textContent = offer.message || 'Finish your Pro upgrade today to unlock direct global & remote corporate links before this offer expires.';
+
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;';
+
+    const dismissBtn = document.createElement('button');
+    dismissBtn.type = 'button';
+    dismissBtn.textContent = 'Maybe Later';
+    dismissBtn.style.cssText = 'min-height:40px;padding:8px 16px;border-radius:980px;border:1px solid #d2d2d7;background:#ffffff;color:#1d1d1f;font-size:13px;font-weight:600;cursor:pointer;';
+    dismissBtn.addEventListener('click', () => {
+        dlg.close();
+        dlg.remove();
+        const tk = localStorage.getItem('almond_session_token') || '';
+        const em = localStorage.getItem('almond_user_email') || '';
+        fetch('/api/recovery-offer/dismiss', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: tk, email: em })
+        }).catch(() => {});
+    });
+
+    const upgradeBtn = document.createElement('button');
+    upgradeBtn.type = 'button';
+    upgradeBtn.textContent = 'Claim Pro Offer';
+    upgradeBtn.style.cssText = 'min-height:40px;padding:8px 18px;border-radius:980px;border:none;background:#0071e3;color:#ffffff;font-size:13px;font-weight:600;cursor:pointer;';
+    upgradeBtn.addEventListener('click', () => {
+        dlg.close();
+        dlg.remove();
+        if (typeof window.openVipPricingModal === 'function') {
+            window.openVipPricingModal();
+        } else {
+            document.querySelector('[onclick*="openVipPricingModal"]')?.click();
+        }
+    });
+
+    actions.appendChild(dismissBtn);
+    actions.appendChild(upgradeBtn);
+    dlg.appendChild(badge);
+    dlg.appendChild(title);
+    dlg.appendChild(body);
+    dlg.appendChild(actions);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+};

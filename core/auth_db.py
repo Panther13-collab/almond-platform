@@ -3305,9 +3305,14 @@ def get_traffic_source_breakdown() -> list:
             cursor.execute("""
                 SELECT 
                     CASE 
+                        WHEN LOWER(COALESCE(utm_source, '')) IN ('ai', 'chatgpt', 'perplexity', 'claude', 'gemini', 'copilot')
+                          OR LOWER(referrer) LIKE '%chatgpt.com%' OR LOWER(referrer) LIKE '%chat.openai.com%'
+                          OR LOWER(referrer) LIKE '%perplexity.ai%' OR LOWER(referrer) LIKE '%claude.ai%'
+                          OR LOWER(referrer) LIKE '%gemini.google.com%' OR LOWER(referrer) LIKE '%copilot.microsoft.com%'
+                          OR LOWER(referrer) LIKE '%you.com%' OR LOWER(referrer) LIKE '%phind.com%' THEN 'AI Tools'
+                        WHEN LOWER(COALESCE(utm_source, '')) IN ('meta', 'meta_ads') OR COALESCE(fbclid, '') != '' THEN 'Meta Ads'
                         WHEN LOWER(COALESCE(utm_source, '')) IN ('instagram', 'ig') OR LOWER(referrer) LIKE '%instagram.com%' THEN 'Instagram'
                         WHEN LOWER(COALESCE(utm_source, '')) IN ('facebook', 'fb') OR LOWER(referrer) LIKE '%facebook.com%' OR LOWER(referrer) LIKE '%fb.com%' THEN 'Facebook'
-                        WHEN LOWER(COALESCE(utm_source, '')) IN ('meta', 'meta_ads') OR COALESCE(fbclid, '') != '' THEN 'Meta Ads'
                         WHEN LOWER(COALESCE(utm_source, '')) = 'reddit' OR LOWER(referrer) LIKE '%reddit.com%' THEN 'Reddit'
                         WHEN LOWER(COALESCE(utm_source, '')) = 'peerlist' OR LOWER(referrer) LIKE '%peerlist.io%' THEN 'Peerlist'
                         WHEN LOWER(COALESCE(utm_source, '')) = 'linkedin' OR LOWER(referrer) LIKE '%linkedin.com%' THEN 'LinkedIn'
@@ -3315,7 +3320,7 @@ def get_traffic_source_breakdown() -> list:
                         WHEN LOWER(COALESCE(utm_source, '')) IN ('google', 'google_ads') OR LOWER(referrer) LIKE '%google.%' THEN 'Google Search'
                         WHEN LOWER(COALESCE(utm_source, '')) = 'whatsapp' OR LOWER(referrer) LIKE '%whatsapp%' THEN 'WhatsApp'
                         WHEN LOWER(COALESCE(utm_source, '')) = 'telegram' OR LOWER(referrer) LIKE '%telegram%' OR LOWER(referrer) LIKE '%t.me%' THEN 'Telegram'
-                        WHEN LOWER(referrer) LIKE '%almondjobs.com%' OR LOWER(referrer) LIKE '%localhost%' THEN 'On-Site / Refresh'
+                        WHEN LOWER(referrer) LIKE '%almondjobs.com%' OR LOWER(referrer) LIKE '%localhost%' THEN 'Direct / In-App'
                         WHEN (referrer = '' OR referrer IS NULL) AND COALESCE(utm_source, '') = '' THEN 'Direct / In-App'
                         ELSE 'Other Websites'
                     END as channel,
@@ -3324,7 +3329,7 @@ def get_traffic_source_breakdown() -> list:
                 FROM site_traffic
                 WHERE is_bot = 0 AND path NOT LIKE '/admin%' AND path NOT LIKE '/api/admin%'
                 GROUP BY channel
-                ORDER BY hits DESC;
+                ORDER BY uniques DESC, hits DESC;
             """)
             rows = cursor.fetchall()
     except Exception as e:
@@ -3332,20 +3337,22 @@ def get_traffic_source_breakdown() -> list:
         rows = []
         
     badge_colors = {
+        "AI Tools": "violet",
         "Instagram": "pink",
         "Facebook": "blue",
-        "Meta Ads": "pink",
+        "Meta Ads": "blue",
         "Reddit": "amber",
         "Peerlist": "emerald",
         "LinkedIn": "blue",
         "Twitter / X": "sky",
-        "Google Search": "violet",
+        "Google Search": "emerald",
         "WhatsApp": "emerald",
         "Telegram": "sky",
         "Direct / In-App": "slate",
-        "Other Websites": "indigo"
+        "Other Websites": "slate"
     }
     icons = {
+        "AI Tools": "🤖",
         "Instagram": "📸",
         "Facebook": "📘",
         "Meta Ads": "🎯",
@@ -3476,26 +3483,85 @@ def get_analytics_summary() -> dict:
             for r in cursor.fetchall()
         ]
 
-        # 4. Last 7 days verified candidate trend
+        # 4. Last 14 days verified candidate trend + per-day funnel activity
         cursor.execute("""
             SELECT date, COUNT(*) as pageviews, COUNT(DISTINCT visitor_hash) as uniques
             FROM site_traffic
-            WHERE is_bot = 0
+            WHERE is_bot = 0 AND path NOT LIKE '/admin%' AND path NOT LIKE '/api/admin%'
             GROUP BY date
             ORDER BY date DESC
-            LIMIT 7;
+            LIMIT 14;
         """)
-        history_rows = cursor.fetchall()
-        trend = [
-            {"date": r["date"], "pageviews": r["pageviews"], "uniques": r["uniques"]}
-            for r in reversed(history_rows)
-        ]
+        traffic_by_date = {r["date"]: {"pageviews": r["pageviews"], "uniques": r["uniques"]} for r in cursor.fetchall()}
+
+        day_funnel = {}
+        try:
+            cursor.execute("""
+                SELECT strftime('%Y-%m-%d', timestamp, 'unixepoch') as ev_date,
+                       event_name,
+                       COUNT(DISTINCT visitor_hash) as uniq_cnt,
+                       COUNT(*) as raw_cnt,
+                       COALESCE(SUM(amount_inr), 0) as rev_sum
+                FROM funnel_events
+                GROUP BY ev_date, event_name;
+            """)
+            for fr in cursor.fetchall():
+                d = fr["ev_date"]
+                if not d:
+                    continue
+                bucket = day_funnel.setdefault(d, {"signups": 0, "resumes": 0, "checkouts": 0, "purchases": 0, "revenue_inr": 0.0})
+                ev = fr["event_name"]
+                if ev == "signup":
+                    bucket["signups"] += int(fr["uniq_cnt"] or 0)
+                elif ev == "resume_upload":
+                    bucket["resumes"] += int(fr["uniq_cnt"] or 0)
+                elif ev == "checkout_start":
+                    bucket["checkouts"] += int(fr["uniq_cnt"] or 0)
+                elif ev == "purchase":
+                    bucket["purchases"] += int(fr["raw_cnt"] or 0)
+                    bucket["revenue_inr"] += float(fr["rev_sum"] or 0.0)
+        except Exception:
+            pass
+
+        # Also count real users registered per day (supplements funnel_events signups)
+        signups_by_date = {}
+        try:
+            cursor.execute("""
+                SELECT strftime('%Y-%m-%d', created_at, 'unixepoch') as u_date, email
+                FROM users
+                WHERE created_at IS NOT NULL;
+            """)
+            for ur in cursor.fetchall():
+                ud = ur["u_date"]
+                if ud and not is_dummy_email(ur["email"] or ""):
+                    signups_by_date[ud] = signups_by_date.get(ud, 0) + 1
+        except Exception:
+            pass
+
+        all_dates = sorted(set(traffic_by_date.keys()) | set(day_funnel.keys()) | set(signups_by_date.keys()))[-14:]
+        trend = []
+        for d in reversed(all_dates):
+            tr = traffic_by_date.get(d, {})
+            fn = day_funnel.get(d, {})
+            trend.append({
+                "date": d,
+                "pageviews": tr.get("pageviews", 0),
+                "uniques": tr.get("uniques", 0),
+                "signups": max(fn.get("signups", 0), signups_by_date.get(d, 0)),
+                "resumes": fn.get("resumes", 0),
+                "checkouts": fn.get("checkouts", 0),
+                "purchases": fn.get("purchases", 0),
+                "revenue_inr": fn.get("revenue_inr", 0.0),
+            })
 
     # 5. Candidate Accounts synchronized from Supabase + SQLite
     candidates = get_all_users_admin()
     total_users = len(candidates)
     paid_users = sum(1 for c in candidates if c.get("is_paid"))
     google_users = sum(1 for c in candidates if c.get("auth_provider") == "google")
+    genuine_list = [c for c in candidates if not c.get("is_dummy")]
+    resume_users_count = sum(1 for c in genuine_list if c.get("resume_uploaded"))
+    abandoned_count = sum(1 for c in genuine_list if c.get("checkout_abandoned"))
 
     # If all existing traffic was before migration, ensure default fallback numbers match
     raw_total = verified_total_pageviews + bot_probes_total
@@ -3524,9 +3590,11 @@ def get_analytics_summary() -> dict:
         "total_users": total_users,
         "paid_users": paid_users,
         "google_users": google_users,
-        "genuine_users": sum(1 for c in candidates if not c.get("is_dummy")),
+        "genuine_users": len(genuine_list),
         "dummy_users": sum(1 for c in candidates if c.get("is_dummy")),
         "new_users_24h": sum(1 for c in candidates if c.get("is_new")),
+        "resume_users_count": resume_users_count,
+        "abandoned_count": abandoned_count,
         "today_date": today_str,
 
         # Real-Time Telemetry Stream & Acquisition Sources
@@ -3717,7 +3785,72 @@ def get_all_users_admin() -> list:
                 "created_at_str": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(grant["granted_at"] or now))
             }
 
-    # Format device model display for candidates
+    # Enrich candidates with resume upload, checkout drop-off, acquisition source & recovery offers
+    resume_emails = set()
+    checkout_emails = set()
+    checkout_user_ids = set()
+    source_by_email = {}
+    recovery_offers = _get_system_store().get("recovery_offers", {})
+
+    try:
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT LOWER(user_email) as em, event_name, utm_source, fbclid
+                FROM funnel_events
+                WHERE COALESCE(user_email, '') != ''
+                ORDER BY timestamp DESC;
+            """)
+            for fr in cursor.fetchall():
+                em = fr["em"]
+                if not em:
+                    continue
+                if fr["event_name"] == "resume_upload":
+                    resume_emails.add(em)
+                elif fr["event_name"] == "checkout_start":
+                    checkout_emails.add(em)
+                if em not in source_by_email:
+                    if fr["fbclid"] or (fr["utm_source"] or "") in ("meta", "meta_ads"):
+                        source_by_email[em] = "Meta Ads"
+                    elif fr["utm_source"]:
+                        source_by_email[em] = fr["utm_source"].title()
+
+            cursor.execute("""
+                SELECT DISTINCT user_id FROM payments WHERE COALESCE(user_id, '') != '';
+            """)
+            for pr in cursor.fetchall():
+                checkout_user_ids.add(str(pr["user_id"]))
+
+            cursor.execute("""
+                SELECT LOWER(user_email) as em, utm_source, fbclid, referrer
+                FROM site_traffic
+                WHERE is_bot = 0 AND COALESCE(user_email, '') != ''
+                ORDER BY timestamp DESC;
+            """)
+            for sr in cursor.fetchall():
+                em = sr["em"]
+                if not em or em in source_by_email:
+                    continue
+                ref = (sr["referrer"] or "").lower()
+                usrc = (sr["utm_source"] or "").lower()
+                if usrc in ("meta", "meta_ads") or sr["fbclid"]:
+                    source_by_email[em] = "Meta Ads"
+                elif "instagram" in usrc or "instagram.com" in ref:
+                    source_by_email[em] = "Instagram"
+                elif "facebook" in usrc or "facebook.com" in ref:
+                    source_by_email[em] = "Facebook"
+                elif "google" in usrc or "google." in ref:
+                    source_by_email[em] = "Google Search"
+                elif any(ai in ref or ai in usrc for ai in ("chatgpt", "perplexity", "claude", "gemini", "copilot", "openai")):
+                    source_by_email[em] = "AI Tools"
+                elif "linkedin" in usrc or "linkedin.com" in ref:
+                    source_by_email[em] = "LinkedIn"
+                elif usrc:
+                    source_by_email[em] = usrc.title()
+    except Exception as e:
+        print(f"[AUTH_DB] Candidate funnel enrichment note: {e}")
+
+    # Format device model display & funnel states for candidates
     candidates = list(candidates_by_email.values())
     for c in candidates:
         dev = c.get("device_model") or ""
@@ -3725,8 +3858,69 @@ def get_all_users_admin() -> list:
             dev = "Desktop / Web Browser"
         c["device_display"] = dev
 
+        em_low = (c.get("email") or "").strip().lower()
+        uid_str = str(c.get("id") or "")
+        c["resume_uploaded"] = em_low in resume_emails
+        started_pay = (em_low in checkout_emails) or (uid_str in checkout_user_ids)
+        c["checkout_started"] = started_pay
+        c["checkout_abandoned"] = started_pay and (not bool(c.get("is_paid")))
+        c["acquisition_source"] = source_by_email.get(em_low, "Direct / Organic")
+        offer = recovery_offers.get(em_low)
+        c["recovery_offer"] = offer if (isinstance(offer, dict) and offer.get("active")) else None
+
     candidates.sort(key=lambda x: x.get("created_at", 0), reverse=True)
     return candidates
+
+
+def set_recovery_offer(
+    email: str,
+    headline: str,
+    message: str,
+    discount_badge: str = "Limited Last Offer"
+) -> dict:
+    """Persist an active targeted last-offer popup for a logged-in candidate who exited before paying."""
+    clean_email = (email or "").strip().lower()
+    if not clean_email or "@" not in clean_email:
+        return {"status": "error", "message": "Invalid email address."}
+    store = _get_system_store()
+    offers = dict(store.get("recovery_offers", {}) or {})
+    offers[clean_email] = {
+        "email": clean_email,
+        "headline": (headline or "Limited-Time Career Pass Offer").strip()[:140],
+        "message": (message or "Complete your Almond Jobs Pro upgrade today with a special founder rate before this offer closes.").strip()[:400],
+        "discount_badge": (discount_badge or "Last Offer").strip()[:60],
+        "active": True,
+        "sent_at": time.time(),
+        "sent_at_str": time.strftime("%Y-%m-%d %H:%M", time.localtime()),
+    }
+    _update_system_store({"recovery_offers": offers})
+    return {"status": "success", "offer": offers[clean_email]}
+
+
+def get_recovery_offer(email: str) -> dict | None:
+    """Return active targeted recovery popup offer for a candidate email, if any."""
+    clean_email = (email or "").strip().lower()
+    if not clean_email:
+        return None
+    offers = _get_system_store().get("recovery_offers", {}) or {}
+    offer = offers.get(clean_email)
+    if isinstance(offer, dict) and offer.get("active"):
+        return offer
+    return None
+
+
+def dismiss_recovery_offer(email: str) -> bool:
+    """Mark a candidate's targeted recovery offer as dismissed."""
+    clean_email = (email or "").strip().lower()
+    if not clean_email:
+        return False
+    store = _get_system_store()
+    offers = dict(store.get("recovery_offers", {}) or {})
+    if clean_email in offers and isinstance(offers[clean_email], dict):
+        offers[clean_email]["active"] = False
+        _update_system_store({"recovery_offers": offers})
+        return True
+    return False
 
 
 # =========================================================================
