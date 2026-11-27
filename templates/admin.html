@@ -278,6 +278,9 @@
                 <button type="button" role="tab" id="tab-btn-overview" aria-selected="true" onclick="switchAdminTab('overview')">
                     Overview
                 </button>
+                <button type="button" role="tab" id="tab-btn-journeys" aria-selected="false" onclick="switchAdminTab('journeys')">
+                    <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>Live Journeys &amp; Exits</span>
+                </button>
                 <button type="button" role="tab" id="tab-btn-users" aria-selected="false" onclick="switchAdminTab('users')">
                     Users &amp; Recovery ({{ genuine_count }})
                 </button>
@@ -312,6 +315,23 @@
                         <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-[#1d1d1f]">Overview</h1>
                         <p class="text-sm text-[#6e6e73] mt-0.5">Live visitor flow, acquisition sources, and conversion health &bull; {{ analytics.today_date or 'Today' }}</p>
                     </div>
+                </div>
+
+                <!-- Live Journeys & Clickstream Fast-Link Banner -->
+                <div class="apple-card p-5 bg-gradient-to-r from-indigo-50/70 via-purple-50/40 to-white flex flex-wrap items-center justify-between gap-4 border border-indigo-100 shadow-2xs">
+                    <div class="space-y-1">
+                        <div class="inline-flex items-center gap-2">
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live Candidate Telemetry
+                            </span>
+                            <span class="text-xs font-semibold text-indigo-700">Real-Time Clickstream &amp; Drop-Off Inspector</span>
+                        </div>
+                        <h3 class="text-base font-bold text-[#1d1d1f]">Inspect Today's Visitor Journeys, IT Hub Locations &amp; Drop-Offs</h3>
+                        <p class="text-xs text-[#6e6e73]">See which city candidates visited from (Bengaluru, Hyderabad, Pune), what jobs &amp; filters they clicked, and exact exit points.</p>
+                    </div>
+                    <button type="button" onclick="switchAdminTab('journeys')" class="min-h-[38px] px-5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition cursor-pointer">
+                        Open Live Journeys &rarr;
+                    </button>
                 </div>
 
                 <!-- 4 Core Numbers -->
@@ -489,6 +509,217 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- LIVE CANDIDATE JOURNEYS, IT CITIES & DROP-OFF TELEMETRY            -->
+        <!-- ================================================================= -->
+        <section id="panel-journeys" role="tabpanel" aria-labelledby="tab-btn-journeys" hidden class="space-y-6">
+            <!-- Header with Live Pulse and Controls -->
+            <div class="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <div class="inline-flex items-center gap-2 mb-1">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Live Stream
+                        </span>
+                        <span class="text-xs text-[#6e6e73]">Auto-refreshes every 15s</span>
+                    </div>
+                    <h2 class="text-2xl font-bold tracking-tight text-[#1d1d1f]">Live Visitor Journeys &amp; Drop-Offs</h2>
+                    <p class="text-sm text-[#6e6e73] mt-0.5">Real-time candidate telemetry: who visited, their city/IT hub, exact clickstream, and why they exited.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="refreshJourneysData()" id="journeyRefreshBtn"
+                            class="min-h-[36px] px-4 py-1.5 rounded-full border border-black/15 bg-white hover:bg-[#f5f5f7] text-xs font-semibold text-[#1d1d1f] inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition">
+                        <svg class="w-3.5 h-3.5 text-[#6e6e73]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>Refresh Stream</span>
+                    </button>
+                    <button type="button" onclick="toggleAutoRefresh()" id="journeyAutoRefreshToggle"
+                            class="min-h-[36px] px-3.5 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-xs font-semibold text-emerald-800 inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        <span id="autoRefreshLabel">Auto: 15s ON</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Top Summary KPI Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="apple-card p-5">
+                    <div class="text-xs font-semibold text-[#6e6e73] uppercase tracking-wider">Candidate Sessions</div>
+                    <div class="text-3xl font-extrabold text-[#1d1d1f] mt-1 tabular-nums" id="statTotalSessions">{{ journeys_stats.total_sessions or (visitor_journeys|length) or 0 }}</div>
+                    <div class="text-xs text-[#6e6e73] mt-1">Unique candidate devices today</div>
+                </div>
+                <div class="apple-card p-5">
+                    <div class="text-xs font-semibold text-[#6e6e73] uppercase tracking-wider">Top-Tier IT Hubs</div>
+                    <div class="text-3xl font-extrabold text-indigo-600 mt-1 tabular-nums" id="statTechHubPct">{{ journeys_stats.tech_hub_pct or 0 }}%</div>
+                    <div class="text-xs text-[#6e6e73] mt-1" id="statTechHubCount">{{ journeys_stats.tech_hub_sessions_count or 0 }} from Bengaluru, Pune, etc.</div>
+                </div>
+                <div class="apple-card p-5">
+                    <div class="text-xs font-semibold text-[#6e6e73] uppercase tracking-wider">Auth / Modal Drop-Offs</div>
+                    <div class="text-3xl font-extrabold text-amber-600 mt-1 tabular-nums" id="statAuthDropoffs">{{ (journeys_stats.drop_off_stages.auth_abandoned if journeys_stats.drop_off_stages else 0) or 0 }}</div>
+                    <div class="text-xs text-[#6e6e73] mt-1">Opened login/signup and closed</div>
+                </div>
+                <div class="apple-card p-5">
+                    <div class="text-xs font-semibold text-[#6e6e73] uppercase tracking-wider">Instant Bounces (&lt;6s)</div>
+                    <div class="text-3xl font-extrabold text-rose-600 mt-1 tabular-nums" id="statBounces">{{ (journeys_stats.drop_off_stages.bounced if journeys_stats.drop_off_stages else 0) or 0 }}</div>
+                    <div class="text-xs text-[#6e6e73] mt-1">Immediate exits without click</div>
+                </div>
+            </div>
+
+            <!-- City Breakdown & Geo Hub Performance -->
+            <div class="apple-card p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h3 class="text-base font-bold text-[#1d1d1f]">Candidate Locations &amp; IT Hub Performance</h3>
+                        <p class="text-xs text-[#6e6e73]">Breakdown of where your ad traffic and visitors arrive from.</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2" id="journeyCityBadges">
+                    {% if journeys_stats.city_breakdown %}
+                        {% for city_name, cnt in journeys_stats.city_breakdown.items() %}
+                        <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-black/5 bg-[#f5f5f7] text-xs font-medium text-[#1d1d1f]">
+                            <span class="font-bold">{{ city_name }}</span>
+                            <span class="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-white border border-black/10 text-[#1d1d1f]">{{ cnt }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-xs text-[#6e6e73]">Resolving live visitor cities...</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Segmented Filter Pills -->
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="inline-flex flex-wrap items-center gap-1 p-1 rounded-full bg-[#f5f5f7] border border-black/5" role="group" aria-label="Journey filters">
+                    <button type="button" onclick="setJourneyFilter('all', this)" class="seg-pill active journey-filter-btn" data-filter="all">All Visitors</button>
+                    <button type="button" onclick="setJourneyFilter('tech_hubs', this)" class="seg-pill journey-filter-btn" data-filter="tech_hubs">🏢 Top IT Hubs</button>
+                    <button type="button" onclick="setJourneyFilter('meta_ads', this)" class="seg-pill journey-filter-btn" data-filter="meta_ads">🎯 Meta Ads</button>
+                    <button type="button" onclick="setJourneyFilter('dropoffs', this)" class="seg-pill journey-filter-btn" data-filter="dropoffs">⚠️ Drop-Offs</button>
+                    <button type="button" onclick="setJourneyFilter('authenticated', this)" class="seg-pill journey-filter-btn" data-filter="authenticated">👤 Logged In</button>
+                </div>
+                <div class="text-xs text-[#6e6e73]">
+                    Showing <span id="journeyVisibleCount" class="font-bold text-[#1d1d1f]">{{ visitor_journeys|length }}</span> visitor sessions
+                </div>
+            </div>
+
+            <!-- Live Session Stream List -->
+            <div class="space-y-3" id="journeySessionsContainer">
+                {% for s in visitor_journeys %}
+                <div class="apple-card p-5 space-y-3.5 transition hover:shadow-sm journey-session-card" data-is-tech-hub="{{ '1' if s.is_tech_hub else '0' }}" data-channel="{{ s.referrer_channel }}" data-exit-code="{{ s.exit_code }}" data-is-auth="{{ '1' if s.is_authenticated else '0' }}">
+                    <!-- Card Top Header -->
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-[#f5f5f7] text-[#1d1d1f] border border-black/10">
+                                #{{ s.visitor_hash_short }}
+                            </span>
+                            {% if s.is_authenticated %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {{ s.user_email }}
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#f5f5f7] text-[#6e6e73] border border-black/5">
+                                Guest Candidate
+                            </span>
+                            {% endif %}
+
+                            <!-- Location Badge -->
+                            {% if s.is_tech_hub %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                🏢 {{ s.location_display }} (IT Hub)
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-50 text-slate-700 border border-slate-200">
+                                📍 {{ s.location_display }}
+                            </span>
+                            {% endif %}
+
+                            <!-- Device Badge -->
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-[#6e6e73] bg-[#f5f5f7]">
+                                📱 {{ s.device_brand }} ({{ s.device_model }})
+                            </span>
+                        </div>
+
+                        <!-- Time & Dwell -->
+                        <div class="flex items-center gap-2 text-right">
+                            <span class="text-xs text-[#6e6e73]">{{ s.time_ago }} ({{ s.last_seen_str }} IST)</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-mono font-semibold bg-[#f5f5f7] text-[#1d1d1f]">
+                                ⏱️ {{ s.dwell_str }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Acquisition & Drop-off Status Line -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-black/5 text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="font-medium text-[#6e6e73]">Acquisition:</span>
+                            <span class="inline-flex items-center gap-1 font-semibold text-[#1d1d1f]">
+                                {{ s.referrer_icon }} {{ s.referrer_channel }}
+                                {% if s.utm_campaign %}
+                                <span class="text-[11px] font-normal text-[#6e6e73]">({{ s.utm_campaign }})</span>
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <span class="font-medium text-[#6e6e73]">Exit Drop-off:</span>
+                            {% if s.exit_badge == 'emerald' %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                {{ s.exit_label }}
+                            </span>
+                            {% elif s.exit_badge == 'amber' %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                {{ s.exit_label }}
+                            </span>
+                            {% elif s.exit_badge == 'rose' %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                                {{ s.exit_label }}
+                            </span>
+                            {% elif s.exit_badge == 'purple' %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold bg-purple-50 text-purple-800 border border-purple-200">
+                                {{ s.exit_label }}
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-medium bg-[#f5f5f7] text-[#1d1d1f] border border-black/5">
+                                {{ s.exit_label }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Drop-off Narrative Explanation -->
+                    <div class="p-2.5 rounded-xl bg-[#f5f5f7] text-xs text-[#1d1d1f] flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-bold text-[#6e6e73]">Diagnosis:</span>
+                            <span>{{ s.drop_desc }}</span>
+                        </div>
+                        <button type="button" onclick="toggleSessionTrail(this)" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline cursor-pointer shrink-0">
+                            View Clickstream ({{ s.click_trail|length }})
+                        </button>
+                    </div>
+
+                    <!-- Expandable Clickstream Trail Drawer -->
+                    <div class="session-click-trail pt-2 border-t border-black/5 space-y-2" style="display: none;">
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-[#6e6e73]">Candidate Interaction Sequence</div>
+                        <div class="space-y-1.5 pl-2 border-l-2 border-slate-200">
+                            {% for step in s.click_trail %}
+                            <div class="flex items-center gap-2 text-xs">
+                                <span class="font-mono text-[11px] text-[#86868b]">{{ step.time_str }}</span>
+                                <span class="text-sm">{{ step.icon }}</span>
+                                <span class="font-medium text-[#1d1d1f]">{{ step.action }}</span>
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#f5f5f7] text-[#6e6e73]">{{ step.badge }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="apple-card p-12 text-center text-[#6e6e73]">
+                    <p class="text-base font-semibold text-[#1d1d1f]">No Visitor Sessions Recorded Today Yet</p>
+                    <p class="text-xs mt-1">Live candidate clicks, geo locations, and drop-offs will stream here in real-time as users visit.</p>
+                </div>
+                {% endfor %}
             </div>
         </section>
 
@@ -871,7 +1102,7 @@
 
     <script>
         const ADMIN_KEY = "{{ admin_key }}";
-        const TAB_KEYS = ['overview', 'users', 'vip', 'settings'];
+        const TAB_KEYS = ['overview', 'journeys', 'users', 'vip', 'settings'];
         let pendingConfirmAction = null;
         let currentUserFilter = 'all';
 
@@ -954,6 +1185,207 @@
             });
             sessionStorage.setItem('almond_admin_active_tab', tabName);
         };
+
+        // Live Visitor Journeys Controller
+        let currentJourneyFilter = 'all';
+        let journeyAutoRefreshTimer = null;
+        let isAutoRefreshActive = true;
+
+        window.toggleSessionTrail = function(btn) {
+            const card = btn.closest('.journey-session-card');
+            const drawer = card?.querySelector('.session-click-trail');
+            if (!drawer) return;
+            const isHidden = drawer.style.display === 'none';
+            drawer.style.display = isHidden ? 'block' : 'none';
+            btn.textContent = isHidden ? 'Hide Clickstream' : 'View Clickstream';
+        };
+
+        window.setJourneyFilter = function(filterMode, btn) {
+            currentJourneyFilter = filterMode;
+            document.querySelectorAll('.journey-filter-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
+            const cards = document.querySelectorAll('.journey-session-card');
+            let visibleCount = 0;
+            cards.forEach(card => {
+                const isTech = card.getAttribute('data-is-tech-hub') === '1';
+                const channel = card.getAttribute('data-channel') || '';
+                const exitCode = card.getAttribute('data-exit-code') || '';
+                const isAuth = card.getAttribute('data-is-auth') === '1';
+
+                let show = true;
+                if (filterMode === 'tech_hubs') show = isTech;
+                else if (filterMode === 'meta_ads') show = (channel === 'Meta Ads');
+                else if (filterMode === 'dropoffs') show = ['bounced', 'auth_abandoned', 'resume_abandoned', 'vip_abandoned'].includes(exitCode);
+                else if (filterMode === 'authenticated') show = isAuth;
+
+                card.style.display = show ? 'block' : 'none';
+                if (show) visibleCount++;
+            });
+            const countEl = document.getElementById('journeyVisibleCount');
+            if (countEl) countEl.textContent = visibleCount;
+        };
+
+        window.refreshJourneysData = async function() {
+            const refreshBtn = document.getElementById('journeyRefreshBtn');
+            if (refreshBtn) refreshBtn.classList.add('opacity-50');
+            try {
+                const resp = await fetch(`/api/admin/visitor-journeys?key=${encodeURIComponent(ADMIN_KEY)}&limit=100`, {
+                    headers: { 'x-admin-key': ADMIN_KEY }
+                });
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (data.status === 'success' && data.sessions) {
+                    renderJourneysRealtime(data.sessions, data.stats);
+                    notifyStatus(`Stream refreshed: ${data.sessions.length} live sessions.`);
+                }
+            } catch (err) {
+                console.error("Journeys refresh error:", err);
+            } finally {
+                if (refreshBtn) refreshBtn.classList.remove('opacity-50');
+            }
+        };
+
+        function renderJourneysRealtime(sessions, stats) {
+            if (stats) {
+                const sTotal = document.getElementById('statTotalSessions');
+                if (sTotal) sTotal.textContent = stats.total_sessions || sessions.length;
+                const sPct = document.getElementById('statTechHubPct');
+                if (sPct) sPct.textContent = (stats.tech_hub_pct || 0) + '%';
+                const sCnt = document.getElementById('statTechHubCount');
+                if (sCnt) sCnt.textContent = `${stats.tech_hub_sessions_count || 0} from Bengaluru, Pune, etc.`;
+                const sAuth = document.getElementById('statAuthDropoffs');
+                if (sAuth && stats.drop_off_stages) sAuth.textContent = stats.drop_off_stages.auth_abandoned || 0;
+                const sBnc = document.getElementById('statBounces');
+                if (sBnc && stats.drop_off_stages) sBnc.textContent = stats.drop_off_stages.bounced || 0;
+
+                const cityBox = document.getElementById('journeyCityBadges');
+                if (cityBox && stats.city_breakdown) {
+                    cityBox.innerHTML = Object.entries(stats.city_breakdown).map(([city, cnt]) => `
+                        <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-black/5 bg-[#f5f5f7] text-xs font-medium text-[#1d1d1f]">
+                            <span class="font-bold">${city}</span>
+                            <span class="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-white border border-black/10 text-[#1d1d1f]">${cnt}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            const container = document.getElementById('journeySessionsContainer');
+            if (!container || !sessions.length) return;
+
+            container.innerHTML = sessions.map(s => `
+                <div class="apple-card p-5 space-y-3.5 transition hover:shadow-sm journey-session-card" data-is-tech-hub="${s.is_tech_hub ? '1' : '0'}" data-channel="${s.referrer_channel}" data-exit-code="${s.exit_code}" data-is-auth="${s.is_authenticated ? '1' : '0'}">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-[#f5f5f7] text-[#1d1d1f] border border-black/10">
+                                #${s.visitor_hash_short}
+                            </span>
+                            ${s.is_authenticated ? `
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> ${s.user_email}
+                            </span>` : `
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#f5f5f7] text-[#6e6e73] border border-black/5">
+                                Guest Candidate
+                            </span>`}
+
+                            ${s.is_tech_hub ? `
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                🏢 ${s.location_display} (IT Hub)
+                            </span>` : `
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-50 text-slate-700 border border-slate-200">
+                                📍 ${s.location_display}
+                            </span>`}
+
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs text-[#6e6e73] bg-[#f5f5f7]">
+                                📱 ${s.device_brand} (${s.device_model})
+                            </span>
+                        </div>
+
+                        <div class="flex items-center gap-2 text-right">
+                            <span class="text-xs text-[#6e6e73]">${s.time_ago} (${s.last_seen_str} IST)</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-mono font-semibold bg-[#f5f5f7] text-[#1d1d1f]">
+                                ⏱️ ${s.dwell_str}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-black/5 text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="font-medium text-[#6e6e73]">Acquisition:</span>
+                            <span class="inline-flex items-center gap-1 font-semibold text-[#1d1d1f]">
+                                ${s.referrer_icon} ${s.referrer_channel}
+                                ${s.utm_campaign ? `<span class="text-[11px] font-normal text-[#6e6e73]">(${s.utm_campaign})</span>` : ''}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <span class="font-medium text-[#6e6e73]">Exit Drop-off:</span>
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold ${
+                                s.exit_badge === 'emerald' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
+                                s.exit_badge === 'amber' ? 'bg-amber-50 text-amber-800 border border-amber-200' :
+                                s.exit_badge === 'rose' ? 'bg-rose-50 text-rose-800 border border-rose-200' :
+                                s.exit_badge === 'purple' ? 'bg-purple-50 text-purple-800 border border-purple-200' :
+                                'bg-[#f5f5f7] text-[#1d1d1f] border border-black/5'
+                            }">
+                                ${s.exit_label}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="p-2.5 rounded-xl bg-[#f5f5f7] text-xs text-[#1d1d1f] flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-bold text-[#6e6e73]">Diagnosis:</span>
+                            <span>${s.drop_desc}</span>
+                        </div>
+                        <button type="button" onclick="toggleSessionTrail(this)" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline cursor-pointer shrink-0">
+                            View Clickstream (${s.click_trail.length})
+                        </button>
+                    </div>
+
+                    <div class="session-click-trail pt-2 border-t border-black/5 space-y-2" style="display: none;">
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-[#6e6e73]">Candidate Interaction Sequence</div>
+                        <div class="space-y-1.5 pl-2 border-l-2 border-slate-200">
+                            ${s.click_trail.map(st => `
+                            <div class="flex items-center gap-2 text-xs">
+                                <span class="font-mono text-[11px] text-[#86868b]">${st.time_str}</span>
+                                <span class="text-sm">${st.icon}</span>
+                                <span class="font-medium text-[#1d1d1f]">${st.action}</span>
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#f5f5f7] text-[#6e6e73]">${st.badge}</span>
+                            </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            setJourneyFilter(currentJourneyFilter);
+        }
+
+        window.toggleAutoRefresh = function() {
+            isAutoRefreshActive = !isAutoRefreshActive;
+            const btn = document.getElementById('journeyAutoRefreshToggle');
+            const label = document.getElementById('autoRefreshLabel');
+            if (isAutoRefreshActive) {
+                if (label) label.textContent = 'Auto: 15s ON';
+                if (btn) btn.className = 'min-h-[36px] px-3.5 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-xs font-semibold text-emerald-800 inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition';
+                startAutoRefresh();
+            } else {
+                if (label) label.textContent = 'Auto: Paused';
+                if (btn) btn.className = 'min-h-[36px] px-3.5 py-1.5 rounded-full border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition';
+                if (journeyAutoRefreshTimer) clearInterval(journeyAutoRefreshTimer);
+            }
+        };
+
+        function startAutoRefresh() {
+            if (journeyAutoRefreshTimer) clearInterval(journeyAutoRefreshTimer);
+            journeyAutoRefreshTimer = setInterval(() => {
+                const activeTab = sessionStorage.getItem('almond_admin_active_tab');
+                if (activeTab === 'journeys' && isAutoRefreshActive) {
+                    refreshJourneysData();
+                }
+            }, 15000);
+        }
+        startAutoRefresh();
 
         window.jumpToAbandonedRecovery = function() {
             switchAdminTab('users');

@@ -19,12 +19,94 @@
     } catch (_) {}
 })();
 
+// Candidate Session Dwell Time & Live Interaction Stream Telemetry
+const _almondSessionStart = Date.now();
+let _almondInteractionCount = 0;
+let _almondLastAction = "Landed on site";
+let _almondMaxScrollPct = 0;
+let _almondExitBeaconSent = false;
+
+window.addEventListener("scroll", () => {
+    try {
+        const docElem = document.documentElement;
+        const totalHeight = docElem.scrollHeight - docElem.clientHeight;
+        if (totalHeight > 0) {
+            const currentPct = (docElem.scrollTop / totalHeight) * 100;
+            if (currentPct > _almondMaxScrollPct) _almondMaxScrollPct = currentPct;
+        }
+    } catch (_) {}
+}, { passive: true });
+
+function _sendSessionExitBeacon(reason) {
+    if (_almondExitBeaconSent) return;
+    _almondExitBeaconSent = true;
+    try {
+        const dwellSec = Math.round((Date.now() - _almondSessionStart) / 1000);
+        let saved = {};
+        try { saved = JSON.parse(sessionStorage.getItem("almond_ad_attribution") || "{}") || {}; } catch (_) {}
+        const cityHint = (Intl && Intl.DateTimeFormat) ? (Intl.DateTimeFormat().resolvedOptions().timeZone || "") : "";
+
+        const payload = {
+            event_name: "session_exit",
+            utm_source: saved.utm_source || "",
+            utm_medium: saved.utm_medium || "",
+            utm_campaign: saved.utm_campaign || "",
+            utm_content: saved.utm_content || "",
+            fbclid: saved.fbclid || "",
+            user_name: localStorage.getItem("almond_user_name") || "",
+            user_email: localStorage.getItem("almond_user_email") || "",
+            dwell_time_seconds: dwellSec,
+            scroll_depth_percent: Math.round(_almondMaxScrollPct),
+            exit_page: window.location.pathname,
+            last_action: _almondLastAction,
+            total_interactions: _almondInteractionCount,
+            city_hint: cityHint,
+            exit_reason: reason
+        };
+
+        if (navigator.sendBeacon) {
+            const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+            navigator.sendBeacon("/api/telemetry/event", blob);
+        } else {
+            fetch("/api/telemetry/event", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+                keepalive: true
+            }).catch(() => {});
+        }
+    } catch (_) {}
+}
+
+window.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+        _sendSessionExitBeacon("tab_hidden");
+    }
+});
+window.addEventListener("beforeunload", () => {
+    _sendSessionExitBeacon("page_unload");
+});
+
 window.almondTrackFunnel = function(eventName, extras = {}) {
     try {
+        _almondInteractionCount++;
+        if (extras && extras.meta) {
+            if (extras.meta.chip) _almondLastAction = "Filter: " + extras.meta.chip;
+            else if (extras.meta.company) _almondLastAction = "Job: " + extras.meta.company;
+            else if (extras.meta.query) _almondLastAction = "Search: " + extras.meta.query;
+            else if (extras.meta.trigger) _almondLastAction = "Modal: " + extras.meta.trigger;
+            else _almondLastAction = eventName;
+        } else {
+            _almondLastAction = eventName;
+        }
+
         let saved = {};
         try {
             saved = JSON.parse(sessionStorage.getItem("almond_ad_attribution") || "{}") || {};
         } catch (_) {}
+
+        const cityHint = (Intl && Intl.DateTimeFormat) ? (Intl.DateTimeFormat().resolvedOptions().timeZone || "") : "";
+        const dwellSec = Math.round((Date.now() - _almondSessionStart) / 1000);
 
         const payload = {
             event_name: eventName,
@@ -36,6 +118,11 @@ window.almondTrackFunnel = function(eventName, extras = {}) {
             user_name: extras.user_name || localStorage.getItem("almond_user_name") || "",
             user_email: extras.user_email || localStorage.getItem("almond_user_email") || "",
             amount_inr: extras.amount_inr || 0,
+            dwell_time_seconds: dwellSec,
+            scroll_depth_percent: Math.round(_almondMaxScrollPct),
+            total_interactions: _almondInteractionCount,
+            city_hint: cityHint,
+            last_action: _almondLastAction,
             meta: extras.meta || {}
         };
 
@@ -65,6 +152,106 @@ window.almondTrackFunnel = function(eventName, extras = {}) {
         }
     } catch (_) {}
 };
+
+// Delegated Interaction Listeners for Real-Time Clickstream & Drop-Off Diagnostics
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. Delegated click monitoring for jobs, direct links, and modals
+    document.addEventListener("click", (e) => {
+        try {
+            // Direct portal link / sample link click
+            const directLink = e.target.closest("a[data-direct-link], a.direct-portal-link, a[href*='careers'], a[href*='greenhouse'], a[href*='lever'], a[href*='workday']");
+            if (directLink) {
+                const company = directLink.getAttribute("data-company") || directLink.closest("[data-job-id]")?.getAttribute("data-company") || "Company";
+                window.almondTrackFunnel("sample_link_click", { meta: { company: company, url: directLink.href } });
+                return;
+            }
+
+            // Click on "Sign Up Free to View Link" or locked role link
+            const authTrigger = e.target.closest("button[onclick*='profileModal'], button[onclick*='openAuthModal'], .locked-role-btn, button[onclick*='authFormView']");
+            if (authTrigger) {
+                const card = authTrigger.closest("[data-job-id]");
+                const company = card ? (card.getAttribute("data-company") || "") : "";
+                const role = card ? (card.getAttribute("data-role") || "") : "";
+                window.almondTrackFunnel("auth_modal_open", { meta: { trigger: "locked_job_link", company: company, role: role } });
+                return;
+            }
+
+            // Click on job card container
+            const jobCard = e.target.closest(".job-card, [data-job-id]");
+            if (jobCard && !e.target.closest("button, a")) {
+                const company = jobCard.getAttribute("data-company") || jobCard.querySelector("h3, .company-name")?.innerText?.trim() || "";
+                const role = jobCard.getAttribute("data-role") || jobCard.querySelector("h4, .role-title")?.innerText?.trim() || "";
+                window.almondTrackFunnel("job_card_click", { meta: { company: company, role: role } });
+                return;
+            }
+
+            // Click on Resume Upload button
+            const resumeBtn = e.target.closest("#omniResumeUploadBtn, #heroResumeUploadBtn, button[onclick*='omniResumeFileInput']");
+            if (resumeBtn) {
+                window.almondTrackFunnel("resume_pick_start");
+                return;
+            }
+
+            // Bot check passed
+            const botCheck = e.target.closest("#humanTickCheckbox, #authHumanCheckbox");
+            if (botCheck && botCheck.checked) {
+                window.almondTrackFunnel("bot_check_pass");
+                return;
+            }
+
+            // VIP Modal Trigger
+            const vipBtn = e.target.closest("button[onclick*='vipPassModal'], button[onclick*='vipPricingModal'], #sidePanelVipBtn, #topProfileVipCrown");
+            if (vipBtn) {
+                window.almondTrackFunnel("vip_modal_open", { meta: { trigger: vipBtn.id || "nav_vip" } });
+                return;
+            }
+
+            // Modal Close buttons
+            const closeAuth = e.target.closest("#closeProfileModal, button[onclick*='closeProfileModal']");
+            if (closeAuth) {
+                const isAuth = !!localStorage.getItem("almond_session_token");
+                if (!isAuth) {
+                    window.almondTrackFunnel("auth_modal_close", { meta: { stage: "abandoned_before_login" } });
+                }
+                return;
+            }
+
+            const closeVip = e.target.closest("#closeVipPassModal, button[onclick*='closeVipPassModal']");
+            if (closeVip) {
+                window.almondTrackFunnel("vip_modal_close", { meta: { stage: "abandoned_before_payment" } });
+                return;
+            }
+        } catch (_) {}
+    });
+
+    // 2. Search input interaction listener
+    const searchInp = document.getElementById("omniSearchInput");
+    if (searchInp) {
+        searchInp.addEventListener("change", () => {
+            const val = (searchInp.value || "").trim();
+            if (val.length >= 2) {
+                window.almondTrackFunnel("search_query", { meta: { query: val } });
+            }
+        });
+    }
+
+    // 3. Resume file picker selection listener
+    const resumeFileInput = document.getElementById("omniResumeFileInput");
+    if (resumeFileInput) {
+        resumeFileInput.addEventListener("change", () => {
+            if (resumeFileInput.files && resumeFileInput.files.length > 0) {
+                const file = resumeFileInput.files[0];
+                window.almondTrackFunnel("resume_file_selected", {
+                    meta: {
+                        name: file.name,
+                        size_kb: Math.round(file.size / 1024),
+                        ext: file.name.split('.').pop()
+                    }
+                });
+            }
+        });
+    }
+});
 
 // Curated Feeds Searchable Country/Location Filter Controller
 const CURATED_WORLD_COUNTRIES = [
@@ -9258,6 +9445,10 @@ window.initOmniSearch = function() {
 };
 
 window.applyQuickJobFilter = function(preset, clickedBtn) {
+    try {
+        const chipLabel = clickedBtn ? clickedBtn.innerText.replace(/[\n\r]+/g, " ").trim() : preset;
+        window.almondTrackFunnel("filter_chip_click", { meta: { chip: preset, label: chipLabel } });
+    } catch (_) {}
     document.querySelectorAll(".omni-quick-chip").forEach(btn => {
         const isFreeBtn = btn.getAttribute("data-quick-filter") === "free";
         if (btn === clickedBtn) {

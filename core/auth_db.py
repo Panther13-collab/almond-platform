@@ -2927,22 +2927,53 @@ def _is_private_ip(ip: str) -> bool:
         return True
     return False
 
-def _resolve_ip_location_bg(row_id: int, ip: str):
+def _resolve_ip_location_bg(row_id: int, ip: str, visitor_hash: str = ""):
     """Resolve geographic City, Region, Country in background thread without blocking page load."""
+    if not ip or _is_private_ip(ip):
+        return
     try:
         import urllib.request, json
-        url = f"http://ip-api.com/json/{ip}?fields=status,countryCode,regionName,city"
-        req = urllib.request.Request(url, headers={"User-Agent": "AlmondJobsTelemetry/1.0"})
-        with urllib.request.urlopen(req, timeout=2.0) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-        if data.get("status") == "success":
-            parts = [p for p in [data.get("city"), data.get("regionName"), data.get("countryCode")] if p]
-            loc_str = ", ".join(parts)
-            if loc_str:
-                _IP_GEO_CACHE[ip] = loc_str
-                with get_db() as conn:
+        loc_str = ""
+        # Tier 1: freeipapi (Fast, HTTPS, City + Region + Country)
+        try:
+            url = f"https://freeipapi.com/api/json/{ip}"
+            req = urllib.request.Request(url, headers={"User-Agent": "AlmondJobsTelemetry/1.0"})
+            with urllib.request.urlopen(req, timeout=3.0) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            city = data.get("cityName") or data.get("city")
+            region = data.get("regionName") or data.get("region")
+            country = data.get("countryCode") or data.get("country_code")
+            parts = [p.strip() for p in [city, region, country] if p and str(p).strip() and str(p).strip().upper() != "XX"]
+            if parts:
+                loc_str = ", ".join(parts)
+        except Exception:
+            pass
+
+        # Tier 2 Fallback: ip-api.com
+        if not loc_str:
+            try:
+                url = f"http://ip-api.com/json/{ip}?fields=status,countryCode,regionName,city"
+                req = urllib.request.Request(url, headers={"User-Agent": "AlmondJobsTelemetry/1.0"})
+                with urllib.request.urlopen(req, timeout=2.0) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
+                if data.get("status") == "success":
+                    parts = [p.strip() for p in [data.get("city"), data.get("regionName"), data.get("countryCode")] if p and str(p).strip()]
+                    if parts:
+                        loc_str = ", ".join(parts)
+            except Exception:
+                pass
+
+        if loc_str:
+            _IP_GEO_CACHE[ip] = loc_str
+            with get_db() as conn:
+                if row_id:
                     conn.execute("UPDATE site_traffic SET location = ? WHERE id = ?", (loc_str, row_id))
-                    conn.commit()
+                if visitor_hash:
+                    conn.execute(
+                        "UPDATE site_traffic SET location = ? WHERE visitor_hash = ? AND (location = '' OR location = 'IN' OR location = 'US' OR location IS NULL)",
+                        (loc_str, visitor_hash)
+                    )
+                conn.commit()
     except Exception:
         pass
 
@@ -3057,10 +3088,11 @@ def record_page_visit(
             row_id = cursor.lastrowid
             conn.commit()
 
-        # Non-blocking background Geo-IP resolution if location wasn't in proxy headers or cache
-        if not clean_loc and not is_bot and row_id and not _is_private_ip(client_ip):
+        # Non-blocking background Geo-IP resolution if location is missing, only country code, or lacks city
+        needs_city = not clean_loc or "," not in clean_loc or len(clean_loc) <= 3
+        if needs_city and not is_bot and not _is_private_ip(client_ip):
             import threading
-            threading.Thread(target=_resolve_ip_location_bg, args=(row_id, client_ip), daemon=True).start()
+            threading.Thread(target=_resolve_ip_location_bg, args=(row_id, client_ip, visitor_hash), daemon=True).start()
 
         return True
     except Exception as e:
@@ -4415,7 +4447,18 @@ def get_revenue_analytics() -> dict:
 # Meta Pixel Governance & Paid Ad Conversion Funnel Telemetry
 # ============================================================================
 
-_VALID_FUNNEL_EVENTS = {"resume_upload", "signup", "checkout_start", "purchase"}
+_VALID_FUNNEL_EVENTS = {
+    # High-level conversion milestones
+    "pageview", "resume_upload", "signup", "checkout_start", "purchase",
+    # Interaction & Clickstream events
+    "filter_chip_click", "job_card_click", "sample_link_click", "search_query",
+    "resume_pick_start", "resume_file_selected", "resume_upload_error", "resume_upload_success",
+    "auth_modal_open", "auth_modal_close",
+    "vip_modal_open", "vip_modal_close",
+    "bot_check_pass",
+    # Drop-off & Exit telemetry
+    "session_exit", "tab_blur", "page_unload"
+}
 
 
 def get_meta_pixel_id() -> str:
@@ -4629,6 +4672,465 @@ def get_ad_funnel_summary() -> dict:
         reverse=True
     )[:15]
     return {"totals": totals, "campaigns": campaigns}
+
+
+# ============================================================================
+# Granular Live Visitor Journeys, Tech Hub Detection & Drop-off Telemetry
+# ============================================================================
+
+_TECH_HUBS_INDIA = {
+    "bengaluru": "Bengaluru (Silicon Valley of India)",
+    "bangalore": "Bengaluru (Silicon Valley of India)",
+    "hyderabad": "Hyderabad (Cyberabad)",
+    "pune": "Pune (IT & Engineering Hub)",
+    "chennai": "Chennai (SaaS & IT Hub)",
+    "mumbai": "Mumbai / Navi Mumbai (FinTech & Enterprise)",
+    "navi mumbai": "Mumbai / Navi Mumbai (FinTech & Enterprise)",
+    "noida": "Delhi NCR / Noida (Tech & Product Hub)",
+    "gurugram": "Delhi NCR / Gurgaon (Tech & Startups)",
+    "gurgaon": "Delhi NCR / Gurgaon (Tech & Startups)",
+    "delhi": "Delhi NCR (Capital Hub)",
+    "new delhi": "Delhi NCR (Capital Hub)",
+    "kolkata": "Kolkata (Eastern Tech Hub)",
+    "ahmedabad": "Ahmedabad (Tech & Enterprise)",
+    "kochi": "Kochi (Infopark Hub)",
+    "thiruvananthapuram": "Trivandrum (Technopark Hub)",
+    "trivandrum": "Trivandrum (Technopark Hub)",
+    "coimbatore": "Coimbatore (Tier-2 Emerging IT)",
+    "chandigarh": "Chandigarh / Mohali (Northern Tech Hub)",
+    "indore": "Indore (Emerging Tech Hub)",
+    "jaipur": "Jaipur (Emerging Tech Hub)"
+}
+
+
+def classify_location(location_str: str) -> dict:
+    """Classify location string into City, State, Country and detect whether it is a prime IT hub."""
+    loc = (location_str or "").strip()
+    if not loc:
+        return {"display": "India (Resolving City...)", "city": "India", "state": "", "country": "IN", "is_tech_hub": False, "hub_title": ""}
+    parts = [p.strip() for p in loc.split(",") if p.strip()]
+    city = parts[0] if parts else loc
+    state = parts[1] if len(parts) > 1 else ""
+    country = parts[2] if len(parts) > 2 else (parts[1] if len(parts) == 2 and len(parts[1]) <= 3 else "")
+
+    city_lower = city.lower()
+    loc_lower = loc.lower()
+    tech_hub = ""
+    for hub_key, hub_name in _TECH_HUBS_INDIA.items():
+        if hub_key in city_lower or hub_key in loc_lower:
+            tech_hub = hub_name
+            break
+
+    is_tech = bool(tech_hub)
+    return {
+        "display": loc,
+        "city": city,
+        "state": state,
+        "country": country or ("IN" if is_tech or loc == "IN" else ""),
+        "is_tech_hub": is_tech,
+        "hub_title": tech_hub or ("Top Metro / Emerging" if loc == "IN" or "India" in loc else "Global")
+    }
+
+
+def get_live_session_journeys(date_str: str = "", limit: int = 100, filter_mode: str = "all") -> dict:
+    """
+    Assemble high-resolution candidate session timelines with granular clickstreams,
+    geo-location (IT cities), dwell times, and exit drop-off points.
+    """
+    target_date = date_str.strip() if date_str else time.strftime("%Y-%m-%d", time.gmtime())
+
+    sessions = []
+    stats = {
+        "total_sessions": 0,
+        "unique_visitors": 0,
+        "tech_hub_sessions_count": 0,
+        "tech_hub_pct": 0.0,
+        "city_breakdown": {},
+        "drop_off_stages": {
+            "bounced": 0,
+            "browsed_feed": 0,
+            "resume_abandoned": 0,
+            "auth_abandoned": 0,
+            "vip_abandoned": 0,
+            "signed_up": 0,
+            "vip_paid": 0
+        }
+    }
+
+    try:
+        with get_db() as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT 
+                    visitor_hash,
+                    MIN(timestamp) as first_ts,
+                    MAX(timestamp) as last_ts,
+                    COUNT(*) as hit_count,
+                    GROUP_CONCAT(DISTINCT path) as paths_str,
+                    device,
+                    device_model,
+                    device_brand,
+                    location,
+                    referrer,
+                    user_name,
+                    user_email,
+                    utm_source,
+                    utm_medium,
+                    utm_campaign,
+                    utm_content,
+                    fbclid
+                FROM site_traffic
+                WHERE date = ? AND is_bot = 0
+                GROUP BY visitor_hash
+                ORDER BY last_ts DESC
+                LIMIT ?;
+            """, (target_date, max(limit * 2, 200)))
+            traffic_rows = cursor.fetchall()
+
+            # Pre-fetch all funnel events for the last 48h to stitch without N+1 query overhead
+            cursor.execute("""
+                SELECT 
+                    visitor_hash,
+                    event_name,
+                    utm_source,
+                    utm_campaign,
+                    user_name,
+                    user_email,
+                    amount_inr,
+                    meta_json,
+                    timestamp
+                FROM funnel_events
+                WHERE timestamp >= ?
+                ORDER BY timestamp ASC;
+            """, (time.time() - 86400 * 2,))
+            all_events = cursor.fetchall()
+            events_by_hash = {}
+            for ev in all_events:
+                vh = ev["visitor_hash"]
+                if vh not in events_by_hash:
+                    events_by_hash[vh] = []
+                events_by_hash[vh].append(ev)
+
+            now_ts = time.time()
+            city_counter = {}
+
+            for r in traffic_rows:
+                vh = r["visitor_hash"]
+                first_ts = float(r["first_ts"] or 0)
+                last_ts = float(r["last_ts"] or 0)
+                hit_count = int(r["hit_count"] or 1)
+                dwell_sec = max(0, int(last_ts - first_ts))
+
+                ref_info = parse_referrer_info(
+                    r["referrer"] or "",
+                    r["utm_source"] or "",
+                    r["utm_campaign"] or "",
+                    r["fbclid"] or ""
+                )
+                ref_channel = ref_info.get("channel", "Direct")
+                ref_source = ref_info.get("source", "Direct")
+                ref_detail = ref_info.get("detail", "")
+                ref_color = ref_info.get("badge_color", "slate")
+                ref_icon = ref_info.get("icon", "🌐")
+
+                loc_info = classify_location(r["location"] or "")
+                if loc_info["is_tech_hub"]:
+                    stats["tech_hub_sessions_count"] += 1
+
+                c_name = loc_info["city"] or "Unknown City"
+                city_counter[c_name] = city_counter.get(c_name, 0) + 1
+
+                v_events = events_by_hash.get(vh, [])
+                click_trail = []
+
+                # Initial entry step
+                click_trail.append({
+                    "time_str": time.strftime("%H:%M:%S", time.gmtime(first_ts + 19800)),
+                    "action": f"Landed on Almond Jobs ({r['paths_str'] or '/'})",
+                    "badge": "Landing",
+                    "badge_color": "slate",
+                    "icon": "🚪"
+                })
+
+                has_auth_open = False
+                has_auth_close = False
+                has_resume_pick = False
+                has_resume_upload = False
+                has_vip_open = False
+                has_vip_close = False
+                has_signup = False
+                has_purchase = False
+                filter_clicks = 0
+                job_clicks = 0
+
+                for ev in v_events:
+                    ename = ev["event_name"]
+                    ets = float(ev["timestamp"] or 0)
+                    time_s = time.strftime("%H:%M:%S", time.gmtime(ets + 19800))
+                    meta = {}
+                    if ev["meta_json"]:
+                        try:
+                            meta = json.loads(ev["meta_json"])
+                        except Exception:
+                            pass
+
+                    if ename == "filter_chip_click":
+                        filter_clicks += 1
+                        chip_name = meta.get("chip", "Filter")
+                        click_trail.append({
+                            "time_str": time_s,
+                            "action": f"Filtered Feed: '{chip_name}'",
+                            "badge": "Filter",
+                            "badge_color": "sky",
+                            "icon": "🏷️"
+                        })
+                    elif ename == "job_card_click":
+                        job_clicks += 1
+                        company = meta.get("company", "Company")
+                        role = meta.get("role", "Opening")
+                        click_trail.append({
+                            "time_str": time_s,
+                            "action": f"Clicked Job Card: {company} ({role})",
+                            "badge": "Job Click",
+                            "badge_color": "indigo",
+                            "icon": "💼"
+                        })
+                    elif ename == "sample_link_click":
+                        company = meta.get("company", "Company")
+                        click_trail.append({
+                            "time_str": time_s,
+                            "action": f"Clicked Free Unlocked Link: {company}",
+                            "badge": "Direct Link",
+                            "badge_color": "emerald",
+                            "icon": "🔗"
+                        })
+                    elif ename == "search_query":
+                        q = meta.get("query", "")
+                        click_trail.append({
+                            "time_str": time_s,
+                            "action": f"Searched: '{q}'",
+                            "badge": "Search",
+                            "badge_color": "blue",
+                            "icon": "🔍"
+                        })
+                    elif ename == "resume_pick_start":
+                        has_resume_pick = True
+                        click_trail.append({
+                            "time_str": time_s,
+                            "action": "Clicked 'Upload Resume'",
+                            "badge": "Resume Pick",
+                            "badge_color": "violet",
+                            "icon": "📄"
+                        })
+                    elif ename == "resume_upload":
+                        has_resume_upload = True
+                        click_trail.append({
+                            "time_str": time_s,
+                            "action": "Uploaded Resume Successfully",
+                            "badge": "Resume Upload",
+                            "badge_color": "emerald",
+                            "icon": "✅"
+                        })
+                    elif ename == "auth_modal_open":
+                        has_auth_open = True
+                        trig = meta.get("trigger", "CTA")
+                        click_trail.append({
+                            "time_str": time_s,
+                            "action": f"Opened Sign-Up / Login Modal ({trig})",
+                            "badge": "Auth Modal",
+                            "badge_color": "amber",
+                            "icon": "🔐"
+                        })
+                    elif ename == "auth_modal_close":
+                        has_auth_close = True
+                        click_trail.append({
+                            "time_str": time_s,
+                            "action": "Closed Sign-Up Modal without auth",
+                            "badge": "Auth Abandon",
+                            "badge_color": "orange",
+                            "icon": "⚠️"
+                        })
+                    elif ename == "vip_modal_open":
+                        has_vip_open = True
+                        click_trail.append({
+                            "time_str": time_s,
+                            "action": "Opened VIP Pass Modal",
+                            "badge": "VIP Pricing",
+                            "badge_color": "purple",
+                            "icon": "👑"
+                        })
+                    elif ename == "vip_modal_close":
+                        has_vip_close = True
+                        click_trail.append({
+                            "time_str": time_s,
+                            "action": "Closed VIP Modal without purchase",
+                            "badge": "VIP Abandon",
+                            "badge_color": "orange",
+                            "icon": "⚠️"
+                        })
+                    elif ename == "bot_check_pass":
+                        click_trail.append({
+                            "time_str": time_s,
+                            "action": "Checked 'I am human' verification",
+                            "badge": "Bot Check",
+                            "badge_color": "emerald",
+                            "icon": "🛡️"
+                        })
+                    elif ename == "signup":
+                        has_signup = True
+                        click_trail.append({
+                            "time_str": time_s,
+                            "action": "Completed Sign-up / Login",
+                            "badge": "Signed Up",
+                            "badge_color": "emerald",
+                            "icon": "🎉"
+                        })
+                    elif ename == "purchase":
+                        has_purchase = True
+                        click_trail.append({
+                            "time_str": time_s,
+                            "action": f"Completed VIP Pro Payment (₹{ev['amount_inr']})",
+                            "badge": "VIP Member",
+                            "badge_color": "emerald",
+                            "icon": "💎"
+                        })
+                    elif ename == "session_exit":
+                        dwell_sec = max(dwell_sec, int(meta.get("dwell_time_seconds", 0)))
+                        max_scroll = int(meta.get("scroll_depth_percent", 0))
+                        last_act = meta.get("last_action", "Browsing")
+                        click_trail.append({
+                            "time_str": time_s,
+                            "action": f"Left site after {dwell_sec}s (Scroll: {max_scroll}%, Last: {last_act})",
+                            "badge": "Exit Beacon",
+                            "badge_color": "rose",
+                            "icon": "👋"
+                        })
+
+                # Determine exit stage & drop-off reason
+                user_email = (r["user_email"] or "").strip()
+                user_name = (r["user_name"] or "").strip()
+                is_auth = bool(user_email) or has_signup
+
+                if has_purchase:
+                    exit_code = "vip_paid"
+                    exit_label = "VIP Active Member"
+                    exit_badge = "emerald"
+                    drop_desc = "Successfully upgraded to VIP Pro membership"
+                elif is_auth:
+                    exit_code = "signed_up"
+                    exit_label = f"Logged-in: {user_email}"
+                    exit_badge = "emerald"
+                    drop_desc = "Authenticated candidate actively using platform"
+                elif has_vip_close or (has_vip_open and not has_purchase):
+                    exit_code = "vip_abandoned"
+                    exit_label = "Dropped at VIP Pricing"
+                    exit_badge = "purple"
+                    drop_desc = "Viewed VIP pricing tier but left without paying"
+                elif has_auth_close or (has_auth_open and not is_auth):
+                    exit_code = "auth_abandoned"
+                    exit_label = "Dropped at Sign-Up Modal"
+                    exit_badge = "amber"
+                    drop_desc = "Opened Sign-up / Login modal but exited without registering"
+                elif has_resume_pick and not has_resume_upload:
+                    exit_code = "resume_abandoned"
+                    exit_label = "Dropped at Resume Upload"
+                    exit_badge = "orange"
+                    drop_desc = "Clicked resume upload but abandoned without uploading file"
+                elif (filter_clicks > 0 or job_clicks > 0) and not is_auth:
+                    exit_code = "browsed_feed"
+                    exit_label = f"Browsed Feed ({filter_clicks} filters, {job_clicks} jobs)"
+                    exit_badge = "sky"
+                    drop_desc = "Explored job listings and filters, but left before signing up"
+                elif dwell_sec < 6 and hit_count <= 1 and len(v_events) == 0:
+                    exit_code = "bounced"
+                    exit_label = f"Bounced ({dwell_sec}s dwell)"
+                    exit_badge = "rose"
+                    drop_desc = "Landed and exited in under 6 seconds without any interactions"
+                else:
+                    exit_code = "browsed_feed"
+                    exit_label = f"Browsed Landing ({dwell_sec}s dwell)"
+                    exit_badge = "slate"
+                    drop_desc = "Looked at homepage feed and exited without logging in"
+
+                stats["drop_off_stages"][exit_code] = stats["drop_off_stages"].get(exit_code, 0) + 1
+
+                # Apply filtering
+                if filter_mode == "tech_hubs" and not loc_info["is_tech_hub"]:
+                    continue
+                if filter_mode == "meta_ads" and ref_channel != "Meta Ads":
+                    continue
+                if filter_mode == "dropoffs" and exit_code not in ["bounced", "auth_abandoned", "resume_abandoned", "vip_abandoned"]:
+                    continue
+                if filter_mode == "authenticated" and not is_auth:
+                    continue
+
+                diff_now = max(0, int(now_ts - last_ts))
+                if diff_now < 10:
+                    time_ago_str = "Just now"
+                elif diff_now < 60:
+                    time_ago_str = f"{diff_now}s ago"
+                elif diff_now < 3600:
+                    time_ago_str = f"{diff_now // 60}m ago"
+                elif diff_now < 86400:
+                    time_ago_str = f"{diff_now // 3600}h ago"
+                else:
+                    time_ago_str = f"{diff_now // 86400}d ago"
+
+                session_obj = {
+                    "visitor_hash": vh,
+                    "visitor_hash_short": vh[:8],
+                    "first_seen_str": time.strftime("%H:%M:%S", time.gmtime(first_ts + 19800)),
+                    "last_seen_str": time.strftime("%H:%M:%S", time.gmtime(last_ts + 19800)),
+                    "time_ago": time_ago_str,
+                    "hit_count": hit_count,
+                    "dwell_sec": dwell_sec,
+                    "dwell_str": f"{dwell_sec}s" if dwell_sec < 60 else f"{dwell_sec//60}m {dwell_sec%60}s",
+                    "device_brand": r["device_brand"] or "Generic",
+                    "device_model": r["device_model"] or "Browser",
+                    "device_type": r["device"] or "desktop",
+                    "location_raw": r["location"] or "",
+                    "location_display": loc_info["display"],
+                    "city": loc_info["city"],
+                    "state": loc_info["state"],
+                    "country": loc_info["country"],
+                    "is_tech_hub": loc_info["is_tech_hub"],
+                    "tech_hub_title": loc_info["hub_title"],
+                    "referrer_channel": ref_channel,
+                    "referrer_source": ref_source,
+                    "referrer_detail": ref_detail,
+                    "referrer_badge_color": ref_color,
+                    "referrer_icon": ref_icon,
+                    "utm_campaign": r["utm_campaign"] or "",
+                    "user_email": user_email,
+                    "user_name": user_name,
+                    "is_authenticated": is_auth,
+                    "events_count": len(v_events),
+                    "click_trail": click_trail,
+                    "exit_code": exit_code,
+                    "exit_label": exit_label,
+                    "exit_badge": exit_badge,
+                    "drop_desc": drop_desc
+                }
+                sessions.append(session_obj)
+
+            stats["total_sessions"] = len(traffic_rows)
+            stats["unique_visitors"] = len(traffic_rows)
+            if stats["total_sessions"] > 0:
+                stats["tech_hub_pct"] = round((stats["tech_hub_sessions_count"] / stats["total_sessions"]) * 100, 1)
+            stats["city_breakdown"] = dict(sorted(city_counter.items(), key=lambda x: x[1], reverse=True)[:10])
+
+    except Exception as e:
+        print(f"[JOURNEYS_ERROR] {e}")
+
+    return {
+        "status": "success",
+        "date": target_date,
+        "filter": filter_mode,
+        "stats": stats,
+        "sessions": sessions[:limit]
+    }
 
 
 FREE_AI_GENERATION_LIMIT = 10

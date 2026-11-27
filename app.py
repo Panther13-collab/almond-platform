@@ -42,7 +42,8 @@ from core.auth_db import (
     save_candidate_feedback, get_all_candidate_feedback, reply_to_candidate_feedback, get_revenue_analytics, purge_dummy_candidates_admin,
     get_meta_pixel_id, set_meta_pixel_id, record_funnel_event,
     set_recovery_offer, get_recovery_offer, dismiss_recovery_offer,
-    FREE_AI_GENERATION_LIMIT, get_ai_quota_status, consume_ai_generation_quota
+    FREE_AI_GENERATION_LIMIT, get_ai_quota_status, consume_ai_generation_quota,
+    get_live_session_journeys, classify_location
 )
 from core.email_sender import send_recovery_offer_email
 from core.payment import apply_vip_latest_feed_lock, create_razorpay_order, verify_razorpay_signature
@@ -582,6 +583,7 @@ async def serve_admin_dashboard(
         dummy_count = sum(1 for c in candidates if c.get("is_dummy"))
         new_count = sum(1 for c in candidates if not c.get("is_dummy") and c.get("is_new"))
         vip_count = sum(1 for c in candidates if not c.get("is_dummy") and c.get("is_paid"))
+        journeys_data = get_live_session_journeys(limit=50)
         rendered = template.render(
             is_authenticated=True,
             admin_key=provided_key,
@@ -596,7 +598,9 @@ async def serve_admin_dashboard(
             contributions=get_recent_contributions(limit=50),
             feedback_items=get_all_candidate_feedback(),
             revenue_analytics=get_revenue_analytics(),
-            meta_pixel_id=get_meta_pixel_id()
+            meta_pixel_id=get_meta_pixel_id(),
+            visitor_journeys=journeys_data.get("sessions", []),
+            journeys_stats=journeys_data.get("stats", {})
         )
         response = HTMLResponse(content=rendered)
         # Store secure session cookie for convenience so user stays logged in
@@ -651,6 +655,10 @@ async def api_record_telemetry_event(request: Request, payload: dict = Body(...)
     if not event_name:
         raise HTTPException(status_code=400, detail="Missing event_name.")
     client_ip, user_agent, vis_name, vis_email = _resolve_request_client_and_user(request)
+    meta_dict = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
+    for extra_key in ["dwell_time_seconds", "scroll_depth_percent", "exit_page", "last_action", "total_interactions", "city_hint", "exit_reason", "chip", "company", "role", "query", "stage", "trigger"]:
+        if extra_key in payload and extra_key not in meta_dict:
+            meta_dict[extra_key] = payload[extra_key]
     recorded = record_funnel_event(
         event_name=event_name,
         client_ip=client_ip,
@@ -663,9 +671,27 @@ async def api_record_telemetry_event(request: Request, payload: dict = Body(...)
         user_name=str(payload.get("user_name", "") or "") or vis_name,
         user_email=str(payload.get("user_email", "") or "") or vis_email,
         amount_inr=payload.get("amount_inr", 0) or 0,
-        meta=payload.get("meta") if isinstance(payload.get("meta"), dict) else None
+        meta=meta_dict
     )
     return {"status": "success" if recorded else "ignored", "event_name": event_name}
+
+
+@app.get("/api/admin/visitor-journeys")
+async def api_admin_visitor_journeys(
+    request: Request,
+    key: Optional[str] = Query(None),
+    date: Optional[str] = Query(None),
+    filter: Optional[str] = Query("all"),
+    limit: Optional[int] = Query(50)
+):
+    """Serve granular candidate clickstream, geo IT cities, dwell times, and exit drop-off data."""
+    cookie_key = request.cookies.get("almond_admin_key")
+    header_key = request.headers.get("x-admin-key")
+    provided_key = (key or cookie_key or header_key or "").strip()
+    if not _is_valid_admin_key(provided_key):
+        raise HTTPException(status_code=401, detail="Unauthorized admin key.")
+    data = get_live_session_journeys(date_str=date or "", limit=limit or 50, filter_mode=filter or "all")
+    return JSONResponse(content=data)
 
 
 @app.post("/api/admin/meta-pixel")
